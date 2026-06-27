@@ -1,0 +1,33 @@
+{
+	"name": "@yaebal/workers",
+	"version": "0.0.1",
+	"description": "YAEBAL workers — a tiny worker_threads pool to offload CPU-heavy tasks from handlers.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "worker", "worker-threads", "pool"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/workers"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

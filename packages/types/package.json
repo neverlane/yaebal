@@ -1,0 +1,34 @@
+{
+	"name": "@yaebal/types",
+	"version": "0.0.1",
+	"description": "YAEBAL types — full Telegram Bot API types, code-generated from the schema.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib",
+		"generate": "node scripts/generate.mjs"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "types", "bot-api"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/types"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

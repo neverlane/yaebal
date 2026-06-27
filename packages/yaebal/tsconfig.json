@@ -1,0 +1,20 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"composite": true
+	},
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../contexts" },
+		{ "path": "../keyboard" },
+		{ "path": "../callback-data" },
+		{ "path": "../filters" },
+		{ "path": "../fmt" },
+		{ "path": "../session" },
+		{ "path": "../i18n" },
+		{ "path": "../web" }
+	],
+	"include": ["src/**/*.ts"]
+}

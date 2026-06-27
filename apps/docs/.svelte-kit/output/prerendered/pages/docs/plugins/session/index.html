@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="../../../favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="yaebal — yet another telegram bot api library. type-safe, chainable, plugin-first." />
+		<script>
+			(() => {
+				try {
+					const saved = localStorage.getItem("theme");
+					const theme = saved ?? "dark";
+					document.documentElement.setAttribute("data-theme", theme);
+				} catch {
+					document.documentElement.setAttribute("data-theme", "dark");
+				}
+			})();
+		</script>
+		<link href="../../../_app/immutable/entry/start.2SQazvAH.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/D4KieXef.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CILFtpHi.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CZoOGrhn.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/OA8UcISh.js" rel="modulepreload">
+		<link href="../../../_app/immutable/entry/app.B76dkn1C.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/C1FmrZbK.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/hsF3hrRr.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CBlwNYzs.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/ItzQ5H_G.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CZZgRwnr.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/PnyQD1R_.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/BMxgNVbx.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/0.D7yexSSd.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CvlZIvmO.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/B-T_SWTE.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/2.envlCsQG.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/DEM-99oi.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/C-grAJHd.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/DFXGkbjh.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CmZ4l575.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/Dwy-z0HI.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/B1AGBuo3.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/33.BL8bBUpQ.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/BElR-AbQ.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/1IpLXSSe.js" rel="modulepreload">
+		<!--1yn86bg--><!----><title>@yaebal/session — yaebal</title>
+		<link href="../../../_app/immutable/assets/0.BixmSFrb.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/ThemeToggle.LqrljCZQ.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/2.CTQNgS6m.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/Code.NqpSgyXm.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[0--><!--[--><div class="shell svelte-1bpnej"><div class="mobilebar svelte-1bpnej"><a class="brand unbounded svelte-1bpnej" href="/">yaebal</a> <button class="menu svelte-1bpnej" aria-label="toggle menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><!--[-1--><path d="M3 12h18M3 6h18M3 18h18"></path><!--]--></svg></button></div> <div class="sidebar-wrap svelte-1bpnej"><aside class="sidebar svelte-1nhzsi7"><a class="brand unbounded svelte-1nhzsi7" href="/">yaebal</a> <div class="search-wrap svelte-1387u27"><div class="box svelte-1387u27"><div class="input-row svelte-1387u27"><svg class="icon svelte-1387u27" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg> <input class="input mono svelte-1387u27" type="search" placeholder="search docs…" value=""/> <!--[-1--><!--]--></div> <!--[-1--><!--]--></div></div><!----> <nav class="nav svelte-1nhzsi7"><!--[--><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">guide</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/introduction">introduction <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/yaebal">yaebal (meta) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/getting-started">getting started <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/scaffolding">create a bot <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/core">core concepts <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">core</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/context">context &amp; filters <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/contexts">contexts (autogen) <!--[0--><span class="badge svelte-1nhzsi7">killer</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/media">media &amp; files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/hooks">hooks &amp; errors <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/webhooks">webhooks &amp; deploy <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">plugins</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins">overview <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/fmt">fmt (markdown/html) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/filters">filters <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/conversation">conversation <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/again">again <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7 active" href="/docs/plugins/session">session <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/keyboard">keyboard <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/callback-data">callback-data <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/morda">morda <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/i18n">i18n <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/scenes">scenes <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/prompt">prompt <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/router">router <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/commands">commands <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/throttle">throttle <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/ratelimiter">ratelimiter <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/files">files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/broadcast">broadcast <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/pagination">pagination <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-group">media-group <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-cache">media-cache <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/split">split <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/panel">panel <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">scaling</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins/web">web (edge) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runner">runner <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/workers">workers <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runtimes">runtimes <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">reference</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/types">@yaebal/types <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/packages">packages map <!--[-1--><!--]--></a><!--]--></div><!--]--></nav> <div class="bottom svelte-1nhzsi7"><a class="ghlink svelte-1nhzsi7" href="https://github.com/neverlane/yaebal" target="_blank" rel="noreferrer">github ↗</a> <button class="toggle svelte-lu0t34" aria-label="toggle theme"><!--[0--><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg><!--]--></button><!----></div></aside><!----></div> <!--[-1--><!--]--> <main class="content svelte-1bpnej"><article class="prose svelte-1bpnej" data-pagefind-body=""><!--[--><h1>@yaebal/session</h1> <p class="lead">per-chat session state with a pluggable storage adapter.</p> <h2>install</h2> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">terminal</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">pnpm add @yaebal/session</code></pre><!--]--></div><!----> <h2>usage</h2> <p><code>session()</code> is a plugin — pass it to <code>.install()</code> on a bot or composer.
+	it loads <code>ctx.session</code> from storage before your handlers run and writes it back
+	after <code>next()</code> resolves. the context type is augmented automatically.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">bot.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { Bot } from "@yaebal/core";
+import { session } from "@yaebal/session";
+
+interface MySession {
+  count: number;
+  lastCommand: string | null;
+}
+
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(session&lt;MySession>({
+    initial: () => ({ count: 0, lastCommand: null }),
+  }));
+
+// ctx.session is now fully typed as MySession
+bot.on("message:text", async (ctx) => {
+  ctx.session.count++;
+  ctx.session.lastCommand = ctx.text;
+  await ctx.reply(`message #${ctx.session.count}`);
+});
+
+bot.start();</code></pre><!--]--></div><!----> <h2>custom storage</h2> <p>the default <code>MemoryStorage</code> is lost on restart. swap it for any object that
+	implements <code>StorageAdapter&lt;T></code>:</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">redis-storage.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { session, type StorageAdapter } from "@yaebal/session";
+
+// example: a minimal Redis adapter
+class RedisStorage&lt;T> implements StorageAdapter&lt;T> {
+  constructor(private redis: Redis) {}
+
+  async get(key: string): Promise&lt;T | undefined> {
+    const raw = await this.redis.get(key);
+    return raw ? JSON.parse(raw) : undefined;
+  }
+
+  async set(key: string, value: T): Promise&lt;void> {
+    await this.redis.set(key, JSON.stringify(value));
+  }
+
+  async delete(key: string): Promise&lt;void> {
+    await this.redis.del(key);
+  }
+}
+
+bot.install(session({
+  initial: () => ({ count: 0 }),
+  storage: new RedisStorage(redis),
+}));</code></pre><!--]--></div><!----> <h2>per-user sessions</h2> <p>override <code>getKey</code> to change the partition. the default is <code>ctx.chat.id</code>.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">per-user.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">bot.install(session({
+  initial: () => ({ preferences: {} }),
+  // partition by user instead of chat
+  getKey: (ctx) => ctx.from?.id?.toString(),
+}));</code></pre><!--]--></div><!----> <h2>api</h2> <table><thead><tr><th>export</th><th>signature</th><th>description</th></tr></thead><tbody><tr><td><code>session</code></td><td><code>(options: SessionOptions&lt;S>) => Plugin&lt;Context, { session: S }></code></td><td>creates the session plugin</td></tr><tr><td><code>MemoryStorage</code></td><td><code>class MemoryStorage&lt;T> implements StorageAdapter&lt;T></code></td><td>default in-memory store; lost on restart</td></tr><tr><td><code>StorageAdapter</code></td><td>interface</td><td>implement this to persist sessions externally</td></tr><tr><td><code>SessionOptions</code></td><td>interface</td><td>options passed to <code>session()</code></td></tr></tbody></table> <h3>SessionOptions&lt;S></h3> <table><thead><tr><th>field</th><th>type</th><th>required</th><th>description</th></tr></thead><tbody><tr><td><code>initial</code></td><td><code>() => S</code></td><td>yes</td><td>factory called when no stored session exists for the key</td></tr><tr><td><code>storage</code></td><td><code>StorageAdapter&lt;S></code></td><td>no</td><td>defaults to <code>new MemoryStorage&lt;S>()</code></td></tr><tr><td><code>getKey</code></td><td><code>(ctx: Context) => string | undefined</code></td><td>no</td><td>defaults to <code>ctx.chat?.id?.toString()</code></td></tr></tbody></table> <h3>StorageAdapter&lt;T></h3> <table><thead><tr><th>method</th><th>signature</th></tr></thead><tbody><tr><td><code>get</code></td><td><code>(key: string) => T | undefined | Promise&lt;T | undefined></code></td></tr><tr><td><code>set</code></td><td><code>(key: string, value: T) => unknown | Promise&lt;unknown></code></td></tr><tr><td><code>delete</code></td><td><code>(key: string) => unknown | Promise&lt;unknown></code></td></tr></tbody></table> <div class="note"><strong>writes happen unconditionally after <code>next()</code>.</strong> if a handler throws, <code>next()</code> never resolves, so the write is skipped and storage is left untouched —
+	the session is not half-saved on error. <br/><br/> <strong>updates without a chat</strong> (e.g. <code>poll</code> updates) receive a throwaway
+	session from <code>initial()</code> that is never persisted. <code>getKey</code> returning <code>undefined</code> triggers this path.</div><!--]--><!----></article></main></div><!--]--><!--]--><!----><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_18j168m = {
+						base: new URL("../../..", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../../../_app/immutable/entry/start.2SQazvAH.js"),
+						import("../../../_app/immutable/entry/app.B76dkn1C.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2, 33],
+							data: [null,null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,31 @@
+{
+	"name": "yaebal-monorepo",
+	"version": "0.0.0",
+	"private": true,
+	"description": "YAEBAL — Yet Another tElegram Bot Api Library. Type-safe, extensible, multi-runtime.",
+	"type": "module",
+	"packageManager": "pnpm@9.15.0",
+	"engines": {
+		"node": ">=20"
+	},
+	"scripts": {
+		"build": "pnpm -r --workspace-concurrency=1 --filter \"./packages/*\" run build",
+		"typecheck": "pnpm -r run typecheck",
+		"test": "pnpm build && pnpm -r --filter \"./packages/*\" run test",
+		"dev": "pnpm --filter @yaebal/example-basic run dev",
+		"lint": "biome check .",
+		"lint:fix": "biome check --write .",
+		"clean": "pnpm -r exec rm -rf lib node_modules && rm -rf node_modules",
+		"changeset": "changeset",
+		"version-packages": "changeset version",
+		"release": "pnpm build && changeset publish"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@changesets/cli": "^2.27.0",
+		"@types/node": "^22.10.0",
+		"typescript": "^5.7.0"
+	},
+	"keywords": ["telegram", "telegram-bot", "bot-api", "framework", "typescript", "yaebal"],
+	"license": "MIT"
+}

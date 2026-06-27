@@ -1,0 +1,132 @@
+{
+	"/": [
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/docs": [
+		"src/routes/docs/+page.ts",
+		"src/routes/+layout.ts",
+		"src/routes/+layout.ts"
+	],
+	"/docs/contexts": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/context": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/core": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/getting-started": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/hooks": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/introduction": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/media": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/packages": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/again": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/broadcast": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/callback-data": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/commands": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/conversation": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/files": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/filters": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/fmt": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/i18n": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/keyboard": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/media-cache": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/media-group": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/morda": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/pagination": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/panel": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/prompt": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/ratelimiter": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/router": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/scenes": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/session": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/split": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/throttle": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/plugins/web": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/runner": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/runtimes": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/scaffolding": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/types": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/webhooks": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/workers": [
+		"src/routes/+layout.ts"
+	],
+	"/docs/yaebal": [
+		"src/routes/+layout.ts"
+	],
+	"/playground": [
+		"src/routes/playground/+page.ts",
+		"src/routes/+layout.ts"
+	]
+}

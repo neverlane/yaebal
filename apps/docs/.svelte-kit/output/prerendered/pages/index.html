@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="yaebal — yet another telegram bot api library. type-safe, chainable, plugin-first." />
+		<script>
+			(() => {
+				try {
+					const saved = localStorage.getItem("theme");
+					const theme = saved ?? "dark";
+					document.documentElement.setAttribute("data-theme", theme);
+				} catch {
+					document.documentElement.setAttribute("data-theme", "dark");
+				}
+			})();
+		</script>
+		<link href="./_app/immutable/entry/start.2SQazvAH.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/D4KieXef.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CILFtpHi.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CZoOGrhn.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/OA8UcISh.js" rel="modulepreload">
+		<link href="./_app/immutable/entry/app.B76dkn1C.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/C1FmrZbK.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/hsF3hrRr.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CBlwNYzs.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/ItzQ5H_G.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CZZgRwnr.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/PnyQD1R_.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/BMxgNVbx.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/0.D7yexSSd.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CvlZIvmO.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/B-T_SWTE.js" rel="modulepreload">
+		<link href="./_app/immutable/nodes/3.D6t6hF2U.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/Dwy-z0HI.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/C-grAJHd.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/BElR-AbQ.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/DFXGkbjh.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/1IpLXSSe.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/B1AGBuo3.js" rel="modulepreload">
+		<link href="./_app/immutable/chunks/CmZ4l575.js" rel="modulepreload">
+		<!--1uha8ag--><!----><title>yaebal — yet another telegram bot api library</title>
+		<link href="./_app/immutable/assets/0.BixmSFrb.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/Code.NqpSgyXm.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/ThemeToggle.LqrljCZQ.css" rel="stylesheet">
+		<link href="./_app/immutable/assets/3.CmJqKIdz.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[-1--><!--[--><header class="top svelte-1uha8ag"><a class="brand unbounded svelte-1uha8ag" href="/">yaebal</a> <nav class="top-actions svelte-1uha8ag"><a class="link svelte-1uha8ag" href="/docs/getting-started/">docs</a> <a class="link svelte-1uha8ag" href="https://github.com/neverlane/yaebal" target="_blank" rel="noreferrer">github</a> <button class="toggle svelte-lu0t34" aria-label="toggle theme"><!--[0--><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg><!--]--></button><!----></nav></header> <main class="hero svelte-1uha8ag"><div class="glow svelte-1uha8ag"></div> <span class="eyebrow mono svelte-1uha8ag">type-safe · chainable · plugin-first</span> <h1 class="wordmark unbounded svelte-1uha8ag">yaebal</h1> <p class="tagline svelte-1uha8ag">yet another telegram bot api library.<br/> the context type <em class="svelte-1uha8ag">accumulates</em> through the chain — handlers see what plugins added,
+		with zero casting.</p> <div class="cta svelte-1uha8ag"><a class="button accent" href="/docs/getting-started/">get started →</a> <a class="button" href="https://github.com/neverlane/yaebal" target="_blank" rel="noreferrer">github</a></div> <div class="install mono svelte-1uha8ag"><span class="prompt svelte-1uha8ag">$</span> pnpm add @yaebal/core</div> <div class="sample svelte-1uha8ag"><div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">bot.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { Bot } from "@yaebal/core";
+import { session } from "@yaebal/session";
+
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(session())             // ctx.session is now typed
+  .derive((ctx) => ({ now: Date.now() }));
+
+bot.on("message:text", (ctx) => {
+  //          ^ context is narrowed to text messages
+  ctx.reply("hi " + ctx.from.first_name);
+  ctx.react("🔥");                // auto-generated shortcut
+});
+
+bot.start();</code></pre><!--]--></div><!----></div> <section class="features svelte-1uha8ag"><!--[--><div class="card svelte-1uha8ag"><h3 class="svelte-1uha8ag">type-safe</h3> <p class="subtext">strict mode, no any in public types. the context type flows through the whole chain.</p></div><div class="card svelte-1uha8ag"><h3 class="svelte-1uha8ag">chainable</h3> <p class="subtext">Bot extends Composer. derive / decorate / guard each return an augmented context type.</p></div><div class="card svelte-1uha8ag"><h3 class="svelte-1uha8ag">auto-gen contexts</h3> <p class="subtext">every per-update context and its shortcut methods are generated from the Bot API schema.</p></div><div class="card svelte-1uha8ag"><h3 class="svelte-1uha8ag">plugin-first</h3> <p class="subtext">a deep set of first-party plugins — filters, conversation, runner, and more. dependencies are explicit and type-checked, never implicit order.</p></div><!--]--></section> <footer class="foot subtext svelte-1uha8ag"><span>MIT · built on the shoulders of grammY, GramIO &amp; puregram</span></footer></main><!--]--><!--]--><!----><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_18j168m = {
+						base: new URL(".", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.2SQazvAH.js"),
+						import("./_app/immutable/entry/app.B76dkn1C.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 3],
+							data: [null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

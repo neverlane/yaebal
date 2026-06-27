@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="../../favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="yaebal — yet another telegram bot api library. type-safe, chainable, plugin-first." />
+		<script>
+			(() => {
+				try {
+					const saved = localStorage.getItem("theme");
+					const theme = saved ?? "dark";
+					document.documentElement.setAttribute("data-theme", theme);
+				} catch {
+					document.documentElement.setAttribute("data-theme", "dark");
+				}
+			})();
+		</script>
+		<link href="../../_app/immutable/entry/start.2SQazvAH.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/D4KieXef.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CILFtpHi.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CZoOGrhn.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/OA8UcISh.js" rel="modulepreload">
+		<link href="../../_app/immutable/entry/app.B76dkn1C.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/C1FmrZbK.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/hsF3hrRr.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CBlwNYzs.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/ItzQ5H_G.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CZZgRwnr.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/PnyQD1R_.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/BMxgNVbx.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/0.D7yexSSd.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CvlZIvmO.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/B-T_SWTE.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/2.envlCsQG.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/DEM-99oi.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/C-grAJHd.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/DFXGkbjh.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/CmZ4l575.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/Dwy-z0HI.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/B1AGBuo3.js" rel="modulepreload">
+		<link href="../../_app/immutable/nodes/41.DxXUL3vS.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/BElR-AbQ.js" rel="modulepreload">
+		<link href="../../_app/immutable/chunks/1IpLXSSe.js" rel="modulepreload">
+		<!--31ylnl--><!----><title>webhooks — yaebal</title>
+		<link href="../../_app/immutable/assets/0.BixmSFrb.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/ThemeToggle.LqrljCZQ.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/2.CTQNgS6m.css" rel="stylesheet">
+		<link href="../../_app/immutable/assets/Code.NqpSgyXm.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[0--><!--[--><div class="shell svelte-1bpnej"><div class="mobilebar svelte-1bpnej"><a class="brand unbounded svelte-1bpnej" href="/">yaebal</a> <button class="menu svelte-1bpnej" aria-label="toggle menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><!--[-1--><path d="M3 12h18M3 6h18M3 18h18"></path><!--]--></svg></button></div> <div class="sidebar-wrap svelte-1bpnej"><aside class="sidebar svelte-1nhzsi7"><a class="brand unbounded svelte-1nhzsi7" href="/">yaebal</a> <div class="search-wrap svelte-1387u27"><div class="box svelte-1387u27"><div class="input-row svelte-1387u27"><svg class="icon svelte-1387u27" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg> <input class="input mono svelte-1387u27" type="search" placeholder="search docs…" value=""/> <!--[-1--><!--]--></div> <!--[-1--><!--]--></div></div><!----> <nav class="nav svelte-1nhzsi7"><!--[--><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">guide</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/introduction">introduction <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/yaebal">yaebal (meta) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/getting-started">getting started <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/scaffolding">create a bot <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/core">core concepts <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">core</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/context">context &amp; filters <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/contexts">contexts (autogen) <!--[0--><span class="badge svelte-1nhzsi7">killer</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/media">media &amp; files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/hooks">hooks &amp; errors <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7 active" href="/docs/webhooks">webhooks &amp; deploy <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">plugins</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins">overview <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/fmt">fmt (markdown/html) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/filters">filters <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/conversation">conversation <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/again">again <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/session">session <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/keyboard">keyboard <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/callback-data">callback-data <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/morda">morda <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/i18n">i18n <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/scenes">scenes <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/prompt">prompt <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/router">router <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/commands">commands <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/throttle">throttle <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/ratelimiter">ratelimiter <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/files">files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/broadcast">broadcast <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/pagination">pagination <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-group">media-group <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-cache">media-cache <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/split">split <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/panel">panel <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">scaling</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins/web">web (edge) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runner">runner <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/workers">workers <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runtimes">runtimes <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">reference</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/types">@yaebal/types <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/packages">packages map <!--[-1--><!--]--></a><!--]--></div><!--]--></nav> <div class="bottom svelte-1nhzsi7"><a class="ghlink svelte-1nhzsi7" href="https://github.com/neverlane/yaebal" target="_blank" rel="noreferrer">github ↗</a> <button class="toggle svelte-lu0t34" aria-label="toggle theme"><!--[0--><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg><!--]--></button><!----></div></aside><!----></div> <!--[-1--><!--]--> <main class="content svelte-1bpnej"><article class="prose svelte-1bpnej" data-pagefind-body=""><!--[--><h1>webhooks</h1> <p class="lead">two webhook handlers — a fetch-style one and a node http one — both feeding the same
+	handleUpdate entry point, with a constant-time secret check and a body-size cap.</p> <h2>polling vs webhooks</h2> <p>for development, long polling is simplest: <code>bot.start()</code> loops <code>getUpdates</code> and dispatches each update through <code>handleUpdate</code>, retrying
+	after a short delay if a poll fails. it resolves only when <code>bot.stop()</code> is called.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">polling.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// long polling — start() loops getUpdates and calls handleUpdate for each
+const bot = new Bot(process.env.BOT_TOKEN!);
+bot.on("message:text", (ctx) => ctx.reply(ctx.text));
+await bot.start();   // resolves only when stop() is called</code></pre><!--]--></div><!----> <p>for production you usually want webhooks: Telegram POSTs each update to your URL, and you hand the
+	request straight to a yaebal handler. no polling loop, and it scales to serverless runtimes.</p> <h2>webhookCallback (fetch)</h2> <p><code>webhookCallback</code> returns a <code>(Request) => Promise&lt;Response></code> function — the shape every fetch-based runtime expects. it only accepts <code>POST</code>,
+	parses the JSON update, and dispatches it.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">webhook.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { webhookCallback } from "@yaebal/core";
+
+// (Request) => Promise&lt;Response>
+const handler = webhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET });</code></pre><!--]--></div><!----> <h2>the secret check</h2> <p>when you set <code>secretToken</code>, the handler requires Telegram's <code>X-Telegram-Bot-Api-Secret-Token</code> header to match. the comparison is constant-time
+	(<code>node:crypto</code> <code>timingSafeEqual</code> on equal-length buffers), so the check can't
+	be timed.</p> <table><thead><tr><th>condition</th><th>response</th></tr></thead><tbody><tr><td>method is not <code>POST</code></td><td><code>405</code></td></tr><tr><td><code>secretToken</code> set and header mismatched</td><td><code>401</code></td></tr><tr><td>body larger than 1 MiB</td><td><code>413</code></td></tr><tr><td>body is not valid JSON</td><td><code>400</code></td></tr><tr><td>update dispatched</td><td><code>200 ok</code></td></tr></tbody></table> <div class="note"><strong>body size cap.</strong> Telegram updates are tiny, so the handler rejects anything over
+	1 MiB (<code>MAX_BODY</code>) to avoid memory abuse — the fetch handler checks <code>content-length</code>; the node handler counts bytes as they stream and destroys the request
+	if it overflows.</div> <h2>nodeWebhookCallback (node http)</h2> <p>for a plain Node server, <code>nodeWebhookCallback</code> returns an <code>(req, res)</code> handler you can drop into <code>http.createServer</code>. same secret
+	check and same body cap, streamed off the incoming request.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">server.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// Node http
+import { createServer } from "node:http";
+import { Bot, nodeWebhookCallback } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+bot.on("message:text", (ctx) => ctx.reply(ctx.text));
+
+createServer(
+  nodeWebhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET }),
+).listen(8080);</code></pre><!--]--></div><!----> <h2>handleUpdate</h2> <p>both handlers ultimately call <code>bot.handleUpdate(update)</code>, which builds a <code>Context</code> and runs the middleware chain, sending any thrown error to your <code>onError</code> handler. you can also call it directly from a custom HTTP layer.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">handle.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// both handlers ultimately call bot.handleUpdate — the single-update entry point.
+// the chain is realized (and frozen) on the first call, so register every
+// middleware / plugin before the first handleUpdate or start.
+await bot.handleUpdate(update);</code></pre><!--]--></div><!----> <div class="note"><strong>register before the first update.</strong> the chain is realized and frozen on the first <code>handleUpdate</code> (or <code>start</code>), so attach all middleware and plugins before
+	then.</div> <h2>deploy: Cloudflare Workers</h2> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">worker.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// Cloudflare Workers
+import { Bot, webhookCallback } from "@yaebal/core";
+
+const bot = new Bot(env.BOT_TOKEN);
+bot.command("start", (ctx) => ctx.reply("hi from the edge"));
+
+export default {
+  fetch: webhookCallback(bot, { secretToken: env.WEBHOOK_SECRET }),
+};</code></pre><!--]--></div><!----> <h2>deploy: Bun</h2> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">server.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// Bun
+import { Bot, webhookCallback } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+bot.on("message:text", (ctx) => ctx.reply(ctx.text));
+
+Bun.serve({
+  port: 8080,
+  fetch: webhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET }),
+});</code></pre><!--]--></div><!----><!--]--><!----></article></main></div><!--]--><!--]--><!----><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_18j168m = {
+						base: new URL("../..", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../../_app/immutable/entry/start.2SQazvAH.js"),
+						import("../../_app/immutable/entry/app.B76dkn1C.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2, 41],
+							data: [null,null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

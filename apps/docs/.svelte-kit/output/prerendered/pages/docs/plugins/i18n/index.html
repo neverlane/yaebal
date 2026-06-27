@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="../../../favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="theme-color" content="#000000" />
+		<meta name="description" content="yaebal — yet another telegram bot api library. type-safe, chainable, plugin-first." />
+		<script>
+			(() => {
+				try {
+					const saved = localStorage.getItem("theme");
+					const theme = saved ?? "dark";
+					document.documentElement.setAttribute("data-theme", theme);
+				} catch {
+					document.documentElement.setAttribute("data-theme", "dark");
+				}
+			})();
+		</script>
+		<link href="../../../_app/immutable/entry/start.2SQazvAH.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/D4KieXef.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CILFtpHi.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CZoOGrhn.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/OA8UcISh.js" rel="modulepreload">
+		<link href="../../../_app/immutable/entry/app.B76dkn1C.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/C1FmrZbK.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/hsF3hrRr.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CBlwNYzs.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/ItzQ5H_G.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CZZgRwnr.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/PnyQD1R_.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/BMxgNVbx.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/0.D7yexSSd.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CvlZIvmO.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/B-T_SWTE.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/2.envlCsQG.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/DEM-99oi.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/C-grAJHd.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/DFXGkbjh.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/CmZ4l575.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/Dwy-z0HI.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/B1AGBuo3.js" rel="modulepreload">
+		<link href="../../../_app/immutable/nodes/22.BiVBPm9H.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/BElR-AbQ.js" rel="modulepreload">
+		<link href="../../../_app/immutable/chunks/1IpLXSSe.js" rel="modulepreload">
+		<!--9wdap2--><!----><title>@yaebal/i18n — yaebal</title>
+		<link href="../../../_app/immutable/assets/0.BixmSFrb.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/ThemeToggle.LqrljCZQ.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/2.CTQNgS6m.css" rel="stylesheet">
+		<link href="../../../_app/immutable/assets/Code.NqpSgyXm.css" rel="stylesheet">
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents"><!--[--><!--[0--><!--[--><!--[0--><!--[--><div class="shell svelte-1bpnej"><div class="mobilebar svelte-1bpnej"><a class="brand unbounded svelte-1bpnej" href="/">yaebal</a> <button class="menu svelte-1bpnej" aria-label="toggle menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><!--[-1--><path d="M3 12h18M3 6h18M3 18h18"></path><!--]--></svg></button></div> <div class="sidebar-wrap svelte-1bpnej"><aside class="sidebar svelte-1nhzsi7"><a class="brand unbounded svelte-1nhzsi7" href="/">yaebal</a> <div class="search-wrap svelte-1387u27"><div class="box svelte-1387u27"><div class="input-row svelte-1387u27"><svg class="icon svelte-1387u27" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.35-4.35"></path></svg> <input class="input mono svelte-1387u27" type="search" placeholder="search docs…" value=""/> <!--[-1--><!--]--></div> <!--[-1--><!--]--></div></div><!----> <nav class="nav svelte-1nhzsi7"><!--[--><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">guide</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/introduction">introduction <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/yaebal">yaebal (meta) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/getting-started">getting started <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/scaffolding">create a bot <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/core">core concepts <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">core</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/context">context &amp; filters <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/contexts">contexts (autogen) <!--[0--><span class="badge svelte-1nhzsi7">killer</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/media">media &amp; files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/hooks">hooks &amp; errors <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/webhooks">webhooks &amp; deploy <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">plugins</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins">overview <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/fmt">fmt (markdown/html) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/filters">filters <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/conversation">conversation <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/again">again <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/session">session <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/keyboard">keyboard <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/callback-data">callback-data <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/morda">morda <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7 active" href="/docs/plugins/i18n">i18n <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/scenes">scenes <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/prompt">prompt <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/router">router <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/commands">commands <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/throttle">throttle <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/ratelimiter">ratelimiter <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/files">files <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/broadcast">broadcast <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/pagination">pagination <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-group">media-group <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/media-cache">media-cache <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/split">split <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/plugins/panel">panel <!--[-1--><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">scaling</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/plugins/web">web (edge) <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runner">runner <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/workers">workers <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/runtimes">runtimes <!--[0--><span class="badge svelte-1nhzsi7">new</span><!--]--></a><!--]--></div><div class="section svelte-1nhzsi7"><span class="section-title mono svelte-1nhzsi7">reference</span> <!--[--><a class="item svelte-1nhzsi7" href="/docs/types">@yaebal/types <!--[-1--><!--]--></a><a class="item svelte-1nhzsi7" href="/docs/packages">packages map <!--[-1--><!--]--></a><!--]--></div><!--]--></nav> <div class="bottom svelte-1nhzsi7"><a class="ghlink svelte-1nhzsi7" href="https://github.com/neverlane/yaebal" target="_blank" rel="noreferrer">github ↗</a> <button class="toggle svelte-lu0t34" aria-label="toggle theme"><!--[0--><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg><!--]--></button><!----></div></aside><!----></div> <!--[-1--><!--]--> <main class="content svelte-1bpnej"><article class="prose svelte-1bpnej" data-pagefind-body=""><!--[--><h1>@yaebal/i18n</h1> <p class="lead">per-chat locale with <code>ctx.t</code> / <code>ctx.locale</code> / <code>ctx.changeLanguage</code>. missing keys fall back to the default locale, then to the key
+	itself. powers <code>useTranslation()</code> in the morda jsx layer.</p> <h2>install</h2> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">terminal</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">pnpm add @yaebal/i18n</code></pre><!--]--></div><!----> <h2>usage</h2> <p>pass your locale dictionaries to <code>i18n()</code> and install it with <code>.install()</code>. the plugin reads the stored locale for the current chat before your
+	handlers run, so <code>ctx.t</code> is ready immediately.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">bot.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { Bot } from "@yaebal/core";
+import { i18n } from "@yaebal/i18n";
+
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(i18n({
+    defaultLocale: "en",
+    locales: {
+      en: {
+        welcome: "Hello {name}!",
+        bye: "Goodbye",
+      },
+      ru: {
+        welcome: "Привет {name}!",
+        bye: "До свидания",
+      },
+    },
+  }));
+
+bot.command("start", async (ctx) => {
+  await ctx.reply(ctx.t("welcome", { name: ctx.from!.first_name }));
+});
+
+bot.command("lang", async (ctx) => {
+  await ctx.changeLanguage("ru");
+  await ctx.reply(ctx.t("welcome", { name: ctx.from!.first_name }));
+});
+
+bot.start();</code></pre><!--]--></div><!----> <h2>api</h2> <table><thead><tr><th>export</th><th>signature</th><th>description</th></tr></thead><tbody><tr><td><code>i18n</code></td><td><code>(options: I18nOptions&lt;L>) => Plugin&lt;Context, I18nControls></code></td><td>creates the i18n plugin</td></tr><tr><td><code>I18nOptions</code></td><td>interface</td><td>options passed to <code>i18n()</code></td></tr><tr><td><code>I18nControls</code></td><td>interface</td><td>what the plugin adds to the context (<code>t</code>, <code>locale</code>, <code>changeLanguage</code>)</td></tr><tr><td><code>Dict</code></td><td><code>Record&lt;string, string></code></td><td>a single locale's key → template map</td></tr><tr><td><code>TFn</code></td><td><code>(key: string, params?: Record&lt;string, unknown>) => string</code></td><td>the type of <code>ctx.t</code></td></tr></tbody></table> <h3>I18nOptions&lt;L></h3> <table><thead><tr><th>field</th><th>type</th><th>required</th><th>description</th></tr></thead><tbody><tr><td><code>defaultLocale</code></td><td><code>L</code></td><td>yes</td><td>locale used when no stored locale exists and for fallback lookups</td></tr><tr><td><code>locales</code></td><td><code>Record&lt;L, Dict></code></td><td>yes</td><td>all translation dictionaries keyed by locale code</td></tr><tr><td><code>storage</code></td><td><code>StorageAdapter&lt;string></code></td><td>no</td><td>where to persist each chat's locale. defaults to <code>MemoryStorage</code></td></tr><tr><td><code>getKey</code></td><td><code>(ctx: Context) => string | undefined</code></td><td>no</td><td>storage key for the update. defaults to <code>ctx.chat?.id?.toString()</code></td></tr></tbody></table> <h3>I18nControls (added to ctx)</h3> <table><thead><tr><th>property</th><th>type</th><th>description</th></tr></thead><tbody><tr><td><code>t</code></td><td><code>TFn</code></td><td>translate a key; <code>{placeholder}</code> tokens are replaced from <code>params</code></td></tr><tr><td><code>locale</code></td><td><code>string</code></td><td>the active locale code for this update</td></tr><tr><td><code>changeLanguage</code></td><td><code>(locale: string) => Promise&lt;void></code></td><td>switch locale for this update and persist it; subsequent <code>ctx.t</code> calls in the same handler use the new locale immediately</td></tr></tbody></table> <h2>persistent storage</h2> <p>the default <code>MemoryStorage</code> is lost on restart. pass any <code>StorageAdapter&lt;string></code> (same interface as <code>@yaebal/session</code>) to
+	persist locales across restarts.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">redis-locale.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">import { i18n } from "@yaebal/i18n";
+import { type StorageAdapter } from "@yaebal/session";
+
+// any StorageAdapter&lt;string> keeps locale across restarts
+class RedisLocaleStorage implements StorageAdapter&lt;string> {
+  async get(key: string): Promise&lt;string | undefined> { /* ... */ }
+  async set(key: string, value: string): Promise&lt;void> { /* ... */ }
+  async delete(key: string): Promise&lt;void> { /* ... */ }
+}
+
+bot.install(i18n({
+  defaultLocale: "en",
+  locales: { en: { hi: "Hi" }, ru: { hi: "Привет" } },
+  storage: new RedisLocaleStorage(),
+}));</code></pre><!--]--></div><!----> <h2>per-user locale</h2> <p>override <code>getKey</code> to partition by user instead of chat.</p> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">per-user.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">bot.install(i18n({
+  defaultLocale: "en",
+  locales: { en: { hi: "Hi" }, ru: { hi: "Привет" } },
+  // use the user id as the key instead of the chat id
+  getKey: (ctx) => ctx.from?.id?.toString(),
+}));</code></pre><!--]--></div><!----> <h2>fallback behaviour</h2> <div class="code svelte-168wuw6"><div class="bar svelte-168wuw6"><span class="title mono svelte-168wuw6">fallback.ts</span> <div class="actions svelte-168wuw6"><!--[-1--><!--]--> <button class="copy svelte-168wuw6" aria-label="copy code">copy</button></div></div> <!--[-1--><pre class="mono svelte-168wuw6"><code class="svelte-168wuw6">// "ru" locale has no "bye" key → falls back to "en"
+// "en" has no "missing" key → returns the key itself
+
+ctx.t("bye");      // → "Goodbye"  (en fallback)
+ctx.t("missing");  // → "missing"  (key fallback)</code></pre><!--]--></div><!----> <div class="note"><strong>interpolation uses <code>{placeholder}</code> syntax</strong>, not template
+	literals. every <code>{key}</code> token in the string is replaced with the matching
+	entry from <code>params</code> via <code>String(value)</code>. <br/><br/> <strong>changeLanguage takes effect immediately</strong> within the current handler — calls to <code>ctx.t</code> after <code>await ctx.changeLanguage("ru")</code> in the same middleware use
+	the new locale. the next update loads the persisted locale from storage. <br/><br/> <strong>updates without a chat</strong> (e.g. <code>poll</code> updates) where <code>getKey</code> returns <code>undefined</code> always use the <code>defaultLocale</code> and
+	never persist.</div><!--]--><!----></article></main></div><!--]--><!--]--><!----><!--]--><!--]--> <!--[-1--><!--]--><!--]-->
+			
+			<script>
+				{
+					__sveltekit_18j168m = {
+						base: new URL("../../..", location).pathname.slice(0, -1)
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("../../../_app/immutable/entry/start.2SQazvAH.js"),
+						import("../../../_app/immutable/entry/app.B76dkn1C.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 2, 22],
+							data: [null,null,null],
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+</html>

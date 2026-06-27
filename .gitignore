@@ -1,0 +1,41 @@
+node_modules/
+lib/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+*.log
+coverage/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+.omc/
+
+# temp / cache
+tmp/
+temp/
+.cache/
+.pnpm-debug.log*
+
+# IDE
+*.swp
+*.swo
+*~
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store?
+
+# build artifacts
+*.js.map
+*.d.ts.map
+*.tsbuildinfo
+
+# misc
+*.bak
+*.orig
+*.pid
+*.seed

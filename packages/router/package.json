@@ -1,0 +1,36 @@
+{
+	"name": "@yaebal/router",
+	"version": "0.0.1",
+	"description": "YAEBAL file-based routing — load handlers from a routes/ directory by convention.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "router", "file-based-routing"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/router"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

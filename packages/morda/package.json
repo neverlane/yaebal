@@ -1,0 +1,47 @@
+{
+	"name": "@yaebal/morda",
+	"version": "0.0.1",
+	"description": "YAEBAL dialogs engine — declarative windows, callback routing, stack navigation.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		},
+		"./jsx": {
+			"types": "./lib/jsx/index.d.ts",
+			"import": "./lib/jsx/index.js"
+		},
+		"./jsx-runtime": {
+			"types": "./lib/jsx/jsx-runtime.d.ts",
+			"import": "./lib/jsx/jsx-runtime.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/keyboard": "workspace:*",
+		"@yaebal/callback-data": "workspace:*",
+		"@yaebal/session": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "dialogs", "menu", "fsm"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/morda"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

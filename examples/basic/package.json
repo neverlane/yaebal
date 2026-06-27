@@ -1,0 +1,25 @@
+{
+	"name": "@yaebal/example-basic",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types src/index.ts",
+		"start": "node --experimental-strip-types src/index.ts",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/again": "workspace:*",
+		"@yaebal/session": "workspace:*",
+		"@yaebal/keyboard": "workspace:*",
+		"@yaebal/callback-data": "workspace:*",
+		"@yaebal/morda": "workspace:*",
+		"@yaebal/i18n": "workspace:*",
+		"@yaebal/scenes": "workspace:*",
+		"@yaebal/prompt": "workspace:*",
+		"@yaebal/throttle": "workspace:*",
+		"@yaebal/filters": "workspace:*",
+		"@yaebal/fmt": "workspace:*"
+	}
+}

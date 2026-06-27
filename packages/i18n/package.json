@@ -1,0 +1,37 @@
+{
+	"name": "@yaebal/i18n",
+	"version": "0.0.1",
+	"description": "YAEBAL i18n plugin — per-chat locale, ctx.t / ctx.changeLanguage (powers useTranslation).",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/session": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "i18n", "localization"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/i18n"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

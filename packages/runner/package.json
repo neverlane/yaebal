@@ -1,0 +1,36 @@
+{
+	"name": "@yaebal/runner",
+	"version": "0.0.1",
+	"description": "YAEBAL runner — concurrent update processing with per-chat sequentialization.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"dependencies": {
+		"@yaebal/types": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "runner", "concurrency"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/runner"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

@@ -1,0 +1,30 @@
+{
+	"name": "create-yaebal",
+	"version": "0.0.1",
+	"description": "Scaffold a new YAEBAL Telegram bot — pnpm create yaebal my-bot.",
+	"type": "module",
+	"bin": {
+		"create-yaebal": "./bin/cli.mjs"
+	},
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"files": ["lib", "bin"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "create", "scaffold", "cli"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/create-yaebal"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

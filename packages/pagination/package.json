@@ -1,0 +1,38 @@
+{
+	"name": "@yaebal/pagination",
+	"version": "0.0.1",
+	"description": "YAEBAL pagination — paginated lists with inline prev/next navigation.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/keyboard": "workspace:*",
+		"@yaebal/callback-data": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "pagination"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/pagination"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

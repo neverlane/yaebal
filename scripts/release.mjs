@@ -6,13 +6,23 @@
 // `lib/` as a side effect, which is exactly what `pnpm publish` needs to pack.
 //
 // run locally with DRY_RUN=1 to rehearse: the gate runs for real, publish/release only print.
+// set RELEASE_SKIP_GATE=1 when something upstream (e.g. CI) already ran typecheck/test/lint —
+// the gate is replaced by a plain build, which is all `pnpm publish` needs to pack lib/.
 
 import { spawn } from 'node:child_process'
 
+const SKIP_GATE = process.env.RELEASE_SKIP_GATE === '1'
+
+const gate = SKIP_GATE
+  ? [{ label: 'build', command: 'pnpm', args: ['build'] }]
+  : [
+      { label: 'typecheck', command: 'pnpm', args: ['typecheck'] },
+      { label: 'tests (also builds lib/)', command: 'pnpm', args: ['test'] },
+      { label: 'lint', command: 'pnpm', args: ['lint'] }
+    ]
+
 const STEPS = [
-  { label: 'typecheck', command: 'pnpm', args: ['typecheck'] },
-  { label: 'tests (also builds lib/)', command: 'pnpm', args: ['test'] },
-  { label: 'lint', command: 'pnpm', args: ['lint'] },
+  ...gate,
   { label: 'publish to npm', command: 'node', args: ['scripts/publish-all.mjs'] },
   { label: 'github releases', command: 'node', args: ['scripts/auto-release.mjs'] }
 ]

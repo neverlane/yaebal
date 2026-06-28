@@ -20,7 +20,7 @@
 		"@fontsource/ibm-plex-mono": "^5.1.0",
 		"@fontsource/ibm-plex-sans": "^5.1.0",
 		"@fontsource/unbounded": "^5.1.0",
-		"@sveltejs/adapter-cloudflare": "^7.2.9",
+		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.68.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"pagefind": "^1.5.2",

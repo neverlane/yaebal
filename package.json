@@ -16,7 +16,7 @@
 		"dev": "pnpm --filter @yaebal/example-basic run dev",
 		"docs:dev": "pnpm --filter @yaebal/docs run dev",
 		"docs:build": "pnpm --filter @yaebal/docs run build",
-		"lint": "biome check .",
+		"lint": "biome lint .",
 		"lint:fix": "biome check --write .",
 		"clean": "pnpm -r exec rm -rf lib node_modules && rm -rf node_modules",
 		"changeset": "changeset",

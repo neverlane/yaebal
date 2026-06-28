@@ -29,14 +29,14 @@ test("trailing row() does not emit an empty row", () => {
 
 test("webApp and switchInline buttons", () => {
 	const kb = new InlineKeyboard()
-		.webApp("open", "https://app.example")
+		.webApp("open", "https://example.com")
 		.switchInline("share", "q")
 		.build();
 	
 	assert.deepEqual(kb, {
 		inline_keyboard: [
 			[
-				{ text: "open", web_app: { url: "https://example.app" } },
+				{ text: "open", web_app: { url: "https://example.com" } },
 				{ text: "share", switch_inline_query: "q" },
 			],
 		],

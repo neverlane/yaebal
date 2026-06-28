@@ -10,10 +10,10 @@ const bot = new Bot(process.env.BOT_TOKEN!);
 
 bot.command("menu", (ctx) => {
   const kb = new InlineKeyboard()
-    .text("Ban", "action:ban")
-    .text("Warn", "action:warn")
+    .text("ban", "action:ban")
+    .text("warn", "action:warn")
     .row()
-    .url("View profile", "https://t.me/username")
+    .url("view profile", "https://t.me/username")
     .build();
 
   return ctx.reply("choose an action:", { reply_markup: kb });
@@ -23,8 +23,8 @@ bot.command("menu", (ctx) => {
 
 bot.command("start", (ctx) => {
   const kb = new Keyboard()
-    .text("Yes")
-    .text("No")
+    .text("yes")
+    .text("no")
     .row()
     .requestContact("share phone")
     .resized()
@@ -35,7 +35,7 @@ bot.command("start", (ctx) => {
 });`;
 
 	const webAppSwitchInline = `const kb = new InlineKeyboard()
-  .webApp("open app", "https://app.example.com")
+  .webApp("open app", "https://example.com")
   .row()
   .switchInline("share", "my query")
   .build();`;

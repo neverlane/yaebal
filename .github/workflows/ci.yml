@@ -44,9 +44,9 @@ jobs:
 
       - run: pnpm build
 
-      # Bun can execute node:test files natively — run compiled test suites as a smoke lane
-      - run: bun packages/core/lib/core.test.js
-      - run: bun packages/core/lib/filter.test.js
+      # Bun can execute node:test files through its test runner — run compiled test suites as a smoke lane
+      - run: bun test packages/core/lib/core.test.js
+      - run: bun test packages/core/lib/filter.test.js
 
   deno:
     name: Deno (smoke)

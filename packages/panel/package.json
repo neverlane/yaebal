@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/panel",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal panel — an operator panel: view chats and reply from the browser.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -9,6 +9,14 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
+		},
+		"./serve": {
+			"types": "./lib/serve.d.ts",
+			"import": "./lib/serve.js"
+		},
+		"./sqlite": {
+			"types": "./lib/sqlite.d.ts",
+			"import": "./lib/sqlite.js"
 		}
 	},
 	"files": ["lib", "src"],

@@ -400,6 +400,15 @@ bot.start();`;
 		padding: 12px 14px;
 		color: var(--secondary);
 		background: var(--primary);
+		/* the whole playground reads as a code tool — use the site mono font */
+		font-family: "IBM Plex Mono", ui-monospace, monospace;
+	}
+
+	.pg :global(input),
+	.pg :global(select),
+	.pg :global(button),
+	.pg :global(textarea) {
+		font-family: inherit;
 	}
 
 	.top {

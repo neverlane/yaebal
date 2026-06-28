@@ -1,4 +1,4 @@
-import { type TransferListItem, Worker, parentPort } from "node:worker_threads";
+import { type Transferable, Worker, parentPort } from "node:worker_threads";
 
 /**
  * @yaebal/workers — a small worker_threads pool. keep the bot on the main event
@@ -59,7 +59,7 @@ export interface PoolOptions {
 
 export interface Pool {
 	/** run a registered task on the next worker (round-robin). */
-	run<R = unknown>(name: string, arg?: unknown, transfer?: readonly TransferListItem[]): Promise<R>;
+	run<R = unknown>(name: string, arg?: unknown, transfer?: readonly Transferable[]): Promise<R>;
 	/** terminate all workers and reject anything still in flight. */
 	destroy(): Promise<void>;
 	/** number of worker threads. */
@@ -123,7 +123,7 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 
 	return {
 		size,
-		run<R>(name: string, arg?: unknown, transfer?: readonly TransferListItem[]): Promise<R> {
+		run<R>(name: string, arg?: unknown, transfer?: readonly Transferable[]): Promise<R> {
 			if (destroyed) return Promise.reject(new Error("pool is destroyed"));
 	
 			const worker = workers[next];

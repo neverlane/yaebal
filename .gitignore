@@ -11,6 +11,12 @@ coverage/
 !.vscode/extensions.json
 *.tsbuildinfo
 
+apps/docs/**/.svelte-kit
+packages/**/lib
+
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
 .omc/
 
 # temp / cache

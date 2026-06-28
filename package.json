@@ -4,10 +4,10 @@
 	"private": true,
 	"description": "yaebal — Yet Another tElegram Bot Api Library. type-safe, chainable, plugin-first.",
 	"type": "module",
-	"packageManager": "pnpm@11.9.0",
+	"packageManager": "pnpm@10.34.4",
 	"engines": {
 		"node": ">=20",
-		"pnpm": ">=11"
+		"pnpm": ">=10 <11"
 	},
 	"scripts": {
 		"build": "pnpm -r --workspace-concurrency=1 --filter \"./packages/*\" run build",

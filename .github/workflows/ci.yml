@@ -1,4 +1,4 @@
-name: CI
+name: ci
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   node:
-    name: Node 20
+    name: node 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -27,7 +27,7 @@ jobs:
       - run: pnpm lint
 
   bun:
-    name: Bun (smoke)
+    name: bun (smoke)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -44,12 +44,12 @@ jobs:
 
       - run: pnpm build
 
-      # Bun can execute node:test files through its test runner — run compiled test suites as a smoke lane
+      # bun can execute node:test files through its test runner — run compiled test suites as a smoke lane
       - run: bun test packages/core/lib/core.test.js
       - run: bun test packages/core/lib/filter.test.js
 
   deno:
-    name: Deno (smoke)
+    name: deno (smoke)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -68,5 +68,5 @@ jobs:
 
       - run: pnpm build
 
-      # Deno smoke: type-check the compiled core entry point
+      # deno smoke: type-check the compiled core entry point
       - run: deno check --node-modules-dir packages/core/lib/index.js

@@ -1,9 +1,9 @@
 name: release
 
 on:
-  # run only after the CI workflow finishes successfully on master
+  # run only after the ci workflow finishes successfully on master
   workflow_run:
-    workflows: [CI]
+    workflows: [ci]
     types: [completed]
     branches: [master]
   workflow_dispatch:
@@ -19,7 +19,7 @@ concurrency:
 jobs:
   release:
     name: publish all packages
-    # gate on a green CI run (workflow_run) or an explicit manual trigger
+    # gate on a green ci run (workflow_run) or an explicit manual trigger
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history so auto-release can build per-package changelogs
-          # the exact commit CI validated (falls back to the branch on manual dispatch)
+          # the exact commit ci validated (falls back to the branch on manual dispatch)
           ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: setup pnpm
@@ -45,7 +45,7 @@ jobs:
       - name: install
         run: pnpm install --frozen-lockfile
 
-      # CI already ran typecheck/test/lint on this commit, so skip the gate and just
+      # ci already ran typecheck/test/lint on this commit, so skip the gate and just
       # build → publish to npm → cut a github release per package. publish is idempotent:
       # a version already on npm is skipped, so a run with no version bump is a no-op.
       - name: release

@@ -6,15 +6,18 @@ smoke test of the public api.
 
 ## running
 
-- to run a dev environment with reload, run `pnpm dev`.
-- to run it once, run `pnpm start`.
+```sh
+cp examples/basic/.env.example examples/basic/.env   # then add your token
+pnpm --filter @yaebal/example-basic dev              # reloads on change
+```
 
-both read the configuration from the environment variables below.
+- dev with reload: `pnpm --filter @yaebal/example-basic dev`
+- run once: `pnpm --filter @yaebal/example-basic start`
+
+both load `examples/basic/.env`. on start the bot registers its command menu with
+telegram, so the commands below show up in the `/` picker.
 
 ## environment variables
-
-the bot reads a couple of runtime environment variables. set them in your shell before
-starting (or in a `.env` your runner loads).
 
 | name         | example              | description                                                                               |
 |:-------------|:---------------------|:------------------------------------------------------------------------------------------|
@@ -31,6 +34,10 @@ starting (or in a `.env` your runner loads).
 | `/lang`     | toggles the locale and replies in it (i18n)                             |
 | `/register` | a name → age wizard (scenes)                                            |
 | `/name`     | asks once and handles the reply (prompt)                                |
+| `/help`     | lists every command (filters + fmt html)                               |
+
+it also reacts to plain messages: `ping` → `pong` (`hears`), anything starting with
+`hello` is echoed back bold (filters + fmt), and any other text is echoed.
 
 ---
 

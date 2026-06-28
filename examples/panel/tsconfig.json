@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["DOM"],
+		"types": ["node"]
+	},
+	"references": [
+		{ "path": "../../packages/core" },
+		{ "path": "../../packages/again" },
+		{ "path": "../../packages/panel" }
+	],
+	"include": ["src/**/*.ts"]
+}

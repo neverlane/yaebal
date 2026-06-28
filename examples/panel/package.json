@@ -1,5 +1,5 @@
 {
-	"name": "@yaebal/example-basic",
+	"name": "@yaebal/example-panel",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -11,16 +11,7 @@
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
 		"@yaebal/again": "workspace:*",
-		"@yaebal/session": "workspace:*",
-		"@yaebal/keyboard": "workspace:*",
-		"@yaebal/callback-data": "workspace:*",
-		"@yaebal/morda": "workspace:*",
-		"@yaebal/i18n": "workspace:*",
-		"@yaebal/scenes": "workspace:*",
-		"@yaebal/prompt": "workspace:*",
-		"@yaebal/throttle": "workspace:*",
-		"@yaebal/filters": "workspace:*",
-		"@yaebal/fmt": "workspace:*"
+		"@yaebal/panel": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

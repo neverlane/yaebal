@@ -1,9 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { SqlitePanelStore } from "./sqlite.js";
 
-test("SqlitePanelStore: records, lists newest-first, paginates and emits events", () => {
-	const store = new SqlitePanelStore(); // :memory:
+// `node:sqlite` (and therefore `SqlitePanelStore`) is only available on node 22.5+.
+// on older runtimes a static import of "./sqlite.js" throws ERR_UNKNOWN_BUILTIN_MODULE
+// at module-evaluation time, which would fail the whole file. import it lazily and
+// skip the suite when the builtin is missing instead.
+let SqlitePanelStore: typeof import("./sqlite.js").SqlitePanelStore | undefined;
+try {
+	({ SqlitePanelStore } = await import("./sqlite.js"));
+} catch {
+	SqlitePanelStore = undefined;
+}
+
+const skip = SqlitePanelStore ? false : "node:sqlite unavailable (requires node 22.5+)";
+// non-undefined alias for the test bodies (only reached when not skipped)
+const Store = SqlitePanelStore as NonNullable<typeof SqlitePanelStore>;
+
+test("SqlitePanelStore: records, lists newest-first, paginates and emits events", { skip }, () => {
+	const store = new Store(); // :memory:
 	const events: number[] = [];
 	store.subscribe((e) => events.push(e.chatId));
 
@@ -33,8 +47,8 @@ test("SqlitePanelStore: records, lists newest-first, paginates and emits events"
 	store.close();
 });
 
-test("SqlitePanelStore persists attachments and media_group_id round-trip", () => {
-	const store = new SqlitePanelStore();
+test("SqlitePanelStore persists attachments and media_group_id round-trip", { skip }, () => {
+	const store = new Store();
 
 	store.record(
 		{ id: 1, name: "@u" },

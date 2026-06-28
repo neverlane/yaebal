@@ -1,0 +1,48 @@
+name: release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create git tags + github releases
+  id-token: write # npm provenance
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: publish all packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history so auto-release can build per-package changelogs
+
+      - name: setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      # gate (typecheck/test/lint) → publish to npm → cut a github release per package.
+      # publish is idempotent: a version already on npm is skipped, so a push with no version
+      # bump is a no-op. set NODE_AUTH_TOKEN/GH_TOKEN here so the spawned scripts inherit them.
+      - name: release
+        run: node scripts/release.mjs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GH_TOKEN: ${{ github.token }}

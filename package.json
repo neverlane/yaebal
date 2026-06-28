@@ -21,7 +21,10 @@
 		"clean": "pnpm -r exec rm -rf lib node_modules && rm -rf node_modules",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
-		"release": "pnpm build && changeset publish"
+		"release": "pnpm build && changeset publish",
+		"release:all": "node scripts/release.mjs",
+		"publish:all": "node scripts/publish-all.mjs",
+		"release:notes": "node scripts/auto-release.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.1",

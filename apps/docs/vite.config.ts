@@ -1,8 +1,9 @@
 import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { sveltekit } from "@sveltejs/kit/vite";
+
 import { type Plugin, defineConfig } from "vite";
+import { sveltekit } from "@sveltejs/kit/vite";
 
 interface PackageJson {
 	name?: unknown;

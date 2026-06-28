@@ -1,8 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import adapter from "@sveltejs/adapter-static";
+
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import adapter from "@sveltejs/adapter-cloudflare";
 
 const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 const packagesRoot = join(repoRoot, "packages");

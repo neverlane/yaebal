@@ -12,9 +12,9 @@ bot.install(
   mediaGroup(
     (ctx, messages) => {
       console.log("album received:", messages.length, "parts");
-      // messages[0] is the first update that arrived for this album
+      // ctx is the context of the first part that arrived
     },
-    { delayMs: 200 }, // optional — defaults to 200 ms
+    { delayMs: 200 }, // optional — defaults to 200ms
   ),
 );`;
 
@@ -22,12 +22,9 @@ bot.install(
   mediaGroup(async (ctx, messages) => {
     for (const msg of messages) {
       const photo = msg.photo?.[msg.photo.length - 1];
-      if (photo) {
-        const url = await ctx.files.fileLink(photo.file_id);
-        await db.savePhoto(url);
-      }
+      if (photo) await savePhoto(photo.file_id);
     }
-    await ctx.reply(\`saved \${messages.length} photos\`);
+    await ctx.reply(\`saved \${messages.length} items\`);
   }),
 );`;
 </script>
@@ -37,57 +34,48 @@ bot.install(
 </svelte:head>
 
 <h1>@yaebal/media-group</h1>
-<p class="lead">collect telegram album updates into a single handler call. telegram delivers each photo or video in an album as a separate update sharing a <code>media_group_id</code>; this plugin debounces them and fires your handler once with all parts.</p>
+<p class="lead">called once per album, with every message in the group</p>
 
 <h2>install</h2>
-<Code code={install} lang="sh" title="shell" />
+<Code code={install} title="terminal" lang="sh" />
 
-<h2>registration</h2>
-<p>pass the handler and optional options directly to <code>mediaGroup()</code>, then install the result with <code>bot.install()</code>.</p>
+<h2>usage</h2>
+<p>
+	telegram delivers an album as separate updates that share a <code>media_group_id</code>. this
+	plugin buffers those updates and fires <code>handler(ctx, messages)</code> once, after a short
+	debounce — so you get the whole album in a single call. pass it to <code>bot.install()</code>.
+</p>
 <Code code={basic} title="bot.ts" />
+
+<h2>debounce</h2>
+<p>
+	each incoming album part resets a timer. once <code>delayMs</code> passes with no new part, the
+	handler fires. multiple concurrent albums are tracked independently by their
+	<code>media_group_id</code>. the <code>ctx</code> handed to the handler is the context of the
+	first part that arrived; <code>messages</code> holds every part in arrival order.
+</p>
+<Code code={saveAlbum} title="save-album.ts" />
 
 <h2>api</h2>
 <table>
-	<thead>
-		<tr><th>export</th><th>kind</th><th>description</th></tr>
-	</thead>
+	<thead><tr><th>export</th><th>signature</th><th>description</th></tr></thead>
 	<tbody>
-		<tr>
-			<td><code>mediaGroup</code></td>
-			<td>function</td>
-			<td><code>(handler: MediaGroupHandler, options?: MediaGroupOptions) =&gt; Plugin</code></td>
-		</tr>
-		<tr>
-			<td><code>MediaGroupHandler</code></td>
-			<td>type alias</td>
-			<td><code>(ctx: Context, messages: Message[]) =&gt; unknown | Promise&lt;unknown&gt;</code></td>
-		</tr>
-		<tr>
-			<td><code>MediaGroupOptions</code></td>
-			<td>interface</td>
-			<td>see options table.</td>
-		</tr>
+		<tr><td><code>mediaGroup</code></td><td><code>(handler: MediaGroupHandler, options?: MediaGroupOptions) =&gt; Plugin</code></td><td>buffers album parts, fires the handler once</td></tr>
+		<tr><td><code>MediaGroupHandler</code></td><td><code>(ctx: Context, messages: Message[]) =&gt; unknown | Promise&lt;unknown&gt;</code></td><td>called once per album</td></tr>
+		<tr><td><code>MediaGroupOptions</code></td><td><code>&#123; delayMs?: number &#125;</code></td><td>see below</td></tr>
 	</tbody>
 </table>
 
-<h2>MediaGroupOptions</h2>
+<h3>MediaGroupOptions</h3>
 <table>
-	<thead>
-		<tr><th>field</th><th>type</th><th>default</th><th>description</th></tr>
-	</thead>
+	<thead><tr><th>field</th><th>type</th><th>required</th><th>description</th></tr></thead>
 	<tbody>
-		<tr>
-			<td><code>delayMs</code></td>
-			<td><code>number</code></td>
-			<td><code>200</code></td>
-			<td>how long to wait after the last album part arrives before firing the handler. each new part resets the debounce timer.</td>
-		</tr>
+		<tr><td><code>delayMs</code></td><td><code>number</code></td><td>no</td><td>how long to wait for more album parts before firing. defaults to <code>200</code> (ms).</td></tr>
 	</tbody>
 </table>
-
-<h2>example — save an album</h2>
-<Code code={saveAlbum} title="save-album.ts" />
 
 <div class="note">
-	<strong>album messages are consumed.</strong> updates with a <code>media_group_id</code> never reach other handlers — the plugin intercepts them entirely. messages without a <code>media_group_id</code> are passed through normally. multiple concurrent albums are tracked independently by their <code>media_group_id</code>. the <code>ctx</code> passed to the handler is the context of the first part that arrived.
+	<strong>album parts are consumed.</strong> updates carrying a <code>media_group_id</code> are
+	handled here and never reach other handlers. messages without one pass through to
+	<code>next()</code> unchanged.
 </div>

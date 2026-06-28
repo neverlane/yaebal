@@ -64,10 +64,10 @@ export default {
 </script>
 
 <svelte:head>
-	<title>yaebal — batteries included</title>
+	<title>meta — yaebal</title>
 </svelte:head>
 
-<h1>yaebal <span class="killer">meta</span></h1>
+<h1>yaebal <span class="badge">meta</span></h1>
 <p class="lead">
 	the batteries-included entry point — the <a href="/docs/core/">core engine</a>, the auto-generated
 	per-update contexts, and the most-used plugins behind a <strong>single import</strong>.
@@ -141,7 +141,7 @@ export default {
 </div>
 
 <style>
-	.killer {
+	.badge {
 		display: inline-block;
 		vertical-align: middle;
 		margin-left: 10px;

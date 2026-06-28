@@ -27,14 +27,14 @@ pnpm dev`;
 
 <h1>create a bot</h1>
 <p class="lead">
-	scaffold a working YAEBAL bot in one command — pick a runtime and a few plugins, get a wired
+	scaffold a working yaebal bot in one command — pick a runtime and a few plugins, get a wired
 	project.
 </p>
 
 <h2>scaffold</h2>
 <Code code={create} title="terminal" lang="sh" />
 <p>
-	On a terminal it asks for the project name, runtime (<code>node</code> / <code>bun</code> /
+	on a terminal it asks for the project name, runtime (<code>node</code> / <code>bun</code> /
 	<code>deno</code>), and plugins. In automation, pass flags instead — no prompts, no hangs:
 </p>
 <Code code={flags} title="terminal" lang="sh" />
@@ -42,7 +42,7 @@ pnpm dev`;
 <h2>what you get</h2>
 <Code code={generated} title="structure" lang="text" />
 <p>
-	The generated <code>src/index.ts</code> already wires the plugins you chose — e.g. picking
+	the generated <code>src/index.ts</code> already wires the plugins you chose — e.g. picking
 	<code>session</code> adds <code>.install(session(...))</code>, picking <code>again</code> adds
 	<code>autoRetry(bot.api)</code> — plus a <code>/start</code> command and a text echo.
 </p>

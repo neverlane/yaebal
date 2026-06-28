@@ -82,7 +82,7 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 	<title>contexts — yaebal</title>
 </svelte:head>
 
-<h1>contexts <span class="killer">killer feature</span></h1>
+<h1>contexts <span class="badge">killer feature</span></h1>
 <p class="lead">
 	gramio-style per-update context classes — except the shortcut methods aren't hand-written.
 	they're generated from the Bot API schema, so they're always complete and never lag a version.
@@ -162,7 +162,7 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 </table>
 
 <style>
-	.killer {
+	.badge {
 		display: inline-block;
 		vertical-align: middle;
 		margin-left: 10px;

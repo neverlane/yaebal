@@ -40,10 +40,10 @@ split("a".repeat(250), 100);
 </script>
 
 <svelte:head>
-	<title>split — yaebal</title>
+	<title>@yaebal/split — yaebal</title>
 </svelte:head>
 
-<h1>split</h1>
+<h1>@yaebal/split</h1>
 <p class="lead">
 	break long messages into telegram-sized chunks. adds <code>ctx.sendLong</code> and
 	<code>ctx.replyLong</code> to the context, and also exports a pure <code>split()</code> function
@@ -55,7 +55,7 @@ split("a".repeat(250), 100);
 
 <h2>basic usage</h2>
 <p>
-	install the <code>splitter()</code> plugin with <code>bot.use()</code>. it adds
+	install the <code>splitter()</code> plugin with <code>bot.install()</code>. it adds
 	<code>sendLong</code> and <code>replyLong</code> to every handler's context. both accept the same
 	options as <code>ctx.send</code> / <code>ctx.reply</code>.
 </p>

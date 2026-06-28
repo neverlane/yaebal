@@ -18,21 +18,29 @@ bot.command("menu", (ctx) =>
 		["@yaebal/session", "per-chat session with pluggable storage"],
 		["@yaebal/keyboard", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "typed callback_data pack / unpack"],
+		["@yaebal/filters", "composable, type-narrowing update filters (ctx.filter)"],
+		["@yaebal/fmt", "`` html`` `` / `` md`` `` tagged templates with auto-escaping"],
 		["@yaebal/morda", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "per-chat locale, ctx.t / ctx.changeLanguage"],
 		["@yaebal/scenes", "step-by-step wizards over multiple messages"],
+		["@yaebal/conversation", "await-style multi-step dialogs (coroutine, no replay)"],
 		["@yaebal/prompt", "ask a question, handle the next message"],
 		["@yaebal/router", "file-based routing from a routes/ directory"],
 		["@yaebal/throttle", "rate-limit outgoing api calls"],
 		["@yaebal/files", "resolve and download telegram files"],
 		["@yaebal/ratelimiter", "drop updates from users who spam"],
 		["@yaebal/broadcast", "send a message to many chats"],
-		["@yaebal/web", "operator panel — view chats, reply from the browser"],
+		["@yaebal/panel", "operator panel — view chats and reply from the browser"],
+		["@yaebal/web", "run your bot on edge/web runtimes via webhooks"],
+		["@yaebal/runner", "concurrent long-polling for scale"],
 		["@yaebal/media-group", "collect album updates into one handler"],
+		["@yaebal/media-cache", "reuse a file_id instead of re-uploading"],
 		["@yaebal/split", "break long messages into telegram-sized chunks"],
 		["@yaebal/commands", "one registry for handlers + the / command menu"],
 		["@yaebal/pagination", "paginated lists with inline prev/next"],
-		["@yaebal/media-cache", "reuse a file_id instead of re-uploading"],
+		["@yaebal/preview", "render telegram-style chats to SVG"],
+		["@yaebal/workers", "worker_threads pool to offload CPU-heavy work"],
+		["@yaebal/test", "testing utilities — mock api, update & context factories"],
 	];
 </script>
 
@@ -42,7 +50,7 @@ bot.command("menu", (ctx) =>
 
 <h1>plugins</h1>
 <p class="lead">
-	19 first-party plugins. each is a typed composer extension — installing one enriches the context
+	27 first-party plugins. each is a typed composer extension — installing one enriches the context
 	type, and its dependencies are checked at compile time.
 </p>
 
@@ -62,9 +70,3 @@ bot.command("menu", (ctx) =>
 		{/each}
 	</tbody>
 </table>
-
-<div class="note">
-	naming is deliberately english now — <code>again</code> (retry), <code>session</code>,
-	<code>keyboard</code>, <code>callback-data</code> — with <code>morda</code> kept as the dialogs
-	package's name.
-</div>

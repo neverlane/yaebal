@@ -32,10 +32,10 @@ await cache.photo(ctx, "logo-ru", media.path("./logo-ru.png"));`;
 </script>
 
 <svelte:head>
-	<title>media-cache — yaebal</title>
+	<title>@yaebal/media-cache — yaebal</title>
 </svelte:head>
 
-<h1>media-cache</h1>
+<h1>@yaebal/media-cache</h1>
 <p class="lead">
 	reuse a <code>file_id</code> instead of re-uploading the same file. the first send uploads the
 	local file and stores the returned <code>file_id</code>; every subsequent send under the same key

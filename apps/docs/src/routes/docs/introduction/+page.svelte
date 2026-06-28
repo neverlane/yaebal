@@ -34,7 +34,7 @@ class Bot<C extends Context> extends Composer<C> { /* … */ }`;
 
 <h2>what it is</h2>
 <p>
-	<strong>yaebal</strong> — yet another tElegram Bot Api Library — wraps the Telegram Bot API in a
+	<strong>yaebal</strong> — Yet Another tElegram Bot Api Library — wraps the Telegram Bot API in a
 	chain you build once. you start from a <code>Bot</code>, hang middleware, plugins, routers and
 	enrichment off it, and every step refines the type of the context your handlers see. there is no
 	manual casting and no widening to <code>any</code> in the public surface.

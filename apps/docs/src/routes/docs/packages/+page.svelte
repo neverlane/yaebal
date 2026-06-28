@@ -38,11 +38,13 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next buttons"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "reuse a file_id instead of re-uploading the same file"],
+		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to a standalone SVG string (experimental)"],
 	];
 
 	const scaling: [string, string, string][] = [
 		["@yaebal/runner", "/docs/runner/", "concurrent update processing with per-chat sequentialization"],
 		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy tasks from handlers"],
+		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api, update & context factories, middleware runner"],
 		["create-yaebal", "/docs/scaffolding/", "project scaffolder — pnpm create yaebal my-bot"],
 	];
 </script>

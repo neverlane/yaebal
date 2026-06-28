@@ -14,7 +14,7 @@ export const nav: NavSection[] = [
 		title: "guide",
 		items: [
 			{ label: "introduction", href: "/docs/introduction" },
-			{ label: "yaebal (meta)", href: "/docs/yaebal", badge: "new" },
+			{ label: "yaebal", href: "/docs/yaebal", badge: "meta" },
 			{ label: "getting started", href: "/docs/getting-started" },
 			{ label: "create a bot", href: "/docs/scaffolding", badge: "new" },
 			{ label: "core concepts", href: "/docs/core" },
@@ -35,9 +35,9 @@ export const nav: NavSection[] = [
 		title: "plugins",
 		items: [
 			{ label: "overview", href: "/docs/plugins" },
-			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt", badge: "new" },
-			{ label: "filters", href: "/docs/plugins/filters", badge: "new" },
-			{ label: "conversation", href: "/docs/plugins/conversation", badge: "new" },
+			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
+			{ label: "filters", href: "/docs/plugins/filters" },
+			{ label: "conversation", href: "/docs/plugins/conversation" },
 			{ label: "again", href: "/docs/plugins/again" },
 			{ label: "session", href: "/docs/plugins/session" },
 			{ label: "keyboard", href: "/docs/plugins/keyboard" },
@@ -57,6 +57,8 @@ export const nav: NavSection[] = [
 			{ label: "media-cache", href: "/docs/plugins/media-cache" },
 			{ label: "split", href: "/docs/plugins/split" },
 			{ label: "panel", href: "/docs/plugins/panel" },
+			{ label: "preview", href: "/docs/plugins/preview", badge: "new" },
+			{ label: "test", href: "/docs/plugins/test", badge: "new" },
 		],
 	},
 	{

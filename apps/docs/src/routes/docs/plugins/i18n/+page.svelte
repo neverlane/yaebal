@@ -60,6 +60,30 @@ bot.install(i18n({
 
 ctx.t("bye");      // → "Goodbye"  (en fallback)
 ctx.t("missing");  // → "missing"  (key fallback)`;
+
+	const plurals = `import { i18n } from "@yaebal/i18n";
+
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(i18n({
+    defaultLocale: "en",
+    locales: {
+      en: {
+        // a plural value is an object keyed by Intl.PluralRules categories.
+        // "other" is required; the rest are optional per-locale.
+        apples: { one: "{n} apple", other: "{n} apples" },
+      },
+      ru: {
+        apples: { one: "{n} яблоко", few: "{n} яблока", many: "{n} яблок", other: "{n} яблока" },
+      },
+    },
+  }));
+
+bot.command("count", async (ctx) => {
+  // pass the count as {n} — the category is chosen via
+  // new Intl.PluralRules(locale).select(n)
+  await ctx.reply(ctx.t("apples", { n: 1 }));   // en → "1 apple"
+  await ctx.reply(ctx.t("apples", { n: 5 }));   // en → "5 apples"
+});`;
 </script>
 
 <svelte:head>
@@ -69,8 +93,9 @@ ctx.t("missing");  // → "missing"  (key fallback)`;
 <h1>@yaebal/i18n</h1>
 <p class="lead">
 	per-chat locale with <code>ctx.t</code> / <code>ctx.locale</code> /
-	<code>ctx.changeLanguage</code>. missing keys fall back to the default locale, then to the key
-	itself. powers <code>useTranslation()</code> in the morda jsx layer.
+	<code>ctx.changeLanguage</code>. <code>&#123;placeholder&#125;</code> interpolation and
+	<code>Intl.PluralRules</code>-based plurals. missing keys fall back to the default locale, then to
+	the key itself. powers <code>useTranslation()</code> in the morda jsx layer.
 </p>
 
 <h2>install</h2>
@@ -107,8 +132,18 @@ ctx.t("missing");  // → "missing"  (key fallback)`;
 		</tr>
 		<tr>
 			<td><code>Dict</code></td>
-			<td><code>Record&lt;string, string&gt;</code></td>
-			<td>a single locale's key → template map</td>
+			<td><code>Record&lt;string, DictValue&gt;</code></td>
+			<td>a single locale's key → value map (a value is a template string or plural forms)</td>
+		</tr>
+		<tr>
+			<td><code>DictValue</code></td>
+			<td><code>string | PluralDict</code></td>
+			<td>one translation: a plain template, or a set of plural forms</td>
+		</tr>
+		<tr>
+			<td><code>PluralDict</code></td>
+			<td><code>&#123; zero?, one?, two?, few?, many? : string; other: string &#125;</code></td>
+			<td>plural forms keyed by <code>Intl.PluralRules</code> categories; <code>other</code> is required</td>
 		</tr>
 		<tr>
 			<td><code>TFn</code></td>
@@ -188,6 +223,17 @@ ctx.t("missing");  // → "missing"  (key fallback)`;
 	override <code>getKey</code> to partition by user instead of chat.
 </p>
 <Code code={perUser} title="per-user.ts" />
+
+<h2>pluralization</h2>
+<p>
+	a translation value can be a <code>PluralDict</code> instead of a string — an object keyed by
+	<code>Intl.PluralRules</code> categories (<code>zero</code>, <code>one</code>, <code>two</code>,
+	<code>few</code>, <code>many</code>, <code>other</code>). pass the count as the
+	<code>n</code> param; the matching category is chosen with
+	<code>new Intl.PluralRules(locale).select(n)</code> and falls back to <code>other</code>.
+	<code>&#123;n&#125;</code> is then interpolated like any other placeholder.
+</p>
+<Code code={plurals} title="plurals.ts" />
 
 <h2>fallback behaviour</h2>
 <Code code={fallback} title="fallback.ts" />

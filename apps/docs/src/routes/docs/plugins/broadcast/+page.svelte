@@ -34,7 +34,7 @@ console.log(result.sent, "sent,", result.failed, "failed");`;
 <p class="lead">send a text message to many chats, one at a time, counting successes and failures. one blocked user never aborts the rest of the run.</p>
 
 <h2>install</h2>
-<Code code={install} lang="sh" title="shell" />
+<Code code={install} title="terminal" lang="sh" />
 
 <h2>usage</h2>
 <p><code>broadcast</code> is a plain async function — it takes <code>bot.api</code> directly and needs no middleware registration.</p>

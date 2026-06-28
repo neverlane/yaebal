@@ -30,7 +30,7 @@ bot.install(files());`;
 <p class="lead">resolve and download Telegram files. adds <code>ctx.files</code> with two helpers: get a CDN URL for any <code>file_id</code>, or buffer the whole file into a <code>Uint8Array</code>.</p>
 
 <h2>install</h2>
-<Code code={install} lang="sh" title="shell" />
+<Code code={install} title="terminal" lang="sh" />
 
 <h2>registration</h2>
 <p>call <code>bot.install(files())</code> once. the plugin adds <code>ctx.files</code> to every subsequent handler in the chain.</p>

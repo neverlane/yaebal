@@ -42,6 +42,8 @@ export default { fetch: handler };`;
   basePath: "/panel",                        // mount under a sub-path (default: root)
   cors: "https://ops.example",               // allow a browser origin (or a list, or "*")
   rateLimit: { max: 10, windowMs: 60_000 },  // throttle failed auth (default); false to disable
+  clientKey: (req) => req.headers.get("x-real-ip") ?? "shared", // key for rate limiting
+  recordSends: true,                         // record panel replies into the store (default true)
 });`;
 
 	const sqlite = `import { SqlitePanelStore } from "@yaebal/panel/sqlite";
@@ -88,8 +90,8 @@ GET  /api/chats              → PanelChat[]  (sorted by lastDate desc)
 GET  /api/chats/:id          → PanelMessage[]   (?before=&limit= to page)
 GET  /api/stream             → text/event-stream of record events
 GET  /api/file?id=<file_id>  → proxied file bytes (getFile + stream)
-POST /api/chats/:id/send     → json { text, … }        → sendMessage
-                               multipart { file, caption? } → sendPhoto / sendDocument / …`;
+POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?, reply_parameters? } → sendMessage
+                               multipart { file, caption?, type? } → sendPhoto / sendDocument / sendVoice / …`;
 </script>
 
 <svelte:head>
@@ -201,9 +203,12 @@ POST /api/chats/:id/send     → json { text, … }        → sendMessage
 		<tr><td><code>SqlitePanelStore</code></td><td><code>@yaebal/panel/sqlite</code></td><td>class</td><td>persistent store on <code>node:sqlite</code></td></tr>
 		<tr><td><code>serve(handler, options)</code></td><td><code>@yaebal/panel/serve</code></td><td>function</td><td>native <code>node:http</code> server, zero deps</td></tr>
 		<tr><td><code>PanelStore</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>record</code> / <code>chats</code> / <code>history</code> (+ optional <code>subscribe</code>)</td></tr>
-		<tr><td><code>PanelOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>token</code>, <code>basePath</code>, <code>cors</code>, <code>rateLimit</code>, <code>clientKey</code></td></tr>
+		<tr><td><code>PanelOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>token</code>, <code>basePath</code>, <code>cors</code>, <code>rateLimit</code>, <code>clientKey</code>, <code>recordSends</code></td></tr>
 		<tr><td><code>HistoryOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ before?: number; limit?: number }"}</code></td></tr>
+		<tr><td><code>PanelMessage</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ direction, text, date, attachments?, mediaGroupId? }"}</code></td></tr>
+		<tr><td><code>PanelChat</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ id, name, lastText, lastDate }"}</code></td></tr>
 		<tr><td><code>PanelAttachment</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ type, fileId, fileName?, mimeType? }"}</code></td></tr>
+		<tr><td><code>AttachmentType</code></td><td><code>@yaebal/panel</code></td><td>type</td><td><code>"photo" | "video" | "audio" | "voice" | "document" | …</code></td></tr>
 		<tr><td><code>PanelEvent</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ type: 'record'; chatId: number; direction }"}</code></td></tr>
 		<tr><td><code>PANEL_HTML</code></td><td><code>@yaebal/panel</code></td><td>string</td><td>the raw HTML of the panel UI (exported for custom serving)</td></tr>
 	</tbody>

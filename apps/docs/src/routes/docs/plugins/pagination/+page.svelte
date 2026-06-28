@@ -37,7 +37,7 @@ bot.command("users", (ctx) => userList.send(ctx));`;
 <p class="lead">paginated inline lists with automatic prev/next navigation. renders a page of items as a message, attaches ◀ / ▶ buttons, and handles the button presses — editing the message in place.</p>
 
 <h2>install</h2>
-<Code code={install} lang="sh" title="shell" />
+<Code code={install} title="terminal" lang="sh" />
 
 <h2>registration</h2>
 <p>

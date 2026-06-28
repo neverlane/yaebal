@@ -116,6 +116,22 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/panel:
+    dependencies:
+      '@yaebal/again':
+        specifier: workspace:*
+        version: link:../../packages/again
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/panel':
+        specifier: workspace:*
+        version: link:../../packages/panel
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.0.1
+
   packages/again:
     dependencies:
       '@yaebal/core':

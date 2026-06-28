@@ -29,9 +29,17 @@ Core invariants to preserve:
 
 ## Layout
 
-- `packages/core` — `@yaebal/core`. Entry: `src/index.ts`. Build output: `lib/`.
+pnpm workspace globs: `packages/*`, `examples/*`, `apps/*`.
+
+- `packages/core` — `@yaebal/core`. Entry: `src/index.ts`. Build output: `lib/` (via `tsc`).
+- `packages/*` — the rest of the published `@yaebal/*` scope: plugins (`again`, `session`,
+  `keyboard`, `morda`, `i18n`, `scenes`, `conversation`, `router`, `panel`, `web`, `runner`, …),
+  codegen packages (`@yaebal/types`, `@yaebal/contexts`), the `yaebal` batteries-included meta
+  package, the `create-yaebal` scaffolder, and `@yaebal/test` utilities. Each builds `src/` → `lib/`.
 - `examples/basic` — runnable bot, used as a smoke test for the public API.
+- `apps/docs` — the SvelteKit documentation site (Cloudflare adapter).
 - `docs/RESEARCH.md` — the comparative analysis that motivated the design.
+- `docs/ARCHITECTURE.md` — full architecture, plugin catalog, and build roadmap.
 
 ## Commands
 
@@ -39,8 +47,10 @@ Core invariants to preserve:
 pnpm install          # bootstrap workspace
 pnpm typecheck        # tsc across all packages — run this before claiming done
 pnpm build            # compile packages to lib/
+pnpm test             # build, then run each package's node:test suite over lib/
 pnpm dev              # run examples/basic in watch mode (needs BOT_TOKEN)
-pnpm lint:fix         # Biome format + lint
+pnpm docs:dev         # run the docs app (apps/docs) in dev mode
+pnpm lint:fix         # Biome format + lint (alias for `biome check --write .`)
 ```
 
 ## Conventions

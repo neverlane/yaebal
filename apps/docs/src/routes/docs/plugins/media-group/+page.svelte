@@ -14,7 +14,7 @@ bot.install(
       console.log("album received:", messages.length, "parts");
       // messages[0] is the first update that arrived for this album
     },
-    { delayMs: 200 }, // optional — default is 200 ms
+    { delayMs: 200 }, // optional — defaults to 200 ms
   ),
 );`;
 
@@ -37,7 +37,7 @@ bot.install(
 </svelte:head>
 
 <h1>@yaebal/media-group</h1>
-<p class="lead">collect Telegram album updates into a single handler call. Telegram delivers each photo or video in an album as a separate update sharing a <code>media_group_id</code>; this plugin debounces them and fires your handler once with all parts.</p>
+<p class="lead">collect telegram album updates into a single handler call. telegram delivers each photo or video in an album as a separate update sharing a <code>media_group_id</code>; this plugin debounces them and fires your handler once with all parts.</p>
 
 <h2>install</h2>
 <Code code={install} lang="sh" title="shell" />

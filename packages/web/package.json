@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/web",
 	"version": "0.0.1",
-	"description": "YAEBAL web — run your bot on edge/web runtimes (Cloudflare Workers, Deno, Bun) via webhooks.",
+	"description": "yaebal web — run your bot on edge/web runtimes (cloudflare workers, deno, bun) via webhooks.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

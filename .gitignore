@@ -1,5 +1,4 @@
 node_modules/
-lib/
 dist/
 .env
 .env.*
@@ -10,6 +9,7 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+*.tsbuildinfo
 
 .omc/
 

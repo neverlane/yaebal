@@ -1,6 +1,6 @@
 # @yaebal/filters
 
-Composable, type-narrowing update filters for `composer.filter(...)`. A filter is a type guard that may also attach data to the context; combine them with `and` / `or` / `not`.
+composable, type-narrowing update filters for `composer.filter(...)`. a filter is a type guard that may also attach data to the context; combine them with `and` / `or` / `not`.
 
 ## install
 
@@ -27,3 +27,7 @@ bot.filter(
   (ctx) => ctx.reply("got media"),
 );
 ```
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

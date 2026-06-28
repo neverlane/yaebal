@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/preview",
 	"version": "0.0.1",
-	"description": "YAEBAL preview — render a Telegram-style chat from plain objects to an SVG string. Zero deps, zero runtime.",
+	"description": "yaebal preview — render a telegram-style chat from plain objects to an SVG string. zero deps, zero runtime.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

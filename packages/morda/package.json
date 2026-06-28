@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/morda",
 	"version": "0.0.1",
-	"description": "YAEBAL dialogs engine — declarative windows, callback routing, stack navigation.",
+	"description": "yaebal dialogs engine — declarative windows, callback routing, stack navigation.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -30,6 +30,9 @@
 		"@yaebal/keyboard": "workspace:*",
 		"@yaebal/callback-data": "workspace:*",
 		"@yaebal/session": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

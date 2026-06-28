@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/throttle",
 	"version": "0.0.1",
-	"description": "YAEBAL throttle plugin — space out outgoing API calls to avoid 429s.",
+	"description": "yaebal throttle plugin — space out outgoing API calls to avoid 429s.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/media-cache",
 	"version": "0.0.1",
-	"description": "YAEBAL media-cache — reuse a file_id instead of re-uploading the same file.",
+	"description": "yaebal media-cache — reuse a file_id instead of re-uploading the same file.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -20,6 +20,9 @@
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
 		"@yaebal/session": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

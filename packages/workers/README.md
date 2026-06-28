@@ -1,6 +1,6 @@
 # @yaebal/workers
 
-A small `worker_threads` pool for offloading CPU-heavy work (image resizing, hashing, parsing) away from the bot's event loop.
+a small `worker_threads` pool for offloading CPU-heavy work (image resizing, hashing, parsing) away from the bot's event loop.
 
 ## install
 
@@ -28,9 +28,14 @@ const pool = createPool(new URL("./tasks.js", import.meta.url), { size: 4 });
 bot.on("message:photo", async (ctx) => {
   const original = await ctx.download();
   const thumb = await pool.run<Buffer>("resize", original);
+
   await ctx.sendPhoto(media.buffer(thumb));
 });
 
 // on shutdown
 await pool.destroy();
 ```
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

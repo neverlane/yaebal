@@ -1,6 +1,6 @@
 # @yaebal/runner
 
-Concurrent update processing for YAEBAL bots. Updates that share a chat id still run strictly in order; unrelated chats run in parallel up to `concurrency`.
+concurrent update processing for yaebal bots. updates that share a chat id still run strictly in order; unrelated chats run in parallel up to `concurrency`.
 
 ## install
 
@@ -24,12 +24,13 @@ const handle = run(bot, {
 process.once("SIGINT", () => handle.stop());
 ```
 
-Use `createScheduler` directly if you need the bounded-concurrency queue for other purposes:
+use `createScheduler` directly if you need the bounded-concurrency queue for other purposes:
 
 ```ts
 import { createScheduler } from "@yaebal/runner";
 
 const scheduler = createScheduler(10);
 scheduler.submit(chatId, async () => { /* ... */ });
+
 await scheduler.idle();
 ```

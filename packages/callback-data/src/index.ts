@@ -36,28 +36,37 @@ export function callbackData<S extends Record<string, Codec>>(
 	if (prefix.includes(":")) {
 		throw new Error(`callbackData: prefix "${prefix}" must not contain ":" (the field separator)`);
 	}
+
 	const keys = Object.keys(schema) as (keyof S & string)[];
 	const pattern = new RegExp(`^${escapeRegExp(prefix)}(?::|$)`);
 
 	return {
 		pattern,
+
 		pack(data) {
 			const parts = keys.map((k) => encodeURIComponent(String(data[k])));
 			return [prefix, ...parts].join(":");
 		},
+
 		unpack(raw) {
 			const segs = raw.split(":");
 			if (segs[0] !== prefix) return undefined;
+			
 			const values = segs.slice(1);
 			if (values.length !== keys.length) return undefined;
+
 			const out = {} as Record<string, unknown>;
+
 			keys.forEach((k, i) => {
 				const dec = decodeURIComponent(values[i] ?? "");
 				const codec = schema[k];
+
 				out[k] = codec === Number ? Number(dec) : codec === Boolean ? dec === "true" : dec;
 			});
+
 			return out as Infer<S>;
 		},
+
 		filter(raw) {
 			return raw !== undefined && pattern.test(raw);
 		},

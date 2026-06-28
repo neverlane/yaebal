@@ -7,13 +7,13 @@
 import { session } from "@yaebal/session";
 
 const bot = new Bot(process.env.BOT_TOKEN!)
-  .install(session())             // ctx.session is now typed
+  .install(session()) // ctx.session is now typed
   .derive((ctx) => ({ now: Date.now() }));
 
 bot.on("message:text", (ctx) => {
-  //          ^ context is narrowed to text messages
+  //                    ^ context is narrowed to text messages
   ctx.reply("hi " + ctx.from.first_name);
-  ctx.react("🔥");                // auto-generated shortcut
+  ctx.react("🔥"); //   ^ auto-generated shortcut
 });
 
 bot.start();`;
@@ -119,6 +119,7 @@ bot.start();`;
 		color: var(--gray);
 		transition: color 0.16s ease;
 	}
+	
 	@media (hover: hover) {
 		.link:hover {
 			color: var(--secondary);
@@ -173,6 +174,7 @@ bot.start();`;
 		line-height: 1.6;
 		color: var(--gray);
 	}
+
 	.tagline em {
 		font-style: normal;
 		color: var(--secondary);
@@ -196,6 +198,7 @@ bot.start();`;
 		background: var(--code-bg);
 		color: var(--secondary);
 	}
+
 	.install .prompt {
 		color: var(--gray);
 		margin-right: 8px;
@@ -223,6 +226,7 @@ bot.start();`;
 		border-radius: 16px;
 		background: var(--sidebar-bg);
 	}
+
 	.card h3 {
 		margin-bottom: 8px;
 	}

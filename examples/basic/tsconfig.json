@@ -3,7 +3,9 @@
 	"compilerOptions": {
 		"noEmit": true,
 		"module": "NodeNext",
-		"moduleResolution": "NodeNext"
+		"moduleResolution": "NodeNext",
+		"lib": ["DOM"],
+		"types": ["node"]
 	},
 	"references": [
 		{ "path": "../../packages/core" },

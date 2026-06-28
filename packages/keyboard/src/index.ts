@@ -1,4 +1,4 @@
-// Minimal keyboard types (self-contained until @yaebal/types codegen lands).
+// minimal keyboard types (self-contained until @yaebal/types codegen lands).
 
 export interface InlineKeyboardButton {
 	text: string;
@@ -24,7 +24,7 @@ export interface ReplyKeyboardMarkup {
 	one_time_keyboard?: boolean;
 }
 
-/** Fluent inline keyboard. `.row()` ends a row; buttons accumulate into the current one. */
+/** fluent inline keyboard. `.row()` ends a row; buttons accumulate into the current one. */
 export class InlineKeyboard {
 	#rows: InlineKeyboardButton[][] = [];
 	#current: InlineKeyboardButton[] = [];
@@ -54,17 +54,18 @@ export class InlineKeyboard {
 			this.#rows.push(this.#current);
 			this.#current = [];
 		}
+		
 		return this;
 	}
 
 	build(): InlineKeyboardMarkup {
-		// Clone so a returned markup never aliases the live in-progress row.
+		// clone so a returned markup never aliases the live in-progress row.
 		const rows = this.#current.length > 0 ? [...this.#rows, [...this.#current]] : [...this.#rows];
 		return { inline_keyboard: rows };
 	}
 }
 
-/** Fluent reply keyboard with resize / one-time flags. */
+/** fluent reply keyboard with resize / one-time flags. */
 export class Keyboard {
 	#rows: KeyboardButton[][] = [];
 	#current: KeyboardButton[] = [];
@@ -91,6 +92,7 @@ export class Keyboard {
 			this.#rows.push(this.#current);
 			this.#current = [];
 		}
+
 		return this;
 	}
 
@@ -105,9 +107,10 @@ export class Keyboard {
 	}
 
 	build(): ReplyKeyboardMarkup {
-		// Clone so a returned markup never aliases the live in-progress row.
+		// clone so a returned markup never aliases the live in-progress row.
 		const keyboard =
 			this.#current.length > 0 ? [...this.#rows, [...this.#current]] : [...this.#rows];
+			
 		return {
 			keyboard,
 			...(this.#resize ? { resize_keyboard: true } : {}),

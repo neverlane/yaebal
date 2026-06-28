@@ -1,45 +1,45 @@
 import { callbackData } from "@yaebal/callback-data";
-import type { Composer, Context, Plugin } from "@yaebal/core";
+import type { Context, Plugin } from "@yaebal/core";
 import { InlineKeyboard, type InlineKeyboardMarkup } from "@yaebal/keyboard";
 import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
 
-/** Context inside a dialog: the base context plus the navigation control. */
+/** context inside a dialog: the base context plus the navigation control. */
 export type DialogContext = Context & { dialog: DialogControl };
 
-/** A single button. `onClick` may navigate via `ctx.dialog`. */
+/** a single button. `onClick` may navigate via `ctx.dialog`. */
 export interface Button {
 	id: string;
 	label: string;
 	onClick?: (ctx: DialogContext) => unknown;
 }
 
-/** What a window renders to: a message text and rows of buttons. */
+/** what a window renders to: a message text and rows of buttons. */
 export interface WindowView {
 	text: string;
 	keyboard?: Button[][];
 }
 
-/** A window is rendered on demand, so its text/buttons can depend on context. */
+/** a window is rendered on demand, so its text/buttons can depend on context. */
 export type WindowRender = (ctx: DialogContext) => WindowView | Promise<WindowView>;
 
-/** A dialog is a flat map of named windows. */
+/** a dialog is a flat map of named windows. */
 export type DialogDef = Record<string, WindowRender>;
 
-/** Navigation control exposed as `ctx.dialog`. */
+/** navigation control exposed as `ctx.dialog`. */
 export interface DialogControl {
-	/** Open a window in a fresh message + stack. */
+	/** open a window in a fresh message + stack. */
 	start(windowId: string): Promise<void>;
-	/** Push a window onto the stack and edit the message. */
+	/** push a window onto the stack and edit the message. */
 	push(windowId: string): Promise<void>;
-	/** Replace the top window and edit the message. */
+	/** replace the top window and edit the message. */
 	replace(windowId: string): Promise<void>;
-	/** Pop the stack; closing the dialog (deleting the message) at the root. */
+	/** pop the stack; closing the dialog (deleting the message) at the root. */
 	back(): Promise<void>;
-	/** Re-render the current window in place (after mutating external state). */
+	/** re-render the current window in place (after mutating external state). */
 	rerender(): Promise<void>;
 }
 
-/** Persisted per-chat navigation state. */
+/** persisted per-chat navigation state. */
 export interface DialogState {
 	stack: string[];
 	messageId: number;
@@ -47,10 +47,10 @@ export interface DialogState {
 }
 
 export interface DialogsOptions {
-	/** Where to persist navigation state. Defaults to in-memory (lost on restart). */
+	/** where to persist navigation state. defaults to in-memory (lost on restart). */
 	storage?: StorageAdapter<DialogState>;
-	/** Fired when a window leaves the stack (popped, replaced, or dialog restarted).
-	 *  The JSX layer uses this to drop a window's hook state so it re-mounts fresh. */
+	/** fired when a window leaves the stack (popped, replaced, or dialog restarted).
+	 *  the JSX layer uses this to drop a window's hook state so it re-mounts fresh. */
 	onLeave?: (chatId: number, windowId: string) => void;
 }
 

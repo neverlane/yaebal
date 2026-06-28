@@ -1,8 +1,8 @@
 // AUTO-GENERATED from the Telegram Bot API schema — do not edit by hand.
-// Regenerate with: pnpm --filter @yaebal/types generate
-// Source: https://ark0f.github.io/tg-bot-api/
+// regenerate with: pnpm --filter @yaebal/types generate
+// source: https://ark0f.github.io/tg-bot-api/
 
-/** The Bot API version these types were generated from. */
+/** the Telegram Bot API version these types were generated from. */
 export const BOT_API_VERSION = "8.3";
 
 /** Contains information about the affiliate that received a commission via this transaction. */
@@ -5199,7 +5199,7 @@ export interface VerifyUserParams {
 	custom_description?: string;
 }
 
-/** Every Bot API method, fully typed. */
+/** every Telegram Bot API method, fully typed. */
 export interface BotApiMethods {
 		/** Use this method to add a new sticker to a set created by the bot. Emoji sticker sets can have up to 200 stickers. Other sticker sets can have up to 120 stickers. Returns *True* on success. */
 	addStickerToSet(params: AddStickerToSetParams): Promise<boolean>;

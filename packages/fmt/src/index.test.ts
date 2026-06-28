@@ -8,6 +8,7 @@ test("html: basic tags map to entities", () => {
 		text: "hi",
 		entities: [{ type: "bold", offset: 0, length: 2 }],
 	});
+	
 	assert.deepEqual(html`a <i>b</i> c`, {
 		text: "a b c",
 		entities: [{ type: "italic", offset: 2, length: 1 }],
@@ -19,6 +20,7 @@ test("html: link carries href, spoiler variants", () => {
 		text: "go",
 		entities: [{ type: "text_link", offset: 0, length: 2, url: "https://x.com" }],
 	});
+
 	assert.deepEqual(htmlToEntities("<tg-spoiler>s</tg-spoiler>"), {
 		text: "s",
 		entities: [{ type: "spoiler", offset: 0, length: 1 }],
@@ -31,6 +33,7 @@ test("html: decodes entities, keeps stray < literal", () => {
 
 test("html: interpolated string is escaped, never re-parsed", () => {
 	const r = html`<b>${"<i>x</i>"}</b>`;
+
 	assert.equal(r.text, "<i>x</i>");
 	assert.deepEqual(r.entities, [{ type: "bold", offset: 0, length: 8 }]);
 });
@@ -66,6 +69,7 @@ test("md: inline code and fenced pre with language", () => {
 		text: "run npm i",
 		entities: [{ type: "code", offset: 4, length: 5 }],
 	});
+
 	assert.deepEqual(mdToEntities("```js\nconst x = 1\n```"), {
 		text: "const x = 1\n",
 		entities: [{ type: "pre", offset: 0, length: 12, language: "js" }],
@@ -81,6 +85,7 @@ test("md: link", () => {
 
 test("md: interpolated string is literal (delimiters not parsed)", () => {
 	const r = md`**${"**not bold**"}**`;
+
 	assert.equal(r.text, "**not bold**");
 	assert.deepEqual(r.entities, [{ type: "bold", offset: 0, length: 12 }]);
 });
@@ -91,9 +96,12 @@ test("md: backslash escapes a delimiter", () => {
 
 test("md: nested formatting keeps correct offsets", () => {
 	const r = md`**bold ${"and"} [more](https://z.io)**`;
+
 	assert.equal(r.text, "bold and more");
+
 	const boldE = r.entities.find((e) => e.type === "bold");
 	const link = r.entities.find((e) => e.type === "text_link");
+
 	assert.deepEqual(boldE, { type: "bold", offset: 0, length: 13 });
 	assert.deepEqual(link, { type: "text_link", offset: 9, length: 4, url: "https://z.io" });
 });

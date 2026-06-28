@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/workers",
 	"version": "0.0.1",
-	"description": "YAEBAL workers — a tiny worker_threads pool to offload CPU-heavy tasks from handlers.",
+	"description": "yaebal workers — a tiny worker_threads pool to offload CPU-heavy tasks from handlers.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -16,6 +16,9 @@
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

@@ -1,6 +1,6 @@
 # @yaebal/split
 
-Telegram's per-message text limit.
+telegram's per-message text limit.
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/split
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

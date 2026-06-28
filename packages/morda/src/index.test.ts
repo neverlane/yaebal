@@ -17,6 +17,7 @@ interface Call {
 function fakeApi() {
 	const calls: Call[] = [];
 	let nextId = 100;
+
 	const api = {
 		sendMessage(params: Record<string, unknown>) {
 			calls.push({ method: "sendMessage", params });
@@ -31,6 +32,7 @@ function fakeApi() {
 			return Promise.resolve(true);
 		},
 	} as never;
+
 	return { api, calls };
 }
 
@@ -67,16 +69,16 @@ const cbCtx = (api: never, data: string, chatId: number, messageId: number) =>
 
 const def: DialogDef = {
 	main: () => ({
-		text: "Main",
+		text: "main",
 		keyboard: [
-			[switchTo("Settings →", "settings")],
-			[button("Ping", { id: "ping", onClick: (c) => c.answerCallbackQuery({ text: "pong" }) })],
+			[switchTo("settings →", "settings")],
+			[button("ping", { id: "ping", onClick: (c) => c.answerCallbackQuery({ text: "pong" }) })],
 		],
 	}),
 	settings: () => ({ text: "Settings", keyboard: [[back("← Back")]] }),
 };
 
-// Read a button's callback_data straight from a recorded keyboard — no coupling
+// read a button's callback_data straight from a recorded keyboard — no coupling
 // to morda's internal encoding.
 // biome-ignore lint/suspicious/noExplicitAny: reaching into recorded params
 const dataAt = (params: any, row: number, col: number): string =>
@@ -84,6 +86,7 @@ const dataAt = (params: any, row: number, col: number): string =>
 
 test("start → push(settings) → back navigates and edits in place", async () => {
 	const { api, calls } = fakeApi();
+
 	const storage = new MemoryStorage<DialogState>();
 	const mw = entry(
 		new Composer<Context>()
@@ -92,28 +95,35 @@ test("start → push(settings) → back navigates and edits in place", async () 
 	);
 
 	await mw(msgCtx(api, "/go", 1), noop);
+
 	const sent = calls.find((c) => c.method === "sendMessage");
 	assert.equal(sent?.params.text, "Main");
+
 	const state = await storage.get("1");
 	assert.deepEqual(state?.stack, ["main"]);
 
-	// press "Settings →"
+	// press "settings →"
 	calls.length = 0;
+
 	await mw(cbCtx(api, dataAt(sent?.params, 0, 0), 1, state?.messageId ?? 0), noop);
 	const edit1 = calls.find((c) => c.method === "editMessageText");
+
 	assert.equal(edit1?.params.text, "Settings");
 	assert.deepEqual((await storage.get("1"))?.stack, ["main", "settings"]);
 
-	// press "← Back"
+	// press "← back"
 	calls.length = 0;
+
 	await mw(cbCtx(api, dataAt(edit1?.params, 0, 0), 1, state?.messageId ?? 0), noop);
 	const edit2 = calls.find((c) => c.method === "editMessageText");
+
 	assert.equal(edit2?.params.text, "Main");
 	assert.deepEqual((await storage.get("1"))?.stack, ["main"]);
 });
 
 test("onClick runs without navigating", async () => {
 	const { api, calls } = fakeApi();
+
 	const storage = new MemoryStorage<DialogState>();
 	const mw = entry(
 		new Composer<Context>()
@@ -125,8 +135,9 @@ test("onClick runs without navigating", async () => {
 	const sent = calls.find((c) => c.method === "sendMessage");
 	calls.length = 0;
 
-	// press "Ping" (row 1)
+	// press "ping" (row 1)
 	await mw(cbCtx(api, dataAt(sent?.params, 1, 0), 1, 100), noop);
+
 	assert.ok(calls.some((c) => c.method === "answerCallbackQuery" && c.params.text === "pong"));
 	assert.equal(
 		calls.find((c) => c.method === "editMessageText"),
@@ -137,6 +148,7 @@ test("onClick runs without navigating", async () => {
 
 test("a press whose window is not the stack top is ignored", async () => {
 	const { api, calls } = fakeApi();
+
 	const storage = new MemoryStorage<DialogState>();
 	const mw = entry(
 		new Composer<Context>()
@@ -150,7 +162,7 @@ test("a press whose window is not the stack top is ignored", async () => {
 	await mw(cbCtx(api, dataAt(sent?.params, 0, 0), 1, 100), noop);
 	calls.length = 0;
 
-	// press the OLD "Ping" button from main (payload.w = "main") while on "settings"
+	// press the OLD "ping" button from main (payload.w = "main") while on "settings"
 	await mw(cbCtx(api, dataAt(sent?.params, 1, 0), 1, 100), noop);
 	assert.equal(
 		calls.some((c) => c.method === "answerCallbackQuery" && c.params.text === "pong"),
@@ -161,6 +173,7 @@ test("a press whose window is not the stack top is ignored", async () => {
 
 test("back() at the root closes the dialog", async () => {
 	const { api, calls } = fakeApi();
+	
 	const storage = new MemoryStorage<DialogState>();
 	const mw = entry(
 		new Composer<Context>()

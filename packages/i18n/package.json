@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/i18n",
 	"version": "0.0.1",
-	"description": "YAEBAL i18n plugin — per-chat locale, ctx.t / ctx.changeLanguage (powers useTranslation).",
+	"description": "yaebal i18n plugin — per-chat locale, ctx.t / ctx.changeLanguage (powers useTranslation).",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -20,6 +20,9 @@
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
 		"@yaebal/session": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

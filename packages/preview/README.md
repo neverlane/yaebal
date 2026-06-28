@@ -1,11 +1,11 @@
 # @yaebal/preview
 
-> ⚠️ **Experimental / WIP.** API and rendering may change without notice. Not ready for production.
+> ⚠️ **experimental / wip.** api and rendering may change without notice. not ready for production.
 
-Render a Telegram-style chat from plain objects to an **SVG string** — rich text, every
-common media type, the lot. Zero runtime, no `<foreignObject>` (so it rasterizes and
-survives GitHub's SVG sanitizer). Media fields use the real `@yaebal/types` shapes, so you
-can hand it a `ctx.message` almost verbatim. Drop the result into docs, a README, or a
+render a telegram-style chat from plain objects to an **SVG string** — rich text, every
+common media type, the lot. zero runtime, no `<foreignObject>` (so it rasterizes and
+survives github's SVG sanitizer). media fields use the real `@yaebal/types` shapes, so you
+can hand it a `ctx.message` almost verbatim. drop the result into docs, a README, or a
 landing page.
 
 ## install
@@ -36,42 +36,42 @@ await writeFile("chat.svg", svg); // it's just a string
 
 ## messages
 
-| field      | meaning                                                            |
-| ---------- | ----------------------------------------------------------------- |
-| `from`     | `"user"` → outgoing (right, ticks) · `"bot"` → incoming (left, avatar) |
-| `text`     | message text — wrapped automatically                              |
-| `entities` | Telegram `MessageEntity[]` — bold/italic/underline/strike/code/spoiler/link. Spread `@yaebal/fmt`'s `md`/`html` to get these for free |
-| `caption` / `captionEntities` | text under a media message                      |
-| `time` · `status` · `buttons` · `name` | time · ticks (`sent`/`delivered`/`read`) · keyboard rows · sender label + avatar |
+| field                                  | meaning                                                                                                                               |
+|:---------------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------|
+| `from`                                 | `"user"` → outgoing (right, ticks) · `"bot"` → incoming (left, avatar)                                                                |
+| `text`                                 | message text — wrapped automatically                                                                                                  |
+| `entities`                             | telegram `MessageEntity[]` — bold/italic/underline/strike/code/spoiler/link. spread `@yaebal/fmt`'s `md`/`html` to get these for free |
+| `caption` / `captionEntities`          | text under a media message                                                                                                            |
+| `time` · `status` · `buttons` · `name` | time · ticks (`sent`/`delivered`/`read`) · keyboard rows · sender label + avatar                                                      |
 
 ## media
 
-All use the real `@yaebal/types` shapes. For picture-like media add `src` (a URL/data-URI)
+all use the real `@yaebal/types` shapes. for picture-like media add `src` (a URL/data-URI)
 to show real pixels — a `file_id` has none, so without `src` you get a clean placeholder.
 
-| field       | renders as                                            |
-| ----------- | ----------------------------------------------------- |
-| `photo`     | image (or placeholder) + optional `caption`           |
-| `sticker`   | standalone image, or its `emoji` big                  |
-| `animation` | image + `GIF` badge                                   |
-| `video`     | image + play button + duration                        |
-| `voice`     | waveform + duration                                   |
-| `audio`     | play disc + title / performer                         |
-| `document`  | file icon + name + size                               |
-| `venue` / `location` | map tile + pin (+ title/address)             |
-| `contact`   | avatar + name + phone                                 |
-| `poll`      | question + options with percentage bars               |
+| field                | renders as                                            |
+|:---------------------|:------------------------------------------------------|
+| `photo`              | image (or placeholder) + optional `caption`           |
+| `sticker`            | standalone image, or its `emoji` big                  |
+| `animation`          | image + `GIF` badge                                   |
+| `video`              | image + play button + duration                        |
+| `voice`              | waveform + duration                                   |
+| `audio`              | play disc + title / performer                         |
+| `document`           | file icon + name + size                               |
+| `venue` / `location` | map tile + pin (+ title/address)                      |
+| `contact`            | avatar + name + phone                                 |
+| `poll`               | question + options with percentage bars               |
 
-Add `spoiler: true` to cover picture media.
+add `spoiler: true` to cover picture media.
 
 ## options
 
-| option   | default     | meaning                          |
-| -------- | ----------- | -------------------------------- |
-| `theme`  | `"light"`   | `"light"` (green wallpaper) or `"dark"` |
-| `width`  | `380`       | canvas width in px               |
-| `avatar` | name initial | override the incoming avatar glyph |
+| option   | default      | meaning                                 |
+|:---------|:-------------|:----------------------------------------|
+| `theme`  | `"light"`    | `"light"` (green wallpaper) or `"dark"` |
+| `width`  | `380`        | canvas width in px                      |
+| `avatar` | name initial | override the incoming avatar glyph      |
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

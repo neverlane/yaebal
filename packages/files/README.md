@@ -1,6 +1,6 @@
 # @yaebal/files
 
-Resolve a `file_id` to its download URL (via `getFile`).
+resolve a `file_id` to its download URL (via `getFile`).
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/files
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

@@ -5,22 +5,23 @@ import type { Context, Plugin } from "@yaebal/core";
  *
  *   const greet = createConversation("greet", async (cv, ctx) => {
  *     await ctx.send("what's your name?");
+ * 
  *     const answer = await cv.wait();
  *     await answer.send(`hi ${answer.text}`);
  *   });
  *   bot.install(conversation([greet]));
  *   bot.command("greet", (ctx) => ctx.conversation.enter("greet"));
  *
- * It's a COROUTINE, not a replay engine (grammY-style): the builder runs once,
- * detached, and `cv.wait()` resolves with the next update for that chat. While a
+ * it's a COROUTINE, not a replay engine (grammY-style): the builder runs once,
+ * detached, and `cv.wait()` resolves with the next update for that chat. while a
  * conversation is active it OWNS the chat's updates (they don't reach other
- * handlers). State is in-memory, lost on restart — like `prompt`/`scenes`.
+ * handlers). state is in-memory, lost on restart — like `prompt`/`scenes`.
  */
 
 export interface Conversation {
-	/** Resolve with the next update's context for this chat. */
+	/** resolve with the next update's context for this chat. */
 	wait(): Promise<Context>;
-	/** The most recent context (the entering update, then each waited one). */
+	/** the most recent context (the entering update, then each waited one). */
 	readonly ctx: Context;
 }
 
@@ -36,18 +37,18 @@ export function createConversation(name: string, builder: ConversationBuilder): 
 }
 
 export interface ConversationControl {
-	/** Start a registered conversation for this chat. */
+	/** start a registered conversation for this chat. */
 	enter(name: string): void;
-	/** Whether a conversation is currently running for this chat. */
+	/** whether a conversation is currently running for this chat. */
 	active(): boolean;
-	/** Abandon the active conversation (its coroutine is left parked). */
+	/** abandon the active conversation (its coroutine is left parked). */
 	leave(): void;
 }
 
 export interface ConversationOptions {
-	/** Conversation key for an update. Default: per-chat (`ctx.chat.id`). */
+	/** conversation key for an update. default: per-chat (`ctx.chat.id`). */
 	getKey?: (ctx: Context) => string | undefined;
-	/** Called if a conversation builder throws. */
+	/** called if a conversation builder throws. */
 	onError?: (error: unknown, ctx: Context) => void;
 }
 
@@ -68,10 +69,12 @@ export function conversation(
 	const start = (key: string, def: ConversationDef, enterCtx: Context) => {
 		const live: Live = { queue: [], current: enterCtx };
 		sessions.set(key, live);
+
 		const cv: Conversation = {
 			wait: () =>
 				new Promise<Context>((resolve) => {
 					const queued = live.queue.shift();
+
 					if (queued) {
 						live.current = queued;
 						resolve(queued);
@@ -83,6 +86,7 @@ export function conversation(
 				return live.current;
 			},
 		};
+
 		Promise.resolve(def.builder(cv, enterCtx))
 			.catch((error) => options.onError?.(error, live.current))
 			.finally(() => {
@@ -97,34 +101,43 @@ export function conversation(
 				const control: ConversationControl = {
 					enter: (name) => {
 						if (key === undefined) return;
+
 						const def = registry.get(name);
 						if (!def) throw new Error(`conversation "${name}" is not registered`);
+
 						start(key, def, ctx);
 					},
+
 					active: () => key !== undefined && sessions.has(key),
 					leave: () => {
 						if (key !== undefined) sessions.delete(key);
 					},
 				};
+
 				return { conversation: control };
 			})
 			.use(async (ctx, next) => {
 				const key = getKey(ctx);
 				if (key !== undefined) {
 					const live = sessions.get(key);
+
 					if (live) {
 						if (live.waiter) {
 							const resolve = live.waiter;
+
 							live.waiter = undefined;
 							live.current = ctx;
+
 							resolve(ctx);
 						} else {
 							live.queue.push(ctx);
 						}
+
 						return; // owned by the active conversation
 					}
 				}
 				await next();
 			});
+	
 	return plugin;
 }

@@ -33,15 +33,18 @@ export function commands(): CommandsRegistry {
 			defs.push({ name, description, handlers });
 			return registry;
 		},
+
 		list() {
 			return defs.map((d) => ({ command: d.name, description: d.description }));
 		},
+
 		plugin() {
 			return (composer) => {
 				for (const d of defs) composer.command(d.name, ...d.handlers);
 				return composer;
 			};
 		},
+
 		register(api, options) {
 			return api.call("setMyCommands", {
 				commands: registry.list(),
@@ -49,5 +52,6 @@ export function commands(): CommandsRegistry {
 			});
 		},
 	};
+	
 	return registry;
 }

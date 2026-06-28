@@ -1,6 +1,6 @@
 import { register } from "./index.js";
 
-// Fixture worker used by index.test.ts.
+// fixture worker used by index.test.ts.
 register({
 	add: (pair: [number, number]) => pair[0] + pair[1],
 	echo: (value: unknown) => value,

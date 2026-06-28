@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"composite": true
+		"composite": true,
+		"types": ["node"]
 	},
 	"references": [{ "path": "../core" }, { "path": "../session" }],
 	"include": ["src/**/*.ts"]

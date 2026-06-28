@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/conversation",
 	"version": "0.0.1",
-	"description": "YAEBAL conversation — await-style multi-step dialogs (coroutine, no replay).",
+	"description": "yaebal conversation — await-style multi-step dialogs (coroutine, no replay).",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

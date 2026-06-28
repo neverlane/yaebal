@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/session",
 	"version": "0.0.1",
-	"description": "YAEBAL session plugin — per-chat state with pluggable storage adapters.",
+	"description": "yaebal session plugin — per-chat state with pluggable storage adapters.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

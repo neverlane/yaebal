@@ -2,17 +2,20 @@
 	"name": "yaebal-monorepo",
 	"version": "0.0.0",
 	"private": true,
-	"description": "YAEBAL — Yet Another tElegram Bot Api Library. Type-safe, extensible, multi-runtime.",
+	"description": "yaebal — Yet Another tElegram Bot Api Library. type-safe, chainable, plugin-first.",
 	"type": "module",
-	"packageManager": "pnpm@9.15.0",
+	"packageManager": "pnpm@11.9.0",
 	"engines": {
-		"node": ">=20"
+		"node": ">=20",
+		"pnpm": ">=11"
 	},
 	"scripts": {
 		"build": "pnpm -r --workspace-concurrency=1 --filter \"./packages/*\" run build",
 		"typecheck": "pnpm -r run typecheck",
 		"test": "pnpm build && pnpm -r --filter \"./packages/*\" run test",
 		"dev": "pnpm --filter @yaebal/example-basic run dev",
+		"docs:dev": "pnpm --filter @yaebal/docs run dev",
+		"docs:build": "pnpm --filter @yaebal/docs run build",
 		"lint": "biome check .",
 		"lint:fix": "biome check --write .",
 		"clean": "pnpm -r exec rm -rf lib node_modules && rm -rf node_modules",
@@ -21,10 +24,10 @@
 		"release": "pnpm build && changeset publish"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^1.9.4",
-		"@changesets/cli": "^2.27.0",
-		"@types/node": "^22.10.0",
-		"typescript": "^5.7.0"
+		"@biomejs/biome": "^2.5.1",
+		"@changesets/cli": "^2.31.0",
+		"@types/node": "latest",
+		"typescript": "^6.0.3"
 	},
 	"keywords": ["telegram", "telegram-bot", "bot-api", "framework", "typescript", "yaebal"],
 	"license": "MIT"

@@ -19,11 +19,13 @@ const CATALOG: Record<string, PluginDef> = {
 		import: 'import { session } from "@yaebal/session";',
 		install: "session({ initial: () => ({ seen: 0 }) })",
 	},
+
 	ratelimiter: {
 		dep: "@yaebal/ratelimiter",
 		import: 'import { ratelimiter } from "@yaebal/ratelimiter";',
 		install: "ratelimiter()",
 	},
+	
 	again: {
 		dep: "@yaebal/again",
 		import: 'import { autoRetry } from "@yaebal/again";',
@@ -49,7 +51,7 @@ const SCRIPTS: Record<Runtime, { dev: string; start: string }> = {
 	},
 };
 
-/** Pure: turn options into a map of relative path → file content. */
+/** pure: turn options into a map of relative path → file content. */
 export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 	const chosen = opts.plugins.filter((p) => p in CATALOG);
 
@@ -123,15 +125,18 @@ interface Args {
 	plugins?: string;
 }
 
-/** Pure: parse argv into name + flags. Supports `<name> --runtime x --plugins a,b`. */
+/** pure: parse argv into name + flags. supports `<name> --runtime x --plugins a,b`. */
 export function parseArgs(argv: string[]): Args {
 	const out: Args = {};
+
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
+
 		if (a === "--runtime" || a === "-r") out.runtime = argv[++i];
 		else if (a === "--plugins" || a === "-p") out.plugins = argv[++i];
 		else if (a && !a.startsWith("-") && out.name === undefined) out.name = a;
 	}
+
 	return out;
 }
 
@@ -139,18 +144,22 @@ export async function main(): Promise<void> {
 	const args = parseArgs(process.argv.slice(2));
 	const tty = Boolean(process.stdin.isTTY);
 	const rl = tty ? createInterface({ input: process.stdin, output: process.stdout }) : null;
+
 	try {
 		let name = args.name;
+
 		if (!name && rl) name = (await rl.question("project name: ")).trim();
 		if (!name) {
 			console.error(
 				"✗ project name is required\n  usage: create-yaebal <name> [--runtime node|bun|deno] [--plugins session,again]",
 			);
 			process.exitCode = 1;
+
 			return;
 		}
 
 		let runtime: Runtime = "node";
+
 		if (args.runtime && isRuntime(args.runtime)) runtime = args.runtime;
 		else if (rl) {
 			const a = (await rl.question("runtime — node / bun / deno [node]: ")).trim().toLowerCase();
@@ -163,6 +172,7 @@ export async function main(): Promise<void> {
 				"plugins — comma list of [session, ratelimiter, again] (enter to skip): ",
 			);
 		}
+
 		const plugins = pluginsRaw
 			.split(",")
 			.map((s) => s.trim())
@@ -172,18 +182,21 @@ export async function main(): Promise<void> {
 		if (existsSync(target)) {
 			console.error(`✗ directory "${name}" already exists`);
 			process.exitCode = 1;
+
 			return;
 		}
 
 		const files = renderFiles({ name, runtime, plugins });
 		for (const [rel, content] of Object.entries(files)) {
 			const full = join(target, rel);
+
 			await mkdir(dirname(full), { recursive: true });
 			await writeFile(full, content);
 		}
 
 		const installCmd = runtime === "deno" ? "deno cache src/index.ts" : "pnpm install";
 		const runCmd = runtime === "deno" ? SCRIPTS.deno.dev : "pnpm dev";
+
 		console.log(
 			`\n✓ created ${name}/\n\nnext steps:\n  cd ${name}\n  ${installCmd}\n  # add your BOT_TOKEN to .env\n  ${runCmd}\n`,
 		);

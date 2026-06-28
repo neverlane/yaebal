@@ -36,26 +36,31 @@ const cbCtx = () =>
 
 test("filter(text) runs only on non-empty text", async () => {
 	const seen: string[] = [];
+
 	const mw = entry(new Composer<Context>().filter(text, (ctx) => seen.push(ctx.text)));
 	await mw(msgCtx("hi"), noop);
 	await mw(cbCtx(), noop); // no text
+
 	assert.deepEqual(seen, ["hi"]);
 });
 
 test("regex matches and exposes ctx.match", async () => {
 	let captured = "";
+
 	const mw = entry(
 		new Composer<Context>().filter(regex(/^buy (\d+)/), (ctx) => {
 			captured = ctx.match[1] ?? "";
 		}),
 	);
 	await mw(msgCtx("buy 42"), noop);
+
 	assert.equal(captured, "42");
 });
 
 test("command matches a name and exposes ctx.command / ctx.args", async () => {
 	let cmd = "";
 	let args: string[] = [];
+
 	const mw = entry(
 		new Composer<Context>().filter(command("add"), (ctx) => {
 			cmd = ctx.command;
@@ -63,12 +68,14 @@ test("command matches a name and exposes ctx.command / ctx.args", async () => {
 		}),
 	);
 	await mw(msgCtx("/add a b"), noop);
+
 	assert.equal(cmd, "add");
 	assert.deepEqual(args, ["a", "b"]);
 });
 
 test("and requires all; or requires any; not inverts", async () => {
 	let andHits = 0;
+
 	const andMw = entry(
 		new Composer<Context>().filter(and(isPrivate, command("buy")), () => {
 			andHits++;
@@ -76,9 +83,11 @@ test("and requires all; or requires any; not inverts", async () => {
 	);
 	await andMw(msgCtx("/buy", "private"), noop); // ✓ private + command
 	await andMw(msgCtx("/buy", "group"), noop); // ✗ not private
+
 	assert.equal(andHits, 1);
 
 	let orHits = 0;
+
 	const orMw = entry(
 		new Composer<Context>().filter(or(command("a"), command("b")), () => {
 			orHits++;
@@ -87,9 +96,11 @@ test("and requires all; or requires any; not inverts", async () => {
 	await orMw(msgCtx("/a"), noop);
 	await orMw(msgCtx("/b"), noop);
 	await orMw(msgCtx("/c"), noop);
+
 	assert.equal(orHits, 2);
 
 	let notHits = 0;
+
 	const notMw = entry(
 		new Composer<Context>().filter(not(fromUser(99)), () => {
 			notHits++;
@@ -97,6 +108,7 @@ test("and requires all; or requires any; not inverts", async () => {
 	);
 	await notMw(msgCtx("hi", "private", 5), noop); // from 5 → allowed
 	await notMw(msgCtx("hi", "private", 99), noop); // from 99 → blocked
+
 	assert.equal(notHits, 1);
 });
 
@@ -123,6 +135,7 @@ test("not() and failed and() do not leak attached data downstream", async () => 
 
 test("scoped derive runs only for the listed update types", async () => {
 	const tags: (number | undefined)[] = [];
+
 	const mw = entry(
 		new Composer<Context>()
 			.derive("message", () => ({ tag: 7 }))
@@ -132,5 +145,6 @@ test("scoped derive runs only for the listed update types", async () => {
 	);
 	await mw(msgCtx("hi"), noop); // message → derived
 	await mw(cbCtx(), noop); // callback_query → skipped
+	
 	assert.deepEqual(tags, [7, undefined]);
 });

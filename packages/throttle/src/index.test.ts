@@ -17,6 +17,7 @@ test("reserve respects real elapsed time (no artificial wait)", () => {
 
 test("throttle registers a before hook that resolves", async () => {
 	let hook: ((method: string, params: unknown) => Promise<unknown>) | undefined;
+
 	const api = {
 		before: (h: typeof hook) => {
 			hook = h;
@@ -25,5 +26,6 @@ test("throttle registers a before hook that resolves", async () => {
 
 	throttle(api, { minIntervalMs: 0 });
 	assert.equal(typeof hook, "function");
+	
 	await hook?.("sendMessage", undefined); // interval 0 → no delay
 });

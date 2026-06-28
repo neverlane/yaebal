@@ -1,6 +1,6 @@
 # @yaebal/prompt
 
-Handles the message that answers a prompt. May call `ctx.prompt` again to chain.
+handles the message that answers a prompt. may call `ctx.prompt` again to chain.
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/prompt
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

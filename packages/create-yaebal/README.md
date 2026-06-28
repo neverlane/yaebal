@@ -1,6 +1,6 @@
 # create-yaebal
 
-Scaffold a new YAEBAL bot project interactively or from flags — generates `package.json`, `tsconfig.json`, `src/index.ts`, `.env.example`, and `.gitignore`.
+scaffold a new yaebal bot project interactively or from flags — generates `package.json`, `tsconfig.json`, `src/index.ts`, `.env.example`, and `.gitignore`.
 
 ## install
 
@@ -18,15 +18,18 @@ pnpm create yaebal
 pnpm create yaebal my-bot --runtime bun --plugins session,again
 ```
 
-Supported runtimes: `node` (default), `bun`, `deno`.
+supported runtimes: `node` (default), `bun`, `deno`.
+supported plugins: `session` (`@yaebal/session`), `ratelimiter` (`@yaebal/ratelimiter`), `again` (`@yaebal/again`).
 
-Supported plugins: `session` (`@yaebal/session`), `ratelimiter` (`@yaebal/ratelimiter`), `again` (`@yaebal/again`).
-
-After scaffolding:
+after scaffolding:
 
 ```sh
 cd my-bot
 pnpm install
-cp .env.example .env   # add your BOT_TOKEN
+cp .env.example .env # add your BOT_TOKEN
 pnpm dev
 ```
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

@@ -1,6 +1,6 @@
 # @yaebal/test
 
-Testing utilities for YAEBAL bots: a fake `Api` that records every call, update factories, and helpers to run middleware in isolation.
+testing utilities for yaebal bots: a fake `Api` that records every call, update factories, and helpers to run middleware in isolation.
 
 ## install
 
@@ -34,3 +34,7 @@ test("callback query", async () => {
   expect(calls[0]?.method).toBe("answerCallbackQuery");
 });
 ```
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

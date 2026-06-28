@@ -1,6 +1,6 @@
 # @yaebal/broadcast
 
-Extra params merged into every `sendMessage` (parse_mode, reply_markup, …).
+extra params merged into every `sendMessage` (parse_mode, reply_markup, …).
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/broadcast
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

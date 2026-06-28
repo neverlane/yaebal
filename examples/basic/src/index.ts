@@ -13,7 +13,7 @@ import { throttle } from "@yaebal/throttle";
 
 // i18n tables; ctx.t / ctx.changeLanguage become available after install
 const locales = {
-	en: { hello: "hi {who}! switched to English." },
+	en: { hello: "hi {who}! switched to english." },
 	ru: { hello: "привет {who}! язык переключён на русский." },
 };
 
@@ -47,11 +47,11 @@ const vote = callbackData("vote", { choice: String });
 // a two-window dialog (morda): main ↔ settings, with stack navigation
 const menu: DialogDef = {
 	main: () => ({
-		text: "🏠 Главное меню",
+		text: "🏠 главное меню",
 		keyboard: [
-			[switchTo("⚙️ Настройки", "settings")],
+			[switchTo("⚙️ настройки", "settings")],
 			[
-				button("🔔 Пинг", {
+				button("🔔 пинг", {
 					id: "ping",
 					onClick: (c) => c.answerCallbackQuery({ text: "понг 🏓" }),
 				}),
@@ -81,7 +81,7 @@ const bot = new Bot(token)
 	.command("start", (ctx) =>
 		ctx.send(
 			format`привет, ${bold(ctx.who)}! 🐴
-это ${italic("YAEBAL")} — yet another telegram bot api library.
+это ${italic("yaebal")} — Yet Another tElegram Bot Api Library.
 команды: /start, /count. или жми кнопку.`,
 			{
 				reply_markup: new InlineKeyboard()

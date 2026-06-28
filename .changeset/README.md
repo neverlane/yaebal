@@ -1,6 +1,6 @@
-# Changesets
+# changesets
 
-This folder is managed by [changesets](https://github.com/changesets/changesets).
+this folder is managed by [changesets](https://github.com/changesets/changesets).
 
 - `pnpm changeset` — record a change (pick packages + bump type, write a summary).
 - `pnpm version-packages` — apply pending changesets: bump versions + write changelogs.

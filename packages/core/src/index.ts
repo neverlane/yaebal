@@ -1,8 +1,8 @@
 /**
- * @yaebal/core — Yet Another tElegram Bot Api Library (core).
+ * @yaebal/core — core of Yet Another tElegram Bot Api Library.
  *
- * Public surface: the `Bot`, the standalone `Composer`, the `Context`,
- * the entity-based `format` helpers, the low-level `Api`, and the Telegram types.
+ * public surface: the `Bot`, the standalone `Composer`, the `Context`,
+ * the entity-based `format` helpers, the low-level `Api`, and the telegram types.
  */
 
 export { Bot, type BotOptions } from "./bot.js";

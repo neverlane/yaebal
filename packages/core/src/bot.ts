@@ -6,16 +6,16 @@ import type { Update, UpdateName, User } from "./telegram-types.js";
 export interface BotOptions {
 	apiRoot?: string;
 	/**
-	 * Resolve `media.path()` into bytes. Injected per runtime so core stays free of any
-	 * `node:` import. The `yaebal` package wires an auto-detecting default; on bare core
+	 * resolve `media.path()` into bytes. injected per runtime so core stays free of any
+	 * `node:` import. the `yaebal` package wires an auto-detecting default; on bare core
 	 * (or edge) leave it unset and `media.path()` throws — send `media.buffer()`/`url()`.
 	 */
 	readFile?: FileReader;
-	/** Update types to request; `undefined` = Telegram default. */
+	/** update types to request; `undefined` = telegram default. */
 	allowedUpdates?: UpdateName[];
 	/**
-	 * Build the context for each update. Defaults to the base {@link Context}.
-	 * Higher-level packages (e.g. the `yaebal` meta-package) inject a factory here
+	 * build the context for each update. defaults to the base {@link Context}.
+	 * gigher-level packages (e.g. the `yaebal` meta-package) inject a factory here
 	 * to produce richer per-update contexts with auto-generated shortcut methods.
 	 */
 	contextFactory?: (api: Api, update: Update, updateType: UpdateName) => Context;
@@ -29,11 +29,12 @@ function detectUpdateType(update: Update): UpdateName {
 		if (key === "update_id") continue;
 		return key as UpdateName;
 	}
+
 	return "message" as UpdateName;
 }
 
 /**
- * The bot. Extends {@link Composer}, so the whole chainable, type-accumulating
+ * the bot. extends {@link Composer}, so the whole chainable, type-accumulating
  * surface is available — and `derive` / `decorate` / `extend` keep returning a
  * `Bot` (not a bare `Composer`) so lifecycle methods stay reachable down the chain.
  */
@@ -52,11 +53,12 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	constructor(token: string, options: BotOptions = {}) {
 		super();
 		if (!token) throw new Error("Bot(token): token is required");
+
 		this.#options = options;
 		this.api = createApi(token, { apiRoot: options.apiRoot, readFile: options.readFile });
 	}
 
-	/** Bot account info, available after `start()`. */
+	/** bot account info, available after `start()`. */
 	get info(): User | undefined {
 		return this.#info;
 	}
@@ -90,31 +92,33 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		return this as unknown as Bot<C & Add>;
 	}
 
-	/** Register a callback fired once the bot has started. */
+	/** register a callback fired once the bot has started. */
 	onStart(handler: StartHandler): this {
 		this.#startHandlers.push(handler);
 		return this;
 	}
 
-	/** Replace the default error handler. */
+	/** replace the default error handler. */
 	onError(handler: ErrorHandler): this {
 		this.#errorHandler = handler;
 		return this;
 	}
 
 	/**
-	 * Run the middleware chain for a single update. This is the webhook entry
-	 * point — call it from your HTTP handler. Errors go to the error handler.
+	 * run the middleware chain for a single update. this is the webhook entry
+	 * point — call it from your HTTP handler. errors go to the error handler.
 	 *
-	 * The chain is realized (and frozen) on the first call, so register all
+	 * the chain is realized (and frozen) on the first call, so register all
 	 * middleware/plugins before the first `handleUpdate` / `start`.
 	 */
 	async handleUpdate(update: Update): Promise<void> {
 		if (!this.#handle) this.#handle = this.toMiddleware() as unknown as Middleware<Context>;
+
 		const updateType = detectUpdateType(update);
 		const ctx = this.#options.contextFactory
 			? this.#options.contextFactory(this.api, update, updateType)
 			: new Context({ api: this.api, update, updateType });
+
 		try {
 			await this.#handle(ctx, async () => {});
 		} catch (error) {
@@ -122,7 +126,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		}
 	}
 
-	/** Start long polling. Resolves only when `stop()` is called. */
+	/** start long polling. resolves only when `stop()` is called. */
 	async start(): Promise<void> {
 		if (this.#running) return;
 		this.#running = true;
@@ -132,6 +136,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 		while (this.#running) {
 			let updates: Update[];
+
 			try {
 				updates = await this.api.getUpdates({
 					offset: this.#offset,
@@ -142,7 +147,9 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				});
 			} catch (error) {
 				if (!this.#running) break;
+
 				console.error("[yaebal] getUpdates failed, retrying in 3s:", error);
+				
 				await new Promise((r) => setTimeout(r, 3000));
 				continue;
 			}
@@ -154,7 +161,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		}
 	}
 
-	/** Stop the polling loop. */
+	/** stop the polling loop. */
 	stop(): void {
 		this.#running = false;
 	}

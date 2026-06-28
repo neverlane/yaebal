@@ -1,7 +1,7 @@
 # @yaebal/panel
 
-An operator panel for [yaebal](https://github.com/neverlane/yaebal) bots: view
-incoming private-chat messages and reply from the browser. Ships as a
+an operator panel for [yaebal](https://github.com/neverlane/yaebal) bots: view
+incoming private-chat messages and reply from the browser. ships as a
 self-contained `fetch` handler — mount it on any HTTP framework.
 
 ## install
@@ -27,5 +27,9 @@ const handler = panelHandler(bot.api, store, { token: process.env.PANEL_TOKEN! }
 // handler: (Request) => Promise<Response> — open /?token=<PANEL_TOKEN>
 ```
 
-Implement `PanelStore` (`record` / `chats` / `history`) to persist conversations
-in Redis, Postgres, etc. instead of the in-memory default.
+implement `PanelStore` (`record` / `chats` / `history`) to persist conversations
+in redis, postgres, etc. instead of the in-memory default.
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

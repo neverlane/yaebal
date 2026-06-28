@@ -2,44 +2,45 @@ import { type MediaSource, isMediaSource } from "./media.js";
 import type { ApiResponse, Message, Update, User } from "./telegram-types.js";
 
 /**
- * Resolve a local `media.path()` into bytes. Runtime-specific (node:fs, Bun.file,
+ * resolve a local `media.path()` into bytes. runtime-specific (node:fs, Bun.file,
  * Deno.readFile), so it's injected rather than imported — that keeps `@yaebal/core`
- * free of any `node:` import and loadable on edge/web. The `yaebal` package wires an
+ * free of any `node:` import and loadable on edge/web. the `yaebal` package wires an
  * auto-detecting default; absent ⇒ `media.path()` throws (e.g. on Cloudflare Workers).
  */
 export type FileReader = (path: string) => Promise<Uint8Array>;
 
-/** Thrown when Telegram replies with `ok: false`. */
+/** thrown when telegram replies with `ok: false`. */
 export class TelegramError extends Error {
 	readonly method: string;
 	readonly code: number;
 
 	constructor(method: string, code: number, description: string) {
 		super(`[${method}] ${code}: ${description}`);
+
 		this.name = "TelegramError";
 		this.method = method;
 		this.code = code;
 	}
 }
 
-/** Inspect/rewrite params before a request. Return new params to replace them. */
+/** inspect/rewrite params before a request. return new params to replace them. */
 export type BeforeHook = (
 	method: string,
 	params: Record<string, unknown> | undefined,
 ) => Record<string, unknown> | undefined | Promise<Record<string, unknown> | undefined>;
 
-/** Inspect/rewrite the result after a successful request. Return a value to replace it. */
+/** inspect/rewrite the result after a successful request. return a value to replace it. */
 export type AfterHook = (method: string, result: unknown) => unknown | Promise<unknown>;
 
-/** What an error hook can ask the client to do. */
+/** what an error hook can ask the client to do. */
 export interface ErrorAction {
-	/** Re-run the same call. */
+	/** re-run the same call. */
 	retry?: boolean;
-	/** Wait this many ms before retrying. */
+	/** wait this many ms before retrying. */
 	delayMs?: number;
 }
 
-/** Runs when a request throws. `attempt` is the (1-based) attempt that just failed. */
+/** runs when a request throws. `attempt` is the (1-based) attempt that just failed. */
 export type ErrorHook = (
 	method: string,
 	error: unknown,
@@ -47,7 +48,7 @@ export type ErrorHook = (
 ) => ErrorAction | undefined | Promise<ErrorAction | undefined>;
 
 /**
- * The API client. Known methods are typed; everything else goes through `call`
+ * the API client. known methods are typed; everything else goes through `call`
  * (the puregram passthrough — a new Bot API method works before its types ship).
  * `before` / `after` / `onError` are the extension points plugins hang off of.
  */
@@ -57,19 +58,19 @@ export interface Api {
 	getUpdates(params?: Record<string, unknown>): Promise<Update[]>;
 	sendMessage(params: Record<string, unknown>): Promise<Message>;
 	answerCallbackQuery(params: Record<string, unknown>): Promise<boolean>;
-	/** Build the download URL for a `file_path` from `getFile`. Contains the bot token — don't log it. */
+	/** build the download URL for a `file_path` from `getFile`. contains the bot token — don't log it. */
 	fileUrl(filePath: string): string;
-	/** Register a hook that runs before every request; may rewrite params. */
+	/** register a hook that runs before every request; may rewrite params. */
 	before(hook: BeforeHook): Api;
-	/** Register a hook that runs after every successful request; may rewrite the result. */
+	/** register a hook that runs after every successful request; may rewrite the result. */
 	after(hook: AfterHook): Api;
-	/** Register a hook that runs when a request throws; may request a retry. */
+	/** register a hook that runs when a request throws; may request a retry. */
 	onError(hook: ErrorHook): Api;
 }
 
 export interface ApiOptions {
 	apiRoot?: string;
-	/** Resolve `media.path()` to bytes. Injected per runtime; absent ⇒ path media throws (e.g. edge). */
+	/** resolve `media.path()` to bytes. injected per runtime; absent ⇒ path media throws (e.g. edge). */
 	readFile?: FileReader;
 }
 
@@ -82,11 +83,18 @@ function containsMedia(v: unknown): boolean {
 	if (isMediaSource(v)) return true;
 	if (Array.isArray(v)) return v.some(containsMedia);
 	if (v !== null && typeof v === "object") return Object.values(v).some(containsMedia);
+
 	return false;
 }
 
 /** basename without node:path — keeps core free of node: imports. */
 const baseName = (p: string): string => p.split(/[\\/]/).pop() || "file";
+const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => {
+	const copy = new Uint8Array(bytes.byteLength);
+	copy.set(bytes);
+
+	return copy.buffer;
+};
 
 async function mediaToBlob(
 	m: MediaSource,
@@ -96,21 +104,24 @@ async function mediaToBlob(
 		if (!readFile)
 			throw new Error(
 				"media.path() needs a filesystem — use the `yaebal` package (auto-detects node/bun/deno), " +
-					"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
+				"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
 			);
+
 		const bytes = await readFile(m.path);
-		return { blob: new Blob([bytes]), filename: baseName(m.path) };
+		return { blob: new Blob([toArrayBuffer(bytes)]), filename: baseName(m.path) };
 	}
+
 	if (m.kind === "buffer") {
-		return { blob: new Blob([m.buffer]), filename: m.filename ?? "file" };
+		return { blob: new Blob([toArrayBuffer(m.buffer)]), filename: m.filename ?? "file" };
 	}
+
 	throw new Error(`mediaToBlob: ${m.kind} is not an uploadable source`);
 }
 
 /**
- * Encode request params. Plain params (and `url`/`fileId` media) go as JSON;
+ * encode request params. Plain params (and `url`/`fileId` media) go as JSON;
  * if any `path`/`buffer` media is present the whole request becomes multipart,
- * with each upload attached via `attach://`. Exported for testing.
+ * with each upload attached via `attach://`. exported for testing.
  */
 export async function encodeRequest(
 	params: Record<string, unknown> | undefined,
@@ -118,7 +129,7 @@ export async function encodeRequest(
 ): Promise<EncodedRequest> {
 	if (!params) return { body: undefined, contentType: "application/json" };
 
-	// ponytail: media is only handled at the top level. Media nested inside arrays
+	// ponytail: media is only handled at the top level. media nested inside arrays
 	// or objects (e.g. sendMediaGroup's `media[]`) would serialize to garbage, so
 	// fail loud until that method is actually supported.
 	if (Object.values(params).some((v) => !isMediaSource(v) && containsMedia(v))) {
@@ -133,6 +144,7 @@ export async function encodeRequest(
 
 	if (!needsUpload) {
 		const inlined: Record<string, unknown> = {};
+
 		for (const [k, v] of Object.entries(params)) {
 			inlined[k] = isMediaSource(v)
 				? v.kind === "url"
@@ -140,19 +152,23 @@ export async function encodeRequest(
 					: (v as { fileId: string }).fileId
 				: v;
 		}
+
 		return { body: JSON.stringify(inlined), contentType: "application/json" };
 	}
 
 	const form = new FormData();
 	let n = 0;
+
 	for (const [k, v] of Object.entries(params)) {
 		if (v === undefined || v === null) continue;
+
 		if (isMediaSource(v)) {
 			if (v.kind === "fileId") form.set(k, v.fileId);
 			else if (v.kind === "url") form.set(k, v.url);
 			else {
 				const field = `_file${n++}`;
 				const { blob, filename } = await mediaToBlob(v, readFile);
+
 				form.set(field, blob, filename);
 				form.set(k, `attach://${field}`);
 			}
@@ -162,10 +178,11 @@ export async function encodeRequest(
 			form.set(k, JSON.stringify(v));
 		}
 	}
+
 	return { body: form };
 }
 
-/** Builds a callable API client with before/after/error hooks. */
+/** builds a callable API client with before/after/error hooks. */
 export function createApi(token: string, options: ApiOptions = {}): Api {
 	const apiRoot = options.apiRoot ?? "https://api.telegram.org";
 	const beforeHooks: BeforeHook[] = [];
@@ -176,12 +193,14 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		const { body, contentType } = await encodeRequest(params, options.readFile);
 		const res = await fetch(`${apiRoot}/bot${token}/${method}`, {
 			method: "POST",
-			// For multipart, let fetch set the content-type (with its boundary).
+			// for multipart, let fetch set the content-type (with its boundary).
 			headers: contentType ? { "content-type": contentType } : undefined,
 			body,
 		});
+
 		const data = (await res.json()) as ApiResponse<T>;
 		if (!data.ok) throw new TelegramError(method, data.error_code, data.description);
+
 		return data.result;
 	};
 
@@ -194,18 +213,22 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			const next = await hook(method, p);
 			if (next !== undefined) p = next;
 		}
+
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
-		// attempts). With no hook requesting a retry it throws on the first failure.
+		// attempts). with no hook requesting a retry it throws on the first failure.
 		for (let attempt = 1; ; attempt++) {
 			try {
 				let result = await rawCall<T>(method, p);
+
 				for (const hook of afterHooks) {
 					const next = await hook(method, result);
 					if (next !== undefined) result = next as Awaited<T>;
 				}
+
 				return result;
 			} catch (error) {
 				let retry: ErrorAction | undefined;
+
 				for (const hook of errorHooks) {
 					const action = await hook(method, error, attempt);
 					if (action?.retry) {
@@ -213,6 +236,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 						break;
 					}
 				}
+
 				if (!retry) throw error;
 				if (retry.delayMs) await new Promise((r) => setTimeout(r, retry.delayMs));
 			}
@@ -239,8 +263,10 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	const api = new Proxy(registrar, {
 		get(obj, prop: string) {
 			if (prop in obj) return obj[prop];
-			// Lazily materialise `api.<method>(params)` → call(method, params).
+
+			// lazily materialise `api.<method>(params)` → call(method, params).
 			const method = (params?: Record<string, unknown>) => call(prop, params);
+			
 			obj[prop] = method;
 			return method;
 		},

@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/media-group",
 	"version": "0.0.1",
-	"description": "YAEBAL media-group plugin — collect album updates into one handler call.",
+	"description": "yaebal media-group plugin — collect album updates into one handler call.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

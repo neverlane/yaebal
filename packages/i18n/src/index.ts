@@ -2,7 +2,7 @@ import type { Context, Plugin } from "@yaebal/core";
 import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
 
 /**
- * A plural form set keyed by `Intl.PluralRules` categories. `other` is required
+ * a plural form set keyed by `Intl.PluralRules` categories. `other` is required
  * as the fallback; the rest are optional and selected per locale via
  * `new Intl.PluralRules(locale).select(n)`.
  */
@@ -15,18 +15,18 @@ export interface PluralDict {
 	other: string;
 }
 
-/** A single translation value: a plain template or a set of plural forms. */
+/** a single translation value: a plain template or a set of plural forms. */
 export type DictValue = string | PluralDict;
 
 /**
- * A translation table: key → template (with `{placeholder}` interpolation), or
+ * a translation table: key → template (with `{placeholder}` interpolation), or
  * key → plural forms (selected by `{n}` via `Intl.PluralRules`).
  */
 export type Dict = Record<string, DictValue>;
 
 export type TFn = (key: string, params?: Record<string, unknown>) => string;
 
-/** What the plugin adds to the context. Powers morda/jsx `useTranslation`. */
+/** what the plugin adds to the context. powers morda/jsx `useTranslation`. */
 export interface I18nControls {
 	t: TFn;
 	locale: string;
@@ -36,19 +36,20 @@ export interface I18nControls {
 export interface I18nOptions<L extends string> {
 	defaultLocale: L;
 	locales: Record<L, Dict>;
-	/** Where to persist each chat's locale. Defaults to in-memory. */
+	/** where to persist each chat's locale. defaults to in-memory. */
 	storage?: StorageAdapter<string>;
-	/** Locale key for an update. Default: per-chat (`ctx.chat.id`). */
+	/** locale key for an update. default: per-chat (`ctx.chat.id`). */
 	getKey?: (ctx: Context) => string | undefined;
 }
 
 /**
- * i18n plugin. Adds `ctx.t` / `ctx.locale` / `ctx.changeLanguage`, with the
- * active locale persisted per chat. Missing keys fall back to the default
+ * i18n plugin. adds `ctx.t` / `ctx.locale` / `ctx.changeLanguage`, with the
+ * active locale persisted per chat. missing keys fall back to the default
  * locale, then to the key itself.
  */
 export function i18n<L extends string>(options: I18nOptions<L>): Plugin<Context, I18nControls> {
 	const { defaultLocale, locales } = options;
+
 	const storage = options.storage ?? new MemoryStorage<string>();
 	const getKey = options.getKey ?? ((ctx: Context) => ctx.chat?.id?.toString());
 
@@ -69,12 +70,14 @@ export function i18n<L extends string>(options: I18nOptions<L>): Plugin<Context,
 				} else {
 					const n = params?.n;
 					const category = typeof n === "number" ? new Intl.PluralRules(locale).select(n) : "other";
+
 					s = raw[category as keyof PluralDict] ?? raw.other;
 				}
 
 				if (params) {
 					for (const [pk, pv] of Object.entries(params)) s = s.replaceAll(`{${pk}}`, String(pv));
 				}
+				
 				return s;
 			};
 

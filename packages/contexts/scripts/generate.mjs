@@ -1,8 +1,8 @@
-// Generates src/generated/*.ts: one file per Update type with a context class whose
-// shortcut methods are auto-derived from the Bot API methods + the ids the context
-// carries. A few high-value contexts get a hand-written sugar subclass (see SUGARED +
+// generates src/generated/*.ts: one file per Update type with a context class whose
+// shortcut methods are auto-derived from the Telegram Bot API methods + the ids the context
+// carries. a few high-value contexts get a hand-written sugar subclass (see SUGARED +
 // ../src/sugar/*); the generated class becomes their `*Base`.
-// Run: node scripts/generate.mjs  (after refreshing ../types/schema.json)
+// run: node scripts/generate.mjs  (after refreshing ../types/schema.json)
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
@@ -20,6 +20,7 @@ const ID_FILLABLE = [
 	"pre_checkout_query_id",
 	"from_chat_id",
 ];
+
 // a shortcut must target one of these (otherwise it's not really "this thing")
 const TARGET_IDS = new Set([
 	"chat_id",
@@ -29,12 +30,14 @@ const TARGET_IDS = new Set([
 	"shipping_query_id",
 	"pre_checkout_query_id",
 ]);
+
 const QUERY_ID = {
 	CallbackQuery: "callback_query_id",
 	InlineQuery: "inline_query_id",
 	ShippingQuery: "shipping_query_id",
 	PreCheckoutQuery: "pre_checkout_query_id",
 };
+
 // pretty names for the high-value shortcuts; everything else keeps its method name
 const SHORT = {
 	sendMessage: "send",
@@ -54,6 +57,7 @@ const SHORT = {
 	answerShippingQuery: "answer",
 	answerPreCheckoutQuery: "answer",
 };
+
 // update prop -> public class comes from src/sugar/<kebab>.ts (extends the generated *Base)
 const SUGARED = {
 	message: true,
@@ -96,18 +100,23 @@ const returnType = (node) => {
 function providersFor(payload) {
 	const fields = new Map((payload.properties || []).map((f) => [f.name, f]));
 	const p = {};
+
 	if (fields.has("chat")) {
 		p.chat_id = "this.chat.id";
 		p.from_chat_id = "this.chat.id";
 	}
+
 	if (fields.has("message_id")) p.message_id = "this.message_id";
 	if (fields.has("from")) p.user_id = fields.get("from").required ? "this.from.id" : "this.from?.id";
+
 	const qid = QUERY_ID[payload.name];
 	if (qid && fields.has("id")) p[qid] = "this.id";
+
 	if (payload.name === "CallbackQuery") {
 		p.chat_id = "this.message?.chat.id";
 		p.message_id = "this.message?.message_id";
 	}
+
 	return p;
 }
 
@@ -116,7 +125,7 @@ function methodsFor(providers, isMessage) {
 	const used = new Set();
 
 	if (isMessage && providers.chat_id && providers.message_id) {
-		lines.push(`	/** Reply to this message. */
+		lines.push(`	/** reply to this message. */
 	reply(params: Omit<t.SendMessageParams, "chat_id">) {
 		return this.api.call<t.Message>("sendMessage", { chat_id: ${providers.chat_id}, reply_parameters: { message_id: this.message_id }, ...params });
 	}`);
@@ -130,15 +139,18 @@ function methodsFor(providers, isMessage) {
 		const fills = idArgs.filter(
 			(n) => providers[n] !== undefined && !(hasFromChat && n === "chat_id"),
 		);
+
 		if (fills.length === 0) continue;
 		const unfilledRequired = args
 			.filter((a) => a.required && ID_FILLABLE.includes(a.name))
 			.map((a) => a.name)
 			.filter((n) => !fills.includes(n) && !(hasFromChat && n === "chat_id"));
+		
 		if (unfilledRequired.length) continue;
 		if (!fills.some((n) => TARGET_IDS.has(n))) continue;
 
 		const name = SHORT[m.name] ?? m.name;
+
 		if (used.has(name)) continue;
 		used.add(name);
 
@@ -149,52 +161,63 @@ function methodsFor(providers, isMessage) {
 		const otherArgs = args.some((a) => !fills.includes(a.name));
 		const sig = otherArgs ? `params: Omit<${paramsType}, ${omit}>` : `params?: Omit<${paramsType}, ${omit}>`;
 		const desc = (m.description || "").replace(/\r?\n/g, " ").replace(/\*\//g, "*\\/").trim();
+
 		lines.push(`	/** ${desc} */
 	${name}(${sig}) {
 		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
 	}`);
 	}
+
 	return lines;
 }
 
-// Ergonomic camel-case getters (the gramio/puregram idea), derived from the
+// ergonomic camel-case getters (the gramio/puregram idea), derived from the
 // payload's own fields so every context exposes them uniformly.
 function gettersFor(payload) {
 	const fields = new Map((payload.properties || []).map((f) => [f.name, f]));
 	const lines = [];
 	const fromKey = fields.has("from") ? "from" : fields.has("user") ? "user" : null;
+
 	if (fromKey) {
 		const o = fields.get(fromKey).required ? "" : "?";
-		lines.push(`	/** Id of the user this update is from. */
+
+		lines.push(`	/** id of the user this update is from. */
 	get senderId(): number${o ? " | undefined" : ""} {
 		return this.${fromKey}${o}.id;
 	}`);
-		lines.push(`	/** First name of the user this update is from. */
+
+		lines.push(`	/** first name of the user this update is from. */
 	get firstName(): string | undefined {
 		return this.${fromKey}${o}.first_name;
 	}`);
 	}
+
 	if (fields.has("chat")) {
 		const o = fields.get("chat").required ? "" : "?";
-		lines.push(`	/** Id of the chat this update is in. */
+
+		lines.push(`	/** id of the chat this update is in. */
 	get chatId(): number${o ? " | undefined" : ""} {
 		return this.chat${o}.id;
 	}`);
-		lines.push(`	/** Whether this is a private (1:1) chat. */
+
+		lines.push(`	/** whether this is a private (1:1) chat. */
 	get isPM(): boolean {
 		return this.chat${o}.type === "private";
 	}`);
-		lines.push(`	/** Whether this is a group or supergroup. */
+
+		lines.push(`	/** whether this is a group or supergroup. */
 	get isGroup(): boolean {
 		return this.chat${o}.type === "group" || this.chat${o}.type === "supergroup";
 	}`);
 	}
+
 	if (fields.has("message_id")) {
-		lines.push(`	/** Camel-case alias for \`message_id\`. */
+		lines.push(`	/** camel-case alias for \`message_id\`. */
 	get messageId(): number {
 		return this.message_id;
 	}`);
 	}
+
 	return lines;
 }
 
@@ -204,7 +227,7 @@ const payloadProps = update.properties.filter((p) => p.name !== "update_id");
 const genDir = new URL("src/generated/", root);
 mkdirSync(genDir, { recursive: true });
 
-const header = `// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+const header = `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
@@ -214,8 +237,10 @@ const entries = []; // { prop, payloadName, pascal, kebab, sugared }
 
 for (const prop of payloadProps) {
 	const payloadName = prop.reference;
+
 	const payload = objects.get(payloadName);
 	if (!payload) continue;
+
 	const pascal = snakePascal(prop.name);
 	const sugared = !!SUGARED[prop.name];
 	const className = sugared ? `${pascal}ContextBase` : `${pascal}Context`;
@@ -234,6 +259,7 @@ export class ${className} {
 ${[...getters, ...methods].join("\n")}
 }
 `;
+
 	writeFileSync(new URL(`${kebab(prop.name)}.ts`, genDir), file);
 	entries.push({ prop: prop.name, pascal, kebab: kebab(prop.name), sugared });
 }
@@ -243,19 +269,20 @@ const importLine = (e) =>
 	e.sugared
 		? `import { ${e.pascal}Context } from "../sugar/${e.kebab}.js";`
 		: `import { ${e.pascal}Context } from "./${e.kebab}.js";`;
+
 const reexport = (e) =>
 	e.sugared
 		? `export { ${e.pascal}Context } from "../sugar/${e.kebab}.js";\nexport { ${e.pascal}ContextBase } from "./${e.kebab}.js";`
 		: `export { ${e.pascal}Context } from "./${e.kebab}.js";`;
 
-const index = `// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+const index = `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 ${entries.map(importLine).join("\n")}
 
 ${entries.map(reexport).join("\n")}
 
-/** Maps an update type to its context class. */
+/** maps an update type to its context class. */
 export interface ContextByType {
 ${entries.map((e) => `	${e.prop}: ${e.pascal}Context;`).join("\n")}
 }
@@ -264,7 +291,7 @@ const CONTEXTS = {
 ${entries.map((e) => `	${e.prop}: ${e.pascal}Context,`).join("\n")}
 } satisfies { [K in keyof ContextByType]: new (api: Api, update: t.Update) => ContextByType[K] };
 
-/** Build the right context for an update. */
+/** build the right context for an update. */
 export function contextFor<K extends keyof ContextByType>(
 	type: K,
 	api: Api,
@@ -277,5 +304,6 @@ export function contextFor<K extends keyof ContextByType>(
 	return new Ctor(api, update);
 }
 `;
+
 writeFileSync(new URL("index.ts", genDir), index);
 console.log(`generated ${entries.length} contexts (+${Object.keys(SUGARED).length} sugared) from ${schema.methods.length} methods`);

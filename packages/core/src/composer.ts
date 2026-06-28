@@ -5,7 +5,7 @@ export type NextFn = () => Promise<void>;
 export type Middleware<C> = (ctx: C, next: NextFn) => unknown | Promise<unknown>;
 
 /**
- * A plugin enriches the context. Dependencies are expressed by the type it
+ * a plugin enriches the context. dependencies are expressed by the type it
  * requires (`In`), so installing a plugin before its dependency is a compile
  * error — not a runtime surprise (core invariant #4).
  *
@@ -22,9 +22,9 @@ export type Plugin<In extends Context = Context, Out extends object = Record<nev
 ) => Composer<C & Out>;
 
 /**
- * A composable filter (the mtcute idea). `test` is a type guard, so a matching
+ * a composable filter (the mtcute idea). `test` is a type guard, so a matching
  * filter narrows the context to `C & Add`; filters may also attach `Add` fields
- * onto the context as a side effect (e.g. `regex` exposes `ctx.match`). Combine
+ * onto the context as a side effect (e.g. `regex` exposes `ctx.match`). combine
  * with `and` / `or` / `not` from `@yaebal/filters`.
  */
 export interface Filter<C = Context, Add extends object = Record<never, never>> {
@@ -32,12 +32,12 @@ export interface Filter<C = Context, Add extends object = Record<never, never>> 
 }
 
 /**
- * Filter query mini-language (the grammY idea), e.g.
+ * filter query mini-language (the grammY idea), e.g.
  * `"message:text"`, `"callback_query:data"`, `":photo"`.
  */
 export type FilterQuery = UpdateName | `${UpdateName}:${string}` | `:${string}`;
 
-/** Narrows the context type for known queries so handlers get non-optional fields. */
+/** narrows the context type for known queries so handlers get non-optional fields. */
 export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${string}:caption`
 	? C & { text: string }
 	: Q extends `${string}:data` | "callback_query"
@@ -46,17 +46,21 @@ export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${stri
 			? C & { entities: MessageEntity[] }
 			: C;
 
-/** Koa-style middleware composer with single-`next()` protection. */
+/** koa-style middleware composer with single-`next()` protection. */
 export function compose<C>(middlewares: Middleware<C>[]): (ctx: C, next?: NextFn) => Promise<void> {
 	return function composed(ctx, next) {
 		let lastIndex = -1;
+
 		const dispatch = async (i: number): Promise<void> => {
 			if (i <= lastIndex) throw new Error("next() called multiple times");
 			lastIndex = i;
+
 			const fn = i === middlewares.length ? next : middlewares[i];
 			if (!fn) return;
+
 			await fn(ctx, () => dispatch(i + 1));
 		};
+
 		return dispatch(0);
 	};
 }
@@ -80,74 +84,88 @@ function checkField(ctx: Context, field: string): boolean {
 export function matchQuery(ctx: Context, query: string): boolean {
 	const [head, ...rest] = query.split(":");
 	if (head && head.length > 0 && ctx.updateType !== head) return false;
+
 	for (const field of rest) {
 		if (!checkField(ctx, field)) return false;
 	}
+
 	return true;
 }
 
 /**
- * The chainable middleware pipeline. Every context-enriching method returns a
- * Composer whose context type carries the new properties — types flow through
+ * the chainable middleware pipeline. every context-enriching method returns a
+ * composer whose context type carries the new properties — types flow through
  * the whole chain (the GramIO idea). `Composer` is also usable standalone, so
  * feature files can be plain composers with no `Bot` and no token.
  */
 export class Composer<C extends Context = Context> {
 	protected middlewares: Middleware<C>[] = [];
 
-	/** Raw middleware. Call `next()` to continue the chain. */
+	/** raw middleware. call `next()` to continue the chain. */
 	use(...middleware: Middleware<C>[]): this {
 		this.middlewares.push(...middleware);
 		return this;
 	}
 
-	/** Handle a specific update, optionally narrowed by a filter query. */
+	/** handle a specific update, optionally narrowed by a filter query. */
 	on<Q extends FilterQuery>(query: Q, ...handlers: Middleware<Filtered<C, Q>>[]): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
 		this.middlewares.push((ctx, next) =>
 			matchQuery(ctx, query as string) ? handler(ctx, next) : next(),
 		);
+
 		return this;
 	}
 
-	/** Handle `/<name>` commands. Strips a trailing `@botname` and parses args. */
+	/** handle `/<name>` commands. Strips a trailing `@botname` and parses args. */
 	command(name: string, ...handlers: Middleware<C & { command: string; args: string[] }>[]): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
 		this.middlewares.push((ctx, next) => {
 			const text = ctx.text;
 			if (text === undefined || !text.startsWith("/")) return next();
+
 			const [head, ...args] = text.slice(1).split(/\s+/);
 			const base = head?.split("@")[0];
 			if (base !== name) return next();
+
 			Object.assign(ctx as object, { command: base, args });
 			return handler(ctx, next);
 		});
+
 		return this;
 	}
 
-	/** Match message text/caption against a string or regex; exposes `ctx.match`. */
+	/** match message text/caption against a string or regex; exposes `ctx.match`. */
 	hears(
 		trigger: string | RegExp,
 		...handlers: Middleware<C & { match: string | RegExpMatchArray }>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
 		this.middlewares.push((ctx, next) => {
 			const text = ctx.text;
 			if (text === undefined) return next();
+
 			if (typeof trigger === "string") {
 				if (text !== trigger) return next();
+
 				Object.assign(ctx as object, { match: text });
 			} else {
 				const m = text.match(trigger);
 				if (!m) return next();
+
 				Object.assign(ctx as object, { match: m });
 			}
+
 			return handler(ctx, next);
 		});
+
 		return this;
 	}
 
-	/** Match callback-query data against a string or regex; exposes `ctx.match`. */
+	/** match callback-query data against a string or regex; exposes `ctx.match`. */
 	callbackQuery(
 		trigger: string | RegExp,
 		...handlers: Middleware<
@@ -155,33 +173,41 @@ export class Composer<C extends Context = Context> {
 		>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
 		this.middlewares.push((ctx, next) => {
 			const data = ctx.callbackQuery?.data;
+
 			if (data === undefined) return next();
+
 			if (typeof trigger === "string") {
 				if (data !== trigger) return next();
+
 				Object.assign(ctx as object, { match: data });
 			} else {
 				const m = data.match(trigger);
 				if (!m) return next();
+
 				Object.assign(ctx as object, { match: m });
 			}
+
 			return handler(ctx, next);
 		});
+
 		return this;
 	}
 
-	/** Continue only if the predicate holds. */
+	/** continue only if the predicate holds. */
 	guard(predicate: (ctx: C) => boolean | Promise<boolean>): this {
 		this.middlewares.push(async (ctx, next) => {
 			if (await predicate(ctx)) await next();
 		});
+
 		return this;
 	}
 
 	/**
-	 * Run `handlers` only when `filter` matches. The filter narrows the context
-	 * (and may attach data), so handlers see `C & Add`. Compose filters with
+	 * run `handlers` only when `filter` matches. the filter narrows the context
+	 * (and may attach data), so handlers see `C & Add`. compose filters with
 	 * `and` / `or` / `not` from `@yaebal/filters`.
 	 */
 	filter<Add extends object>(
@@ -189,22 +215,23 @@ export class Composer<C extends Context = Context> {
 		...handlers: Middleware<C & Add>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
 		this.middlewares.push((ctx, next) => (filter.test(ctx) ? handler(ctx, next) : next()));
 		return this;
 	}
 
-	/** Apply a plugin. Its required context (`In`) is checked at compile time. */
+	/** apply a plugin. its required context (`In`) is checked at compile time. */
 	install<Add extends object>(
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
 	): Composer<C & Add> {
 		return plugin(this);
 	}
 
-	/** Async, per-request context enrichment. Adds `D` to the context type. */
+	/** async, per-request context enrichment. adds `D` to the context type. */
 	derive<D extends object>(fn: (ctx: C) => D | Promise<D>): Composer<C & D>;
 	/**
-	 * Scoped enrichment (the GramIO idea): `fn` runs only for the listed update
-	 * types, so irrelevant updates pay nothing. The fields are typed as optional
+	 * scoped enrichment (the GramIO idea): `fn` runs only for the listed update
+	 * types, so irrelevant updates pay nothing. the fields are typed as optional
 	 * (`Partial<D>`) since they are absent on other update types.
 	 */
 	derive<D extends object>(
@@ -216,15 +243,17 @@ export class Composer<C extends Context = Context> {
 		const scoped = typeof a !== "function";
 		const only: UpdateName[] | null = scoped ? (Array.isArray(a) ? a : [a]) : null;
 		const fn = (scoped ? b : a) as (ctx: C) => object | Promise<object>;
+
 		this.middlewares.push(async (ctx, next) => {
 			if (!only || only.includes(ctx.updateType)) Object.assign(ctx as object, await fn(ctx));
 			await next();
 		});
+
 		return this;
 	}
 
 	/**
-	 * Static context enrichment. Adds `D` to the context type.
+	 * static context enrichment. adds `D` to the context type.
 	 * NOTE: a production build would hoist this out of the per-request path entirely;
 	 * here it is applied once at the top of the chain for simplicity.
 	 */
@@ -233,16 +262,17 @@ export class Composer<C extends Context = Context> {
 			Object.assign(ctx as object, value);
 			return next();
 		});
+		
 		return this as unknown as Composer<C & D>;
 	}
 
-	/** Merge another composer in, inheriting its full context type. */
+	/** merge another composer in, inheriting its full context type. */
 	extend<C2 extends Context>(other: Composer<C2>): Composer<C & C2> {
 		this.middlewares.push(other.toMiddleware() as unknown as Middleware<C>);
 		return this as unknown as Composer<C & C2>;
 	}
 
-	/** Collapse this composer into a single middleware (used by `extend` and `Bot`). */
+	/** collapse this composer into a single middleware (used by `extend` and `Bot`). */
 	toMiddleware(): Middleware<C> {
 		const composed = compose(this.middlewares);
 		return (ctx, next) => composed(ctx, next);

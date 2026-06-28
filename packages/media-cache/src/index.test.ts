@@ -50,6 +50,7 @@ test("distinct keys cache independently", async () => {
 	const cache = mediaCache();
 	await cache.photo(ctx, "a", media.path("./a.png"));
 	await cache.photo(ctx, "b", media.path("./b.png")); // different key → uploads
+	
 	assert.equal(sent[0]?.kind, "path");
 	assert.equal(sent[1]?.kind, "path");
 });

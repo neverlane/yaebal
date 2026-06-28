@@ -37,17 +37,21 @@ test("a wizard collects input across messages and leaves", async () => {
 				(ctx: SceneContext) => {
 					collected.name = ctx.text ?? "";
 					ctx.scene.next();
+
 					asked.push("age?");
 				},
 				(ctx: SceneContext) => {
 					collected.age = ctx.text ?? "";
+
 					return ctx.scene.leave();
 				},
 			],
 		},
 	};
+
 	const storage = new MemoryStorage<{ scene: string; step: number }>();
 	let fellThrough = 0;
+
 	const mw = entry(
 		new Composer<Context>()
 			.install(scenes(defs, { storage }))
@@ -75,11 +79,13 @@ test("a wizard collects input across messages and leaves", async () => {
 
 test("messages outside a scene fall through to normal handlers", async () => {
 	let seen = "";
+
 	const mw = entry(
 		new Composer<Context>().install(scenes({ reg: { steps: [] } })).on("message:text", (ctx) => {
 			seen = ctx.text;
 		}),
 	);
+
 	await mw(msgCtx("hello", 2), noop);
 	assert.equal(seen, "hello");
 });
@@ -89,15 +95,18 @@ test("a step can switch scenes via enter()", async () => {
 		a: { steps: [(ctx: SceneContext) => ctx.scene.enter("b")] },
 		b: { steps: [(ctx: SceneContext) => ctx.scene.leave()] },
 	};
+
 	const storage = new MemoryStorage<{ scene: string; step: number }>();
 	const mw = entry(
 		new Composer<Context>()
 			.install(scenes(defs, { storage }))
 			.command("a", (ctx) => ctx.scene.enter("a")),
 	);
+
 	await mw(msgCtx("/a", 5), noop); // in scene a
 	await mw(msgCtx("go", 5), noop); // step a[0] → enter("b")
 	assert.deepEqual((await storage.get("5")) ?? null, { scene: "b", step: 0 });
+
 	await mw(msgCtx("done", 5), noop); // step b[0] → leave
 	assert.equal(await storage.get("5"), undefined);
 });
@@ -115,15 +124,18 @@ test("a step that does not advance re-runs (validation)", async () => {
 			],
 		},
 	};
+
 	const storage = new MemoryStorage<{ scene: string; step: number }>();
 	const mw = entry(
 		new Composer<Context>()
 			.install(scenes(defs, { storage }))
 			.command("ask", (ctx) => ctx.scene.enter("ask")),
 	);
+
 	await mw(msgCtx("/ask", 3), noop);
 	await mw(msgCtx("nope", 3), noop); // stays
 	assert.deepEqual((await storage.get("3")) ?? null, { scene: "ask", step: 0 });
+	
 	await mw(msgCtx("ok", 3), noop); // leaves
 	assert.equal(await storage.get("3"), undefined);
 	assert.equal(attempts, 2);

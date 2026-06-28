@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/core",
 	"version": "0.0.1",
-	"description": "YAEBAL core — type-safe, chainable Telegram Bot API framework.",
+	"description": "yaebal core — type-safe, chainable Telegram Bot API framework.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -14,6 +14,9 @@
 	"files": ["lib", "src"],
 	"dependencies": {
 		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"scripts": {
 		"build": "tsc -p tsconfig.json",

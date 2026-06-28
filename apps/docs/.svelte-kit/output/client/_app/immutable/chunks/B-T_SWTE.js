@@ -1,1 +1,0 @@
-import{g as r,d as a,h as s}from"./CILFtpHi.js";let e=s("dark");const m={get value(){return r(e)},init(){{const t=localStorage.getItem("theme");a(e,t??"dark",!0)}},set(t){a(e,t,!0),document.documentElement.setAttribute("data-theme",t),localStorage.setItem("theme",t)},toggle(){this.set(r(e)==="dark"?"light":"dark")}};export{m as t};

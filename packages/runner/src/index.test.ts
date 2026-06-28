@@ -6,9 +6,11 @@ const tick = () => new Promise<void>((r) => setTimeout(r, 0));
 
 function deferred() {
 	let resolve!: () => void;
+
 	const promise = new Promise<void>((r) => {
 		resolve = r;
 	});
+
 	return { promise, resolve };
 }
 
@@ -21,11 +23,14 @@ test("scheduler: same key runs in order, never overlapping", async () => {
 	s.submit("A", async () => {
 		log.push("a1-start");
 		await a1.promise;
+
 		log.push("a1-end");
 	});
+
 	s.submit("A", async () => {
 		log.push("a2-start");
 		await a2.promise;
+
 		log.push("a2-end");
 	});
 
@@ -68,26 +73,34 @@ test("scheduler: different keys run concurrently up to the limit", async () => {
 test("scheduler: whenBelow gates backpressure", async () => {
 	const s = createScheduler(10);
 	const g = deferred();
+
 	for (let i = 0; i < 3; i++) s.submit(undefined, async () => await g.promise);
 	assert.equal(s.size(), 3);
+
 	let below = false;
 	void s.whenBelow(2).then(() => {
 		below = true;
 	});
+
 	await tick();
 	assert.equal(below, false);
+
 	g.resolve();
+
 	await s.idle();
 	await tick();
+
 	assert.equal(below, true);
 });
 
 test("chatKey: pulls chat id from common update shapes", () => {
 	assert.equal(chatKey({ update_id: 1, message: { chat: { id: 7 } } } as never), 7);
+
 	assert.equal(
 		chatKey({ update_id: 2, callback_query: { message: { chat: { id: 9 } } } } as never),
 		9,
 	);
+
 	assert.equal(chatKey({ update_id: 3, callback_query: { from: { id: 5 } } } as never), 5);
 	assert.equal(chatKey({ update_id: 4 } as never), undefined);
 });
@@ -101,14 +114,17 @@ test("run: processes a batch, keeps per-chat order, advances offset, drains on s
 		api: {
 			async getUpdates(params?: Record<string, unknown>) {
 				offsets.push(Number(params?.offset ?? 0));
+
 				if (!delivered) {
 					delivered = true;
+
 					return [
 						{ update_id: 1, message: { chat: { id: 7 } } },
 						{ update_id: 2, message: { chat: { id: 7 } } },
 						{ update_id: 3, message: { chat: { id: 8 } } },
 					] as never;
 				}
+
 				await tick();
 				return [] as never;
 			},
@@ -120,8 +136,10 @@ test("run: processes a batch, keeps per-chat order, advances offset, drains on s
 	};
 
 	const handle = run(bot, { concurrency: 5, timeout: 0 });
+
 	await tick();
 	await tick();
+	
 	await handle.stop();
 
 	assert.ok(order.includes(1) && order.includes(2) && order.includes(3));

@@ -9,6 +9,7 @@ const entry = <C extends Context>(c: Composer<C>) =>
 
 test("MemoryPanelStore records, preserves names, sorts and reads history", () => {
 	const s = new MemoryPanelStore();
+
 	s.record({ id: 1, name: "@a" }, { direction: "in", text: "hi", date: 10 });
 	s.record({ id: 1 }, { direction: "out", text: "yo", date: 20 }); // no name → keep "@a"
 	s.record({ id: 2, name: "@b" }, { direction: "in", text: "hey", date: 30 });
@@ -21,8 +22,10 @@ test("MemoryPanelStore records, preserves names, sorts and reads history", () =>
 
 test("recorder logs incoming private text into the store", async () => {
 	const store = new MemoryPanelStore();
+
 	const api = {} as never;
 	const mw = entry(new Composer<Context>().install(recorder(store)));
+
 	const ctx = new Context({
 		api,
 		update: {
@@ -37,9 +40,11 @@ test("recorder logs incoming private text into the store", async () => {
 		} as never,
 		updateType: "message",
 	});
+
 	await mw(ctx, noop);
 
 	const hist = store.history(5);
+
 	assert.equal(hist.length, 1);
 	assert.equal(hist[0]?.text, "hello");
 	assert.equal(hist[0]?.direction, "in");
@@ -54,29 +59,35 @@ function fakePanel() {
 			return Promise.resolve({ message_id: 1 });
 		},
 	};
+
 	const store = new MemoryPanelStore();
 	store.record({ id: 1, name: "@sam" }, { direction: "in", text: "hi", date: 1 });
+
 	return { handler: panelHandler(api, store, { token: "secret" }), sent, store };
 }
 
 test("panelHandler refuses to construct with an empty token", () => {
 	const store = new MemoryPanelStore();
 	const api = { sendMessage: () => Promise.resolve({}) };
+
 	assert.throws(() => panelHandler(api, store, { token: "" }), /non-empty token/);
 });
 
 test("panel API rejects requests without the token", async () => {
 	const { handler } = fakePanel();
 	const res = await handler(new Request("http://x/api/chats"));
+
 	assert.equal(res.status, 401);
 });
 
 test("panel API lists chats and serves the UI with a token", async () => {
 	const { handler } = fakePanel();
+
 	const chatsRes = await handler(
 		new Request("http://x/api/chats", { headers: { authorization: "Bearer secret" } }),
 	);
 	assert.equal(chatsRes.status, 200);
+
 	const chats = (await chatsRes.json()) as Array<{ name: string }>;
 	assert.equal(chats[0]?.name, "@sam");
 
@@ -87,6 +98,7 @@ test("panel API lists chats and serves the UI with a token", async () => {
 
 test("panel send posts via the api and logs an outgoing message", async () => {
 	const { handler, sent, store } = fakePanel();
+
 	const res = await handler(
 		new Request("http://x/api/chats/1/send?token=secret", {
 			method: "POST",
@@ -96,6 +108,7 @@ test("panel send posts via the api and logs an outgoing message", async () => {
 	);
 	assert.equal(res.status, 200);
 	assert.deepEqual(sent, [{ chat_id: 1, text: "yo" }]);
+	
 	const last = store.history(1).at(-1);
 	assert.equal(last?.direction, "out");
 	assert.equal(last?.text, "yo");

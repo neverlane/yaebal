@@ -1,4 +1,4 @@
-/** The operator panel UI — a single static page that talks to the panel API. */
+/** the operator panel ui — a single static page that talks to the panel api. */
 export const PANEL_HTML = `<!doctype html>
 <html lang="en">
 <head>

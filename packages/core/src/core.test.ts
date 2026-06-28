@@ -77,6 +77,7 @@ test("webhookCallback dispatches a POSTed update and guards method/secret", asyn
 			body,
 		}),
 	);
+
 	assert.equal(ok.status, 200);
 	assert.deepEqual(seen, [7]);
 
@@ -98,6 +99,7 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	const bot = new Bot("123:abc").on("message:text", (ctx) => {
 		seen = ctx.text;
 	});
+	
 	await bot.handleUpdate({
 		update_id: 1,
 		message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },

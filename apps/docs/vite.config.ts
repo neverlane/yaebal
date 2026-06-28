@@ -1,7 +1,32 @@
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, readdirSync, readFileSync } from "node:fs";
 import { extname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { type Plugin, defineConfig } from "vite";
+
+interface PackageJson {
+	name?: unknown;
+}
+
+const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+const packagesRoot = join(repoRoot, "packages");
+
+const workspaceAliases = readdirSync(packagesRoot, { withFileTypes: true }).flatMap((entry) => {
+	if (!entry.isDirectory()) return [];
+
+	const packageJsonPath = join(packagesRoot, entry.name, "package.json");
+	if (!existsSync(packageJsonPath)) return [];
+
+	const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as PackageJson;
+	if (typeof packageJson.name !== "string") return [];
+
+	return [
+		{
+			find: packageJson.name,
+			replacement: join(packagesRoot, entry.name, "src", "index.ts"),
+		},
+	];
+});
 
 // Pagefind only exists after `pagefind --site build` writes it into `build/pagefind`.
 // `vite dev` never produces it, so search would be dead in dev. This middleware serves
@@ -21,8 +46,10 @@ const pagefindDev = (): Plugin => ({
 		server.middlewares.use("/pagefind", (req, res, next) => {
 			const rel = (req.url ?? "/").split("?")[0] ?? "/";
 			const file = join(process.cwd(), "build", "pagefind", rel);
+
 			if (!file.startsWith(join(process.cwd(), "build", "pagefind")) || !existsSync(file))
 				return next();
+			
 			res.setHeader("content-type", types[extname(file)] ?? "application/octet-stream");
 			createReadStream(file).pipe(res);
 		});
@@ -30,5 +57,8 @@ const pagefindDev = (): Plugin => ({
 });
 
 export default defineConfig({
+	resolve: {
+		alias: workspaceAliases,
+	},
 	plugins: [sveltekit(), pagefindDev()],
 });

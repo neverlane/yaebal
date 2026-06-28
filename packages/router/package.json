@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/router",
 	"version": "0.0.1",
-	"description": "YAEBAL file-based routing — load handlers from a routes/ directory by convention.",
+	"description": "yaebal file-based routing — load handlers from a routes/ directory by convention.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

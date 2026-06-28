@@ -5,15 +5,18 @@ import { deleteWebhook, setWebhook, webhook } from "./index.js";
 const sink = () => {
 	const updates: unknown[] = [];
 	const bot = { handleUpdate: async (u: never) => void updates.push(u) };
+
 	return { bot, updates };
 };
 
 const post = (body: unknown, headers: Record<string, string> = {}) =>
-	new Request("https://x.dev/", { method: "POST", body: JSON.stringify(body), headers });
+	new Request("https://example.dev/", { method: "POST", body: JSON.stringify(body), headers });
 
 test("webhook handler dispatches POSTed updates", async () => {
 	const { bot, updates } = sink();
+
 	const res = await webhook(bot)(post({ update_id: 1, message: { text: "hi" } }));
+
 	assert.equal(res.status, 200);
 	assert.equal(updates.length, 1);
 });
@@ -22,7 +25,7 @@ test("webhook handler rejects non-POST and bad secret", async () => {
 	const { bot, updates } = sink();
 	const handler = webhook(bot, { secretToken: "s3cret" });
 
-	const get = await handler(new Request("https://x.dev/", { method: "GET" }));
+	const get = await handler(new Request("https://example.dev/", { method: "GET" }));
 	assert.equal(get.status, 405);
 
 	const bad = await handler(post({ update_id: 1 }, { "x-telegram-bot-api-secret-token": "nope" }));
@@ -44,13 +47,14 @@ test("setWebhook / deleteWebhook call the Bot API", async () => {
 		},
 	};
 
-	await setWebhook(bot, "https://x.dev/hook", {
+	await setWebhook(bot, "https://example.dev/hook", {
 		secretToken: "s3cret",
 		allowedUpdates: ["message"],
 		dropPendingUpdates: true,
 	});
+
 	assert.equal(calls[0]?.method, "setWebhook");
-	assert.equal(calls[0]?.params?.url, "https://x.dev/hook");
+	assert.equal(calls[0]?.params?.url, "https://example.dev/hook");
 	assert.equal(calls[0]?.params?.secret_token, "s3cret");
 	assert.deepEqual(calls[0]?.params?.allowed_updates, ["message"]);
 	assert.equal(calls[0]?.params?.drop_pending_updates, true);

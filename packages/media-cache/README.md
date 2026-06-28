@@ -1,6 +1,6 @@
 # @yaebal/media-cache
 
-Where to keep `key → file_id`. Defaults to in-memory (lost on restart).
+where to keep `key → file_id`. defaults to in-memory (lost on restart).
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/media-cache
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

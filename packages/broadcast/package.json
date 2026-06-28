@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/broadcast",
 	"version": "0.0.1",
-	"description": "YAEBAL broadcast — send a message to many chats, counting successes and failures.",
+	"description": "yaebal broadcast — send a message to many chats, counting successes and failures.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"composite": true
+		"composite": true,
+		"types": ["node"]
 	},
 	"references": [{ "path": "../types" }],
 	"include": ["src/**/*.ts"]

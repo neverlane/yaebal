@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { onMount } from "svelte";
+
 	import { type ChatMessage, renderChat } from "@yaebal/preview";
+
 	import { base } from "$app/paths";
 	import { page } from "$app/stores";
-	import { onMount } from "svelte";
+
 	import MonacoEditor from "$lib/MonacoEditor.svelte";
 	import { EXAMPLES } from "$lib/examples";
+
 	import type { Step } from "$lib/playground";
 	import { type LiveSession, type LogLine, runUserCode, startLive } from "$lib/playground-run";
 	import {
@@ -41,7 +45,7 @@
 
 	let live = $state<LiveSession | null>(null);
 	let liveMsgs = $state<ChatMessage[]>([]);
-	// the playground is its own dark surface regardless of the docs theme
+
 	const theme = "dark" as const;
 	let chatBox = $state<HTMLDivElement>();
 
@@ -53,22 +57,27 @@
 
 	function startResize(which: 1 | 2, e: PointerEvent) {
 		e.preventDefault();
+
 		const move = (ev: PointerEvent) => {
 			const r = gridEl?.getBoundingClientRect();
+
 			if (!r) return;
 			if (which === 1) sideW = Math.max(150, Math.min(380, ev.clientX - r.left));
 			else {
 				const start = r.left + sideW + 14;
 				const w = r.right - start;
+
 				split = Math.max(0.22, Math.min(0.78, (ev.clientX - start) / w));
 			}
 		};
+
 		const up = () => {
 			window.removeEventListener("pointermove", move);
 			window.removeEventListener("pointerup", up);
 			document.body.style.cursor = "";
 			document.body.style.userSelect = "";
 		};
+
 		window.addEventListener("pointermove", move);
 		window.addEventListener("pointerup", up);
 		document.body.style.cursor = "col-resize";
@@ -90,15 +99,16 @@ bot.start();`;
 
 		const exId = $page.url.searchParams.get("ex");
 		const ex = (exId && EXAMPLES[exId]) || EXAMPLES["getting-started"];
+
 		if (!projects.length && ex) {
 			projects = [newProject(ex.title, ex.code)];
 			saveProjects(projects);
 		}
+
 		const first = projects[0];
 		activeId = first?.id ?? "";
 		code = first?.code ?? ex?.code ?? "";
 
-		// a shared ?code= link wins, loading straight into the editor
 		const shared = $page.url.searchParams.get("code");
 		if (shared) {
 			try {
@@ -112,9 +122,9 @@ bot.start();`;
 		runMock();
 	});
 
-	// persist code edits back into the active project
 	$effect(() => {
 		const p = projects.find((x) => x.id === activeId);
+
 		if (p && p.code !== code) {
 			p.code = code;
 			saveProjects(projects);
@@ -123,6 +133,7 @@ bot.start();`;
 
 	async function runMock() {
 		busy = true;
+
 		const res = await runUserCode(code, steps, chatW(), theme);
 		svg = res.svg;
 		logs = res.logs;
@@ -139,17 +150,21 @@ bot.start();`;
 			live.stop();
 			live = null;
 			logs = [...logs, { level: "log", text: "stopped." }];
+
 			return;
 		}
+
 		const tok = tokens.find((t) => t.id === activeTokenId);
 		if (!tok) {
 			error = "select a bot token first";
 			return;
 		}
+
 		error = "";
 		liveMsgs = [];
 		svg = "";
 		logs = [];
+
 		try {
 			live = await startLive(
 				code,
@@ -175,22 +190,27 @@ bot.start();`;
 	function send() {
 		const t = msg.trim();
 		if (!t || mode !== "mock") return;
+
 		steps = [...steps, { user: t }];
 		msg = "";
+
 		runMock();
 	}
 
 	function addProject() {
 		const p = newProject("untitled", EMPTY);
 		projects = [...projects, p];
+
 		saveProjects(projects);
 		switchProject(p.id);
 	}
 	function switchProject(id: string) {
 		const p = projects.find((x) => x.id === id);
 		if (!p) return;
+
 		activeId = id;
 		code = p.code;
+
 		if (mode === "mock") runMock();
 	}
 	function renameProject(p: Project) {
@@ -203,16 +223,20 @@ bot.start();`;
 	function deleteProject(id: string) {
 		projects = projects.filter((p) => p.id !== id);
 		saveProjects(projects);
+
 		if (activeId === id) switchProject(projects[0]?.id ?? "");
 	}
 
 	function addToken() {
 		if (!newTok.trim()) return;
+
 		const t = newToken(newLabel.trim() || "bot", newTok.trim());
 		tokens = [...tokens, t];
 		saveTokens(tokens);
+
 		activeTokenId = t.id;
 		saveActiveToken(t.id);
+
 		newLabel = "";
 		newTok = "";
 	}
@@ -228,6 +252,7 @@ bot.start();`;
 	async function share() {
 		const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(code)));
 		const url = `${location.origin}${base}/playground?code=${encodeURIComponent(b64)}`;
+
 		try {
 			await navigator.clipboard.writeText(url);
 			copied = true;
@@ -384,11 +409,13 @@ bot.start();`;
 		padding: 0 4px;
 		flex: none;
 	}
+
 	.brand {
 		display: flex;
 		align-items: center;
 		gap: 11px;
 	}
+
 	.home {
 		width: 30px;
 		height: 30px;
@@ -400,15 +427,18 @@ bot.start();`;
 		box-shadow: var(--button-box-shadow);
 		transition: background 0.16s ease, color 0.16s ease;
 	}
+
 	.home:hover {
 		color: var(--secondary);
 		background: var(--button-hover);
 	}
+
 	.logo {
 		font-size: 16px;
 		font-weight: 600;
 		color: var(--secondary);
 	}
+
 	.chip {
 		font-size: 10px;
 		font-weight: 600;
@@ -420,11 +450,13 @@ bot.start();`;
 		padding: 4px 10px;
 		border-radius: 999px;
 	}
+
 	.top-r {
 		display: flex;
 		align-items: center;
 		gap: 12px;
 	}
+
 	.share {
 		font-size: 12px;
 		font-weight: 500;
@@ -435,9 +467,11 @@ bot.start();`;
 		box-shadow: var(--button-box-shadow);
 		transition: background 0.16s ease;
 	}
+
 	.share:hover {
 		background: var(--button-hover);
 	}
+
 	.hint {
 		font-size: 11px;
 		color: var(--gray);
@@ -450,10 +484,12 @@ bot.start();`;
 		grid-template-columns: var(--cols);
 		gap: 0;
 	}
+
 	.resizer {
 		cursor: col-resize;
 		position: relative;
 	}
+
 	.resizer::after {
 		content: "";
 		position: absolute;
@@ -461,23 +497,29 @@ bot.start();`;
 		border-radius: 2px;
 		transition: background 0.15s;
 	}
+
 	.resizer:hover::after {
 		background: var(--content-border);
 	}
+
 	@media (max-width: 900px) {
 		.pg {
 			height: auto;
 		}
+
 		.grid {
 			grid-template-columns: 1fr;
 		}
+
 		.resizer {
 			display: none;
 		}
+
 		.side,
 		.pane {
 			height: auto;
 		}
+
 		.editor {
 			min-height: 360px;
 		}
@@ -494,6 +536,7 @@ bot.start();`;
 		border-radius: var(--border-radius);
 		overflow: hidden;
 	}
+
 	.side {
 		padding: 10px;
 		gap: 1px;
@@ -510,9 +553,11 @@ bot.start();`;
 		letter-spacing: 0.6px;
 		margin: 12px 6px 6px;
 	}
+
 	.side-h:first-child {
 		margin-top: 2px;
 	}
+
 	.projects {
 		list-style: none;
 		margin: 0;
@@ -521,6 +566,7 @@ bot.start();`;
 		flex-direction: column;
 		gap: 1px;
 	}
+
 	.projects li {
 		display: flex;
 		align-items: center;
@@ -528,12 +574,15 @@ bot.start();`;
 		padding-left: 4px;
 		transition: background 0.12s;
 	}
+
 	.projects li:hover {
 		background: var(--button);
 	}
+
 	.projects li.active {
 		background: var(--secondary);
 	}
+
 	.pname {
 		flex: 1;
 		min-width: 0;
@@ -547,14 +596,17 @@ bot.start();`;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
+
 	.projects li.active .pname {
 		color: var(--primary);
 		font-weight: 500;
 	}
+
 	.projects li.active .mini {
 		color: var(--primary);
 		opacity: 0.7;
 	}
+
 	.mini {
 		width: 24px;
 		height: 24px;
@@ -566,6 +618,7 @@ bot.start();`;
 		border-radius: 7px;
 		flex: none;
 	}
+
 	.mini:hover {
 		color: var(--secondary);
 		background: var(--button-hover);
@@ -581,12 +634,14 @@ bot.start();`;
 		font-size: 12px;
 		outline: none;
 	}
+
 	.tok-manage {
 		padding: 8px 2px 0;
 		display: flex;
 		flex-direction: column;
 		gap: 6px;
 	}
+
 	.tok-row {
 		display: flex;
 		justify-content: space-between;
@@ -595,6 +650,7 @@ bot.start();`;
 		padding-left: 4px;
 		color: var(--secondary);
 	}
+
 	.ti {
 		width: 100%;
 		padding: 8px 10px;
@@ -606,10 +662,12 @@ bot.start();`;
 		outline: none;
 		transition: box-shadow 0.16s ease;
 	}
+
 	.ti:focus {
 		outline: var(--focus-ring);
 		outline-offset: var(--focus-ring-offset);
 	}
+
 	.add {
 		font-size: 12px;
 		padding: 7px;
@@ -618,9 +676,11 @@ bot.start();`;
 		box-shadow: var(--button-box-shadow);
 		color: var(--button-text);
 	}
+
 	.add:hover {
 		background: var(--button-hover);
 	}
+
 	.note {
 		font-size: 10px;
 		color: var(--gray);
@@ -636,12 +696,14 @@ bot.start();`;
 		border-bottom: 1px solid var(--code-stroke);
 		flex: none;
 	}
+
 	.label {
 		font-size: 11px;
 		color: var(--gray);
 		text-transform: uppercase;
 		letter-spacing: 0.5px;
 	}
+
 	.dot {
 		font-size: 11px;
 		color: var(--green);
@@ -655,6 +717,7 @@ bot.start();`;
 		border-radius: var(--border-radius);
 		padding: 3.5px;
 	}
+
 	.seg button {
 		font-size: 12px;
 		padding: 5px 15px;
@@ -664,6 +727,7 @@ bot.start();`;
 		color: var(--gray);
 		transition: background 0.16s ease, color 0.16s ease;
 	}
+
 	.seg button.on {
 		background: var(--secondary);
 		color: var(--primary);
@@ -679,12 +743,15 @@ bot.start();`;
 		box-shadow: none;
 		transition: opacity 0.16s ease;
 	}
+
 	.run:hover {
 		opacity: 0.86;
 	}
+
 	.run:disabled {
 		opacity: 0.5;
 	}
+
 	.run.danger {
 		color: var(--white);
 		background: var(--red);
@@ -703,21 +770,25 @@ bot.start();`;
 		display: flex;
 		flex-direction: column;
 	}
+
 	.chat-svg {
 		animation: fade 0.25s ease;
 	}
+
 	.chat :global(svg) {
 		display: block;
 		width: 100%;
 		height: auto;
 		border-radius: 14px;
 	}
+
 	@keyframes fade {
 		from {
 			opacity: 0;
 			transform: translateY(4px);
 		}
 	}
+
 	.empty {
 		margin: auto;
 		display: flex;
@@ -727,10 +798,12 @@ bot.start();`;
 		color: var(--gray);
 		font-size: 12px;
 	}
+
 	.empty .emoji {
 		font-size: 30px;
 		opacity: 0.55;
 	}
+
 	.err {
 		margin: 0;
 		padding: 12px 14px;
@@ -748,6 +821,7 @@ bot.start();`;
 		padding: 10px 12px;
 		border-top: 1px solid var(--code-stroke);
 	}
+
 	.msg {
 		flex: 1;
 		min-width: 0;
@@ -759,10 +833,12 @@ bot.start();`;
 		font-size: 13px;
 		outline: none;
 	}
+
 	.msg:focus {
 		outline: var(--focus-ring);
 		outline-offset: var(--focus-ring-offset);
 	}
+
 	.send {
 		width: 42px;
 		flex: none;
@@ -772,6 +848,7 @@ bot.start();`;
 		color: var(--secondary);
 		font-size: 15px;
 	}
+
 	.send:hover {
 		background: var(--button-hover);
 	}
@@ -784,6 +861,7 @@ bot.start();`;
 		border-top: 1px solid var(--code-stroke);
 		background: var(--primary);
 	}
+
 	.console-bar {
 		display: flex;
 		justify-content: space-between;
@@ -792,16 +870,19 @@ bot.start();`;
 		border-bottom: 1px solid var(--code-stroke);
 		flex: none;
 	}
+
 	.cbar-l {
 		display: flex;
 		align-items: center;
 		gap: 7px;
 	}
+
 	.ctitle {
 		font-size: 11px;
 		font-weight: 600;
 		color: var(--secondary);
 	}
+
 	.count {
 		font-size: 10px;
 		min-width: 16px;
@@ -811,6 +892,7 @@ bot.start();`;
 		background: var(--button);
 		color: var(--gray);
 	}
+
 	.cclear {
 		font-size: 11px;
 		padding: 3px 9px;
@@ -819,25 +901,30 @@ bot.start();`;
 		box-shadow: none;
 		color: var(--gray);
 	}
+
 	.cclear:hover:not(:disabled) {
 		background: var(--button);
 		color: var(--secondary);
 	}
+
 	.cclear:disabled {
 		opacity: 0.4;
 	}
+
 	.clog {
 		flex: 1;
 		min-height: 0;
 		overflow-y: auto;
 		padding: 4px 0;
 	}
+
 	.cempty {
 		padding: 10px 14px;
 		font-size: 12px;
 		color: var(--gray);
 		opacity: 0.6;
 	}
+
 	.line {
 		display: flex;
 		gap: 9px;
@@ -847,12 +934,15 @@ bot.start();`;
 		line-height: 1.55;
 		border-bottom: 1px solid var(--code-stroke);
 	}
+
 	.line.warn {
 		background: rgba(241, 179, 56, 0.06);
 	}
+
 	.line.error {
 		background: rgba(237, 34, 54, 0.06);
 	}
+
 	.lv {
 		flex: none;
 		width: 3px;
@@ -860,20 +950,25 @@ bot.start();`;
 		border-radius: 2px;
 		background: transparent;
 	}
+
 	.lv-warn {
 		background: var(--gold);
 	}
+
 	.lv-error {
 		background: var(--red);
 	}
+
 	.ltext {
 		white-space: pre-wrap;
 		word-break: break-word;
 		color: var(--secondary);
 	}
+
 	.line.warn .ltext {
 		color: var(--gold);
 	}
+	
 	.line.error .ltext {
 		color: var(--red);
 	}

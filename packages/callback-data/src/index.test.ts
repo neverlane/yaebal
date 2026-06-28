@@ -6,6 +6,7 @@ const cd = callbackData("user", { id: Number, action: String, admin: Boolean });
 
 test("round-trips with typed coercion", () => {
 	const raw = cd.pack({ id: 5, action: "ban", admin: true });
+
 	assert.equal(raw, "user:5:ban:true");
 	assert.deepEqual(cd.unpack(raw), { id: 5, action: "ban", admin: true });
 });
@@ -35,6 +36,7 @@ test("rejects a prefix containing the separator", () => {
 
 test("prefix-only schema matches exactly", () => {
 	const ping = callbackData("ping", {});
+	
 	assert.equal(ping.pack({}), "ping");
 	assert.deepEqual(ping.unpack("ping"), {});
 	assert.ok(ping.filter("ping"));

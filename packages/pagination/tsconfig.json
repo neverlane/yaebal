@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"composite": true
+		"composite": true,
+		"types": ["node"]
 	},
 	"references": [{ "path": "../core" }, { "path": "../keyboard" }, { "path": "../callback-data" }],
 	"include": ["src/**/*.ts"]

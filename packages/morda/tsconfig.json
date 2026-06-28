@@ -4,9 +4,9 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"composite": true,
+		"types": ["node"],
 		"jsx": "react-jsx",
 		"jsxImportSource": "@yaebal/morda",
-		"baseUrl": ".",
 		"paths": {
 			"@yaebal/morda/jsx-runtime": ["./src/jsx/jsx-runtime.ts"]
 		}

@@ -11,6 +11,7 @@ const api = {} as never;
 const cmdCtx = (text: string) =>
 	new Context({
 		api,
+
 		update: {
 			update_id: 1,
 			message: {
@@ -21,6 +22,7 @@ const cmdCtx = (text: string) =>
 				text,
 			},
 		} as never,
+
 		updateType: "message",
 	});
 
@@ -28,6 +30,7 @@ test("list() yields the {command, description} menu", () => {
 	const cmd = commands()
 		.add("start", "start the bot", () => {})
 		.add("help", "show help", () => {});
+
 	assert.deepEqual(cmd.list(), [
 		{ command: "start", description: "start the bot" },
 		{ command: "help", description: "show help" },
@@ -36,11 +39,14 @@ test("list() yields the {command, description} menu", () => {
 
 test("plugin() registers the handlers", async () => {
 	let started = false;
+
 	const cmd = commands().add("start", "start", () => {
 		started = true;
 	});
+
 	const mw = entry(new Composer<Context>().install(cmd.plugin()));
 	await mw(cmdCtx("/start"), noop);
+
 	assert.equal(started, true);
 });
 
@@ -52,8 +58,10 @@ test("register() pushes the list via setMyCommands", async () => {
 			return Promise.resolve(true);
 		},
 	};
+
 	const cmd = commands().add("start", "go", () => {});
 	await cmd.register(fakeApi as never, { languageCode: "en" });
+	
 	assert.deepEqual(calls, [
 		{
 			method: "setMyCommands",

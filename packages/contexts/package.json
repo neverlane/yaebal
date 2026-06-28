@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/contexts",
 	"version": "0.0.1",
-	"description": "YAEBAL contexts — per-update context classes with auto-generated shortcut methods.",
+	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -21,6 +21,9 @@
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

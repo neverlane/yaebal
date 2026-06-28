@@ -1,7 +1,7 @@
 import type { MessageEntity } from "./telegram-types.js";
 
 /**
- * Formatting without `parse_mode`: tagged template literals that build proper
+ * formatting without `parse_mode`: tagged template literals that build proper
  * `MessageEntity` objects, so there is nothing to escape (the GramIO idea).
  */
 export interface FormatResult {
@@ -9,7 +9,7 @@ export interface FormatResult {
 	entities: MessageEntity[];
 }
 
-/** A piece of text that carries its own entities, used inside `format`. */
+/** a piece of text that carries its own entities, used inside `format`. */
 export class Stringable implements FormatResult {
 	constructor(
 		readonly text: string,
@@ -29,7 +29,7 @@ function isFormatResult(value: unknown): value is FormatResult {
 	);
 }
 
-/** Stitches the literal parts and interpolations into one `{ text, entities }`. */
+/** stitches the literal parts and interpolations into one `{ text, entities }`. */
 export function format(strings: TemplateStringsArray, ...subs: Insertable[]): FormatResult {
 	let text = "";
 	const entities: MessageEntity[] = [];
@@ -43,6 +43,7 @@ export function format(strings: TemplateStringsArray, ...subs: Insertable[]): Fo
 
 			if (isFormatResult(sub)) {
 				text += sub.text;
+				
 				for (const entity of sub.entities) {
 					entities.push({ ...entity, offset: entity.offset + offset });
 				}

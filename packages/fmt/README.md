@@ -1,6 +1,6 @@
 # @yaebal/fmt
 
-`html` and `md` tagged template literals that parse Telegram's markup subset into `MessageEntity` objects — no `parse_mode`, no manual escaping.
+`html` and `md` tagged template literals that parse telegram's markup subset into `MessageEntity` objects — no `parse_mode`, no manual escaping.
 
 ## install
 
@@ -29,3 +29,7 @@ bot.command("mix", (ctx) =>
   ctx.send(html`welcome, ${bold(ctx.who)}!`),
 );
 ```
+
+---
+
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

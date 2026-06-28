@@ -1,14 +1,16 @@
 import type { Context, Plugin } from "@yaebal/core";
 import { PANEL_HTML } from "./panel-html.js";
 
-/** Keep at most this many messages per chat in the in-memory store. */
+/** keep at most this many messages per chat in the in-memory store. */
 const MAX_HISTORY = 1000;
 
-/** Constant-time compare (pure JS — runs on Node, Bun, Deno and edge/web). */
+/** constant-time compare (pure js — runs on node, bun, deno and edge/web). */
 function safeEqual(a: string, b: string): boolean {
 	if (a.length !== b.length) return false;
+
 	let diff = 0;
 	for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+
 	return diff === 0;
 }
 
@@ -27,23 +29,26 @@ export interface PanelChat {
 	lastDate: number;
 }
 
-/** Where conversations are kept for the panel to read. Implement for persistence. */
+/** where conversations are kept for the panel to read. implement for persistence. */
 export interface PanelStore {
 	record(chat: { id: number; name?: string }, message: PanelMessage): void | Promise<void>;
 	chats(): PanelChat[] | Promise<PanelChat[]>;
 	history(chatId: number): PanelMessage[] | Promise<PanelMessage[]>;
 }
 
-/** Default in-memory store. Lost on restart — swap for a persistent one in production. */
+/** defaults to in-memory store. Lost on restart — swap for a persistent one in production. */
 export class MemoryPanelStore implements PanelStore {
 	#chats = new Map<number, PanelChat>();
 	#messages = new Map<number, PanelMessage[]>();
 
 	record(chat: { id: number; name?: string }, message: PanelMessage): void {
 		const list = this.#messages.get(chat.id) ?? [];
+
 		list.push(message);
 		if (list.length > MAX_HISTORY) list.shift();
+
 		this.#messages.set(chat.id, list);
+
 		const prev = this.#chats.get(chat.id);
 		this.#chats.set(chat.id, {
 			id: chat.id,
@@ -62,23 +67,27 @@ export class MemoryPanelStore implements PanelStore {
 	}
 }
 
-/** Records incoming private-chat text into the store so the panel can show it. */
+/** records incoming private-chat text into the store so the panel can show it. */
 export function recorder(store: PanelStore): Plugin<Context, Record<never, never>> {
 	const plugin: Plugin<Context, Record<never, never>> = (composer) =>
 		composer.use(async (ctx, next) => {
 			const text = ctx.text;
 			const chat = ctx.chat;
+
 			if (text !== undefined && chat?.type === "private") {
 				const name = ctx.from?.username
 					? `@${ctx.from.username}`
 					: (ctx.from?.first_name ?? `chat ${chat.id}`);
+
 				await store.record(
 					{ id: chat.id, name },
 					{ direction: "in", text, date: Math.floor(Date.now() / 1000) },
 				);
 			}
+
 			await next();
 		});
+
 	return plugin;
 }
 
@@ -87,7 +96,7 @@ interface SendApi {
 }
 
 export interface PanelOptions {
-	/** Shared secret required to open the panel and call its API. */
+	/** shared secret required to open the panel and call its api. */
 	token: string;
 }
 
@@ -98,9 +107,9 @@ const json = (data: unknown, status = 200): Response =>
 	});
 
 /**
- * A fetch-style handler for the operator panel: serves the UI at `/`, and a small
- * API to list chats, read a conversation, and send a reply. Mount it on any
- * fetch-compatible server. Open it at `/?token=<your token>`.
+ * a fetch-style handler for the operator panel: serves the ui at `/`, and a small
+ * api to list chats, read a conversation, and send a reply. mount it on any
+ * fetch-compatible server. open it at `/?token=<your token>`.
  */
 export function panelHandler(
 	api: SendApi,
@@ -115,6 +124,7 @@ export function panelHandler(
 			url.searchParams.get("token") ??
 			request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ??
 			"";
+
 		// fail closed: reject empty/missing tokens and use a constant-time compare
 		if (!provided || !safeEqual(provided, options.token)) {
 			return new Response("unauthorized", { status: 401 });
@@ -132,25 +142,32 @@ export function panelHandler(
 				},
 			});
 		}
+
 		if (url.pathname === "/api/chats" && request.method === "GET") {
 			return json(await store.chats());
 		}
+
 		const get = url.pathname.match(/^\/api\/chats\/(-?\d+)$/);
 		if (get?.[1] && request.method === "GET") {
 			return json(await store.history(Number(get[1])));
 		}
+
 		const send = url.pathname.match(/^\/api\/chats\/(-?\d+)\/send$/);
 		if (send?.[1] && request.method === "POST") {
 			const chatId = Number(send[1]);
 			const body = (await request.json().catch(() => ({}))) as { text?: string };
+
 			if (!body.text) return json({ error: "text required" }, 400);
+
 			await api.sendMessage({ chat_id: chatId, text: body.text });
 			await store.record(
 				{ id: chatId },
 				{ direction: "out", text: body.text, date: Math.floor(Date.now() / 1000) },
 			);
+
 			return json({ ok: true });
 		}
+		
 		return json({ error: "not found" }, 404);
 	};
 }

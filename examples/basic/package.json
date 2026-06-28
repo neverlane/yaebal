@@ -21,5 +21,8 @@
 		"@yaebal/throttle": "workspace:*",
 		"@yaebal/filters": "workspace:*",
 		"@yaebal/fmt": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	}
 }

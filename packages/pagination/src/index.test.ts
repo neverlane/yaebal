@@ -29,6 +29,7 @@ function fakeApi() {
 			return Promise.resolve(true);
 		},
 	} as never;
+
 	return { api, calls };
 }
 
@@ -62,7 +63,9 @@ const nextData = (params: any): string => {
 	const rows = params.reply_markup.inline_keyboard as Array<
 		Array<{ text: string; callback_data: string }>
 	>;
+
 	for (const row of rows) for (const b of row) if (b.text === "▶") return b.callback_data;
+
 	throw new Error("no next button");
 };
 
@@ -76,13 +79,16 @@ const list = pagination<number>({
 test("send renders the first page with a next button only", async () => {
 	const { api, calls } = fakeApi();
 	await list.send(msgCtx(api));
+
 	const sent = calls.find((c) => c.method === "sendMessage");
 	assert.match(sent?.params.text, /page 1\/3/);
 	assert.match(sent?.params.text, /0: 0/);
 	assert.match(sent?.params.text, /4: 4/);
 	assert.doesNotMatch(sent?.params.text, /5: 5/); // page size 5
+
 	// page 0 → next only, no prev
 	const flat = sent?.params.reply_markup.inline_keyboard.flat() as Array<{ text: string }>;
+
 	assert.deepEqual(
 		flat.map((b) => b.text),
 		["▶"],
@@ -92,6 +98,7 @@ test("send renders the first page with a next button only", async () => {
 test("pressing next edits the message to the following page", async () => {
 	const { api, calls } = fakeApi();
 	await list.send(msgCtx(api));
+
 	const sent = calls.find((c) => c.method === "sendMessage");
 	const data = nextData(sent?.params);
 
@@ -102,8 +109,10 @@ test("pressing next edits the message to the following page", async () => {
 	const edit = calls.find((c) => c.method === "editMessageText");
 	assert.match(edit?.params.text, /page 2\/3/);
 	assert.match(edit?.params.text, /5: 5/);
+
 	// page 1 → both prev and next
 	const flat = edit?.params.reply_markup.inline_keyboard.flat() as Array<{ text: string }>;
+	
 	assert.deepEqual(
 		flat.map((b) => b.text),
 		["◀", "▶"],

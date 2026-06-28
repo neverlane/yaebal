@@ -1,7 +1,7 @@
 {
 	"name": "yaebal",
 	"version": "0.0.1",
-	"description": "YAEBAL — batteries-included Telegram bot framework: core + auto-generated contexts + the common plugins, one import.",
+	"description": "yaebal — batteries-included Telegram Bot API framework: core + auto-generated contexts + the common plugins, one import.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -27,6 +27,9 @@
 		"@yaebal/session": "workspace:*",
 		"@yaebal/i18n": "workspace:*",
 		"@yaebal/web": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

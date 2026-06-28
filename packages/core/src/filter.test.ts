@@ -4,16 +4,13 @@ import { Composer, Context } from "./index.js";
 import type { Filter } from "./index.js";
 import type { Update } from "./telegram-types.js";
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/** Minimal no-op API stub — composer tests never make real API calls. */
+/** minimal no-op api stub — composer tests never make real api calls. */
 const stubApi = null as unknown as InstanceType<typeof Context>["api"];
 
 function makeCtx(update: Update): Context {
 	const keys = Object.keys(update).filter((k) => k !== "update_id") as (keyof Update)[];
 	const updateType = keys[0] as Context["updateType"];
+
 	return new Context({ api: stubApi, update, updateType });
 }
 
@@ -41,14 +38,10 @@ function makeCallbackCtx(data = "btn"): Context {
 	} as unknown as Update);
 }
 
-/** Run `composer.toMiddleware()` against ctx and resolve when the chain ends. */
+/** run `composer.toMiddleware()` against ctx and resolve when the chain ends. */
 async function run(composer: Composer, ctx: Context): Promise<void> {
 	await composer.toMiddleware()(ctx, async () => {});
 }
-
-// ---------------------------------------------------------------------------
-// filter() — basic pass/fail
-// ---------------------------------------------------------------------------
 
 test("filter: runs handlers when filter.test returns true", async () => {
 	const alwaysTrue: Filter = {
@@ -90,10 +83,6 @@ test("filter: skips handlers and calls next when filter.test returns false", asy
 	assert.ok(nextCalled, "next middleware must still be reached");
 });
 
-// ---------------------------------------------------------------------------
-// filter() — data attachment via Object.assign in test()
-// ---------------------------------------------------------------------------
-
 test("filter: handler sees data attached by filter.test via Object.assign", async () => {
 	interface WithMatch {
 		match: RegExpMatchArray;
@@ -103,6 +92,7 @@ test("filter: handler sees data attached by filter.test via Object.assign", asyn
 		test(ctx): ctx is Context & WithMatch {
 			const m = ctx.text?.match(/hello (\w+)/);
 			if (!m) return false;
+
 			Object.assign(ctx as object, { match: m });
 			return true;
 		},
@@ -127,6 +117,7 @@ test("filter: filter.test that attaches data is not called for non-matching ctx"
 		test(ctx): ctx is Context & WithMatch {
 			const m = ctx.text?.match(/hello (\w+)/);
 			if (!m) return false;
+
 			Object.assign(ctx as object, { match: m });
 			return true;
 		},
@@ -142,10 +133,6 @@ test("filter: filter.test that attaches data is not called for non-matching ctx"
 	assert.equal(handlerCalled, false);
 });
 
-// ---------------------------------------------------------------------------
-// Filter type guard narrows — inline filter with tag: number
-// ---------------------------------------------------------------------------
-
 test("filter: type guard narrows — handler sees ctx.tag added by filter", async () => {
 	const tagFilter: Filter<Context, { tag: number }> = {
 		test(ctx): ctx is Context & { tag: number } {
@@ -156,17 +143,13 @@ test("filter: type guard narrows — handler sees ctx.tag added by filter", asyn
 
 	let seenTag: number | undefined;
 	const composer = new Composer().filter(tagFilter, (ctx) => {
-		// TypeScript sees ctx.tag as number here (narrowed by the Filter type)
+		// typescript sees ctx.tag as number here (narrowed by the Filter type)
 		seenTag = (ctx as Context & { tag: number }).tag;
 	});
 
 	await run(composer, makeMessageCtx());
 	assert.equal(seenTag, 42);
 });
-
-// ---------------------------------------------------------------------------
-// scoped derive(updates, fn) — runs only for matching updateType
-// ---------------------------------------------------------------------------
 
 test("derive scoped: fn runs for the listed update type and field is present", async () => {
 	const composer = new Composer().derive("message", (_ctx) => ({ enriched: true }));

@@ -2,19 +2,19 @@ import { type Context, type MediaSource, type Message, media } from "@yaebal/cor
 import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
 
 export interface MediaCacheOptions {
-	/** Where to keep `key → file_id`. Defaults to in-memory (lost on restart). */
+	/** where to keep `key → file_id`. defaults to in-memory (lost on restart). */
 	storage?: StorageAdapter<string>;
 }
 
 export interface MediaCache {
-	/** Send a photo, caching its `file_id` under `key` to skip future uploads. */
+	/** send a photo, caching its `file_id` under `key` to skip future uploads. */
 	photo(
 		ctx: Context,
 		key: string,
 		source: MediaSource | string,
 		extra?: Record<string, unknown>,
 	): Promise<Message>;
-	/** Send a document, caching its `file_id` under `key`. */
+	/** send a document, caching its `file_id` under `key`. */
 	document(
 		ctx: Context,
 		key: string,
@@ -26,13 +26,14 @@ export interface MediaCache {
 function extractFileId(result: Message, field: string): string | undefined {
 	const value = (result as unknown as Record<string, unknown>)[field];
 	const node = Array.isArray(value) ? value[value.length - 1] : value;
+
 	return (node as { file_id?: string } | undefined)?.file_id;
 }
 
 /**
- * The first time you send a local file under a `key`, Telegram returns a
+ * the first time you send a local file under a `key`, telegram returns a
  * `file_id`; this caches it and reuses it on later sends — no re-upload.
- * Caller-supplied keys, so it's correct under concurrency (unlike a transparent
+ * caller-supplied keys, so it's correct under concurrency (unlike a transparent
  * hook that has to guess which upload produced which id).
  */
 export function mediaCache(options: MediaCacheOptions = {}): MediaCache {
@@ -48,10 +49,13 @@ export function mediaCache(options: MediaCacheOptions = {}): MediaCache {
 	): Promise<Message> => {
 		const cached = await storage.get(key);
 		const result = await sender(cached ? media.fileId(cached) : source, extra);
+
 		if (!cached) {
 			const id = extractFileId(result, field);
+			
 			if (id) await storage.set(key, id);
 		}
+
 		return result;
 	};
 

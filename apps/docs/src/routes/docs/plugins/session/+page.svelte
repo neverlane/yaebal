@@ -84,7 +84,7 @@ bot.install(session({
 
 <h2>per-user sessions</h2>
 <p>
-	override <code>getKey</code> to change the partition. the default is <code>ctx.chat.id</code>.
+	override <code>getKey</code> to change the partition. defaults to <code>ctx.chat.id</code>.
 </p>
 <Code code={perUser} title="per-user.ts" />
 

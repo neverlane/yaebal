@@ -2,3 +2,6 @@ packages:
   - "packages/*"
   - "examples/*"
   - "apps/*"
+allowBuilds:
+  '@biomejs/biome': true
+  esbuild: true

@@ -1,7 +1,7 @@
 {
 	"name": "create-yaebal",
 	"version": "0.0.1",
-	"description": "Scaffold a new YAEBAL Telegram bot — pnpm create yaebal my-bot.",
+	"description": "scaffold a new yaebal telegram bot.",
 	"type": "module",
 	"bin": {
 		"create-yaebal": "./bin/cli.mjs"
@@ -13,6 +13,9 @@
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

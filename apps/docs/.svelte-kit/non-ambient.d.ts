@@ -29,21 +29,13 @@ declare module "$app/types" {
 	type MatcherParam<M> = M extends (param : string) => param is (infer U extends string) ? U : string;
 
 	export interface AppTypes {
-		RouteId(): "/" | "/.omc" | "/.omc/state" | "/.omc/state/sessions" | "/.omc/state/sessions/2ad49742-69dc-45f7-9dcd-f3374c65de2f" | "/docs" | "/docs/.omc" | "/docs/.omc/state" | "/docs/.omc/state/sessions" | "/docs/.omc/state/sessions/2ad49742-69dc-45f7-9dcd-f3374c65de2f" | "/docs/contexts" | "/docs/context" | "/docs/core" | "/docs/getting-started" | "/docs/hooks" | "/docs/introduction" | "/docs/media" | "/docs/packages" | "/docs/plugins" | "/docs/plugins/again" | "/docs/plugins/broadcast" | "/docs/plugins/callback-data" | "/docs/plugins/commands" | "/docs/plugins/conversation" | "/docs/plugins/files" | "/docs/plugins/filters" | "/docs/plugins/fmt" | "/docs/plugins/i18n" | "/docs/plugins/keyboard" | "/docs/plugins/media-cache" | "/docs/plugins/media-group" | "/docs/plugins/morda" | "/docs/plugins/pagination" | "/docs/plugins/panel" | "/docs/plugins/prompt" | "/docs/plugins/ratelimiter" | "/docs/plugins/router" | "/docs/plugins/scenes" | "/docs/plugins/session" | "/docs/plugins/split" | "/docs/plugins/throttle" | "/docs/plugins/web" | "/docs/runner" | "/docs/runtimes" | "/docs/scaffolding" | "/docs/types" | "/docs/webhooks" | "/docs/workers" | "/docs/yaebal" | "/playground";
+		RouteId(): "/" | "/docs" | "/docs/contexts" | "/docs/context" | "/docs/core" | "/docs/getting-started" | "/docs/hooks" | "/docs/introduction" | "/docs/media" | "/docs/packages" | "/docs/plugins" | "/docs/plugins/again" | "/docs/plugins/broadcast" | "/docs/plugins/callback-data" | "/docs/plugins/commands" | "/docs/plugins/conversation" | "/docs/plugins/files" | "/docs/plugins/filters" | "/docs/plugins/fmt" | "/docs/plugins/i18n" | "/docs/plugins/keyboard" | "/docs/plugins/media-cache" | "/docs/plugins/media-group" | "/docs/plugins/morda" | "/docs/plugins/pagination" | "/docs/plugins/panel" | "/docs/plugins/prompt" | "/docs/plugins/ratelimiter" | "/docs/plugins/router" | "/docs/plugins/scenes" | "/docs/plugins/session" | "/docs/plugins/split" | "/docs/plugins/throttle" | "/docs/plugins/web" | "/docs/runner" | "/docs/runtimes" | "/docs/scaffolding" | "/docs/types" | "/docs/webhooks" | "/docs/workers" | "/docs/yaebal" | "/playground";
 		RouteParams(): {
 			
 		};
 		LayoutParams(): {
 			"/": Record<string, never>;
-			"/.omc": Record<string, never>;
-			"/.omc/state": Record<string, never>;
-			"/.omc/state/sessions": Record<string, never>;
-			"/.omc/state/sessions/2ad49742-69dc-45f7-9dcd-f3374c65de2f": Record<string, never>;
 			"/docs": Record<string, never>;
-			"/docs/.omc": Record<string, never>;
-			"/docs/.omc/state": Record<string, never>;
-			"/docs/.omc/state/sessions": Record<string, never>;
-			"/docs/.omc/state/sessions/2ad49742-69dc-45f7-9dcd-f3374c65de2f": Record<string, never>;
 			"/docs/contexts": Record<string, never>;
 			"/docs/context": Record<string, never>;
 			"/docs/core": Record<string, never>;

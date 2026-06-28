@@ -10,23 +10,23 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
 	},
 	"dependencies": {
-		"shiki": "^1.22.0",
-		"sucrase": "^3.35.0",
+		"shiki": "^4.3.0",
+		"sucrase": "^3.35.1",
 		"yaebal": "workspace:*",
 		"@yaebal/test": "workspace:*",
 		"@yaebal/preview": "workspace:*"
 	},
 	"devDependencies": {
-		"pagefind": "^1.3.0",
+		"pagefind": "^1.5.2",
 		"@fontsource/ibm-plex-mono": "^5.1.0",
 		"@fontsource/ibm-plex-sans": "^5.1.0",
 		"@fontsource/unbounded": "^5.1.0",
-		"@sveltejs/adapter-static": "^3.0.6",
-		"@sveltejs/kit": "^2.8.0",
-		"@sveltejs/vite-plugin-svelte": "^4.0.0",
-		"svelte": "^5.1.0",
-		"svelte-check": "^4.0.0",
-		"typescript": "^5.7.0",
-		"vite": "^5.4.0"
+		"@sveltejs/adapter-static": "^3.0.10",
+		"@sveltejs/kit": "^2.68.0",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"svelte": "^5.56.3",
+		"svelte-check": "^4.6.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16"
 	}
 }

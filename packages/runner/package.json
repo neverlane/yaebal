@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/runner",
 	"version": "0.0.1",
-	"description": "YAEBAL runner — concurrent update processing with per-chat sequentialization.",
+	"description": "yaebal runner — concurrent update processing with per-chat sequentialization.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,6 +19,9 @@
 	},
 	"dependencies": {
 		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"

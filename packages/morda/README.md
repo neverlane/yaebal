@@ -1,6 +1,6 @@
 # @yaebal/morda
 
-Context inside a dialog: the base context plus the navigation control.
+context inside a dialog: the base context plus the navigation control.
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/morda
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

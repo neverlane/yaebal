@@ -1,6 +1,6 @@
 # @yaebal/throttle
 
-Minimum ms between outgoing calls. Default 34 (~30/sec, Telegram's global cap).
+minimum ms between outgoing calls. defaults to 34 (~30/sec, telegram's global cap).
 
 ## install
 
@@ -10,4 +10,4 @@ pnpm add @yaebal/throttle
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

@@ -25,6 +25,7 @@ export async function broadcast(
 ): Promise<BroadcastResult> {
 	let sent = 0;
 	let failed = 0;
+
 	for (const chatId of chatIds) {
 		try {
 			// extra first so the per-chat fields always win (extra can't clobber chat_id/text)
@@ -35,5 +36,6 @@ export async function broadcast(
 			options.onError?.(chatId, error);
 		}
 	}
+	
 	return { sent, failed };
 }

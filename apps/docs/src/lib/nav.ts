@@ -18,6 +18,7 @@ export const nav: NavSection[] = [
 			{ label: "getting started", href: "/docs/getting-started" },
 			{ label: "create a bot", href: "/docs/scaffolding", badge: "new" },
 			{ label: "core concepts", href: "/docs/core" },
+			{ label: "examples", href: "/docs/examples", badge: "new" },
 		],
 	},
 	{

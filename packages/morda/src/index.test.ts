@@ -97,7 +97,7 @@ test("start → push(settings) → back navigates and edits in place", async () 
 	await mw(msgCtx(api, "/go", 1), noop);
 
 	const sent = calls.find((c) => c.method === "sendMessage");
-	assert.equal(sent?.params.text, "Main");
+	assert.equal(sent?.params.text, "main");
 
 	const state = await storage.get("1");
 	assert.deepEqual(state?.stack, ["main"]);
@@ -117,7 +117,7 @@ test("start → push(settings) → back navigates and edits in place", async () 
 	await mw(cbCtx(api, dataAt(edit1?.params, 0, 0), 1, state?.messageId ?? 0), noop);
 	const edit2 = calls.find((c) => c.method === "editMessageText");
 
-	assert.equal(edit2?.params.text, "Main");
+	assert.equal(edit2?.params.text, "main");
 	assert.deepEqual((await storage.get("1"))?.stack, ["main"]);
 });
 

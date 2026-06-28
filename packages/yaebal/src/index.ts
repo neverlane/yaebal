@@ -73,15 +73,28 @@ export const richContext: ContextFactory = (api, update, updateType) => {
 		});
 	}
 
-	// shortcut methods live on the generated prototype — bind the ones core lacks
-	const proto = Object.getPrototypeOf(rich) as Record<string, unknown>;
-	for (const name of Object.getOwnPropertyNames(proto)) {
-		if (name === "constructor") continue;
+	// shortcut methods (`react`, `editText`, …) and accessors (`senderId`, `isPM`, …)
+	// live UP the generated prototype chain — the immediate prototype is just
+	// `{ constructor }`, the sugar sits on its bases. walk the whole chain and graft
+	// every member core lacks; core's own methods/getters (`send`, `chat`, …) win, and
+	// a more-derived override wins over a base one (we never overwrite an own prop).
+	for (
+		let proto = Object.getPrototypeOf(rich);
+		proto && proto !== Object.prototype;
+		proto = Object.getPrototypeOf(proto)
+	) {
+		for (const [name, desc] of Object.entries(Object.getOwnPropertyDescriptors(proto))) {
+			if (name === "constructor" || name in target) continue;
 
-		const fn = proto[name];
-
-		if (typeof fn === "function" && !(name in ctx)) {
-			target[name] = (fn as (...args: unknown[]) => unknown).bind(ctx);
+			if (typeof desc.value === "function") {
+				target[name] = (desc.value as (...args: unknown[]) => unknown).bind(ctx);
+			} else if (desc.get) {
+				Object.defineProperty(ctx, name, {
+					get: desc.get.bind(ctx),
+					enumerable: true,
+					configurable: true,
+				});
+			}
 		}
 	}
 

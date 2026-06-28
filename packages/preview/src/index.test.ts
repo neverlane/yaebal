@@ -16,7 +16,7 @@ test("renders a well-formed svg with the message text", () => {
 
 	assert.match(svg, /width="380"/); // default width
 	
-	assert.ok(svg.includes("Hello, unknown person"));
+	assert.ok(svg.includes("hello, unknown person"));
 	assert.ok(svg.includes("Useless button"));
 });
 

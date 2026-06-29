@@ -38,12 +38,12 @@ app.all("/panel/*", (c) => handler(c.req.raw));
 export default { fetch: handler };`;
 
 	const options = `panelHandler(bot.api, store, {
-  token: process.env.PANEL_TOKEN!,           // required shared secret
-  basePath: "/panel",                        // mount under a sub-path (default: root)
-  cors: "https://yaeb.al",               // allow a browser origin (or a list, or "*")
-  rateLimit: { max: 10, windowMs: 60_000 },  // throttle failed auth (default); false to disable
+  token: process.env.PANEL_TOKEN!,                              // required shared secret
+  basePath: "/panel",                                           // mount under a sub-path (default: root)
+  cors: "https://yaeb.al",                                      // allow a browser origin (or a list, or "*")
+  rateLimit: { max: 10, windowMs: 60_000 },                     // throttle failed auth (default); false to disable
   clientKey: (req) => req.headers.get("x-real-ip") ?? "shared", // key for rate limiting
-  recordSends: true,                         // record panel replies into the store (default true)
+  recordSends: true,                                            // record panel replies into the store (default true)
 });`;
 
 	const sqlite = `import { SqlitePanelStore } from "@yaebal/panel/sqlite";
@@ -61,12 +61,15 @@ class MyPersistentStore implements PanelStore {
   async record(chat: { id: number; name?: string }, message: PanelMessage) {
     await db.messages.insert({ chatId: chat.id, ...message });
   }
+
   async chats(): Promise<PanelChat[]> {
     return db.chats.findAll({ orderBy: "lastDate desc" });
   }
+
   async history(chatId: number, opts?: HistoryOptions): Promise<PanelMessage[]> {
     return db.messages.page({ chatId, before: opts?.before, limit: opts?.limit });
   }
+
   // optional — enables the realtime SSE stream; omit it and the UI just polls
   subscribe(listener: (e: PanelEvent) => void) {
     return bus.on("record", listener); // returns an unsubscribe fn
@@ -79,6 +82,7 @@ class MyPersistentStore implements PanelStore {
 // (e.g. ctx.reply(...) in your handlers), hook the api — and stop the panel from
 // recording its own sends so they aren't logged twice:
 recordOutgoing(bot.api, store);
+
 const handler = panelHandler(bot.api, store, {
   token: process.env.PANEL_TOKEN!,
   recordSends: false,
@@ -200,8 +204,10 @@ POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?,
 		<tr><td><code>recorder(store)</code></td><td><code>@yaebal/panel</code></td><td>Plugin</td><td>logs incoming private text/media into the store</td></tr>
 		<tr><td><code>recordOutgoing(api, store)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>logs outgoing replies sent outside the panel (api <code>after</code> hook)</td></tr>
 		<tr><td><code>MemoryPanelStore</code></td><td><code>@yaebal/panel</code></td><td>class</td><td>in-memory <code>PanelStore</code> with <code>subscribe</code></td></tr>
-		<tr><td><code>SqlitePanelStore</code></td><td><code>@yaebal/panel/sqlite</code></td><td>class</td><td>persistent store on <code>node:sqlite</code></td></tr>
-		<tr><td><code>serve(handler, options)</code></td><td><code>@yaebal/panel/serve</code></td><td>function</td><td>native <code>node:http</code> server, zero deps</td></tr>
+		<tr><td><code>SqlitePanelStore</code></td><td><code>@yaebal/panel/sqlite</code></td><td>class</td><td>persistent store on <code>node:sqlite</code>; requires Node ≥22.5</td></tr>
+		<tr><td><code>SqlitePanelStoreOptions</code></td><td><code>@yaebal/panel/sqlite</code></td><td>interface</td><td><code>{"{ path?: string; db?: DatabaseSync }"}</code>; path defaults to <code>":memory:"</code></td></tr>
+		<tr><td><code>serve(handler, options)</code></td><td><code>@yaebal/panel/serve</code></td><td>function</td><td>native <code>node:http</code> server, zero deps; returns the Node <code>Server</code></td></tr>
+		<tr><td><code>ServeOptions</code></td><td><code>@yaebal/panel/serve</code></td><td>interface</td><td><code>{"{ port: number; host?: string; onListen?: (info) => void }"}</code></td></tr>
 		<tr><td><code>PanelStore</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>record</code> / <code>chats</code> / <code>history</code> (+ optional <code>subscribe</code>)</td></tr>
 		<tr><td><code>PanelOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>token</code>, <code>basePath</code>, <code>cors</code>, <code>rateLimit</code>, <code>clientKey</code>, <code>recordSends</code></td></tr>
 		<tr><td><code>HistoryOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ before?: number; limit?: number }"}</code></td></tr>
@@ -218,4 +224,8 @@ POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?,
 	the panel HTML is a single self-contained page — no external assets, no CDN. it updates in
 	realtime over SSE and falls back to polling. for a production deployment, put the panel behind a
 	reverse proxy with TLS and restrict the <code>token</code> to a long random value.
+	<br /><br />
+	<strong>SQLite note:</strong> <code>@yaebal/panel/sqlite</code> uses Node's built-in
+	<code>node:sqlite</code>, so it requires Node ≥22.5. call <code>store.close()</code> on shutdown if
+	you created a <code>SqlitePanelStore</code>.
 </div>

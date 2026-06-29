@@ -112,7 +112,7 @@ class Bot<C extends Context> extends Composer<C> { /* … */ }`;
 		<tr><td><code>Context</code></td><td>the per-update wrapper with <code>send</code>/<code>reply</code>/<code>sendPhoto</code>/…</td></tr>
 		<tr><td><code>media</code>, <code>isMediaSource</code>, <code>MediaSource</code></td><td>the file abstraction</td></tr>
 		<tr><td><code>createApi</code>, <code>Api</code>, <code>TelegramError</code></td><td>the low-level API client and hooks</td></tr>
-		<tr><td><code>webhookCallback</code>, <code>nodeWebhookCallback</code></td><td>fetch- and node-style webhook handlers</td></tr>
+		<tr><td><code>webhookCallback</code></td><td>fetch-style webhook handler; Node's <code>nodeWebhookCallback</code> lives in <code>@yaebal/core/node</code></td></tr>
 		<tr><td><code>format</code>, <code>bold</code>, <code>italic</code>, …</td><td>entity-based message formatting helpers</td></tr>
 	</tbody>
 </table>

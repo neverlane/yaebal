@@ -3,55 +3,35 @@
 
 	const install = `pnpm add @yaebal/prompt`;
 
-	const usage = `import { Bot } from "@yaebal/core";
-import { prompt } from "@yaebal/prompt";
-import type { PromptControl } from "@yaebal/prompt";
-
-type Ctx = typeof bot extends { use: (fn: (ctx: infer C) => unknown) => unknown } ? C : never;
-
-const bot = new Bot(process.env.BOT_TOKEN!)
-  .install(prompt());
-
-bot.command("ask", async (ctx) => {
-  await (ctx as typeof ctx & PromptControl).prompt(
-    "What is your name?",
-    async (reply) => {
-      await reply.reply(\`Hello, \${reply.text}!\`);
-    },
-  );
-});
-
-bot.start();`;
-
 	const simple = `import { Bot } from "@yaebal/core";
 import { prompt } from "@yaebal/prompt";
-import type { PromptControl } from "@yaebal/prompt";
 
-const bot = new Bot(process.env.BOT_TOKEN!).install(prompt());
-
-// cast once at the handler boundary — ctx.prompt is fully typed
-bot.command("ask", (ctx) =>
-  (ctx as typeof ctx & PromptControl).prompt("name?", (c) =>
-    c.reply(\`Hello, \${c.text}!\`),
-  ),
-);
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(prompt())
+  .command("ask", async (ctx) => {
+    await ctx.prompt("what is your name?", async (reply) => {
+      await reply.reply("hello, " + reply.text + "!");
+    });
+  });
 
 bot.start();`;
 
 	const chaining = `// handlers can call ctx.prompt again to collect multiple values in sequence
 bot.command("survey", (ctx) =>
-  (ctx as typeof ctx & PromptControl).prompt("first name?", (c1) => {
+  ctx.prompt("first name?", (c1) => {
     const first = c1.text ?? "";
-    return (c1 as typeof c1 & PromptControl).prompt("last name?", (c2) => {
+
+    return c1.prompt("last name?", (c2) => {
       const last = c2.text ?? "";
-      return c2.reply(\`Full name: \${first} \${last}\`);
+
+      return c2.reply("Full name: " + first + " " + last);
     });
   }),
 );`;
 
 	const extra = `// pass extra sendMessage parameters as the third argument
-await (ctx as typeof ctx & PromptControl).prompt(
-  "Choose an option:",
+await ctx.prompt(
+  "choose an option:",
   async (c) => { /* handle reply */ },
   {
     reply_markup: {
@@ -106,7 +86,7 @@ await (ctx as typeof ctx & PromptControl).prompt(
 		</tr>
 		<tr>
 			<td><code>PromptHandler</code></td>
-			<td><code>(ctx: Context) =&gt; unknown | Promise&lt;unknown&gt;</code></td>
+			<td><code>(ctx: Context &amp; PromptControl) =&gt; unknown | Promise&lt;unknown&gt;</code></td>
 			<td>the callback that handles the answer message</td>
 		</tr>
 	</tbody>

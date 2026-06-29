@@ -34,7 +34,8 @@ Bun.serve({
 
 	const node = `// Node http
 import { createServer } from "node:http";
-import { Bot, nodeWebhookCallback } from "@yaebal/core";
+import { Bot } from "@yaebal/core";
+import { nodeWebhookCallback } from "@yaebal/core/node";
 
 const bot = new Bot(process.env.BOT_TOKEN!);
 bot.on("message:text", (ctx) => ctx.reply(ctx.text));
@@ -82,9 +83,9 @@ await bot.handleUpdate(update);`;
 <h2>the secret check</h2>
 <p>
 	when you set <code>secretToken</code>, the handler requires Telegram's
-	<code>X-Telegram-Bot-Api-Secret-Token</code> header to match. the comparison is constant-time
-	(<code>node:crypto</code> <code>timingSafeEqual</code> on equal-length buffers), so the check can't
-	be timed.
+	<code>X-Telegram-Bot-Api-Secret-Token</code> header to match. the comparison uses a small
+	constant-time string loop instead of <code>node:crypto</code>, so the fetch handler stays portable
+	across Node, Bun, Deno and edge runtimes.
 </p>
 <table>
 	<thead>
@@ -107,9 +108,10 @@ await bot.handleUpdate(update);`;
 
 <h2>nodeWebhookCallback (node http)</h2>
 <p>
-	for a plain Node server, <code>nodeWebhookCallback</code> returns an
-	<code>(req, res)</code> handler you can drop into <code>http.createServer</code>. same secret
-	check and same body cap, streamed off the incoming request.
+	for a plain Node server, import <code>nodeWebhookCallback</code> from
+	<code>@yaebal/core/node</code>. it returns an <code>(req, res)</code> handler you can drop into
+	<code>http.createServer</code>. keeping it in a Node-only subpath prevents the main
+	<code>@yaebal/core</code> entry from importing <code>node:http</code>.
 </p>
 <Code code={node} title="server.ts" />
 

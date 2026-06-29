@@ -11,12 +11,12 @@ const bot = new Bot(process.env.BOT_TOKEN!)
     defaultLocale: "en",
     locales: {
       en: {
-        welcome: "Hello {name}!",
-        bye: "Goodbye",
+        welcome: "hello {name}!",
+        bye: "goodbye",
       },
       ru: {
-        welcome: "Привет {name}!",
-        bye: "До свидания",
+        welcome: "привет {name}!",
+        bye: "до свидания",
       },
     },
   }));
@@ -44,13 +44,13 @@ class RedisLocaleStorage implements StorageAdapter<string> {
 
 bot.install(i18n({
   defaultLocale: "en",
-  locales: { en: { hi: "Hi" }, ru: { hi: "Привет" } },
+  locales: { en: { hi: "hi" }, ru: { hi: "привет" } },
   storage: new RedisLocaleStorage(),
 }));`;
 
 	const perUser = `bot.install(i18n({
   defaultLocale: "en",
-  locales: { en: { hi: "Hi" }, ru: { hi: "Привет" } },
+  locales: { en: { hi: "hi" }, ru: { hi: "привет" } },
   // use the user id as the key instead of the chat id
   getKey: (ctx) => ctx.from?.id?.toString(),
 }));`;
@@ -58,7 +58,7 @@ bot.install(i18n({
 	const fallback = `// "ru" locale has no "bye" key → falls back to "en"
 // "en" has no "missing" key → returns the key itself
 
-ctx.t("bye");      // → "Goodbye"  (en fallback)
+ctx.t("bye");      // → "goodbye"  (en fallback)
 ctx.t("missing");  // → "missing"  (key fallback)`;
 
 	const plurals = `import { i18n } from "@yaebal/i18n";
@@ -205,7 +205,7 @@ bot.command("count", async (ctx) => {
 		<tr>
 			<td><code>changeLanguage</code></td>
 			<td><code>(locale: string) =&gt; Promise&lt;void&gt;</code></td>
-			<td>switch locale for this update and persist it; subsequent <code>ctx.t</code> calls in the same handler use the new locale immediately</td>
+			<td>switch locale for this update and persist it; subsequent <code>ctx.t</code> calls and <code>ctx.locale</code> reads in the same handler use the new locale immediately</td>
 		</tr>
 	</tbody>
 </table>
@@ -244,8 +244,9 @@ bot.command("count", async (ctx) => {
 	entry from <code>params</code> via <code>String(value)</code>.
 	<br /><br />
 	<strong>changeLanguage takes effect immediately</strong> within the current handler — calls to
-	<code>ctx.t</code> after <code>await ctx.changeLanguage("ru")</code> in the same middleware use
-	the new locale. the next update loads the persisted locale from storage.
+	<code>ctx.t</code> and reads of <code>ctx.locale</code> after
+	<code>await ctx.changeLanguage("ru")</code> use the new locale. the next update loads the
+	persisted locale from storage.
 	<br /><br />
 	<strong>updates without a chat</strong> (e.g. <code>poll</code> updates) where
 	<code>getKey</code> returns <code>undefined</code> always use the <code>defaultLocale</code> and

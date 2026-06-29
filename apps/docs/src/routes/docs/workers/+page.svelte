@@ -13,12 +13,15 @@ register({
 
 	const bot = `// bot — stays on the main event loop
 import { media } from "@yaebal/core";
+import { files } from "@yaebal/files";
 import { createPool } from "@yaebal/workers";
 
 const pool = createPool(new URL("./tasks.js", import.meta.url), { size: 4 });
 
-bot.on("message:photo", async (ctx) => {
-  const thumb = await pool.run("resize", await ctx.download()); // → thread → back
+bot.install(files()).on("message:photo", async (ctx) => {
+  const largest = ctx.message.photo.at(-1)!;
+  const bytes = await ctx.files.download(largest.file_id);
+  const thumb = await pool.run<Uint8Array>("resize", bytes); // → thread → back
   await ctx.sendPhoto(media.buffer(thumb));
 });
 

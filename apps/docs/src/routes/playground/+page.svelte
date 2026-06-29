@@ -14,6 +14,7 @@
 	import {
 		type Project,
 		type Token,
+		clearTokens,
 		loadActiveToken,
 		loadProjects,
 		loadTokens,
@@ -54,6 +55,32 @@
 	let gridEl = $state<HTMLDivElement>();
 
 	const chatW = () => Math.round(chatBox?.clientWidth || 360);
+
+	async function encodeShare(text: string): Promise<string> {
+		const bytes = new TextEncoder().encode(text);
+		const compressed = "CompressionStream" in globalThis
+			? new Uint8Array(
+					await new Response(
+						new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip")),
+					).arrayBuffer(),
+				)
+			: bytes;
+
+		const binary = Array.from(compressed, (b) => String.fromCharCode(b)).join("");
+
+		return `${compressed === bytes ? "p" : "g"}.${btoa(binary)}`;
+	}
+
+	async function decodeShare(value: string): Promise<string> {
+		const [kind, payload] = value.includes(".") ? value.split(".", 2) : ["p", value];
+		const bytes = Uint8Array.from(atob(decodeURIComponent(payload ?? "")), (c) => c.charCodeAt(0));
+
+		if (kind === "g" && "DecompressionStream" in globalThis) {
+			return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+		}
+
+		return new TextDecoder().decode(bytes);
+	}
 
 	function startResize(which: 1 | 2, e: PointerEvent) {
 		e.preventDefault();
@@ -111,11 +138,13 @@ bot.start();`;
 
 		const shared = $page.url.searchParams.get("code");
 		if (shared) {
-			try {
-				code = new TextDecoder().decode(Uint8Array.from(atob(decodeURIComponent(shared)), (c) => c.charCodeAt(0)));
-			} catch {
-				/* malformed link — keep the example */
-			}
+			void decodeShare(shared)
+				.then((decoded) => {
+					code = decoded;
+				})
+				.catch(() => {
+					/* malformed link — keep the example */
+				});
 		}
 
 		steps = ex ? [...ex.steps] : [];
@@ -135,6 +164,7 @@ bot.start();`;
 		busy = true;
 
 		const res = await runUserCode(code, steps, chatW(), theme);
+
 		svg = res.svg;
 		logs = res.logs;
 		error = res.error ?? "";
@@ -204,6 +234,7 @@ bot.start();`;
 		saveProjects(projects);
 		switchProject(p.id);
 	}
+
 	function switchProject(id: string) {
 		const p = projects.find((x) => x.id === id);
 		if (!p) return;
@@ -213,13 +244,16 @@ bot.start();`;
 
 		if (mode === "mock") runMock();
 	}
+
 	function renameProject(p: Project) {
 		const name = prompt("rename project", p.name);
+
 		if (name) {
 			p.name = name;
 			saveProjects(projects);
 		}
 	}
+
 	function deleteProject(id: string) {
 		projects = projects.filter((p) => p.id !== id);
 		saveProjects(projects);
@@ -240,18 +274,33 @@ bot.start();`;
 		newLabel = "";
 		newTok = "";
 	}
+
 	function removeToken(id: string) {
 		tokens = tokens.filter((t) => t.id !== id);
 		saveTokens(tokens);
+
+		if (activeTokenId === id) pickToken("");
 	}
+
+	function removeAllTokens() {
+		tokens = [];
+		activeTokenId = "";
+		clearTokens();
+	}
+
 	function pickToken(id: string) {
 		activeTokenId = id;
 		saveActiveToken(id);
 	}
 
 	async function share() {
-		const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(code)));
-		const url = `${location.origin}${base}/playground?code=${encodeURIComponent(b64)}`;
+		const packed = await encodeShare(code);
+		const url = `${location.origin}${base}/playground?code=${encodeURIComponent(packed)}`;
+
+		if (url.length > 7000) {
+			error = "share link is too large — copy the code instead";
+			return;
+		}
 
 		try {
 			await navigator.clipboard.writeText(url);
@@ -305,7 +354,7 @@ bot.start();`;
 				{/each}
 			</ul>
 
-			<div class="side-h"><span>bot token</span><button class="mini" onclick={() => (showTokens = !showTokens)} aria-label="manage tokens">⚙</button></div>
+			<div class="side-h"><span>bot token</span><button class="mini" onclick={() => (showTokens = !showTokens)} aria-label={showTokens ? "hide token manager" : "show token manager"} aria-expanded={showTokens}>⚙</button></div>
 			<select class="tok-select mono" bind:value={activeTokenId} onchange={() => pickToken(activeTokenId)}>
 				<option value="">— none · mock —</option>
 				{#each tokens as t (t.id)}<option value={t.id}>{t.label}</option>{/each}
@@ -315,10 +364,11 @@ bot.start();`;
 					{#each tokens as t (t.id)}
 						<div class="tok-row"><span class="mono">{t.label}</span><button class="mini ghost" onclick={() => removeToken(t.id)} aria-label="remove token">✕</button></div>
 					{/each}
-					<input class="ti mono" placeholder="label" bind:value={newLabel} />
-					<input class="ti mono" placeholder="123456:ABC-token" bind:value={newTok} />
-					<button class="add" onclick={addToken}>add token</button>
-					<p class="note">stored only in this browser · sent only to telegram</p>
+					<input class="ti mono" placeholder="label" aria-label="token label" bind:value={newLabel} />
+					<input class="ti mono" type="password" placeholder="123456:ABC-token" aria-label="bot token" bind:value={newTok} />
+					<button class="add" onclick={addToken}>add token for this tab</button>
+					<button class="add ghosty" onclick={removeAllTokens} disabled={!tokens.length}>clear tokens</button>
+					<p class="note">tokens are kept in sessionStorage for this tab only · live code runs locally and can access browser globals</p>
 				</div>
 			{/if}
 		</aside>
@@ -356,7 +406,7 @@ bot.start();`;
 				{:else}
 					<div class="empty">
 						<span class="emoji">💬</span>
-						<span class="mono">{mode === "live" ? "press Start, then message your bot" : "run to see the conversation"}</span>
+						<span class="mono">{mode === "live" ? "press start, then message your bot" : "run to see the conversation"}</span>
 					</div>
 				{/if}
 			</div>
@@ -369,7 +419,7 @@ bot.start();`;
 			<div class="console">
 				<div class="console-bar">
 					<div class="cbar-l">
-						<span class="ctitle">Console</span>
+						<span class="ctitle">console</span>
 						{#if logs.length}<span class="count mono">{logs.length}</span>{/if}
 					</div>
 					<button class="cclear mono" onclick={() => (logs = [])} disabled={!logs.length} aria-label="clear console">clear</button>
@@ -686,8 +736,20 @@ bot.start();`;
 		color: var(--button-text);
 	}
 
-	.add:hover {
+	.add:hover:not(:disabled) {
 		background: var(--button-hover);
+	}
+
+	.add.ghosty {
+		background: transparent;
+		color: var(--gray);
+		box-shadow: none;
+		border: 1px solid var(--input-border);
+	}
+
+	.add:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
 	}
 
 	.note {

@@ -9,15 +9,15 @@ import { dialogs, switchTo, back, button } from "@yaebal/morda";
 const bot = new Bot(process.env.BOT_TOKEN!)
   .install(dialogs({
     main: () => ({
-      text: "Main menu",
+      text: "main menu",
       keyboard: [
-        [switchTo("Settings →", "settings")],
-        [button("Ping", { id: "ping", onClick: (ctx) => ctx.answerCallbackQuery({ text: "pong" }) })],
+        [switchTo("settings →", "settings")],
+        [button("ping", { id: "ping", onClick: (ctx) => ctx.answerCallbackQuery({ text: "pong" }) })],
       ],
     }),
     settings: () => ({
-      text: "Settings",
-      keyboard: [[back("← Back")]],
+      text: "settings",
+      keyboard: [[back("← back")]],
     }),
   }));
 
@@ -44,14 +44,14 @@ await ctx.dialog.rerender();`;
 	const buttonHelpers = `import { switchTo, back, button } from "@yaebal/morda";
 
 // navigate to another window on click
-switchTo("Settings →", "settings");
+switchTo("settings →", "settings");
 
-// pop the stack (default label "← Назад")
+// pop the stack (default label "← назад")
 back();
-back("← Go back");
+back("← go back");
 
 // arbitrary action button
-button("Refresh", {
+button("refresh", {
   id: "refresh",
   onClick: async (ctx) => {
     await ctx.answerCallbackQuery({ text: "refreshed" });
@@ -93,7 +93,7 @@ function SettingsScreen() {
     <Screen>
       Settings page
       <ButtonRow>
-        <Button id="back" onClick={() => nav.back()}>← Back</Button>
+        <Button id="back" onClick={() => nav.back()}>← back</Button>
       </ButtonRow>
     </Screen>
   );
@@ -105,10 +105,10 @@ function MainScreen() {
 
   return (
     <Screen>
-      {\`You tapped \${count} time(s)\`}
+      {\`you tapped \${count} time(s)\`}
       <ButtonRow>
-        <Button id="tap" onClick={() => setCount((n) => n + 1)}>Tap</Button>
-        <Button id="settings" onClick={() => nav.push(SettingsScreen)}>Settings</Button>
+        <Button id="tap" onClick={() => setCount((n) => n + 1)}>tap</Button>
+        <Button id="settings" onClick={() => nav.push(SettingsScreen)}>settings</Button>
       </ButtonRow>
     </Screen>
   );
@@ -138,8 +138,8 @@ function ProfileScreen() {
 
   return (
     <Screen>
-      {\`Hello \${user?.first_name}! visits: \${session.visits}\`}
-      <Button id="back" onClick={() => nav.back()}>← Back</Button>
+      {\`hello \${user?.first_name}! visits: \${session.visits}\`}
+      <Button id="back" onClick={() => nav.back()}>← back</Button>
     </Screen>
   );
 }`;
@@ -326,6 +326,18 @@ function ProfileScreen() {
 			<td><code>id, onClick?, children</code></td>
 			<td>a single inline button; <code>children</code> becomes the label</td>
 		</tr>
+	</tbody>
+</table>
+
+<h2>jsx public exports</h2>
+<table>
+	<thead><tr><th>export</th><th>subpath</th><th>description</th></tr></thead>
+	<tbody>
+		<tr><td><code>jsxDialogs</code></td><td><code>@yaebal/morda/jsx</code></td><td>register JSX screens as a dialog plugin.</td></tr>
+		<tr><td><code>Screen</code>, <code>ButtonRow</code>, <code>Button</code></td><td><code>@yaebal/morda/jsx</code></td><td>JSX components used to build a Telegram window.</td></tr>
+		<tr><td><code>useState</code>, <code>useEffect</code>, <code>useNavigation</code>, <code>useUser</code>, <code>useSession</code>, <code>useTranslation</code></td><td><code>@yaebal/morda/jsx</code></td><td>hooks available during screen render.</td></tr>
+		<tr><td><code>ScreenComponent</code>, <code>ButtonProps</code>, <code>Navigation</code>, <code>Translation</code>, <code>VNode</code></td><td><code>@yaebal/morda/jsx</code></td><td>public JSX layer types.</td></tr>
+		<tr><td><code>jsx</code>, <code>jsxs</code>, <code>Fragment</code>, <code>JSX</code>, <code>VNODE</code></td><td><code>@yaebal/morda/jsx-runtime</code></td><td>automatic JSX runtime used by TypeScript when <code>jsxImportSource</code> is <code>"@yaebal/morda"</code>. You normally do not import this subpath manually.</td></tr>
 	</tbody>
 </table>
 

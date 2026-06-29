@@ -18,6 +18,7 @@ export const theme = {
 
 	set(value: Theme) {
 		current = value;
+		
 		if (browser) {
 			document.documentElement.setAttribute("data-theme", value);
 			localStorage.setItem("theme", value);

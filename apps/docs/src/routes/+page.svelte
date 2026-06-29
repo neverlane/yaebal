@@ -47,7 +47,7 @@ bot.start();`;
 	<a class="brand unbounded" href="/">yaebal</a>
 	<nav class="top-actions">
 		<a class="link" href="/docs/getting-started/">docs</a>
-		<a class="link" href={GITHUB} target="_blank" rel="noreferrer">github</a>
+		<a class="link" href={GITHUB} target="_blank" rel="noopener noreferrer">github</a>
 		<a class="link" href={NPMX} target="_blank" rel="noreferrer">npmx</a>
 		<ThemeToggle />
 	</nav>
@@ -65,12 +65,24 @@ bot.start();`;
 	</p>
 
 	<div class="cta">
-		<a class="button accent" href="/docs/getting-started/">get started →</a>
-		<a class="button" href={GITHUB} target="_blank" rel="noreferrer">github</a>
+		<a class="button accent" href="/docs/getting-started/">
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<path d="M5 12h14" />
+				<path d="m13 6 6 6-6 6" />
+				<path d="M5 5v14" />
+			</svg>
+			<span>get started</span>
+		</a>
+		<a class="button" href={GITHUB} target="_blank" rel="noopener noreferrer" aria-label="Open GitHub repository">
+			<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+				<path d="M12 .5a12 12 0 0 0-3.8 23.39c.6.11.82-.26.82-.58v-2.23c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.2.09 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23A11.45 11.45 0 0 1 12 5.8c1.02 0 2.04.14 3 .4 2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.49 5.93.43.37.82 1.1.82 2.22v3.29c0 .32.22.7.83.58A12 12 0 0 0 12 .5Z" />
+			</svg>
+			<span>github</span>
+		</a>
 	</div>
 
-	<div class="install mono">
-		<span class="prompt">$</span> pnpm add @yaebal/core
+	<div class="install-code">
+		<Code code={"pnpm add @yaebal/core"} title="terminal" lang="sh" />
 	</div>
 
 	<div class="sample">
@@ -191,20 +203,14 @@ bot.start();`;
 		justify-content: center;
 	}
 
-	.install {
+	.install-code {
+		width: min(100%, 360px);
 		margin-top: 22px;
-		padding: 11px 18px;
-		font-size: 13.5px;
-		border-radius: 12px;
-		border: 1px solid var(--code-stroke);
-		background: var(--code-bg);
-		color: var(--secondary);
+		text-align: left;
 	}
 
-	.install .prompt {
-		color: var(--gray);
-		margin-right: 8px;
-		user-select: none;
+	.install-code :global(.code) {
+		margin: 0;
 	}
 
 	.sample {

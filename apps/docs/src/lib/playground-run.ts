@@ -1,15 +1,15 @@
-import { type ChatMessage, renderChat } from "@yaebal/preview";
+import type { ChatMessage } from "@yaebal/preview";
 import { transform } from "sucrase";
 
 import * as yaebal from "yaebal";
 import * as ypreview from "@yaebal/preview";
 import * as ytest from "@yaebal/test";
 
-import { type Step, feedSteps, mapCall } from "./playground";
+import { type Step, mapCall } from "./playground";
 
 export type LogLine = { level: "log" | "warn" | "error"; text: string };
 
-type AnyBot = Parameters<typeof feedSteps>[0];
+let mockRunId = 0;
 
 export interface RunResult {
 	svg: string;
@@ -36,77 +36,37 @@ export async function runUserCode(
 	width = 360,
 	theme: "light" | "dark" = "light",
 ): Promise<RunResult> {
-	const logs: RunResult["logs"] = [];
-	const sandboxConsole = {
-		log: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		info: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		debug: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		warn: (...a: unknown[]) => logs.push({ level: "warn", text: fmt(a) }),
-		error: (...a: unknown[]) => logs.push({ level: "error", text: fmt(a) }),
-	};
+	const id = ++mockRunId;
+	const worker = new Worker(new URL("./playground-worker.ts", import.meta.url), { type: "module" });
 
-	let js: string;
-	try {
-		js = transform(code, { transforms: ["typescript", "imports"], filePath: "playground.ts" }).code;
-	} catch (e) {
-		return { svg: "", logs, error: `compile: ${e instanceof Error ? e.message : String(e)}` };
-	}
+	return new Promise((resolve) => {
+		const timeout = setTimeout(() => {
+			worker.terminate();
+			resolve({
+				svg: "",
+				logs: [],
+				error: "runtime: execution timed out after 2s — possible infinite loop",
+			});
+		}, 2000);
 
-	const { api, calls } = ytest.mockApi();
-	const wire = { contextFactory: (_a: unknown, u: unknown, t: unknown) => yaebal.richContext(api, u as never, t as never) };
+		worker.onmessage = (event: MessageEvent<RunResult & { id: number }>) => {
+			if (event.data.id !== id) return;
 
-	let captured: AnyBot | null = null;
-	const tame = (b: AnyBot): AnyBot => {
-		captured = b;
+			clearTimeout(timeout);
+			worker.terminate();
 
-		(b as { start: () => Promise<void> }).start = async () => {};
-		return b;
-	};
+			resolve({ svg: event.data.svg, logs: event.data.logs, error: event.data.error });
+		};
 
-	class PatchedBot extends (yaebal.Bot as new (t: string, o?: object) => AnyBot) {
-		constructor(token?: string, options: object = {}) {
-			super(token || "playground", { ...options, ...wire });
-			tame(this as AnyBot);
-		}
-	}
+		worker.onerror = (event) => {
+			clearTimeout(timeout);
+			worker.terminate();
 
-	const patchedCreateBot = (token?: string, options: object = {}) =>
-		tame(yaebal.createBot(token || "playground", { ...options, ...wire }));
+			resolve({ svg: "", logs: [], error: `runtime: ${event.message}` });
+		};
 
-	const patched = { ...yaebal, Bot: PatchedBot, createBot: patchedCreateBot };
-
-	const MODULES: Record<string, unknown> = {
-		yaebal: patched,
-		"@yaebal/core": patched,
-		"@yaebal/fmt": yaebal,
-		"@yaebal/keyboard": yaebal,
-		"@yaebal/test": ytest,
-		"@yaebal/preview": ypreview,
-	};
-	
-	const require = (name: string): unknown => {
-		const m = MODULES[name];
-		if (!m) throw new Error(`cannot import "${name}" in the playground`);
-
-		return m;
-	};
-
-	const proc = { env: {} as Record<string, string>, argv: [] as string[] };
-
-	try {
-		const mod = { exports: {} };
-		const fn = new Function("require", "console", "process", "exports", "module", js);
-		
-		await fn(require, sandboxConsole, proc, mod.exports, mod);
-	} catch (e) {
-		return { svg: "", logs, error: `runtime: ${e instanceof Error ? e.message : String(e)}` };
-	}
-
-	if (!captured)
-		return { svg: "", logs, error: "no bot created — make one with new Bot(...) or createBot(...)" };
-
-	const convo = await feedSteps(captured, calls, steps);
-	return { svg: renderChat(convo, { theme, width: Math.max(280, width) }), logs };
+		worker.postMessage({ id, code, steps, width, theme });
+	});
 }
 
 export interface LiveSession {
@@ -200,8 +160,10 @@ export async function startLive(
 
 	const me = await bot.api.getMe();
 	
-	onLog({ level: "log", text: `@${me.username ?? "bot"} is live — message it on Telegram` });
-	realStart();
+	onLog({ level: "log", text: `@${me.username ?? "bot"} is live — message it on telegram` });
+	void realStart().catch((error: unknown) => {
+		onLog({ level: "error", text: `polling stopped: ${error instanceof Error ? error.message : String(error)}` });
+	});
 
 	return { stop: () => bot.stop() };
 }

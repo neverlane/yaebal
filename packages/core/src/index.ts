@@ -19,14 +19,10 @@ export {
 } from "./composer.js";
 export { Context, type ContextOptions } from "./context.js";
 export { media, isMediaSource, type MediaSource } from "./media.js";
-export {
-	webhookCallback,
-	nodeWebhookCallback,
-	type UpdateSink,
-	type WebhookOptions,
-} from "./webhook.js";
+export { webhookCallback, type UpdateSink, type WebhookOptions } from "./webhook.js";
 export {
 	createApi,
+	encodeRequest,
 	TelegramError,
 	type Api,
 	type ApiOptions,

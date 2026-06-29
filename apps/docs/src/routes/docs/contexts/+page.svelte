@@ -6,9 +6,9 @@
         ▼
 packages/types/schema.json        ← single source of truth
         │
-        ├──────────►  @yaebal/types/generate.mjs   → telegram.ts (types)
+        ├──────────►  packages/types/scripts/generate.mjs     → telegram.ts (types)
         │
-        └──────────►  @yaebal/contexts/generate.mjs
+        └──────────►  packages/contexts/scripts/generate.mjs
                             ├─ Update.props      → 23 context types
                             ├─ payload fields    → providers (which ids it carries)
                             └─ each API method   → matched shortcut

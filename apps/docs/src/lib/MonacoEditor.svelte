@@ -45,30 +45,41 @@
 		return w.__monacoLoading;
 	}
 
-	function ensureFont() {
-		if (document.getElementById("pg-fira")) return;
-
-		const l = document.createElement("link");
-
-		l.id = "pg-fira";
-		l.rel = "stylesheet";
-		l.href = "https://cdn.jsdelivr.net/npm/firacode@6.2.0/distr/fira_code.css";
-
-		document.head.appendChild(l);
+	// biome-ignore lint/suspicious/noExplicitAny: Monaco is loaded dynamically from the CDN.
+	function addYaebalTypes(ts: any) {
+		const core = `declare module "@yaebal/core" {
+  export type NextFn = () => Promise<void>;
+  export type Middleware<C = Context> = (ctx: C, next: NextFn) => unknown | Promise<unknown>;
+  export type Plugin<In extends Context = Context, Out extends object = {}> = <C extends In>(composer: Composer<C>) => Composer<C & Out>;
+  export interface BotOptions { apiRoot?: string; allowedUpdates?: string[]; contextFactory?: unknown; }
+  export class Context { update: unknown; updateType: string; message?: any; callbackQuery?: any; from?: any; chat?: any; text?: string; send(text: string, extra?: object): Promise<any>; reply(text: string, extra?: object): Promise<any>; sendPhoto(media: unknown, extra?: object): Promise<any>; answerCallbackQuery(text?: string): Promise<boolean>; }
+  export class Composer<C extends Context = Context> { use(...m: Middleware<C>[]): this; on<Q extends string>(query: Q, ...h: Middleware<C & { text: string; callbackQuery: any }>[]): this; command(name: string, ...h: Middleware<C & { command: string; args: string[] }>[]): this; install<Add extends object>(plugin: (c: Composer<C>) => Composer<C & Add>): Composer<C & Add>; derive<D extends object>(fn: (ctx: C) => D | Promise<D>): Composer<C & D>; decorate<D extends object>(value: D): Composer<C & D>; }
+  export class Bot<C extends Context = Context> extends Composer<C> { constructor(token: string, options?: BotOptions); api: any; start(): Promise<void>; stop(): void; onStart(handler: (info: any) => unknown | Promise<unknown>): this; onError(handler: (error: unknown, ctx: Context) => unknown | Promise<unknown>): this; }
+  export const media: { path(path: string): unknown; url(url: string): unknown; buffer(bytes: Uint8Array | ArrayBuffer): unknown; fileId(id: string): unknown };
+  export function format(strings: TemplateStringsArray, ...values: unknown[]): { text: string; entities: unknown[] };
+}`;
+		const globals = `declare const process: { env: Record<string, string | undefined> };
+declare namespace NodeJS { interface ProcessEnv extends Record<string, string | undefined> {} }`;
+		const meta = `declare module "yaebal" { export * from "@yaebal/core"; export function createBot(token: string, options?: import("@yaebal/core").BotOptions): import("@yaebal/core").Bot; export function html(strings: TemplateStringsArray, ...values: unknown[]): { text: string; entities: unknown[] }; export function md(strings: TemplateStringsArray, ...values: unknown[]): { text: string; entities: unknown[] }; export class InlineKeyboard { text(label: string, data: string): this; url(label: string, url: string): this; row(): this; build(): unknown; } export function callbackData(prefix: string, schema: Record<string, NumberConstructor | StringConstructor | BooleanConstructor>): any; export function session<S>(options: { initial: () => S }): import("@yaebal/core").Plugin<import("@yaebal/core").Context, { session: S }>; }`;
+		ts.typescriptDefaults.addExtraLib(globals, "file:///node_modules/@types/node/process.d.ts");
+		ts.typescriptDefaults.addExtraLib(core, "file:///node_modules/@yaebal/core/index.d.ts");
+		ts.typescriptDefaults.addExtraLib(meta, "file:///node_modules/yaebal/index.d.ts");
 	}
 
 	onMount(async () => {
-		ensureFont();
 		try {
 			monaco = await loadMonaco();
 			const ts = monaco.languages.typescript;
 
-			ts.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: true, noSyntaxValidation: false });
+			ts.typescriptDefaults.setDiagnosticsOptions({ noSemanticValidation: false, noSyntaxValidation: false });
 			ts.typescriptDefaults.setCompilerOptions({
 				target: ts.ScriptTarget.ESNext,
 				allowNonTsExtensions: true,
 				moduleResolution: ts.ModuleResolutionKind.NodeJs,
+				module: ts.ModuleKind.ESNext,
+				strict: true,
 			});
+			addYaebalTypes(ts);
 
 			monaco.editor.defineTheme("yaebal-dark", {
 				base: "vs-dark",
@@ -98,7 +109,7 @@
 				automaticLayout: true,
 				minimap: { enabled: false },
 				fontSize: 13.5,
-				fontFamily: "'Fira Code', 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace",
+				fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
 				fontLigatures: true,
 				lineHeight: 1.7,
 				letterSpacing: 0.2,
@@ -146,6 +157,15 @@
 		width: 100%;
 		height: 100%;
 		min-height: 420px;
+		font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	}
+
+	.host :global(.monaco-editor),
+	.host :global(.monaco-editor .inputarea),
+	.host :global(.monaco-hover),
+	.host :global(.suggest-widget),
+	.host :global(.monaco-editor .view-line) {
+		font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
 	}
 	.fallback {
 		display: block;
@@ -157,6 +177,7 @@
 		background: transparent;
 		color: var(--secondary);
 		padding: 14px 16px;
+		font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 		font-size: 13px;
 		line-height: 1.7;
 		tab-size: 2;

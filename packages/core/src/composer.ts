@@ -100,6 +100,7 @@ export function matchQuery(ctx: Context, query: string): boolean {
  */
 export class Composer<C extends Context = Context> {
 	protected middlewares: Middleware<C>[] = [];
+	protected decorations: object[] = [];
 
 	/** raw middleware. call `next()` to continue the chain. */
 	use(...middleware: Middleware<C>[]): this {
@@ -252,17 +253,9 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/**
-	 * static context enrichment. adds `D` to the context type.
-	 * NOTE: a production build would hoist this out of the per-request path entirely;
-	 * here it is applied once at the top of the chain for simplicity.
-	 */
+	/** static context enrichment. adds `D` to the context type without adding middleware hops. */
 	decorate<D extends object>(value: D): Composer<C & D> {
-		this.middlewares.push((ctx, next) => {
-			Object.assign(ctx as object, value);
-			return next();
-		});
-		
+		this.decorations.push(value);
 		return this as unknown as Composer<C & D>;
 	}
 
@@ -274,7 +267,12 @@ export class Composer<C extends Context = Context> {
 
 	/** collapse this composer into a single middleware (used by `extend` and `Bot`). */
 	toMiddleware(): Middleware<C> {
+		const decorations = Object.assign({}, ...this.decorations);
 		const composed = compose(this.middlewares);
-		return (ctx, next) => composed(ctx, next);
+
+		return (ctx, next) => {
+			Object.assign(ctx as object, decorations);
+			return composed(ctx, next);
+		};
 	}
 }

@@ -66,18 +66,25 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 			<td>✅</td>
 		</tr>
 		<tr>
-			<td><code>nodeWebhookCallback</code> (node http)</td>
+			<td><code>@yaebal/core/node</code> — <code>nodeWebhookCallback</code></td>
 			<td>✅</td>
 			<td>✅ (compat)</td>
 			<td>✅ (compat)</td>
 			<td>❌ no node:http</td>
 		</tr>
 		<tr>
-			<td><code>@yaebal/panel</code></td>
+			<td><code>@yaebal/panel</code> main handler</td>
 			<td>✅</td>
 			<td>✅</td>
 			<td>✅</td>
-			<td>❌ needs fs</td>
+			<td>✅ fetch handler</td>
+		</tr>
+		<tr>
+			<td><code>@yaebal/panel/sqlite</code></td>
+			<td>✅ Node ≥22.5</td>
+			<td>❌</td>
+			<td>❌</td>
+			<td>❌</td>
 		</tr>
 		<tr>
 			<td><code>@yaebal/router</code> (file-based)</td>
@@ -140,8 +147,9 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 </p>
 <ul>
 	<li>
-		<code>@yaebal/panel</code> — serves a static admin UI from disk; needs
-		<code>fs</code>
+		<code>@yaebal/panel/sqlite</code> — optional SQLite store; uses <code>node:sqlite</code> and
+		requires Node ≥22.5. the main <code>@yaebal/panel</code> fetch handler can run on edge with a
+		compatible store.
 	</li>
 	<li>
 		<code>@yaebal/router</code> — discovers handler files at startup; needs
@@ -152,7 +160,7 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 		the edge
 	</li>
 	<li>
-		<code>nodeWebhookCallback</code> — uses <code>node:http</code> types; polyfills vary
+		<code>@yaebal/core/node</code> — uses <code>node:http</code>; keep it out of edge bundles.
 	</li>
 </ul>
 <p>Everything else — core, all filter/keyboard/session/i18n plugins, <code>webhook()</code> — runs fine at the edge.</p>

@@ -23,6 +23,12 @@ bot.api.onError((method, error, attempt) => {
   // return undefined (or { retry: false }) → the error is rethrown
 });`;
 
+	const encode = `import { encodeRequest, media } from "@yaebal/core";
+
+const req = await encodeRequest({ photo: media.buffer(bytes), caption: "hi" });
+req.body;    // FormData
+req.headers; // {} — browser/runtime sets multipart boundary`;
+
 	const chained = `import { createApi } from "@yaebal/core";
 
 const api = createApi(process.env.BOT_TOKEN!)
@@ -105,11 +111,13 @@ const url = bot.api.fileUrl(file.file_path);
 
 <h2>encodeRequest: JSON vs multipart</h2>
 <p>
-	the body encoding is chosen per request. plain params (and <code>url</code>/<code>fileId</code>
-	media) serialize to JSON; the moment a <code>path</code>/<code>buffer</code> upload is present the
-	request becomes multipart with <code>attach://</code> references. see
-	<a href="/docs/media/">media</a> for the full encoding rules.
+	<code>encodeRequest</code> is exported for adapters and tests. the body encoding is chosen per
+	request. plain params (and <code>url</code>/<code>fileId</code> media) serialize to JSON; the
+	moment a <code>path</code>/<code>buffer</code> upload is present the request becomes multipart with
+	<code>attach://</code> references. see <a href="/docs/media/">media</a> for the full encoding
+	rules.
 </p>
+<Code code={encode} title="encode.ts" />
 
 <h2>fileUrl</h2>
 <p>

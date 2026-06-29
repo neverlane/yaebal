@@ -32,42 +32,57 @@ export const nav: NavSection[] = [
 		],
 	},
 	{
-		title: "plugins",
+		title: "plugins / state",
 		items: [
 			{ label: "overview", href: "/docs/plugins" },
-			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
-			{ label: "filters", href: "/docs/plugins/filters" },
-			{ label: "conversation", href: "/docs/plugins/conversation" },
-			{ label: "again", href: "/docs/plugins/again" },
 			{ label: "session", href: "/docs/plugins/session" },
-			{ label: "keyboard", href: "/docs/plugins/keyboard" },
-			{ label: "callback-data", href: "/docs/plugins/callback-data" },
-			{ label: "morda", href: "/docs/plugins/morda" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
 			{ label: "scenes", href: "/docs/plugins/scenes" },
+			{ label: "conversation", href: "/docs/plugins/conversation" },
 			{ label: "prompt", href: "/docs/plugins/prompt" },
-			{ label: "router", href: "/docs/plugins/router" },
+			{ label: "morda", href: "/docs/plugins/morda" },
+		],
+	},
+	{
+		title: "plugins / ui",
+		items: [
+			{ label: "keyboard", href: "/docs/plugins/keyboard" },
+			{ label: "callback-data", href: "/docs/plugins/callback-data" },
+			{ label: "pagination", href: "/docs/plugins/pagination" },
+			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
+			{ label: "filters", href: "/docs/plugins/filters" },
 			{ label: "commands", href: "/docs/plugins/commands" },
+		],
+	},
+	{
+		title: "plugins / media",
+		items: [
+			{ label: "files", href: "/docs/plugins/files" },
+			{ label: "media-cache", href: "/docs/plugins/media-cache" },
+			{ label: "media-group", href: "/docs/plugins/media-group" },
+			{ label: "split", href: "/docs/plugins/split" },
+			{ label: "preview", href: "/docs/plugins/preview" },
+		],
+	},
+	{
+		title: "plugins / ops",
+		items: [
+			{ label: "again", href: "/docs/plugins/again" },
 			{ label: "throttle", href: "/docs/plugins/throttle" },
 			{ label: "ratelimiter", href: "/docs/plugins/ratelimiter" },
-			{ label: "files", href: "/docs/plugins/files" },
 			{ label: "broadcast", href: "/docs/plugins/broadcast" },
-			{ label: "pagination", href: "/docs/plugins/pagination" },
-			{ label: "media-group", href: "/docs/plugins/media-group" },
-			{ label: "media-cache", href: "/docs/plugins/media-cache" },
-			{ label: "split", href: "/docs/plugins/split" },
 			{ label: "panel", href: "/docs/plugins/panel" },
-			{ label: "preview", href: "/docs/plugins/preview", badge: "new" },
-			{ label: "test", href: "/docs/plugins/test", badge: "new" },
 		],
 	},
 	{
 		title: "scaling",
 		items: [
-			{ label: "web (edge)", href: "/docs/plugins/web", badge: "new" },
-			{ label: "runner", href: "/docs/runner", badge: "new" },
-			{ label: "workers", href: "/docs/workers", badge: "new" },
-			{ label: "runtimes", href: "/docs/runtimes", badge: "new" },
+			{ label: "web (edge)", href: "/docs/plugins/web" },
+			{ label: "runner", href: "/docs/runner" },
+			{ label: "workers", href: "/docs/workers" },
+			{ label: "runtimes", href: "/docs/runtimes" },
+			{ label: "router", href: "/docs/plugins/router" },
+			{ label: "test", href: "/docs/plugins/test" },
 		],
 	},
 	{
@@ -78,6 +93,25 @@ export const nav: NavSection[] = [
 		],
 	},
 ];
+
+export const flatNav = nav.flatMap((section) => section.items);
+
+export function navNeighbors(pathname: string): { previous?: NavItem; next?: NavItem } {
+	const clean = pathname.replace(/\/$/, "") || "/";
+	const index = flatNav.findIndex((item) => item.href.replace(/\/$/, "") === clean);
+
+	return {
+		previous: index > 0 ? flatNav[index - 1] : undefined,
+		next: index >= 0 ? flatNav[index + 1] : undefined,
+	};
+}
+
+export function docsSourcePath(pathname: string): string | undefined {
+	const clean = pathname.replace(/\/$/, "");
+	if (!clean.startsWith("/docs/")) return undefined;
+
+	return `apps/docs/src/routes${clean}/+page.svelte`;
+}
 
 export const GITHUB = "https://github.com/neverlane/yaebal";
 export const NPMX = "https://npmx.dev/org/yaebal";

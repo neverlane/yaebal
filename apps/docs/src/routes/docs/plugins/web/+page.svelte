@@ -11,6 +11,7 @@ export default {
   fetch(request: Request, env: { BOT_TOKEN: string; SECRET: string }) {
     const bot = new Bot(env.BOT_TOKEN);
     bot.command("start", (ctx) => ctx.reply("running on the edge ⚡"));
+	
     return webhook(bot, { secretToken: env.SECRET })(request);
   },
 };`;
@@ -24,8 +25,9 @@ bot.on("message:text", (ctx) => ctx.reply(ctx.text));
 // bun or deno only — starts a native fetch server
 serve(bot, { port: 8080, secretToken: process.env.SECRET });`;
 
-	const node = `import { Bot, nodeWebhookCallback } from "@yaebal/core";
-import { createServer } from "node:http";
+	const node = `import { createServer } from "node:http";
+import { Bot } from "@yaebal/core";
+import { nodeWebhookCallback } from "@yaebal/core/node";
 
 const bot = new Bot(process.env.BOT_TOKEN!);
 bot.on("message:text", (ctx) => ctx.reply(ctx.text));
@@ -79,7 +81,7 @@ await deleteWebhook(bot);`;
 <h2>on node</h2>
 <p>
 	<code>serve()</code> has no node backend. instead wrap <code>nodeWebhookCallback</code> from
-	<code>@yaebal/core</code> in a <code>node:http</code> server (or any node framework adapter).
+	<code>@yaebal/core/node</code> in a <code>node:http</code> server (or any node framework adapter).
 </p>
 <Code code={node} title="node-server.ts" />
 
@@ -97,8 +99,8 @@ await deleteWebhook(bot);`;
 		<tr><td><code>webhook</code></td><td><code>(bot: UpdateSink, options?: WebhookOptions) =&gt; (Request) =&gt; Promise&lt;Response&gt;</code></td><td>fetch handler for edge/web runtimes</td></tr>
 		<tr><td><code>serve</code></td><td><code>(bot: UpdateSink, options?: ServeOptions) =&gt; void</code></td><td>standalone fetch server — bun or deno only</td></tr>
 		<tr><td><code>setWebhook</code></td><td><code>(bot, url: string, options?: SetWebhookOptions) =&gt; Promise&lt;void&gt;</code></td><td>register the webhook with telegram</td></tr>
-		<tr><td><code>deleteWebhook</code></td><td><code>(bot, dropPendingUpdates?: boolean) =&gt; Promise&lt;void&gt;</code></td><td>remove the webhook (back to long-polling)</td></tr>
-		<tr><td><code>ServeOptions</code></td><td><code>WebhookOptions &amp; &#123; port?: number; hostname?: string &#125;</code></td><td>options for <code>serve()</code></td></tr>
+		<tr><td><code>deleteWebhook</code></td><td><code>(bot, dropPendingUpdates?: boolean) =&gt; Promise&lt;void&gt;</code></td><td>remove the webhook; <code>dropPendingUpdates</code> defaults to <code>false</code></td></tr>
+		<tr><td><code>ServeOptions</code></td><td><code>WebhookOptions &amp; &#123; port?: number; hostname?: string &#125;</code></td><td>options for <code>serve()</code>; <code>port</code> defaults to <code>8080</code>, <code>hostname</code> is unset by default</td></tr>
 		<tr><td><code>SetWebhookOptions</code></td><td>interface</td><td>see below</td></tr>
 		<tr><td><code>WebhookOptions</code></td><td>re-export</td><td>from <code>@yaebal/core</code></td></tr>
 		<tr><td><code>UpdateSink</code></td><td>re-export</td><td>from <code>@yaebal/core</code></td></tr>
@@ -119,7 +121,7 @@ await deleteWebhook(bot);`;
 <div class="note">
 	<strong>node has no <code>serve()</code>.</strong> the whole package is <code>fetch</code>-first
 	with zero <code>node:</code> imports, so it runs on bun, deno and edge. on node, use
-	<code>nodeWebhookCallback</code> from <code>@yaebal/core</code>; on edge, just export
+	<code>nodeWebhookCallback</code> from <code>@yaebal/core/node</code>; on edge, just export
 	<code>&#123; fetch: webhook(bot) &#125;</code>. the operator dashboard moved to
 	<a href="/docs/plugins/panel/">@yaebal/panel</a>.
 </div>

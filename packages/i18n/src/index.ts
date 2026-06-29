@@ -56,12 +56,12 @@ export function i18n<L extends string>(options: I18nOptions<L>): Plugin<Context,
 	return (composer) =>
 		composer.derive(async (ctx): Promise<I18nControls> => {
 			const key = getKey(ctx);
-			let locale: string =
+			let currentLocale: string =
 				(key !== undefined ? await storage.get(key) : undefined) ?? defaultLocale;
 
 			const t: TFn = (k, params) => {
 				const def: Dict = locales[defaultLocale] ?? {};
-				const dict: Dict = locales[locale as L] ?? def;
+				const dict: Dict = locales[currentLocale as L] ?? def;
 				const raw: DictValue = dict[k] ?? def[k] ?? k;
 
 				let s: string;
@@ -69,7 +69,8 @@ export function i18n<L extends string>(options: I18nOptions<L>): Plugin<Context,
 					s = raw;
 				} else {
 					const n = params?.n;
-					const category = typeof n === "number" ? new Intl.PluralRules(locale).select(n) : "other";
+					const category =
+						typeof n === "number" ? new Intl.PluralRules(currentLocale).select(n) : "other";
 
 					s = raw[category as keyof PluralDict] ?? raw.other;
 				}
@@ -77,15 +78,21 @@ export function i18n<L extends string>(options: I18nOptions<L>): Plugin<Context,
 				if (params) {
 					for (const [pk, pv] of Object.entries(params)) s = s.replaceAll(`{${pk}}`, String(pv));
 				}
-				
+
 				return s;
 			};
 
 			const changeLanguage = async (next: string): Promise<void> => {
-				locale = next;
+				currentLocale = next;
 				if (key !== undefined) await storage.set(key, next);
 			};
 
-			return { t, locale, changeLanguage };
+			return {
+				t,
+				get locale() {
+					return currentLocale;
+				},
+				changeLanguage,
+			};
 		});
 }

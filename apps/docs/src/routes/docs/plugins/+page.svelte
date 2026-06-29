@@ -3,15 +3,18 @@
 
 	const usage = `import { Bot } from "@yaebal/core";
 import { session } from "@yaebal/session";
-import { Keyboard } from "@yaebal/keyboard";
+import { InlineKeyboard } from "@yaebal/keyboard";
 
-const bot = new Bot(token).use(session());
-
-bot.command("menu", (ctx) =>
-  ctx.reply("pick one", {
-    reply_markup: new Keyboard().text("a", "a").text("b", "b").inline(),
-  }),
-);`;
+const bot = new Bot(token)
+  .install(session({ initial: () => ({ clicks: 0 }) }))
+  .command("menu", (ctx) =>
+    ctx.reply("pick one", {
+      reply_markup: new InlineKeyboard()
+        .text("a", "pick:a")
+        .text("b", "pick:b")
+        .build(),
+    }),
+  );`;
 
 	const plugins = [
 		["@yaebal/again", "auto-retry on 429 / flood-wait / transient 5xx"],

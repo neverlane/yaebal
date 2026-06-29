@@ -1,8 +1,5 @@
 import type { Context, FormatResult, Message, Plugin } from "@yaebal/core";
 
-/** handles the message that answers a prompt. may call `ctx.prompt` again to chain. */
-export type PromptHandler = (ctx: Context) => unknown | Promise<unknown>;
-
 export interface PromptControl {
 	/** send `question`, then run `handler` on the next message in this chat. */
 	prompt(
@@ -11,6 +8,9 @@ export interface PromptControl {
 		extra?: Record<string, unknown>,
 	): Promise<Message>;
 }
+
+/** handles the message that answers a prompt. may call `ctx.prompt` again to chain. */
+export type PromptHandler = (ctx: Context & PromptControl) => unknown | Promise<unknown>;
 
 export interface PromptOptions {
 	/** prompt key for an update. defaults to per-chat (`ctx.chat.id`). */

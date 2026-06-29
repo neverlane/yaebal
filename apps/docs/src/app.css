@@ -108,7 +108,13 @@ body {
 	padding: 0;
 	background: var(--primary);
 	color: var(--secondary);
-	scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	html,
+	body {
+		scroll-behavior: smooth;
+	}
 }
 
 body {

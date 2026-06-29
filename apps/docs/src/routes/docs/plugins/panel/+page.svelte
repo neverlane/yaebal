@@ -40,7 +40,7 @@ export default { fetch: handler };`;
 	const options = `panelHandler(bot.api, store, {
   token: process.env.PANEL_TOKEN!,           // required shared secret
   basePath: "/panel",                        // mount under a sub-path (default: root)
-  cors: "https://ops.example",               // allow a browser origin (or a list, or "*")
+  cors: "https://yaeb.al",               // allow a browser origin (or a list, or "*")
   rateLimit: { max: 10, windowMs: 60_000 },  // throttle failed auth (default); false to disable
   clientKey: (req) => req.headers.get("x-real-ip") ?? "shared", // key for rate limiting
   recordSends: true,                         // record panel replies into the store (default true)

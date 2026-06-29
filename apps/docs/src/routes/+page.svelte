@@ -1,7 +1,8 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 	import ThemeToggle from "$lib/ThemeToggle.svelte";
-	import { GITHUB } from "$lib/nav";
+
+	import { GITHUB, NPMX } from "$lib/nav";
 
 	const sample = `import { Bot } from "@yaebal/core";
 import { session } from "@yaebal/session";
@@ -20,19 +21,19 @@ bot.start();`;
 
 	const features = [
 		{
-			title: "type-safe",
+			title: "🛟 type-safe",
 			body: "strict mode, no any in public types. the context type flows through the whole chain.",
 		},
 		{
-			title: "chainable",
+			title: "⛓️ chainable",
 			body: "Bot extends Composer. derive / decorate / guard each return an augmented context type.",
 		},
 		{
-			title: "auto-gen contexts",
+			title: "🚘 auto-gen contexts",
 			body: "every per-update context and its shortcut methods are generated from the Bot API schema.",
 		},
 		{
-			title: "plugin-first",
+			title: "🥇 plugin-first",
 			body: "a deep set of first-party plugins — filters, conversation, runner, and more. dependencies are explicit and type-checked, never implicit order.",
 		},
 	];
@@ -47,6 +48,7 @@ bot.start();`;
 	<nav class="top-actions">
 		<a class="link" href="/docs/getting-started/">docs</a>
 		<a class="link" href={GITHUB} target="_blank" rel="noreferrer">github</a>
+		<a class="link" href={NPMX} target="_blank" rel="noreferrer">npmx</a>
 		<ThemeToggle />
 	</nav>
 </header>
@@ -57,7 +59,7 @@ bot.start();`;
 	<span class="eyebrow mono">type-safe · chainable · plugin-first</span>
 	<h1 class="wordmark unbounded">yaebal</h1>
 	<p class="tagline">
-		yet another telegram bot api library.<br />
+		Yet Another tElegram Bot Api Library.<br />
 		the context type <em>accumulates</em> through the chain — handlers see what plugins added,
 		with zero casting.
 	</p>

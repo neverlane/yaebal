@@ -6,16 +6,16 @@ export interface BroadcastResult {
 }
 
 export interface BroadcastOptions {
-	/** Extra params merged into every `sendMessage` (parse_mode, reply_markup, …). */
+	/** extra params merged into every `sendMessage` (parse_mode, reply_markup, …). */
 	extra?: Record<string, unknown>;
-	/** Called for each chat that failed (blocked the bot, deleted account, …). */
+	/** called for each chat that failed (blocked the bot, deleted account, …). */
 	onError?: (chatId: number | string, error: unknown) => void;
 }
 
 /**
- * Send `text` to many chats, one at a time, counting successes and failures.
- * Failures (a user blocked the bot, etc.) are swallowed so one bad chat doesn't
- * abort the run. Pair with `@yaebal/throttle` to stay under Telegram's rate limit.
+ * send `text` to many chats, one at a time, counting successes and failures.
+ * failures (a user blocked the bot, etc.) are swallowed so one bad chat doesn't
+ * abort the run. pair with `@yaebal/throttle` to stay under telegram's rate limit.
  */
 export async function broadcast(
 	api: Api,

@@ -80,4 +80,4 @@ export const nav: NavSection[] = [
 ];
 
 export const GITHUB = "https://github.com/neverlane/yaebal";
-export const NPM = "https://www.npmjs.com/org/yaebal";
+export const NPMX = "https://npmx.dev/org/yaebal";

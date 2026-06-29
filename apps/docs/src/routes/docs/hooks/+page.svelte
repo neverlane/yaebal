@@ -46,7 +46,7 @@ try {
 	const fileUrl = `const file = await bot.api.call("getFile", { file_id: id });
 const url = bot.api.fileUrl(file.file_path);
 // https://api.telegram.org/file/bot<token>/<file_path>
-//                                ^^^^^^^ contains the bot token — never log it`;
+//                                  ^^^^^^^ contains the bot token — never log it`;
 </script>
 
 <svelte:head>

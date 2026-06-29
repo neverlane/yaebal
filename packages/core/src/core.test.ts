@@ -7,19 +7,21 @@ import { webhookCallback } from "./webhook.js";
 
 test("media helpers are branded and discriminated", () => {
 	assert.ok(isMediaSource(media.fileId("AgAC")));
-	assert.ok(isMediaSource(media.url("https://x/y.png")));
+	assert.ok(isMediaSource(media.url("https://yaeb.al/y.png")));
 	assert.equal(isMediaSource({ kind: "fileId", fileId: "x" }), false); // unbranded
 });
 
 test("encodeRequest sends JSON when there is no upload", async () => {
 	const r = await encodeRequest({ chat_id: 1, photo: media.fileId("AgAC") });
+
 	assert.equal(r.contentType, "application/json");
 	assert.deepEqual(JSON.parse(r.body as string), { chat_id: 1, photo: "AgAC" });
 });
 
 test("encodeRequest inlines a url media to its string", async () => {
-	const r = await encodeRequest({ photo: media.url("https://e/p.png") });
-	assert.deepEqual(JSON.parse(r.body as string), { photo: "https://e/p.png" });
+	const r = await encodeRequest({ photo: media.url("https://yaeb.al/p.png") });
+
+	assert.deepEqual(JSON.parse(r.body as string), { photo: "https://yaeb.al/p.png" });
 });
 
 test("encodeRequest builds multipart for a buffer upload", async () => {
@@ -29,7 +31,9 @@ test("encodeRequest builds multipart for a buffer upload", async () => {
 		reply_markup: { inline_keyboard: [] },
 	});
 	assert.ok(r.body instanceof FormData);
+
 	const form = r.body as FormData;
+
 	assert.equal(form.get("photo"), "attach://_file0");
 	assert.ok(form.get("_file0") instanceof Blob);
 	assert.equal(form.get("chat_id"), "7"); // non-string serialized
@@ -57,8 +61,10 @@ test("encodeRequest uses an injected readFile for media.path() (runtime-agnostic
 		assert.equal(p, "./pics/cat.jpg"); // path forwarded verbatim
 		return new Uint8Array([9, 8, 7]);
 	};
+	
 	const r = await encodeRequest({ chat_id: 1, photo: media.path("./pics/cat.jpg") }, readFile);
 	const form = r.body as FormData;
+
 	assert.ok(form.get("_file0") instanceof Blob);
 	assert.equal(form.get("photo"), "attach://_file0");
 	assert.equal((form.get("_file0") as File).name, "cat.jpg"); // pure-js basename

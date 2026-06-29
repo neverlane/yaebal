@@ -6,7 +6,7 @@
 *Yet Another tElegram Bot Api Library*  
 **type-safe** · **chainable** · **plugin-first**
 
-[⭐ github](https://github.com/neverlane/yaebal) · [🔗 docs](https://yaebal.pages.dev) · [📦 npmx](https://npmx.dev/org/yaebal)
+[🔗 docs](https://yaebal.pages.dev) · [📦 npmx](https://npmx.dev/org/yaebal)
 
 </div>
 
@@ -69,10 +69,3 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | [@yaebal/preview](/packages/preview/)             | render telegram-style chats to SVG                            |
 | [@yaebal/workers](/packages/workers/)             | worker_threads pool to offload CPU-heavy work                 |
 | [@yaebal/test](/packages/test/)                   | testing utilities — mock api, update & context factories      |
-
-### design
-
-yaebal borrows the best from three libraries: a chainable `Composer` whose context type
-accumulates through the chain (gramio), filter queries that narrow the context
-(`on("message:text")`, grammy), and clean contexts, request hooks and media (puregram).
-the full write-up lives in [docs/RESEARCH.md](/docs/RESEARCH.md).

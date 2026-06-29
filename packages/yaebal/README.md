@@ -3,7 +3,7 @@
 
 ### yaebal
 
-*the batteries-included telegram bot framework*
+*the batteries-included telegram bot framework*  
 **one import** · **type-safe** · **runtime-agnostic**
 
 [🔗 docs](https://yaebal.pages.dev) · [⭐ github](https://github.com/neverlane/yaebal) · [📦 npmx](https://npmx.dev/org/yaebal)
@@ -58,21 +58,21 @@ bot.on("callback_query:data", (ctx) => ctx.answer("ok")); // CallbackQueryContex
 
 one `import { … } from "yaebal"` gives you, ready to use:
 
-| from              | exports                                                        | what                                  |
-|:------------------|:--------------------------------------------------------------|:--------------------------------------|
-| core              | `Bot`, `Composer`, `Context`, `media`, `Api` hooks            | the engine, filter queries, transports |
-| contexts          | `createBot`, the per-update context classes                   | typed `ctx.react` / `ctx.editText` / … |
-| `@yaebal/keyboard`| `InlineKeyboard`, `Keyboard`                                   | fluent keyboard builders               |
-| `@yaebal/callback-data` | `callbackData`                                          | typed `callback_data` pack / unpack    |
-| `@yaebal/fmt`     | `html`, `md` (+ `*ToEntities`)                                 | tagged templates with auto-escaping    |
-| `@yaebal/filters` | `filters`, `and`, `or`, `not`                                 | composable, type-narrowing filters     |
-| `@yaebal/session` | `session`                                                     | per-chat state, pluggable storage      |
-| `@yaebal/i18n`    | `i18n`                                                        | per-chat locale, `ctx.t`               |
-| `@yaebal/web`     | `serve`, `webhook`, `setWebhook`, `deleteWebhook`             | webhooks on edge/web runtimes          |
+| from                    | exports                                                        | what                                   |
+|:------------------------|:---------------------------------------------------------------|:---------------------------------------|
+| core                    | `Bot`, `Composer`, `Context`, `media`, `Api` hooks             | the engine, filter queries, transports |
+| contexts                | `createBot`, the per-update context classes                    | typed `ctx.react` / `ctx.editText` / … |
+| `@yaebal/keyboard`      | `InlineKeyboard`, `Keyboard`                                   | fluent keyboard builders               |
+| `@yaebal/callback-data` | `callbackData`                                                 | typed `callback_data` pack / unpack    |
+| `@yaebal/fmt`           | `html`, `md` (+ `*ToEntities`)                                 | tagged templates with auto-escaping    |
+| `@yaebal/filters`       | `filters`, `and`, `or`, `not`                                  | composable, type-narrowing filters     |
+| `@yaebal/session`       | `session`                                                      | per-chat state, pluggable storage      |
+| `@yaebal/i18n`          | `i18n`                                                         | per-chat locale, `ctx.t`               |
+| `@yaebal/web`           | `serve`, `webhook`, `setWebhook`, `deleteWebhook`              | webhooks on edge/web runtimes          |
 
 ## a quick tour
 
-**keyboards + typed callback data**
+### keyboards + typed callback data
 
 ```ts
 import { InlineKeyboard, callbackData } from "yaebal";
@@ -94,7 +94,7 @@ bot.on("callback_query:data", (ctx) => {
 });
 ```
 
-**per-chat sessions**
+### per-chat sessions
 
 ```ts
 import { session } from "yaebal";
@@ -103,7 +103,7 @@ bot.install(session({ initial: () => ({ count: 0 }) }));
 bot.command("count", (ctx) => ctx.reply(`#${++ctx.session.count}`));
 ```
 
-**i18n**
+### i18n (internationalization)
 
 ```ts
 import { i18n } from "yaebal";
@@ -115,7 +115,7 @@ bot.install(i18n({
 bot.command("start", (ctx) => ctx.reply(ctx.t("hi")));
 ```
 
-**media — no platform package**
+### media — no platform package
 
 ```ts
 import { media } from "yaebal";
@@ -124,7 +124,7 @@ bot.command("pic", (ctx) => ctx.sendPhoto(media.path("./cat.jpg"))); // node/bun
 // on edge, send media.url(...) / media.buffer(...) instead
 ```
 
-**run on the edge (webhooks)**
+### run on the edge (webhooks)
 
 ```ts
 import { Bot, webhook } from "yaebal";
@@ -133,6 +133,7 @@ export default {
   fetch(request: Request, env: { BOT_TOKEN: string; SECRET: string }) {
     const bot = new Bot(env.BOT_TOKEN);
     bot.command("start", (ctx) => ctx.reply("running on the edge ⚡"));
+
     return webhook(bot, { secretToken: env.SECRET })(request);
   },
 };

@@ -35,7 +35,7 @@ bot.command("start", (ctx) => {
 });`;
 
 	const webAppSwitchInline = `const kb = new InlineKeyboard()
-  .webApp("open app", "https://example.com")
+  .webApp("open app", "https://yaeb.al")
   .row()
   .switchInline("share", "my query")
   .build();`;

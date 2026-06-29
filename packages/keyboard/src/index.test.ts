@@ -7,7 +7,7 @@ test("inline keyboard builds rows", () => {
 		.text("A", "a")
 		.text("B", "b")
 		.row()
-		.url("site", "https://example.com")
+		.url("site", "https://yaeb.al")
 		.build();
 	
 	assert.deepEqual(kb, {
@@ -16,7 +16,7 @@ test("inline keyboard builds rows", () => {
 				{ text: "A", callback_data: "a" },
 				{ text: "B", callback_data: "b" },
 			],
-			[{ text: "site", url: "https://example.com" }],
+			[{ text: "site", url: "https://yaeb.al" }],
 		],
 	});
 });
@@ -29,14 +29,14 @@ test("trailing row() does not emit an empty row", () => {
 
 test("webApp and switchInline buttons", () => {
 	const kb = new InlineKeyboard()
-		.webApp("open", "https://example.com")
+		.webApp("open", "https://yaeb.al")
 		.switchInline("share", "q")
 		.build();
 	
 	assert.deepEqual(kb, {
 		inline_keyboard: [
 			[
-				{ text: "open", web_app: { url: "https://example.com" } },
+				{ text: "open", web_app: { url: "https://yaeb.al" } },
 				{ text: "share", switch_inline_query: "q" },
 			],
 		],

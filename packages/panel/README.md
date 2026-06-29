@@ -72,9 +72,9 @@ export default { fetch: handler };
 
 ```ts
 panelHandler(bot.api, store, {
-  token: process.env.PANEL_TOKEN!,   // required shared secret
-  basePath: "/panel",                // mount under a sub-path (default: root)
-  cors: "https://ops.example",       // allow a browser origin (or a list, or "*")
+  token: process.env.PANEL_TOKEN!,          // required shared secret
+  basePath: "/panel",                       // mount under a sub-path (default: root)
+  cors: "https://ops.example",              // allow a browser origin (or a list, or "*")
   rateLimit: { max: 10, windowMs: 60_000 }, // throttle failed auth (default); false to disable
 });
 ```

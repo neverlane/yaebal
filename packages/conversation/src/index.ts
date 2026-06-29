@@ -1,23 +1,5 @@
 import type { Context, Plugin } from "@yaebal/core";
 
-/**
- * @yaebal/conversation — write multi-step dialogs as a straight line:
- *
- *   const greet = createConversation("greet", async (cv, ctx) => {
- *     await ctx.send("what's your name?");
- * 
- *     const answer = await cv.wait();
- *     await answer.send(`hi ${answer.text}`);
- *   });
- *   bot.install(conversation([greet]));
- *   bot.command("greet", (ctx) => ctx.conversation.enter("greet"));
- *
- * it's a COROUTINE, not a replay engine (grammY-style): the builder runs once,
- * detached, and `cv.wait()` resolves with the next update for that chat. while a
- * conversation is active it OWNS the chat's updates (they don't reach other
- * handlers). state is in-memory, lost on restart — like `prompt`/`scenes`.
- */
-
 export interface Conversation {
 	/** resolve with the next update's context for this chat. */
 	wait(): Promise<Context>;
@@ -58,6 +40,26 @@ interface Live {
 	current: Context;
 }
 
+/**
+ * yaebal/conversation — write multi-step dialogs as a straight line:
+ *
+ *   ```
+ *   const greet = createConversation("greet", async (cv, ctx) => {
+ *     await ctx.send("what's your name?");
+ * 
+ *     const answer = await cv.wait();
+ *     await answer.send(`hi ${answer.text}`);
+ *   });
+ * 
+ *   bot.install(conversation([greet]));
+ *   bot.command("greet", (ctx) => ctx.conversation.enter("greet"));
+ *   ```
+ *
+ * it's a COROUTINE, not a replay engine: the builder runs once, detached,
+ * and `cv.wait()` resolves with the next update for that chat. while a
+ * conversation is active it OWNS the chat's updates (they don't reach other
+ * handlers). state is in-memory, lost on restart — like `prompt`/`scenes`.
+ */
 export function conversation(
 	defs: ConversationDef[],
 	options: ConversationOptions = {},

@@ -3,14 +3,14 @@
 
 	const helpers = `import { media } from "@yaebal/core";
 
-media.path("./photo.jpg");                 // local file → uploaded
-media.url("https://example.com/p.png");    // remote url → passed as a string
+media.path("./photo.jpg");                  // local file → uploaded
+media.url("https://yaeb.al/p.png");         // remote url → passed as a string
 media.buffer(new Uint8Array([…]), "p.png"); // in-memory bytes → uploaded
-media.fileId("AgACAgIAAx…");               // already on Telegram → reused`;
+media.fileId("AgACAgIAAx…");                // already on Telegram → reused`;
 
 	const guard = `import { isMediaSource, media } from "@yaebal/core";
 
-isMediaSource(media.fileId("AgAC")); // true — branded with a symbol
+isMediaSource(media.fileId("AgAC"));            // true — branded with a symbol
 isMediaSource({ kind: "fileId", fileId: "x" }); // false — not branded`;
 
 	const send = `bot.command("photo", (ctx) =>
@@ -30,8 +30,8 @@ ctx.sendPhoto("AgACAgIAAx…");`;
 await encodeRequest({ chat_id: 1, photo: media.fileId("AgAC") });
 //   { body: '{"chat_id":1,"photo":"AgAC"}', contentType: "application/json" }
 
-await encodeRequest({ photo: media.url("https://e/p.png") });
-//   { body: '{"photo":"https://e/p.png"}', contentType: "application/json" }`;
+await encodeRequest({ photo: media.url("https://yaeb.al/p.png") });
+//   { body: '{"photo":"https://yaeb.al/p.png"}', contentType: "application/json" }`;
 
 	const multipart = `// a path or buffer present → the whole request becomes multipart.
 // each upload is attached under a generated field and referenced via attach://

@@ -21,7 +21,7 @@ console.log(BOT_API_VERSION); // e.g. "8.3"`;
 type SendMessage = BotApiMethods["sendMessage"];
 // (params: SendMessageParams) => Promise<Message>
 
-// *Params interfaces carry every field the method accepts
+// *params interfaces carry every field the method accepts
 const params: SendMessageParams = {
   chat_id: 123456,
   text: "hello",
@@ -32,8 +32,8 @@ const params: SendMessageParams = {
 pnpm --filter @yaebal/types generate`;
 
 	const fileHead = `// AUTO-GENERATED from the Telegram Bot API schema — do not edit by hand.
-// Regenerate with: pnpm --filter @yaebal/types generate
-// Source: https://ark0f.github.io/tg-bot-api/
+// regenerate with: pnpm --filter @yaebal/types generate
+// source: https://ark0f.github.io/tg-bot-api/
 
 export const BOT_API_VERSION = "8.3";
 

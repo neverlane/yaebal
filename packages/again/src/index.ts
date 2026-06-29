@@ -1,4 +1,4 @@
-import { type Api, type ErrorAction, TelegramError } from "@yaebal/core";
+import { type Api, type BotPlugin, type ErrorAction, TelegramError } from "@yaebal/core";
 
 export interface AutoRetryOptions {
 	/** max retries after the first attempt. defaults to 3. */
@@ -41,9 +41,30 @@ export function decideRetry(
 	return undefined;
 }
 
-/** install auto-retry on a bot's API: `autoRetry(bot.api)`. */
-export function autoRetry(api: Api, options: AutoRetryOptions = {}): void {
+function isApi(value: Api | AutoRetryOptions | undefined): value is Api {
+	return typeof (value as Api | undefined)?.onError === "function";
+}
+
+function installAutoRetry(api: Api, options: AutoRetryOptions = {}): void {
 	api.onError((_method, error, attempt) => decideRetry(error, attempt, options));
+}
+
+/** create an installable bot plugin: `bot.install(autoRetry())`. */
+export function autoRetry(options?: AutoRetryOptions): BotPlugin;
+/** install auto-retry on a bot's API directly: `autoRetry(bot.api)`. */
+export function autoRetry(api: Api, options?: AutoRetryOptions): void;
+export function autoRetry(
+	apiOrOptions?: Api | AutoRetryOptions,
+	options: AutoRetryOptions = {},
+): BotPlugin | void {
+	if (isApi(apiOrOptions)) return installAutoRetry(apiOrOptions, options);
+
+	const pluginOptions = apiOrOptions ?? {};
+
+	return (bot) => {
+		installAutoRetry(bot.api, pluginOptions);
+		return bot;
+	};
 }
 
 function parseRetryAfter(message: string): number | undefined {

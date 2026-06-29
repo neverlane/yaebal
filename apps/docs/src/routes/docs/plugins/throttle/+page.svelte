@@ -6,15 +6,17 @@
 	const usage = `import { Bot } from "@yaebal/core";
 import { throttle } from "@yaebal/throttle";
 
-const bot = new Bot(process.env.BOT_TOKEN!);
-
 // space outgoing API calls to ≤ 30/sec (Telegram's global cap)
-throttle(bot.api);
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(throttle())
+  .on("message:text", (ctx) => ctx.reply("hello!"));
 
-bot.on("message:text", (ctx) => ctx.reply("hello!"));
 bot.start();`;
 
 	const customInterval = `// tighter limit — one call per 100 ms
+bot.install(throttle({ minIntervalMs: 100 }));`;
+
+	const directApi = `// lower-level form, useful when you only have an Api instance
 throttle(bot.api, { minIntervalMs: 100 });`;
 
 	const reserveUsage = `import { reserve } from "@yaebal/throttle";
@@ -47,14 +49,18 @@ reserve(2000, 1068, 34);
 
 <h2>usage</h2>
 <p>
-	call <code>throttle(bot.api)</code> once after constructing the bot. it installs a
-	<code>before</code> hook on the API layer that enforces a minimum gap between consecutive
-	outgoing calls. no middleware registration needed.
+	install <code>throttle()</code> on the bot. it attaches a <code>before</code> hook to the API
+	layer that enforces a minimum gap between consecutive outgoing calls.
 </p>
 <Code code={usage} title="bot.ts" />
 
 <h2>custom interval</h2>
 <Code code={customInterval} title="bot.ts" />
+<p>
+	the direct API-hook form remains available when you are wiring a standalone
+	<code>Api</code> instance instead of a bot:
+</p>
+<Code code={directApi} title="api.ts" />
 
 <h2>api</h2>
 <table>
@@ -64,8 +70,8 @@ reserve(2000, 1068, 34);
 	<tbody>
 		<tr>
 			<td><code>throttle</code></td>
-			<td><code>(api: Api, options?: ThrottleOptions) =&gt; void</code></td>
-			<td>installs the throttle hook on <code>bot.api</code></td>
+			<td><code>(options?: ThrottleOptions) =&gt; BotPlugin</code><br /><code>(api: Api, options?: ThrottleOptions) =&gt; void</code></td>
+			<td>creates an installable bot plugin or installs the throttle hook on an <code>Api</code> directly</td>
 		</tr>
 		<tr>
 			<td><code>reserve</code></td>

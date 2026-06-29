@@ -35,6 +35,7 @@ export const nav: NavSection[] = [
 		title: "plugins / state",
 		items: [
 			{ label: "overview", href: "/docs/plugins" },
+			{ label: "authoring", href: "/docs/plugins/authoring", badge: "new" },
 			{ label: "session", href: "/docs/plugins/session" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
 			{ label: "scenes", href: "/docs/plugins/scenes" },

@@ -31,14 +31,20 @@ bot.derive(["message", "edited_message"], async (ctx) => ({
   user: await db.users.find(ctx.from!.id),
 }));`;
 
-	const plugin = `import type { Context, Plugin } from "@yaebal/core";
+	const plugin = `import type { BotPlugin, Context, Plugin } from "@yaebal/core";
 
 type Clock = { now: () => Date };
 
 const clock: Plugin<Context, { clock: Clock }> = (composer) =>
   composer.decorate({ clock: { now: () => new Date() } });
 
-bot.install(clock).command("time", (ctx) => ctx.reply(String(ctx.clock.now())));`;
+const lifecycle: BotPlugin = (bot) =>
+  bot.onStart((info) => console.log("started @" + info.username))
+     .onStop(() => console.log("stopped"));
+
+bot.install(clock).install(lifecycle).command("time", (ctx) => {
+  return ctx.reply(String(ctx.clock.now()));
+});`;
 
 	const lowLevel = `import { compose, matchQuery, type Middleware } from "@yaebal/core";
 
@@ -103,7 +109,8 @@ if (matchQuery(ctx, "message:text")) {
 <p>
 	a plugin is <code>(composer) =&gt; composer</code> with explicit input and output context types.
 	dependencies are type-checked: if a plugin requires <code>ctx.session</code>, typescript rejects
-	installing it before the session plugin.
+	installing it before the session plugin. use <code>BotPlugin</code> for extensions that need
+	bot-only features such as <code>bot.api</code>, <code>onStart()</code>, or <code>onStop()</code>.
 </p>
 <Code code={plugin} title="plugin.ts" />
 
@@ -113,9 +120,10 @@ if (matchQuery(ctx, "message:text")) {
 	<tbody>
 		<tr><td><code>new Bot(token, options?)</code></td><td>creates an API client and a composer-backed bot.</td></tr>
 		<tr><td><code>bot.start()</code></td><td>starts sequential long-polling. resolves when <code>stop()</code> is called.</td></tr>
-		<tr><td><code>bot.stop()</code></td><td>stops the polling loop.</td></tr>
+		<tr><td><code>bot.stop()</code></td><td>stops the polling loop and resolves after stop handlers run.</td></tr>
 		<tr><td><code>bot.handleUpdate(update)</code></td><td>runs one update through the frozen middleware chain.</td></tr>
 		<tr><td><code>bot.onStart(handler)</code></td><td>runs after <code>getMe()</code> succeeds in <code>start()</code>.</td></tr>
+		<tr><td><code>bot.onStop(handler)</code></td><td>runs once when <code>stop()</code> is requested or polling exits.</td></tr>
 		<tr><td><code>bot.onError(handler)</code></td><td>handles errors thrown by middleware for a specific context.</td></tr>
 	</tbody>
 </table>
@@ -139,7 +147,7 @@ if (matchQuery(ctx, "message:text")) {
 		<tr><td><code>compose</code></td><td>Koa-style middleware composition with double-<code>next()</code> protection.</td></tr>
 		<tr><td><code>matchQuery</code></td><td>runtime evaluator used by <code>on()</code>.</td></tr>
 		<tr><td><code>Middleware</code>, <code>NextFn</code></td><td>middleware function types.</td></tr>
-		<tr><td><code>Plugin</code></td><td>typed composer extension type.</td></tr>
+		<tr><td><code>Plugin</code>, <code>BotPlugin</code></td><td>typed composer and bot extension types.</td></tr>
 		<tr><td><code>Filter</code>, <code>FilterQuery</code>, <code>Filtered</code></td><td>filter and query typing primitives.</td></tr>
 		<tr><td><code>ContextOptions</code></td><td>constructor options for the base <code>Context</code>.</td></tr>
 	</tbody>

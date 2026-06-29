@@ -34,7 +34,7 @@ const bot = new Bot(token)
 		["@yaebal/files", "resolve and download telegram files"],
 		["@yaebal/ratelimiter", "drop updates from users who spam"],
 		["@yaebal/broadcast", "send a message to many chats"],
-		["@yaebal/panel", "operator panel — view chats and reply from the browser"],
+		["@yaebal/panel", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/web", "run your bot on edge/web runtimes via webhooks"],
 		["@yaebal/runner", "concurrent long-polling for scale"],
 		["@yaebal/media-group", "collect album updates into one handler"],

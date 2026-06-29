@@ -18,7 +18,7 @@ plus a set of first-party plugins:
 - [packages tree](/packages/) — the framework and every plugin
 - [core tree & readme](/packages/core/) — `Bot`, `Composer`, context, filter queries, media
 - [yaebal](/packages/yaebal/) — batteries-included meta package: core + contexts + common plugins, one import
-- [create-yaebal](/packages/create-yaebal/) — `npm create yaebal` scaffolder for a new bot
+- [create-yaebal](/packages/create-yaebal/) — `pnpm create yaebal` scaffolder for a new bot
 - [@yaebal/types](/packages/types/) — full Bot API types, code-generated from the schema
 - [@yaebal/contexts](/packages/contexts/) — per-update context classes with **auto-generated** shortcut methods
 - [examples tree](/examples/) — runnable bots you can clone and run
@@ -34,10 +34,13 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 |:---------------------------------------|:--------------------------------------------------------------------------------------------------|:---------------------------------------------|
 | [basic](/examples/basic/)              | a tour wiring most plugins — keyboard, callback-data, session, morda, i18n, scenes, prompt, media | `pnpm --filter @yaebal/example-basic dev`    |
 | [onboarding](/examples/onboarding/)    | first-run product tour with typed flow controls, inline buttons and opt-out state                 | `pnpm --filter @yaebal/example-onboarding dev` |
-| [panel](/examples/panel/)              | the operator [panel](/packages/panel/) end-to-end — live chats, media both ways, login + SSE      | `pnpm --filter @yaebal/example-panel dev`    |
+| [panel](/examples/panel/)              | the operator [panel](/packages/panel/) end-to-end: avatars, media viewer, keyboards, callbacks, events | `pnpm --filter @yaebal/example-panel dev`    |
 
 > need a fresh project instead of the monorepo? scaffold one with
-> [`create-yaebal`](/packages/create-yaebal/): `pnpm create yaebal my-bot`.
+> [`create-yaebal`](/packages/create-yaebal/): `pnpm create yaebal my-bot`. it opens a centred,
+> keyboard-driven ansi wizard that runs everywhere out of the box (node 20+/bun/deno · 9 templates ·
+> every `@yaebal` plugin), falls back to plain prompts without a tty, and takes flags for ci —
+> `--plugins all --yes`.
 
 ### plugins
 
@@ -60,7 +63,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | [@yaebal/files](/packages/files/)                 | resolve and download telegram files                           |
 | [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                              |
 | [@yaebal/broadcast](/packages/broadcast/)         | send a message to many chats                                  |
-| [@yaebal/panel](/packages/panel/)                 | operator panel — view chats and reply from the browser        |
+| [@yaebal/panel](/packages/panel/)                 | framework-agnostic operator panel with media, keyboards and event timeline |
 | [@yaebal/web](/packages/web/)                     | run your bot on edge/web runtimes via webhooks                |
 | [@yaebal/runner](/packages/runner/)               | concurrent long-polling for scale                             |
 | [@yaebal/media-group](/packages/media-group/)     | collect album updates into one handler                        |

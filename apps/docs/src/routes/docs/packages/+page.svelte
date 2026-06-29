@@ -33,7 +33,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who send too many requests"],
 		["@yaebal/broadcast", "/docs/plugins/broadcast/", "send a message to many chats"],
 		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes (Cloudflare Workers, Deno, Bun) via webhooks"],
-		["@yaebal/panel", "/docs/plugins/panel/", "operator panel — view chats and reply from the browser"],
+		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect album updates into one handler"],
 		["@yaebal/split", "/docs/plugins/split/", "break long messages into Telegram-sized chunks"],
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu"],

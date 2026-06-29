@@ -30,7 +30,11 @@ export type BeforeHook = (
 ) => Record<string, unknown> | undefined | Promise<Record<string, unknown> | undefined>;
 
 /** inspect/rewrite the result after a successful request. return a value to replace it. */
-export type AfterHook = (method: string, result: unknown) => unknown | Promise<unknown>;
+export type AfterHook = (
+	method: string,
+	params: Record<string, unknown> | undefined,
+	result: unknown,
+) => unknown | Promise<unknown>;
 
 /** what an error hook can ask the client to do. */
 export interface ErrorAction {
@@ -123,11 +127,28 @@ async function mediaToBlob(
  * if any `path`/`buffer` media is present the whole request becomes multipart,
  * with each upload attached via `attach://`. exported for testing.
  */
+type Thenable<T> = { then: (resolve: (value: T) => unknown) => unknown };
+
+function isThenable(v: unknown): v is Thenable<unknown> {
+	return typeof v === "object" && v !== null && "then" in v;
+}
+
+async function resolveThenables(
+	params: Record<string, unknown>,
+): Promise<void> {
+	for (const key of Object.keys(params)) {
+		const v = params[key];
+		if (isThenable(v)) params[key] = await v;
+	}
+}
+
 export async function encodeRequest(
 	params: Record<string, unknown> | undefined,
 	readFile?: FileReader,
 ): Promise<EncodedRequest> {
 	if (!params) return { body: undefined, contentType: "application/json" };
+
+	await resolveThenables(params);
 
 	// ponytail: media is only handled at the top level. media nested inside arrays
 	// or objects (e.g. sendMediaGroup's `media[]`) would serialize to garbage, so
@@ -220,10 +241,10 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			try {
 				let result = await rawCall<T>(method, p);
 
-				for (const hook of afterHooks) {
-					const next = await hook(method, result);
-					if (next !== undefined) result = next as Awaited<T>;
-				}
+			for (const hook of afterHooks) {
+				const next = await hook(method, p, result);
+				if (next !== undefined) result = next as Awaited<T>;
+			}
 
 				return result;
 			} catch (error) {

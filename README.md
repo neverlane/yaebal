@@ -1,19 +1,17 @@
-<div align="center">
-🐴
 
-### yaebal
+<p align="center">
+  <img src="https://raw.githubusercontent.com/neverlane/yaebal/refs/heads/master/.github/yaebal.svg"><br>
+  <b>Yet Another tElegram Bot Api Library</b><br>
+  <i>type-safe · chainable · plugin-first · batteries included</i>
+</p>
 
-*Yet Another tElegram Bot Api Library*  
-**type-safe** · **chainable** · **plugin-first**
-
-[🔗 docs](https://yaebal.pages.dev) · [📦 npmx](https://npmx.dev/org/yaebal)
-
-</div>
-
-### repository structure
-
-this repository is a pnpm monorepo for the yaebal telegram bot framework — the core
-plus a set of first-party plugins:
+<p align="center">
+  <a href="https://github.com/neverlane/yaebal"><b>GitHub</b></a>
+  ·
+  <a href="https://npmx.dev/org/yaebal"><b>npm</b></a>
+  ·
+  <a href="https://yaebal.dev"><b>Docs</b></a>
+</p>
 
 - [packages tree](/packages/) — the framework and every plugin
 - [core tree & readme](/packages/core/) — `Bot`, `Composer`, context, filter queries, media

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { encodeRequest } from "./api.js";
-import { Bot } from "./bot.js";
+import { Bot, type BotPlugin } from "./bot.js";
+import type { Context } from "./context.js";
 import { isMediaSource, media } from "./media.js";
 import { webhookCallback } from "./webhook.js";
 
@@ -111,4 +112,32 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 		message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },
 	} as never);
 	assert.equal(seen, "hi");
+});
+
+test("Bot.install accepts bot plugins and keeps enriched context", async () => {
+	let seen = "";
+	const stamp: BotPlugin<Context, { stamp: string }> = (bot) => bot.decorate({ stamp: "ok" });
+
+	const bot = new Bot("123:abc").install(stamp).on("message:text", (ctx) => {
+		seen = ctx.stamp;
+	});
+
+	await bot.handleUpdate({
+		update_id: 1,
+		message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },
+	} as never);
+
+	assert.equal(seen, "ok");
+});
+
+test("Bot.onStop handlers run once per stop cycle", async () => {
+	let stopped = 0;
+	const bot = new Bot("123:abc").onStop(() => {
+		stopped++;
+	});
+
+	await bot.stop();
+	await bot.stop();
+
+	assert.equal(stopped, 1);
 });

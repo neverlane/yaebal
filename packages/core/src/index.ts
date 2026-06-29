@@ -5,7 +5,7 @@
  * the entity-based `format` helpers, the low-level `Api`, and the telegram types.
  */
 
-export { Bot, type BotOptions } from "./bot.js";
+export { Bot, type BotOptions, type BotPlugin } from "./bot.js";
 export {
 	Composer,
 	compose,

@@ -1,6 +1,6 @@
 {
 	"name": "create-yaebal",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "scaffold a new yaebal telegram bot.",
 	"type": "module",
 	"bin": {
@@ -8,7 +8,10 @@
 	},
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
-	"files": ["lib", "bin"],
+	"files": [
+		"lib",
+		"bin"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -20,7 +23,14 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "create", "scaffold", "cli"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"create",
+		"scaffold",
+		"cli"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

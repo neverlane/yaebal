@@ -3,6 +3,11 @@ import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
 import type { Update, UpdateName, User } from "./telegram-types.js";
 
+export type BotPlugin<
+	In extends Context = Context,
+	Out extends object = Record<never, never>,
+> = <C extends In>(bot: Bot<C>) => Bot<C & Out>;
+
 export interface BotOptions {
 	apiRoot?: string;
 	/**
@@ -22,6 +27,7 @@ export interface BotOptions {
 }
 
 type StartHandler = (info: User) => unknown | Promise<unknown>;
+type StopHandler = () => unknown | Promise<unknown>;
 type ErrorHandler = (error: unknown, ctx: Context) => unknown | Promise<unknown>;
 
 function detectUpdateType(update: Update): UpdateName {
@@ -45,6 +51,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	#info?: User;
 	readonly #options: BotOptions;
 	readonly #startHandlers: StartHandler[] = [];
+	readonly #stopHandlers: StopHandler[] = [];
+	#stopPromise?: Promise<void>;
 	#errorHandler: ErrorHandler = (error) => {
 		console.error("[yaebal] unhandled error in middleware:", error);
 	};
@@ -87,14 +95,27 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 	override install<Add extends object>(
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
+	): Bot<C & Add>;
+	override install<Add extends object>(plugin: (bot: Bot<C>) => Bot<C & Add>): Bot<C & Add>;
+	override install<Add extends object>(
+		plugin:
+			| ((composer: Composer<C>) => Composer<C & Add>)
+			| ((bot: Bot<C>) => Bot<C & Add>),
 	): Bot<C & Add> {
-		plugin(this);
+		// biome-ignore lint/suspicious/noExplicitAny: overloaded plugin entry point
+		(plugin as any)(this);
 		return this as unknown as Bot<C & Add>;
 	}
 
 	/** register a callback fired once the bot has started. */
 	onStart(handler: StartHandler): this {
 		this.#startHandlers.push(handler);
+		return this;
+	}
+
+	/** register a callback fired when `stop()` is requested or polling exits. */
+	onStop(handler: StopHandler): this {
+		this.#stopHandlers.push(handler);
 		return this;
 	}
 
@@ -130,39 +151,54 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	async start(): Promise<void> {
 		if (this.#running) return;
 		this.#running = true;
+		this.#stopPromise = undefined;
 
-		this.#info = await this.api.getMe();
-		for (const handler of this.#startHandlers) await handler(this.#info);
+		try {
+			this.#info = await this.api.getMe();
+			for (const handler of this.#startHandlers) await handler(this.#info);
 
-		while (this.#running) {
-			let updates: Update[];
+			while (this.#running) {
+				let updates: Update[];
 
-			try {
-				updates = await this.api.getUpdates({
-					offset: this.#offset,
-					timeout: 30,
-					...(this.#options.allowedUpdates
-						? { allowed_updates: this.#options.allowedUpdates }
-						: {}),
-				});
-			} catch (error) {
-				if (!this.#running) break;
+				try {
+					updates = await this.api.getUpdates({
+						offset: this.#offset,
+						timeout: 30,
+						...(this.#options.allowedUpdates
+							? { allowed_updates: this.#options.allowedUpdates }
+							: {}),
+					});
+				} catch (error) {
+					if (!this.#running) break;
 
-				console.error("[yaebal] getUpdates failed, retrying in 3s:", error);
-				
-				await new Promise((r) => setTimeout(r, 3000));
-				continue;
+					console.error("[yaebal] getUpdates failed, retrying in 3s:", error);
+					
+					await new Promise((r) => setTimeout(r, 3000));
+					continue;
+				}
+
+				for (const update of updates) {
+					this.#offset = update.update_id + 1;
+					await this.handleUpdate(update);
+				}
 			}
-
-			for (const update of updates) {
-				this.#offset = update.update_id + 1;
-				await this.handleUpdate(update);
-			}
+		} finally {
+			this.#running = false;
+			await this.#runStopHandlers();
 		}
 	}
 
-	/** stop the polling loop. */
-	stop(): void {
+	/** stop the polling loop and run registered stop handlers once. */
+	stop(): Promise<void> {
 		this.#running = false;
+		return this.#runStopHandlers();
+	}
+
+	#runStopHandlers(): Promise<void> {
+		this.#stopPromise ??= (async () => {
+			for (const handler of this.#stopHandlers) await handler();
+		})();
+
+		return this.#stopPromise;
 	}
 }

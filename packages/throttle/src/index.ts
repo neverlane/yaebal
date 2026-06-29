@@ -1,4 +1,4 @@
-import type { Api } from "@yaebal/core";
+import type { Api, BotPlugin } from "@yaebal/core";
 
 export interface ThrottleOptions {
 	/** minimum ms between outgoing calls. defaults to 34 (~30/sec, telegram's global cap). */
@@ -15,12 +15,16 @@ export function reserve(now: number, next: number, interval: number): { at: numb
 	return { at, next: at + interval };
 }
 
+function isApi(value: Api | ThrottleOptions | undefined): value is Api {
+	return typeof (value as Api | undefined)?.before === "function";
+}
+
 /**
  * space out outgoing api calls by at least `minIntervalMs` (hooks `api.before`).
  * calls past the cap are delayed, not dropped, so nothing is lost — they just
  * queue up behind the rate limit.
  */
-export function throttle(api: Api, options: ThrottleOptions = {}): void {
+function installThrottle(api: Api, options: ThrottleOptions = {}): void {
 	const interval = options.minIntervalMs ?? 34;
 
 	let next = 0;
@@ -36,4 +40,22 @@ export function throttle(api: Api, options: ThrottleOptions = {}): void {
 		
 		return undefined; // keep params unchanged
 	});
+}
+
+/** create an installable bot plugin: `bot.install(throttle())`. */
+export function throttle(options?: ThrottleOptions): BotPlugin;
+/** install throttling on a bot's API directly: `throttle(bot.api)`. */
+export function throttle(api: Api, options?: ThrottleOptions): void;
+export function throttle(
+	apiOrOptions?: Api | ThrottleOptions,
+	options: ThrottleOptions = {},
+): BotPlugin | void {
+	if (isApi(apiOrOptions)) return installThrottle(apiOrOptions, options);
+
+	const pluginOptions = apiOrOptions ?? {};
+
+	return (bot) => {
+		installThrottle(bot.api, pluginOptions);
+		return bot;
+	};
 }

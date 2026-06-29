@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { Api, ErrorHook } from "@yaebal/core";
 import { TelegramError } from "@yaebal/core";
-import { decideRetry } from "./index.js";
+import { autoRetry, decideRetry } from "./index.js";
 
 test("429 with retry_after waits exactly that long", () => {
 	assert.deepEqual(
@@ -41,4 +42,18 @@ test("retryOnInternal:false skips 5xx", () => {
 		decideRetry(new TelegramError("x", 503, "Service Unavailable"), 1, { retryOnInternal: false }),
 		undefined,
 	);
+});
+
+test("autoRetry can be installed as a bot plugin", () => {
+	let hook: ErrorHook | undefined;
+	const api = {
+		onError: (h: ErrorHook) => {
+			hook = h;
+			return api as Api;
+		},
+	} as Api;
+
+	autoRetry({ maxRetries: 1 })({ api } as never);
+
+	assert.equal(typeof hook, "function");
 });

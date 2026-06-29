@@ -6,21 +6,21 @@
 	const usage = `import { Bot } from "@yaebal/core";
 import { autoRetry } from "@yaebal/again";
 
-const bot = new Bot(process.env.BOT_TOKEN!);
-
-// attach the retry handler to the bot's API layer
-autoRetry(bot.api);
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .install(autoRetry())
+  .on("message:text", (ctx) => ctx.reply("hello!"));
 
 // all API calls made through bot.api will now be retried automatically
-bot.on("message:text", (ctx) => ctx.reply("hello!"));
-
 bot.start();`;
 
-	const customOptions = `autoRetry(bot.api, {
+	const customOptions = `bot.install(autoRetry({
   maxRetries: 5,      // retry up to 5 times (default: 3)
   maxDelayMs: 10_000, // cap each wait at 10 s (default: 30 000)
   retryOnInternal: false, // skip 5xx, only handle 429 (default: true)
-});`;
+}));`;
+
+	const directApi = `// lower-level form, useful when you only have an Api instance
+autoRetry(bot.api, { maxRetries: 5 });`;
 
 	const decideRetryUsage = `import { decideRetry, type AutoRetryOptions } from "@yaebal/again";
 import { TelegramError } from "@yaebal/core";
@@ -42,14 +42,18 @@ const action = decideRetry(new TelegramError("sendMessage", 429, "retry after 7"
 
 <h2>usage</h2>
 <p>
-	call <code>autoRetry(bot.api)</code> once after constructing the bot. it installs an error hook
-	on the API layer — every failed call is inspected and, if retryable, waited on and re-issued
-	automatically. no middleware registration needed.
+	install <code>autoRetry()</code> on the bot. it attaches an error hook to the API layer — every
+	failed call is inspected and, if retryable, waited on and re-issued automatically.
 </p>
 <Code code={usage} title="bot.ts" />
 
 <h2>options</h2>
 <Code code={customOptions} title="bot.ts" />
+<p>
+	the direct API-hook form remains available when you are wiring a standalone
+	<code>Api</code> instance instead of a bot:
+</p>
+<Code code={directApi} title="api.ts" />
 
 <h2>api</h2>
 <table>
@@ -59,8 +63,8 @@ const action = decideRetry(new TelegramError("sendMessage", 429, "retry after 7"
 	<tbody>
 		<tr>
 			<td><code>autoRetry</code></td>
-			<td><code>(api: Api, options?: AutoRetryOptions) =&gt; void</code></td>
-			<td>installs the retry hook on <code>bot.api</code></td>
+			<td><code>(options?: AutoRetryOptions) =&gt; BotPlugin</code><br /><code>(api: Api, options?: AutoRetryOptions) =&gt; void</code></td>
+			<td>creates an installable bot plugin or installs the retry hook on an <code>Api</code> directly</td>
 		</tr>
 		<tr>
 			<td><code>decideRetry</code></td>

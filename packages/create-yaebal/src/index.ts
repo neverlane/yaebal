@@ -1,206 +1,152 @@
+/**
+ * create-yaebal — scaffold a type-safe telegram bot.
+ *
+ * three front-ends, one pipeline:
+ *   flags (`--yes`) → no prompts · plain readline → fallback · ansi wizard → the
+ *   hype. all of them produce a `Selections`, which `renderFiles` + `writeProject`
+ *   turn into a working project.
+ */
+
 import { existsSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import process from "node:process";
-import { createInterface } from "node:readline/promises";
+import { HELP, parseArgs } from "./args.js";
+import { defaults, type Selections, sanitizePlugins } from "./config.js";
+import { runPrompts } from "./prompts.js";
+import { installCommand, renderFiles, runCommand, writeProject } from "./scaffold.js";
+import { gitInit, installDeps, isInteractive, supportsTui, validateProjectName } from "./util.js";
 
-export type Runtime = "node" | "bun" | "deno";
+export type { ParsedArgs } from "./args.js";
+export { parseArgs } from "./args.js";
+// re-exports so the package is usable as a library / from tests ---------------
+export * from "./catalog.js";
+export * from "./config.js";
+export * from "./scaffold.js";
 
-interface PluginDef {
-	dep: string;
-	import: string;
-	install?: string;
-	setup?: string;
-}
-
-const CATALOG: Record<string, PluginDef> = {
-	session: {
-		dep: "@yaebal/session",
-		import: 'import { session } from "@yaebal/session";',
-		install: "session({ initial: () => ({ seen: 0 }) })",
-	},
-
-	ratelimiter: {
-		dep: "@yaebal/ratelimiter",
-		import: 'import { ratelimiter } from "@yaebal/ratelimiter";',
-		install: "ratelimiter()",
-	},
-	
-	again: {
-		dep: "@yaebal/again",
-		import: 'import { autoRetry } from "@yaebal/again";',
-		setup: "autoRetry(bot.api);",
-	},
+const c = {
+	cyan: (s: string) => `\x1b[36m${s}\x1b[0m`,
+	green: (s: string) => `\x1b[32m${s}\x1b[0m`,
+	dim: (s: string) => `\x1b[2m${s}\x1b[0m`,
+	bold: (s: string) => `\x1b[1m${s}\x1b[0m`,
+	red: (s: string) => `\x1b[31m${s}\x1b[0m`,
 };
 
-export interface ScaffoldOptions {
-	name: string;
-	runtime: Runtime;
-	plugins: string[];
-}
-
-const SCRIPTS: Record<Runtime, { dev: string; start: string }> = {
-	node: {
-		dev: "node --watch --experimental-strip-types src/index.ts",
-		start: "node --experimental-strip-types src/index.ts",
-	},
-	bun: { dev: "bun --watch src/index.ts", start: "bun src/index.ts" },
-	deno: {
-		dev: "deno run --watch --allow-net --allow-env src/index.ts",
-		start: "deno run --allow-net --allow-env src/index.ts",
-	},
-};
-
-/** pure: turn options into a map of relative path → file content. */
-export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
-	const chosen = opts.plugins.filter((p) => p in CATALOG);
-
-	const imports = [
-		'import { Bot } from "@yaebal/core";',
-		...chosen.map((p) => CATALOG[p]?.import ?? ""),
-	]
-		.filter(Boolean)
-		.join("\n");
-	const installs = chosen.map((p) => CATALOG[p]?.install).filter((x): x is string => Boolean(x));
-	const setups = chosen.map((p) => CATALOG[p]?.setup).filter((x): x is string => Boolean(x));
-
-	const botDecl = installs.length
-		? `const bot = new Bot(process.env.BOT_TOKEN ?? "")\n${installs.map((s) => `\t.install(${s})`).join("\n")};`
-		: `const bot = new Bot(process.env.BOT_TOKEN ?? "");`;
-
-	const index = `${imports}\n\n${botDecl}\n${setups.length ? `\n${setups.join("\n")}\n` : ""}
-bot.command("start", (ctx) => ctx.reply("hello from yaebal 👋"));
-
-bot.on("message:text", (ctx) => ctx.reply(ctx.text));
-
-bot.start();
-console.log("bot running");
-`;
-
-	const deps: Record<string, string> = { "@yaebal/core": "latest" };
-	for (const p of chosen) {
-		const dep = CATALOG[p]?.dep;
-		if (dep) deps[dep] = "latest";
-	}
-
-	const pkg = {
-		name: opts.name,
-		version: "0.0.0",
-		private: true,
-		type: "module",
-		scripts: SCRIPTS[opts.runtime],
-		dependencies: deps,
-		devDependencies: { "@types/node": "^22.0.0", typescript: "^5.7.0" },
-	};
-
-	const tsconfig = {
-		compilerOptions: {
-			target: "ES2022",
-			module: "NodeNext",
-			moduleResolution: "NodeNext",
-			strict: true,
-			noUncheckedIndexedAccess: true,
-			verbatimModuleSyntax: true,
-			skipLibCheck: true,
-			outDir: "lib",
-		},
-		include: ["src"],
-	};
-
-	return {
-		"package.json": `${JSON.stringify(pkg, null, 2)}\n`,
-		"tsconfig.json": `${JSON.stringify(tsconfig, null, 2)}\n`,
-		"src/index.ts": index,
-		".env.example": "BOT_TOKEN=\n",
-		".gitignore": "node_modules\nlib\n.env\n",
-		"README.md": `# ${opts.name}\n\na telegram bot built with [yaebal](https://github.com/neverlane/yaebal).\n\n\`\`\`sh\n# 1. put your token in .env\ncp .env.example .env\n\n# 2. run\n${opts.runtime === "deno" ? SCRIPTS.deno.dev : "pnpm dev"}\n\`\`\`\n`,
-	};
-}
-
-const isRuntime = (v: string): v is Runtime => v === "node" || v === "bun" || v === "deno";
-
-interface Args {
-	name?: string;
-	runtime?: string;
-	plugins?: string;
-}
-
-/** pure: parse argv into name + flags. supports `<name> --runtime x --plugins a,b`. */
-export function parseArgs(argv: string[]): Args {
-	const out: Args = {};
-
-	for (let i = 0; i < argv.length; i++) {
-		const a = argv[i];
-
-		if (a === "--runtime" || a === "-r") out.runtime = argv[++i];
-		else if (a === "--plugins" || a === "-p") out.plugins = argv[++i];
-		else if (a && !a.startsWith("-") && out.name === undefined) out.name = a;
-	}
-
-	return out;
-}
-
-export async function main(): Promise<void> {
-	const args = parseArgs(process.argv.slice(2));
-	const tty = Boolean(process.stdin.isTTY);
-	const rl = tty ? createInterface({ input: process.stdin, output: process.stdout }) : null;
-
+function version(): string {
 	try {
-		let name = args.name;
+		const require = createRequire(import.meta.url);
 
-		if (!name && rl) name = (await rl.question("project name: ")).trim();
-		if (!name) {
-			console.error(
-				"✗ project name is required\n  usage: create-yaebal <name> [--runtime node|bun|deno] [--plugins session,again]",
-			);
-			process.exitCode = 1;
-
-			return;
-		}
-
-		let runtime: Runtime = "node";
-
-		if (args.runtime && isRuntime(args.runtime)) runtime = args.runtime;
-		else if (rl) {
-			const a = (await rl.question("runtime — node / bun / deno [node]: ")).trim().toLowerCase();
-			if (isRuntime(a)) runtime = a;
-		}
-
-		let pluginsRaw = args.plugins ?? "";
-		if (args.plugins === undefined && rl) {
-			pluginsRaw = await rl.question(
-				"plugins — comma list of [session, ratelimiter, again] (enter to skip): ",
-			);
-		}
-
-		const plugins = pluginsRaw
-			.split(",")
-			.map((s) => s.trim())
-			.filter((p) => p in CATALOG);
-
-		const target = resolve(process.cwd(), name);
-		if (existsSync(target)) {
-			console.error(`✗ directory "${name}" already exists`);
-			process.exitCode = 1;
-
-			return;
-		}
-
-		const files = renderFiles({ name, runtime, plugins });
-		for (const [rel, content] of Object.entries(files)) {
-			const full = join(target, rel);
-
-			await mkdir(dirname(full), { recursive: true });
-			await writeFile(full, content);
-		}
-
-		const installCmd = runtime === "deno" ? "deno cache src/index.ts" : "pnpm install";
-		const runCmd = runtime === "deno" ? SCRIPTS.deno.dev : "pnpm dev";
-
-		console.log(
-			`\n✓ created ${name}/\n\nnext steps:\n  cd ${name}\n  ${installCmd}\n  # add your BOT_TOKEN to .env\n  ${runCmd}\n`,
-		);
-	} finally {
-		rl?.close();
+		return (require("../package.json") as { version: string }).version;
+	} catch {
+		return "0.0.0";
 	}
+}
+
+/** decide and run the front-end that gathers the user's choices. */
+async function gather(args: ReturnType<typeof parseArgs>): Promise<Selections | undefined> {
+	// fully non-interactive: take defaults, no questions asked.
+	if (args.yes) {
+		const d = defaults(args);
+		return { ...d, plugins: sanitizePlugins(d.plugins) };
+	}
+
+	// no tty (piped/CI) and not --yes: we can't prompt. accept defaults if we
+	// at least have a name, otherwise tell the user how to proceed.
+	if (!isInteractive()) {
+		if (args.name) {
+			const d = defaults(args);
+			return { ...d, plugins: sanitizePlugins(d.plugins) };
+		}
+
+		console.error(
+			c.red("✗ no interactive terminal."),
+			"pass a name and flags, e.g. `create-yaebal my-bot --yes`.",
+		);
+
+		process.exitCode = 1;
+		return undefined;
+	}
+
+	const wantTui = args.tui === true || (args.tui !== false && supportsTui());
+	if (wantTui) {
+		try {
+			const { runTui } = await import("./tui/app.js");
+			return await runTui(args);
+		} catch (err) {
+			if (process.env.YAEBAL_DEBUG) console.error(c.dim(`tui unavailable: ${String(err)}`));
+			// fall through to plain prompts
+		}
+	}
+
+	return runPrompts(args);
+}
+
+export async function main(argv: string[] = process.argv.slice(2)): Promise<void> {
+	const args = parseArgs(argv);
+
+	if (args.help) {
+		console.log(HELP);
+		return;
+	}
+
+	if (args.version) {
+		console.log(version());
+		return;
+	}
+
+	for (const u of args.unknown) console.error(c.dim(`warning: ignoring unknown argument "${u}"`));
+
+	const selections = await gather(args);
+	if (!selections) {
+		if (process.exitCode !== 1) console.log(c.dim("\n✗ cancelled — nothing was created."));
+		return;
+	}
+
+	const nameError = validateProjectName(selections.name);
+	if (nameError) {
+		console.error(c.red(`✗ ${nameError}`));
+		process.exitCode = 1;
+
+		return;
+	}
+
+	const target = resolve(process.cwd(), selections.name);
+	if (existsSync(target)) {
+		console.error(c.red(`✗ directory "${selections.name}" already exists`));
+		process.exitCode = 1;
+
+		return;
+	}
+
+	const files = renderFiles(selections);
+	await writeProject(target, files);
+
+	console.log(c.green(`\n✓ created ${selections.name}/`));
+
+	if (selections.git) {
+		const ok = await gitInit(target);
+		console.log(
+			ok ? c.dim("  • initialised git repository") : c.dim("  • skipped git (not available)"),
+		);
+	}
+
+	if (selections.install) {
+		console.log(c.dim(`  • installing dependencies with ${selections.packageManager}…`));
+
+		const ok = await installDeps(selections.packageManager, target);
+		if (!ok) console.log(c.red("  • install failed — run it manually"));
+	}
+
+	// next steps -----------------------------------------------------------------
+	const steps: string[] = [`cd ${selections.name}`];
+	if (!selections.install) steps.push(installCommand(selections.packageManager));
+
+	steps.push(c.dim("# add your BOT_TOKEN to .env"));
+	steps.push(runCommand(selections.packageManager, "dev"));
+
+	console.log(`\n${c.bold("next steps:")}`);
+
+	for (const s of steps) console.log(`  ${s}`);
+
+	console.log(`\n${c.cyan("happy hacking ✦")}\n`);
 }

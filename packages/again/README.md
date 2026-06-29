@@ -1,11 +1,25 @@
 # @yaebal/again
 
-max retries after the first attempt. defaults to 3.
+auto-retry on 429 / flood-wait and transient 5xx errors.
 
 ## install
 
 ```sh
 pnpm add @yaebal/again
+```
+
+## usage
+
+```ts
+import { autoRetry } from "@yaebal/again";
+
+bot.install(autoRetry({ maxRetries: 5 }));
+```
+
+the direct api-hook form is still available:
+
+```ts
+autoRetry(bot.api, { maxRetries: 5 });
 ```
 
 ---

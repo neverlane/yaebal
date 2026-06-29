@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import type { Api, BeforeHook } from "@yaebal/core";
 import { reserve, throttle } from "./index.js";
 
 test("reserve runs the first call immediately", () => {
@@ -16,16 +17,31 @@ test("reserve respects real elapsed time (no artificial wait)", () => {
 });
 
 test("throttle registers a before hook that resolves", async () => {
-	let hook: ((method: string, params: unknown) => Promise<unknown>) | undefined;
+	let hook: BeforeHook | undefined;
 
 	const api = {
-		before: (h: typeof hook) => {
+		before: (h: BeforeHook) => {
 			hook = h;
+			return api as Api;
 		},
-	} as never;
+	} as Api;
 
 	throttle(api, { minIntervalMs: 0 });
 	assert.equal(typeof hook, "function");
 	
 	await hook?.("sendMessage", undefined); // interval 0 → no delay
+});
+
+test("throttle can be installed as a bot plugin", () => {
+	let hook: BeforeHook | undefined;
+	const api = {
+		before: (h: BeforeHook) => {
+			hook = h;
+			return api as Api;
+		},
+	} as Api;
+
+	throttle({ minIntervalMs: 0 })({ api } as never);
+
+	assert.equal(typeof hook, "function");
 });

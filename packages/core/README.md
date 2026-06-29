@@ -27,10 +27,10 @@ await bot.start(); // long polling — or bot.handleUpdate(update) behind a webh
 
 - chainable `Composer` — `use` / `on` / `command` / `hears` / `callbackQuery` / `guard` / `derive` / `decorate` / `install`, all type-accumulating.
 - filter queries — `on("message:text")`, `on("callback_query:data")`, narrowing the context type.
-- typed plugins — `install(plugin)` checks a plugin's required context at compile time.
+- typed plugins — `install(plugin)` checks a plugin's required context at compile time; `BotPlugin` covers bot/API/lifecycle extensions.
 - `api` — typed methods plus a `call(method, params)` passthrough, with `before` / `after` / `onError` hooks.
 - media — `media.path` / `url` / `buffer` / `fileId` and `ctx.sendPhoto` / `ctx.sendDocument`.
-- both transports — long polling (`start`) and webhooks (`handleUpdate`).
+- both transports — long polling (`start`/`stop`/`onStart`/`onStop`) and webhooks (`handleUpdate`).
 
 ## developing (in this monorepo)
 

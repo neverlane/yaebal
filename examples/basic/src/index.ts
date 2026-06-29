@@ -78,6 +78,9 @@ const stamp: Plugin<Context, { startedAt: Date }> = (c) => c.decorate({ startedA
 const vote = callbackData("vote", { choice: String });
 
 const bot = new Bot(token)
+	// retry on 429/flood-wait and transient 5xx, and throttle outgoing calls
+	.install(autoRetry())
+	.install(throttle())
 	// install a plugin; `startedAt` now flows into every handler's context type
 	.install(stamp)
 	// per-chat session; `ctx.session` is now typed { count: number }
@@ -155,11 +158,6 @@ ${COMMANDS.map((c) => `/${c.command} — ${c.description}`).join("\n")}`,
 		await bot.api.call("setMyCommands", { commands: COMMANDS }).catch(() => {});
 		console.log(`✨ @${info.username} is live — DM it /start`);
 	});
-
-// retry on 429/flood-wait and transient 5xx, and throttle outgoing calls
-autoRetry(bot.api);
-throttle(bot.api);
-
 // graceful shutdown
 process.once("SIGINT", () => bot.stop());
 process.once("SIGTERM", () => bot.stop());

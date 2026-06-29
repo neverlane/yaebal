@@ -25,6 +25,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "/docs/plugins/i18n/", "per-chat locale, ctx.t / ctx.changeLanguage"],
 		["@yaebal/scenes", "/docs/plugins/scenes/", "step-by-step wizards over multiple messages"],
+		["@yaebal/onboarding", "/docs/plugins/onboarding/", "declarative first-run tutorials with inline controls"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, await the next message as the answer"],
 		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "rate-limit outgoing API calls"],

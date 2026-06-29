@@ -26,6 +26,7 @@ const bot = new Bot(token)
 		["@yaebal/morda", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "per-chat locale, ctx.t / ctx.changeLanguage"],
 		["@yaebal/scenes", "step-by-step wizards over multiple messages"],
+		["@yaebal/onboarding", "declarative first-run tutorials with inline controls"],
 		["@yaebal/conversation", "await-style multi-step dialogs (coroutine, no replay)"],
 		["@yaebal/prompt", "ask a question, handle the next message"],
 		["@yaebal/router", "file-based routing from a routes/ directory"],
@@ -53,7 +54,7 @@ const bot = new Bot(token)
 
 <h1>plugins</h1>
 <p class="lead">
-	27 first-party plugins. each is a typed composer extension — installing one enriches the context
+	28 first-party plugins. each is a typed composer extension — installing one enriches the context
 	type, and its dependencies are checked at compile time.
 </p>
 

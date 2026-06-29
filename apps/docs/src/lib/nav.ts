@@ -38,6 +38,7 @@ export const nav: NavSection[] = [
 			{ label: "session", href: "/docs/plugins/session" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
 			{ label: "scenes", href: "/docs/plugins/scenes" },
+			{ label: "onboarding", href: "/docs/plugins/onboarding", badge: "new" },
 			{ label: "conversation", href: "/docs/plugins/conversation" },
 			{ label: "prompt", href: "/docs/plugins/prompt" },
 			{ label: "morda", href: "/docs/plugins/morda" },

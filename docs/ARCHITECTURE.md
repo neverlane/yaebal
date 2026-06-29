@@ -204,7 +204,7 @@ core по-прежнему держит свой минимальный ручн
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` в именах | — | @gramio/autoload + storona |
 | **`@yaebal/listai`** | пагинация | `keyboard` | @gramio/pagination |
 | **`@yaebal/narezka`** | резать длинные сообщения на части | — | @gramio/split |
-| **`@yaebal/vkatka`** | onboarding — декларативные туториалы | `session` | @gramio/onboarding |
+| **`@yaebal/onboarding`** ✅ | onboarding — декларативные туториалы, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
 | **`@yaebal/broadcast`** ✅ | массовая рассылка, `{sent, failed}`, переживает блокировки. Пара к `throttle` | — | @gramio/broadcast |
 | **`@yaebal/komandy`** | управление командами/скоупами | — | grammY commands |
 | **`@yaebal/tolpa`** | runner — конкурентный поллинг, масштаб | — | grammY runner |
@@ -213,7 +213,7 @@ core по-прежнему держит свой минимальный ручн
 ```
 sklad ─→ session ─→ i18n
                 ├→ scenes
-                ├→ vkatka
+                ├→ onboarding
                 └→ morda ─→ morda/jsx
 callback-data ───────────┘
 keyboard ──→ listai

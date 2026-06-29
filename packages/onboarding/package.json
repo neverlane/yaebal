@@ -1,0 +1,40 @@
+{
+	"name": "@yaebal/onboarding",
+	"version": "0.0.1",
+	"description": "yaebal onboarding - declarative product tours and first-run tutorials for telegram bots.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test \"lib/*.test.js\""
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/keyboard": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "onboarding", "tutorial"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/onboarding"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

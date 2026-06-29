@@ -28,6 +28,14 @@ pnpm --filter @yaebal/example-panel dev`;
 		["send an album", "grouped into one media bubble"],
 		["reply from the panel", "delivered via sendMessage; 📎 uploads send as sendPhoto / sendDocument / …"],
 	];
+
+	const onboarding = [
+		["/start", "starts or resumes the welcome flow"],
+		["/tour", "force-restarts the tour after completion"],
+		["/status", "reads ctx.onboarding.welcome state"],
+		["/disable", "calls ctx.onboarding.disableAll()"],
+		["/enable", "reenables and undismisses the flow"],
+	];
 </script>
 
 <svelte:head>
@@ -63,6 +71,24 @@ pnpm --filter @yaebal/example-panel dev`;
 	</tbody>
 </table>
 <p>run it: <code>pnpm --filter @yaebal/example-basic dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
+<h2>onboarding <span class="muted">— product tour</span></h2>
+<p>
+	the <a href="/docs/plugins/onboarding/">onboarding</a> plugin in isolation: typed flow controls,
+	inline next/skip/exit buttons, completion hooks, force restart and opt-out. source:
+	<a href={`${GH}/onboarding`}>examples/onboarding</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each onboarding as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-onboarding dev</code> (needs <code>BOT_TOKEN</code>).</p>
 
 <h2>panel <span class="muted">— operator dashboard</span></h2>
 <p>

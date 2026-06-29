@@ -33,6 +33,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | example                                | what it shows                                                                                     | run                                          |
 |:---------------------------------------|:--------------------------------------------------------------------------------------------------|:---------------------------------------------|
 | [basic](/examples/basic/)              | a tour wiring most plugins — keyboard, callback-data, session, morda, i18n, scenes, prompt, media | `pnpm --filter @yaebal/example-basic dev`    |
+| [onboarding](/examples/onboarding/)    | first-run product tour with typed flow controls, inline buttons and opt-out state                 | `pnpm --filter @yaebal/example-onboarding dev` |
 | [panel](/examples/panel/)              | the operator [panel](/packages/panel/) end-to-end — live chats, media both ways, login + SSE      | `pnpm --filter @yaebal/example-panel dev`    |
 
 > need a fresh project instead of the monorepo? scaffold one with
@@ -51,6 +52,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | [@yaebal/morda](/packages/morda/)                 | dialogs engine + jsx/hooks (react-for-telegram)               |
 | [@yaebal/i18n](/packages/i18n/)                   | per-chat locale, `ctx.t` / `ctx.changeLanguage`               |
 | [@yaebal/scenes](/packages/scenes/)               | step-by-step wizards over multiple messages                   |
+| [@yaebal/onboarding](/packages/onboarding/)       | declarative first-run tutorials with inline controls          |
 | [@yaebal/conversation](/packages/conversation/)   | await-style multi-step dialogs (coroutine, no replay)         |
 | [@yaebal/prompt](/packages/prompt/)               | ask a question, handle the next message                       |
 | [@yaebal/router](/packages/router/)               | file-based routing from a `routes/` directory                 |

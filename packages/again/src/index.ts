@@ -56,7 +56,7 @@ export function autoRetry(api: Api, options?: AutoRetryOptions): void;
 export function autoRetry(
 	apiOrOptions?: Api | AutoRetryOptions,
 	options: AutoRetryOptions = {},
-): BotPlugin | undefined {
+): BotPlugin | void {
 	if (isApi(apiOrOptions)) return installAutoRetry(apiOrOptions, options);
 
 	const pluginOptions = apiOrOptions ?? {};

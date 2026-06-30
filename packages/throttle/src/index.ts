@@ -49,7 +49,7 @@ export function throttle(api: Api, options?: ThrottleOptions): void;
 export function throttle(
 	apiOrOptions?: Api | ThrottleOptions,
 	options: ThrottleOptions = {},
-): BotPlugin | undefined {
+): BotPlugin | void {
 	if (isApi(apiOrOptions)) return installThrottle(apiOrOptions, options);
 
 	const pluginOptions = apiOrOptions ?? {};

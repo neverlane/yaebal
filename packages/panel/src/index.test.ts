@@ -411,14 +411,16 @@ test("SSE stream advertises text/event-stream and forwards a record event", asyn
 	assert.match(res.headers.get("content-type") ?? "", /text\/event-stream/);
 
 	const reader = res.body?.getReader();
-	await reader?.read(); // ": connected"
+	assert.ok(reader);
+	await reader.read(); // ": connected"
 
 	store.record({ id: 1, name: "@u" }, { direction: "in", text: "ping", date: 1 });
 
-	const { value } = await reader?.read();
+	const { value } = await reader.read();
+	assert.ok(value);
 	assert.match(new TextDecoder().decode(value), /event: record/);
 
-	await reader?.cancel();
+	await reader.cancel();
 });
 
 test("recordOutgoing logs bot replies sent outside the panel (private only)", () => {

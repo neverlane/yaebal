@@ -23,10 +23,10 @@ pnpm --filter @yaebal/example-panel dev`;
 	];
 
 	const panelTour: [string, string][] = [
-		["send text", "appears live in the panel; the bot echoes it back"],
-		["send a photo / document / voice", "rendered inline — image, download link, or audio player"],
-		["send an album", "grouped into one media bubble"],
-		["reply from the panel", "delivered via sendMessage; 📎 uploads send as sendPhoto / sendDocument / …"],
+		["/start", "inline keyboard preview, avatar sidebar and callback buttons"],
+		["press a button", "callback event row plus the bot response"],
+		["send photo / album / video / voice", "media viewer, album grid, styled video card and voice waveform"],
+		["reply from the panel", "delivered via sendMessage; uploads infer sendPhoto / sendVideo / sendVoice / sendDocument"],
 	];
 
 	const onboarding = [
@@ -92,9 +92,9 @@ pnpm --filter @yaebal/example-panel dev`;
 
 <h2>panel <span class="muted">— operator dashboard</span></h2>
 <p>
-	the <a href="/docs/plugins/panel/">panel</a> end-to-end: a live operator dashboard with media in
-	both directions, served on a native node server. it exercises the recorder, outgoing-reply logging,
-	the login page, realtime SSE and the media proxy. source: <a href={`${GH}/panel`}>examples/panel</a>.
+	the <a href="/docs/plugins/panel/">panel</a> end-to-end: a live operator dashboard with avatars,
+	media viewer, keyboard previews, callbacks, event rows, outgoing logging, login, realtime SSE and
+	the media proxy. source: <a href={`${GH}/panel`}>examples/panel</a>.
 </p>
 <table>
 	<thead>

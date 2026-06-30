@@ -51,22 +51,35 @@ test("SqlitePanelStore persists attachments and media_group_id round-trip", { sk
 	const store = new Store();
 
 	store.record(
-		{ id: 1, name: "@u" },
+		{ id: 1, name: "@u", firstName: "Uma", lastName: "Ray", username: "u" },
 		{
 			direction: "in",
 			text: "[photo]",
 			date: 1,
 			attachments: [{ type: "photo", fileId: "f1" }],
 			mediaGroupId: "G1",
+			keyboard: { type: "inline", rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]] },
 		},
 	);
-	store.record({ id: 1, name: "@u" }, { direction: "out", text: "thanks", date: 2 });
+	store.record(
+		{ id: 1, name: "@u" },
+		{ direction: "in", text: "button clicked: open", date: 2, event: { type: "callback", title: "button clicked", detail: "open", data: "open" } },
+	);
+
+	const chat = store.chats()[0];
+	assert.equal(chat?.firstName, "Uma");
+	assert.equal(chat?.lastName, "Ray");
+	assert.equal(chat?.username, "u");
+	assert.equal(chat?.lastAttachmentType, undefined);
+	assert.equal(chat?.lastEventType, "callback");
 
 	const hist = store.history(1);
 	assert.deepEqual(hist[0]?.attachments, [{ type: "photo", fileId: "f1" }]);
 	assert.equal(hist[0]?.mediaGroupId, "G1");
-	// plain text message has no attachments/group keys
+	assert.deepEqual(hist[0]?.keyboard, { type: "inline", rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]] });
+	// event message has no attachments/group keys
 	assert.equal(hist[1]?.attachments, undefined);
 	assert.equal(hist[1]?.mediaGroupId, undefined);
+	assert.equal(hist[1]?.event?.type, "callback");
 	store.close();
 });

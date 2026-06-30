@@ -1,5 +1,5 @@
-import { media } from "@yaebal/core";
-import type { Context, Plugin } from "@yaebal/core";
+import { createApi, media } from "@yaebal/core";
+import type { ApiOptions, Context, Plugin } from "@yaebal/core";
 import { PANEL_HTML } from "./panel-html.js";
 
 /** keep at most this many messages per chat in the in-memory store. */
@@ -53,6 +53,52 @@ export interface PanelAttachment {
 	mimeType?: string;
 }
 
+export interface PanelKeyboardButton {
+	text: string;
+	kind?: "callback" | "url" | "web_app" | "login_url" | "switch_inline" | "pay" | "unknown";
+	callbackData?: string;
+	url?: string;
+}
+
+export interface PanelKeyboard {
+	type: "inline" | "reply";
+	rows: PanelKeyboardButton[][];
+}
+
+export type PanelMessageEventType =
+	| "callback"
+	| "reaction"
+	| "reaction_count"
+	| "poll_answer"
+	| "chat_member";
+
+export interface PanelMessageEvent {
+	type: PanelMessageEventType;
+	title: string;
+	detail?: string;
+	data?: string;
+}
+
+export interface PanelChatRecord {
+	id: number;
+	name?: string;
+	firstName?: string;
+	lastName?: string;
+	username?: string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function stringValue(value: unknown): string | undefined {
+	return typeof value === "string" && value ? value : undefined;
+}
+
+function numberValue(value: unknown): number | undefined {
+	return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 /** pull every downloadable attachment out of a telegram message. */
 function extractAttachments(message: Record<string, unknown>): PanelAttachment[] {
 	const out: PanelAttachment[] = [];
@@ -73,6 +119,63 @@ function extractAttachments(message: Record<string, unknown>): PanelAttachment[]
 	}
 
 	return out;
+}
+
+function keyboardButton(raw: unknown): PanelKeyboardButton | undefined {
+	if (!isRecord(raw)) return undefined;
+	const text = stringValue(raw.text);
+	if (!text) return undefined;
+
+	const button: PanelKeyboardButton = { text };
+	const callbackData = stringValue(raw.callback_data);
+	const url = stringValue(raw.url);
+
+	if (callbackData) {
+		button.kind = "callback";
+		button.callbackData = callbackData;
+	} else if (url) {
+		button.kind = "url";
+		button.url = url;
+	} else if (raw.web_app !== undefined) button.kind = "web_app";
+	else if (raw.login_url !== undefined) button.kind = "login_url";
+	else if (raw.switch_inline_query !== undefined || raw.switch_inline_query_current_chat !== undefined) {
+		button.kind = "switch_inline";
+	} else if (raw.pay === true) button.kind = "pay";
+	else button.kind = "unknown";
+
+	return button;
+}
+
+function keyboardRows(raw: unknown): PanelKeyboardButton[][] {
+	if (!Array.isArray(raw)) return [];
+
+	const rows: PanelKeyboardButton[][] = [];
+	for (const row of raw) {
+		if (!Array.isArray(row)) continue;
+
+		const buttons: PanelKeyboardButton[] = [];
+		for (const item of row) {
+			const button = keyboardButton(item);
+			if (button) buttons.push(button);
+		}
+
+		if (buttons.length > 0) rows.push(buttons);
+	}
+
+	return rows;
+}
+
+function extractKeyboard(message: Record<string, unknown>): PanelKeyboard | undefined {
+	const markup = message.reply_markup;
+	if (!isRecord(markup)) return undefined;
+
+	const inline = keyboardRows(markup.inline_keyboard);
+	if (inline.length > 0) return { type: "inline", rows: inline };
+
+	const reply = keyboardRows(markup.keyboard);
+	if (reply.length > 0) return { type: "reply", rows: reply };
+
+	return undefined;
 }
 
 /** best-effort one-line label for a message: its text/caption, else a `[media]` tag. */
@@ -97,10 +200,14 @@ export interface PanelMessage {
 	/** caption / text, or a `[kind]` placeholder when the message is media-only. */
 	text: string;
 	date: number;
-	/** downloadable attachments, fetched lazily through `GET /api/file?id=…`. */
+	/** downloadable attachments, fetched lazily through `GET /api/file?id=...`. */
 	attachments?: PanelAttachment[];
 	/** telegram album id — consecutive messages sharing it are one media group. */
 	mediaGroupId?: string;
+	/** inline/reply keyboard attached to the telegram message, rendered as a compact preview. */
+	keyboard?: PanelKeyboard;
+	/** non-message update rendered in the timeline (callback, reaction, poll answer, member event). */
+	event?: PanelMessageEvent;
 }
 
 /** build a {@link PanelMessage} from a telegram message, or undefined if nothing to log. */
@@ -112,12 +219,14 @@ function toPanelMessage(
 
 	const text = describe(message);
 	const attachments = extractAttachments(message);
-	if (text === undefined && attachments.length === 0) return undefined;
+	const keyboard = extractKeyboard(message);
+	if (text === undefined && attachments.length === 0 && !keyboard) return undefined;
 
 	const date = typeof message.date === "number" ? message.date : Math.floor(Date.now() / 1000);
 	const msg: PanelMessage = { direction, text: text ?? "", date };
 	if (attachments.length > 0) msg.attachments = attachments;
 	if (typeof message.media_group_id === "string") msg.mediaGroupId = message.media_group_id;
+	if (keyboard) msg.keyboard = keyboard;
 
 	return msg;
 }
@@ -125,8 +234,13 @@ function toPanelMessage(
 export interface PanelChat {
 	id: number;
 	name: string;
+	firstName?: string;
+	lastName?: string;
+	username?: string;
 	lastText: string;
 	lastDate: number;
+	lastAttachmentType?: AttachmentType;
+	lastEventType?: PanelMessageEventType;
 }
 
 /** options for reading a slice of a conversation. */
@@ -146,7 +260,7 @@ export interface PanelEvent {
 
 /** where conversations are kept for the panel to read. implement for persistence. */
 export interface PanelStore {
-	record(chat: { id: number; name?: string }, message: PanelMessage): void | Promise<void>;
+	record(chat: PanelChatRecord, message: PanelMessage): void | Promise<void>;
 	chats(): PanelChat[] | Promise<PanelChat[]>;
 	history(chatId: number, options?: HistoryOptions): PanelMessage[] | Promise<PanelMessage[]>;
 	/** optional realtime hook — return an unsubscribe fn. enables the panel's SSE stream. */
@@ -159,7 +273,7 @@ export class MemoryPanelStore implements PanelStore {
 	#messages = new Map<number, PanelMessage[]>();
 	#listeners = new Set<(event: PanelEvent) => void>();
 
-	record(chat: { id: number; name?: string }, message: PanelMessage): void {
+	record(chat: PanelChatRecord, message: PanelMessage): void {
 		const list = this.#messages.get(chat.id) ?? [];
 
 		list.push(message);
@@ -168,12 +282,25 @@ export class MemoryPanelStore implements PanelStore {
 		this.#messages.set(chat.id, list);
 
 		const prev = this.#chats.get(chat.id);
-		this.#chats.set(chat.id, {
+		const next: PanelChat = {
 			id: chat.id,
 			name: chat.name ?? prev?.name ?? `chat ${chat.id}`,
 			lastText: message.text,
 			lastDate: message.date,
-		});
+		};
+		const firstName = chat.firstName ?? prev?.firstName;
+		const lastName = chat.lastName ?? prev?.lastName;
+		const username = chat.username ?? prev?.username;
+		const lastAttachmentType = message.attachments?.[0]?.type;
+		const lastEventType = message.event?.type;
+
+		if (firstName) next.firstName = firstName;
+		if (lastName) next.lastName = lastName;
+		if (username) next.username = username;
+		if (lastAttachmentType) next.lastAttachmentType = lastAttachmentType;
+		if (lastEventType) next.lastEventType = lastEventType;
+
+		this.#chats.set(chat.id, next);
 
 		for (const fn of this.#listeners) {
 			fn({ type: "record", chatId: chat.id, direction: message.direction });
@@ -197,20 +324,162 @@ export class MemoryPanelStore implements PanelStore {
 	}
 }
 
-/** records incoming private-chat text into the store so the panel can show it. */
+function chatIdentity(chatId: number, user: unknown): PanelChatRecord {
+	const out: PanelChatRecord = { id: chatId };
+
+	if (isRecord(user)) {
+		const firstName = stringValue(user.first_name);
+		const lastName = stringValue(user.last_name);
+		const username = stringValue(user.username);
+
+		if (firstName) out.firstName = firstName;
+		if (lastName) out.lastName = lastName;
+		if (username) out.username = username;
+
+		const fullName = [firstName, lastName].filter(Boolean).join(" ");
+		out.name = username ? `@${username}` : (fullName || undefined);
+	}
+
+	out.name ??= `chat ${chatId}`;
+	return out;
+}
+
+function privateChatId(chat: unknown): number | undefined {
+	if (!isRecord(chat) || chat.type !== "private") return undefined;
+	return numberValue(chat.id);
+}
+
+function eventMessage(
+	type: PanelMessageEventType,
+	title: string,
+	detail?: string,
+	data?: string,
+): PanelMessage {
+	const event: PanelMessageEvent = { type, title };
+	if (detail) event.detail = detail;
+	if (data) event.data = data;
+
+	return {
+		direction: "in",
+		text: detail ? `${title}: ${detail}` : title,
+		date: Math.floor(Date.now() / 1000),
+		event,
+	};
+}
+
+function reactionCount(raw: unknown): number | undefined {
+	return Array.isArray(raw) ? raw.length : undefined;
+}
+
+function eventRecord(update: Record<string, unknown>): { chat: PanelChatRecord; message: PanelMessage } | undefined {
+	if (isRecord(update.callback_query)) {
+		const query = update.callback_query;
+		const message = isRecord(query.message) ? query.message : undefined;
+		const chatId = privateChatId(message?.chat);
+		if (chatId === undefined) return undefined;
+
+		const data = stringValue(query.data);
+		return {
+			chat: chatIdentity(chatId, query.from),
+			message: eventMessage("callback", "button clicked", data ?? "callback query", data),
+		};
+	}
+
+	if (isRecord(update.message_reaction)) {
+		const reaction = update.message_reaction;
+		const chatId = privateChatId(reaction.chat);
+		if (chatId === undefined) return undefined;
+
+		const next = reactionCount(reaction.new_reaction) ?? 0;
+		const detail = `changed to ${next} reaction${next === 1 ? "" : "s"}`;
+		return {
+			chat: chatIdentity(chatId, reaction.user),
+			message: eventMessage("reaction", "message reaction", detail),
+		};
+	}
+
+	if (isRecord(update.message_reaction_count)) {
+		const reaction = update.message_reaction_count;
+		const chatId = privateChatId(reaction.chat);
+		if (chatId === undefined) return undefined;
+
+		const next = reactionCount(reaction.reactions) ?? 0;
+		const detail = `${next} reaction type${next === 1 ? "" : "s"}`;
+		return {
+			chat: chatIdentity(chatId, reaction.chat),
+			message: eventMessage("reaction_count", "reaction count", detail),
+		};
+	}
+
+	if (isRecord(update.poll_answer)) {
+		const answer = update.poll_answer;
+		const user = answer.user;
+		if (!isRecord(user)) return undefined;
+
+		const chatId = numberValue(user.id);
+		if (chatId === undefined) return undefined;
+
+		const optionIds = Array.isArray(answer.option_ids)
+			? answer.option_ids.filter((id): id is number => typeof id === "number")
+			: [];
+
+		return {
+			chat: chatIdentity(chatId, user),
+			message: eventMessage("poll_answer", "poll answer", `options ${optionIds.join(", ")}`),
+		};
+	}
+
+	const member = isRecord(update.my_chat_member)
+		? update.my_chat_member
+		: isRecord(update.chat_member)
+			? update.chat_member
+			: undefined;
+	if (member) {
+		const chatId = privateChatId(member.chat);
+		if (chatId === undefined) return undefined;
+
+		const next = isRecord(member.new_chat_member)
+			? stringValue(member.new_chat_member.status)
+			: undefined;
+
+		return {
+			chat: chatIdentity(chatId, member.from),
+			message: eventMessage("chat_member", "chat member", next ?? "updated"),
+		};
+	}
+
+	return undefined;
+}
+
+/** records a raw Telegram update into the store; useful from any bot framework. */
+export async function recordTelegramUpdate(store: PanelStore, update: unknown): Promise<boolean> {
+	if (!isRecord(update)) return false;
+
+	let recorded = false;
+	const rawMessage = update.message ?? update.edited_message ?? update.channel_post;
+	if (isRecord(rawMessage)) {
+		const chatId = privateChatId(rawMessage.chat);
+		const message = toPanelMessage("in", rawMessage);
+		if (chatId !== undefined && message) {
+			await store.record(chatIdentity(chatId, rawMessage.from), message);
+			recorded = true;
+		}
+	}
+
+	const event = eventRecord(update);
+	if (event) {
+		await store.record(event.chat, event.message);
+		recorded = true;
+	}
+
+	return recorded;
+}
+
+/** records incoming private-chat updates into the store so the panel can show them. */
 export function recorder(store: PanelStore): Plugin<Context, Record<never, never>> {
 	const plugin: Plugin<Context, Record<never, never>> = (composer) =>
 		composer.use(async (ctx, next) => {
-			const chat = ctx.chat;
-			const message = toPanelMessage("in", ctx.message as Record<string, unknown> | undefined);
-
-			if (message && chat?.type === "private") {
-				const name = ctx.from?.username
-					? `@${ctx.from.username}`
-					: (ctx.from?.first_name ?? `chat ${chat.id}`);
-
-				await store.record({ id: chat.id, name }, message);
-			}
+			await recordTelegramUpdate(store, ctx.update);
 
 			await next();
 		});
@@ -223,10 +492,15 @@ export function recorder(store: PanelStore): Plugin<Context, Record<never, never
  * `fileUrl` unlock media (file proxying + operator uploads) and are present on the real
  * `@yaebal/core` `Api`. without them, media routes answer `501`.
  */
-interface PanelApi {
+export interface PanelApi {
 	sendMessage(params: Record<string, unknown>): Promise<unknown>;
 	call?<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
 	fileUrl?(filePath: string): string;
+}
+
+/** create a small Bot API client that satisfies {@link PanelApi}; useful with any framework. */
+export function createPanelApi(token: string, options?: ApiOptions): PanelApi {
+	return createApi(token, options);
 }
 
 /** map an attachment kind to its telegram send method + param field. */
@@ -265,7 +539,7 @@ function recordResult(store: PanelStore, result: unknown): void {
 	if (chat?.id === undefined || chat.type !== "private") return;
 
 	const message = toPanelMessage("out", raw);
-	if (message) void Promise.resolve(store.record({ id: chat.id }, message));
+	if (message) void Promise.resolve(store.record(chatIdentity(chat.id, raw.chat), message));
 }
 
 /**
@@ -342,7 +616,16 @@ function corsOrigin(cors: PanelOptions["cors"], request: Request): string | unde
 }
 
 /** fields a panel client may pass through to `sendMessage` alongside `chat_id`/`text`. */
-const SEND_PASSTHROUGH = ["parse_mode", "reply_to_message_id", "reply_parameters"] as const;
+const SEND_PASSTHROUGH = [
+	"parse_mode",
+	"entities",
+	"link_preview_options",
+	"reply_to_message_id",
+	"reply_parameters",
+	"reply_markup",
+	"disable_notification",
+	"protect_content",
+] as const;
 
 /** normalize a mount prefix: `""` or `/foo` (no trailing slash). */
 function normalizeBase(basePath: string | undefined): string {
@@ -566,7 +849,7 @@ export function panelHandler(
 			const chatId = Number(send[1]);
 			const contentType = request.headers.get("content-type") ?? "";
 
-			// ---- operator file upload (multipart) → sendPhoto / sendDocument / sendVoice / … ----
+			// ---- operator file upload (multipart) -> sendPhoto / sendDocument / sendVoice / ... ----
 			if (contentType.includes("multipart/form-data")) {
 				if (!api.call) {
 					return finish(json({ error: "uploads need an api with call()" }, 501));
@@ -611,9 +894,15 @@ export function panelHandler(
 				// record from the api result when it's a real message, else fall back to the text
 				if (result && typeof result === "object" && "chat" in result) recordResult(store, result);
 				else {
+					const fallback = toPanelMessage("out", {
+						text: body.text,
+						date: Math.floor(Date.now() / 1000),
+						reply_markup: body.reply_markup,
+					}) ?? { direction: "out", text: body.text, date: Math.floor(Date.now() / 1000) };
+
 					await store.record(
 						{ id: chatId },
-						{ direction: "out", text: body.text, date: Math.floor(Date.now() / 1000) },
+						fallback,
 					);
 				}
 			}

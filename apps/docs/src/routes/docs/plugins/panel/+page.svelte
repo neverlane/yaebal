@@ -3,27 +3,89 @@
 
 	const install = `pnpm add @yaebal/panel`;
 
-	const fullSetup = `import { Bot } from "@yaebal/core";
-import { MemoryPanelStore, recorder, panelHandler } from "@yaebal/panel";
+	const yaebalSetup = `import { Bot } from "@yaebal/core";
+import { MemoryPanelStore, panelHandler, recordOutgoing, recorder } from "@yaebal/panel";
 import { serve } from "@yaebal/panel/serve";
 
-const bot = new Bot(token);
+const bot = new Bot(process.env.BOT_TOKEN!);
 const store = new MemoryPanelStore();
 
-// 1. attach the recorder plugin — logs incoming private messages to the store
 bot.install(recorder(store));
+recordOutgoing(bot.api, store);
 
-bot.start();
+const handler = panelHandler(bot.api, store, {
+  token: process.env.PANEL_TOKEN!,
+  recordSends: false,
+});
 
-// 2. serve the panel — a fetch handler: (Request) => Promise<Response>
-const handler = panelHandler(bot.api, store, { token: process.env.PANEL_TOKEN! });
 serve(handler, { port: 8080 });
+bot.start();`;
 
-// open http://localhost:8080 and paste your token on the login screen`;
-
-	const mounting = `// node 20+ — \`serve\` ships in the box (native node:http, no deps)
+	const frameworkSetup = `import {
+  MemoryPanelStore,
+  createPanelApi,
+  panelHandler,
+  recordTelegramUpdate,
+} from "@yaebal/panel";
 import { serve } from "@yaebal/panel/serve";
-serve(handler, { port: 8080, onListen: ({ port }) => console.log(\`panel on :\${port}\`) });
+
+const store = new MemoryPanelStore();
+const panelApi = createPanelApi(process.env.BOT_TOKEN!);
+
+// call this from your framework middleware for every raw Telegram update
+await recordTelegramUpdate(store, rawTelegramUpdate);
+
+const handler = panelHandler(panelApi, store, { token: process.env.PANEL_TOKEN! });
+serve(handler, { port: 8080 });`;
+
+	const grammy = `import { Bot } from "grammy";
+import { MemoryPanelStore, createPanelApi, panelHandler, recordTelegramUpdate } from "@yaebal/panel";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+const store = new MemoryPanelStore();
+
+bot.use(async (ctx, next) => {
+  await recordTelegramUpdate(store, ctx.update);
+  await next();
+});
+
+const handler = panelHandler(createPanelApi(process.env.BOT_TOKEN!), store, {
+  token: process.env.PANEL_TOKEN!,
+});`;
+
+	const gramio = `import { Bot } from "gramio";
+import { MemoryPanelStore, createPanelApi, panelHandler, recordTelegramUpdate } from "@yaebal/panel";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+const store = new MemoryPanelStore();
+
+bot.use(async (ctx, next) => {
+  await recordTelegramUpdate(store, ctx.update);
+  return next();
+});
+
+const handler = panelHandler(createPanelApi(process.env.BOT_TOKEN!), store, {
+  token: process.env.PANEL_TOKEN!,
+});`;
+
+	const puregram = `import { Telegram } from "puregram";
+import { MemoryPanelStore, createPanelApi, panelHandler, recordTelegramUpdate } from "@yaebal/panel";
+
+const telegram = new Telegram({ token: process.env.BOT_TOKEN! });
+const store = new MemoryPanelStore();
+
+telegram.updates.use(async (ctx, next) => {
+  await recordTelegramUpdate(store, ctx.update);
+  return next();
+});
+
+const handler = panelHandler(createPanelApi(process.env.BOT_TOKEN!), store, {
+  token: process.env.PANEL_TOKEN!,
+});`;
+
+	const mounting = `// node 20+, native node:http helper
+import { serve } from "@yaebal/panel/serve";
+serve(handler, { port: 8080 });
 
 // bun
 Bun.serve({ port: 8080, fetch: handler });
@@ -31,35 +93,30 @@ Bun.serve({ port: 8080, fetch: handler });
 // deno
 Deno.serve({ port: 8080 }, handler);
 
-// hono / any fetch framework — pair with basePath: "/panel"
+// hono / any fetch framework, pair with basePath: "/panel"
 app.all("/panel/*", (c) => handler(c.req.raw));
 
-// cloudflare workers / deno deploy / vercel edge — same handler, no port
+// cloudflare workers / deno deploy / vercel edge
 export default { fetch: handler };`;
 
-	const options = `panelHandler(bot.api, store, {
-  token: process.env.PANEL_TOKEN!,                              // required shared secret
-  basePath: "/panel",                                           // mount under a sub-path (default: root)
-  cors: "https://yaeb.al",                                      // allow a browser origin (or a list, or "*")
-  rateLimit: { max: 10, windowMs: 60_000 },                     // throttle failed auth (default); false to disable
-  clientKey: (req) => req.headers.get("x-real-ip") ?? "shared", // key for rate limiting
-  recordSends: true,                                            // record panel replies into the store (default true)
+	const options = `panelHandler(api, store, {
+  token: process.env.PANEL_TOKEN!,
+  basePath: "/panel",
+  cors: "https://ops.example",
+  rateLimit: { max: 10, windowMs: 60_000 },
+  clientKey: (req) => req.headers.get("x-real-ip") ?? "shared",
+  recordSends: true,
 });`;
 
 	const sqlite = `import { SqlitePanelStore } from "@yaebal/panel/sqlite";
 
-// persistent store on node's native node:sqlite — zero extra deps
-const store = new SqlitePanelStore({ path: "./panel.db" }); // or ":memory:"
+const store = new SqlitePanelStore({ path: "./panel.db" });`;
 
-bot.install(recorder(store));
-const handler = panelHandler(bot.api, store, { token: process.env.PANEL_TOKEN! });`;
+	const customStore = `import type { PanelStore, PanelChat, PanelChatRecord, PanelMessage, HistoryOptions, PanelEvent } from "@yaebal/panel";
 
-	const customStore = `import type { PanelStore, PanelChat, PanelMessage, HistoryOptions, PanelEvent } from "@yaebal/panel";
-
-// implement PanelStore for persistence (redis, postgres, …)
 class MyPersistentStore implements PanelStore {
-  async record(chat: { id: number; name?: string }, message: PanelMessage) {
-    await db.messages.insert({ chatId: chat.id, ...message });
+  async record(chat: PanelChatRecord, message: PanelMessage) {
+    await db.messages.insert({ chatId: chat.id, ...chat, ...message });
   }
 
   async chats(): Promise<PanelChat[]> {
@@ -70,17 +127,13 @@ class MyPersistentStore implements PanelStore {
     return db.messages.page({ chatId, before: opts?.before, limit: opts?.limit });
   }
 
-  // optional — enables the realtime SSE stream; omit it and the UI just polls
   subscribe(listener: (e: PanelEvent) => void) {
-    return bus.on("record", listener); // returns an unsubscribe fn
+    return bus.on("record", listener);
   }
 }`;
 
 	const outgoing = `import { recordOutgoing } from "@yaebal/panel";
 
-// recorder only sees incoming updates. to also log replies the bot sends elsewhere
-// (e.g. ctx.reply(...) in your handlers), hook the api — and stop the panel from
-// recording its own sends so they aren't logged twice:
 recordOutgoing(bot.api, store);
 
 const handler = panelHandler(bot.api, store, {
@@ -88,14 +141,12 @@ const handler = panelHandler(bot.api, store, {
   recordSends: false,
 });`;
 
-	const apiRoutes = `// routes are relative to basePath (default root). all but the page require the token.
-GET  /                       → login + chat SPA (public)
-GET  /api/chats              → PanelChat[]  (sorted by lastDate desc)
-GET  /api/chats/:id          → PanelMessage[]   (?before=&limit= to page)
-GET  /api/stream             → text/event-stream of record events
-GET  /api/file?id=<file_id>  → proxied file bytes (getFile + stream)
-POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?, reply_parameters? } → sendMessage
-                               multipart { file, caption?, type? } → sendPhoto / sendDocument / sendVoice / …`;
+	const apiRoutes = `GET  /                       -> login + chat SPA (public)
+GET  /api/chats              -> PanelChat[]
+GET  /api/chats/:id          -> PanelMessage[] (?before=&limit=)
+GET  /api/stream             -> text/event-stream of record events
+GET  /api/file?id=<file_id>  -> proxied file bytes
+POST /api/chats/:id/send     -> json { text, reply_markup?, ... } or multipart { file, caption?, type? }`;
 </script>
 
 <svelte:head>
@@ -104,91 +155,95 @@ POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?,
 
 <h1>@yaebal/panel</h1>
 <p class="lead">
-	an operator panel: view incoming private-chat messages and reply from the browser, live. ships as
-	a self-contained fetch handler — mount it on any http framework. the <code>recorder()</code>
-	plugin feeds a store; <code>panelHandler()</code> serves the login + chat UI and a small REST API.
+	framework-agnostic operator panel for Telegram bots. it records private-chat updates, shows a
+	polished browser inbox, and lets operators reply with text or media. the panel is just a
+	<code>fetch</code> handler, so it mounts on any HTTP runtime or framework.
 </p>
 
 <ul>
-	<li><strong>login page</strong> on the panel root — paste your token, no secrets in the url</li>
-	<li><strong>realtime</strong> updates over server-sent events, with a polling safety net</li>
-	<li><strong>media</strong>: photos, docs, voice, video and albums — both directions, in the browser</li>
-	<li><strong>persistence</strong> via a pluggable <code>PanelStore</code> (in-memory + sqlite included)</li>
-	<li>CORS, basePath mounting and failed-auth rate limiting</li>
+	<li><strong>framework-neutral</strong> recording with <code>recordTelegramUpdate(store, update)</code></li>
+	<li><strong>SVG-only UI</strong> with avatars, identity sidebar, media captions and text previews</li>
+	<li><strong>Bot API coverage</strong> for media, albums, keyboards, callbacks, reactions, polls and member events</li>
+	<li><strong>media viewer</strong>, styled voice cards, styled video cards and document cards</li>
+	<li><strong>runtime-neutral</strong> <code>panelHandler</code> plus Node <code>serve</code> and sqlite side entries</li>
 </ul>
 
 <h2>installation</h2>
 <Code code={install} lang="sh" title="terminal" />
 
-<h2>quick start</h2>
-<p>three moving parts: a <strong>store</strong>, the <strong>recorder plugin</strong>, and the <strong>panel handler</strong>.</p>
-<Code code={fullSetup} title="server.ts" />
+<h2>yaebal setup</h2>
 <p>
-	the panel root serves a small SPA: a centered login (token input + <strong>authorize</strong>
-	button), then the live chat view. the token is kept in <code>sessionStorage</code> and sent as an
-	<code>Authorization: Bearer</code> header — it never rides in the page url.
+	use the yaebal plugin recorder when the bot itself is yaebal. add <code>recordOutgoing</code> if
+	you want replies sent by normal handlers to appear in the panel too.
+</p>
+<Code code={yaebalSetup} title="yaebal-panel.ts" />
+
+<h2>framework-agnostic setup</h2>
+<p>
+	for grammY, GramIO, puregram or anything else, keep your existing bot. pass raw Telegram
+	updates to <code>recordTelegramUpdate</code>, and use <code>createPanelApi(token)</code> for panel
+	sends, media proxying and operator uploads.
+</p>
+<Code code={frameworkSetup} title="panel.ts" />
+
+<h3>grammY</h3>
+<Code code={grammy} title="grammy.ts" />
+
+<h3>GramIO</h3>
+<Code code={gramio} title="gramio.ts" />
+
+<h3>puregram</h3>
+<Code code={puregram} title="puregram.ts" />
+
+<p>
+	Other frameworks follow the same rule: if you can access the raw Telegram update, call
+	<code>recordTelegramUpdate(store, update)</code>. if you cannot, write directly to
+	<code>store.record()</code> with <code>PanelChatRecord</code> and <code>PanelMessage</code>.
 </p>
 
 <h2>mounting</h2>
 <p>
-	<code>panelHandler</code> returns a plain <code>(Request) =&gt; Promise&lt;Response&gt;</code> — it
-	binds no port of its own. <code>serve</code> is a separate entry (<code>@yaebal/panel/serve</code>)
-	so the main module stays free of <code>node:</code> imports for edge bundles.
+	<code>panelHandler</code> returns <code>(Request) =&gt; Promise&lt;Response&gt;</code>. it binds no port,
+	so the same handler works on Node, Bun, Deno, edge runtimes and fetch-compatible frameworks.
 </p>
 <Code code={mounting} title="mounting.ts" />
 
 <h2>options</h2>
 <Code code={options} title="options.ts" />
 <p>
-	<code>basePath</code> — the UI builds its api urls from this, so no extra rewriting is needed under
-	a prefix. <code>rateLimit</code> — after <code>max</code> bad tokens within <code>windowMs</code> a
-	client gets <code>429</code> with <code>Retry-After</code>; keyed by <code>x-forwarded-for</code> /
-	<code>x-real-ip</code> by default, override with <code>clientKey</code>.
+	<code>basePath</code> makes the SPA build API URLs under a prefix. <code>rateLimit</code> throttles
+	failed auth attempts and sends <code>429</code> with <code>Retry-After</code>. <code>recordSends</code>
+	controls whether panel-originated sends are written to the store by the handler itself.
 </p>
 
 <h2>persistence</h2>
 <p>
-	<code>MemoryPanelStore</code> is the default — up to 1000 messages per chat, lost on restart. a
-	sqlite-backed store built on node's native <code>node:sqlite</code> ships in the box:
+	<code>MemoryPanelStore</code> keeps up to 1000 messages per chat and is lost on restart.
+	<code>SqlitePanelStore</code> uses Node's built-in <code>node:sqlite</code> and persists identity,
+	preview metadata, keyboards, attachments and events.
 </p>
 <Code code={sqlite} title="sqlite.ts" />
 <p>or implement <code>PanelStore</code> against your own database:</p>
 <Code code={customStore} title="store.ts" />
-<p>
-	<code>subscribe</code> is what powers the SSE stream — a store without it still works, the UI just
-	falls back to polling every few seconds.
-</p>
 
-<h2>what the recorder captures</h2>
-<p>
-	incoming <em>private-chat</em> messages only. text and captions are stored verbatim; a message
-	with no text is logged as a <code>[photo]</code> / <code>[document]</code> / <code>[voice]</code> /
-	… placeholder so the conversation stays readable. group messages are passed through unchanged.
-	replies sent from the panel are recorded with <code>direction: "out"</code> and accept
-	<code>text</code> plus optional <code>parse_mode</code>, <code>reply_to_message_id</code> and
-	<code>reply_parameters</code>, forwarded to <code>sendMessage</code>.
-</p>
-<p>
-	to also capture replies the bot sends <em>outside</em> the panel, hook the api with
-	<code>recordOutgoing</code> and disable the panel's own send-recording to avoid duplicates:
-</p>
+<h2>what gets recorded</h2>
+<ul>
+	<li>private message text and captions</li>
+	<li>photos, videos, animations, audio, voice, video notes, documents, stickers and albums</li>
+	<li>inline and reply keyboards attached to messages</li>
+	<li>callback queries as timeline event rows</li>
+	<li>message reactions, reaction counts, poll answers and private member-status changes</li>
+	<li>outgoing <code>send*</code> results when <code>recordOutgoing</code> is installed</li>
+</ul>
 <Code code={outgoing} title="outgoing.ts" />
 
-<h2>media</h2>
+<h2>media and UI</h2>
 <p>
-	photos, documents, voice notes, video and <strong>albums</strong> flow both ways. the recorder
-	stores each attachment's <code>file_id</code> (and album id); the browser renders them inline —
-	images, <code>&lt;video&gt;</code>, <code>&lt;audio&gt;</code>, or a download link for documents —
-	and consecutive messages sharing a <code>media_group_id</code> show as one album. the
-	<strong>📎</strong> button in the composer uploads a file, and the panel picks
-	<code>sendPhoto</code> / <code>sendVideo</code> / <code>sendVoice</code> / <code>sendDocument</code>
-	from its mime type.
-</p>
-<p>
-	media bytes are <strong>proxied</strong> through <code>GET /api/file?id=…</code> (the panel calls
-	<code>getFile</code> and streams the result) so the bot token never reaches the browser. this needs
-	an api with <code>call()</code> / <code>fileUrl()</code> — the real <code>@yaebal/core</code> Api
-	has both; without them, media routes answer <code>501</code> and text still works.
+	media bytes are proxied through <code>GET /api/file?id=...</code>, so the bot token never reaches
+	the browser. operator uploads use <code>sendPhoto</code>, <code>sendVideo</code>, <code>sendVoice</code>,
+	<code>sendAudio</code> or <code>sendDocument</code> based on MIME type. the UI renders media previews
+	in the sidebar, opens photos/videos in a viewer dialog, groups albums, and uses dedicated voice,
+	video and document cards in the message timeline.
 </p>
 
 <h2>api routes</h2>
@@ -201,31 +256,24 @@ POST /api/chats/:id/send     → json { text, parse_mode?, reply_to_message_id?,
 	</thead>
 	<tbody>
 		<tr><td><code>panelHandler(api, store, options)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>returns a <code>(Request) =&gt; Promise&lt;Response&gt;</code> handler</td></tr>
-		<tr><td><code>recorder(store)</code></td><td><code>@yaebal/panel</code></td><td>Plugin</td><td>logs incoming private text/media into the store</td></tr>
-		<tr><td><code>recordOutgoing(api, store)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>logs outgoing replies sent outside the panel (api <code>after</code> hook)</td></tr>
-		<tr><td><code>MemoryPanelStore</code></td><td><code>@yaebal/panel</code></td><td>class</td><td>in-memory <code>PanelStore</code> with <code>subscribe</code></td></tr>
-		<tr><td><code>SqlitePanelStore</code></td><td><code>@yaebal/panel/sqlite</code></td><td>class</td><td>persistent store on <code>node:sqlite</code>; requires Node ≥22.5</td></tr>
-		<tr><td><code>SqlitePanelStoreOptions</code></td><td><code>@yaebal/panel/sqlite</code></td><td>interface</td><td><code>{"{ path?: string; db?: DatabaseSync }"}</code>; path defaults to <code>":memory:"</code></td></tr>
-		<tr><td><code>serve(handler, options)</code></td><td><code>@yaebal/panel/serve</code></td><td>function</td><td>native <code>node:http</code> server, zero deps; returns the Node <code>Server</code></td></tr>
-		<tr><td><code>ServeOptions</code></td><td><code>@yaebal/panel/serve</code></td><td>interface</td><td><code>{"{ port: number; host?: string; onListen?: (info) => void }"}</code></td></tr>
-		<tr><td><code>PanelStore</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>record</code> / <code>chats</code> / <code>history</code> (+ optional <code>subscribe</code>)</td></tr>
-		<tr><td><code>PanelOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>token</code>, <code>basePath</code>, <code>cors</code>, <code>rateLimit</code>, <code>clientKey</code>, <code>recordSends</code></td></tr>
-		<tr><td><code>HistoryOptions</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ before?: number; limit?: number }"}</code></td></tr>
-		<tr><td><code>PanelMessage</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ direction, text, date, attachments?, mediaGroupId? }"}</code></td></tr>
-		<tr><td><code>PanelChat</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ id, name, lastText, lastDate }"}</code></td></tr>
-		<tr><td><code>PanelAttachment</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ type, fileId, fileName?, mimeType? }"}</code></td></tr>
-		<tr><td><code>AttachmentType</code></td><td><code>@yaebal/panel</code></td><td>type</td><td><code>"photo" | "video" | "audio" | "voice" | "document" | …</code></td></tr>
-		<tr><td><code>PanelEvent</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>{"{ type: 'record'; chatId: number; direction }"}</code></td></tr>
-		<tr><td><code>PANEL_HTML</code></td><td><code>@yaebal/panel</code></td><td>string</td><td>the raw HTML of the panel UI (exported for custom serving)</td></tr>
+		<tr><td><code>createPanelApi(token)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>Bot API client satisfying <code>PanelApi</code>, including uploads and file URLs</td></tr>
+		<tr><td><code>recordTelegramUpdate(store, update)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>framework-neutral raw update recorder</td></tr>
+		<tr><td><code>recorder(store)</code></td><td><code>@yaebal/panel</code></td><td>Plugin</td><td>YAEBAL middleware wrapper around <code>recordTelegramUpdate</code></td></tr>
+		<tr><td><code>recordOutgoing(api, store)</code></td><td><code>@yaebal/panel</code></td><td>function</td><td>logs successful outgoing <code>send*</code> results</td></tr>
+		<tr><td><code>MemoryPanelStore</code></td><td><code>@yaebal/panel</code></td><td>class</td><td>in-memory <code>PanelStore</code> with SSE subscriptions</td></tr>
+		<tr><td><code>SqlitePanelStore</code></td><td><code>@yaebal/panel/sqlite</code></td><td>class</td><td>persistent store on <code>node:sqlite</code>; requires Node >= 22.5</td></tr>
+		<tr><td><code>serve(handler, options)</code></td><td><code>@yaebal/panel/serve</code></td><td>function</td><td>native <code>node:http</code> server helper</td></tr>
+		<tr><td><code>PanelApi</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>sendMessage</code>, optional <code>call</code> and <code>fileUrl</code></td></tr>
+		<tr><td><code>PanelStore</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td><code>record</code>, <code>chats</code>, <code>history</code>, optional <code>subscribe</code></td></tr>
+		<tr><td><code>PanelChatRecord</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td>chat id plus optional name, first name, last name and username</td></tr>
+		<tr><td><code>PanelMessage</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td>text, date, direction, attachments, media group, keyboard and event metadata</td></tr>
+		<tr><td><code>PanelKeyboard</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td>inline/reply keyboard preview rows</td></tr>
+		<tr><td><code>PanelMessageEvent</code></td><td><code>@yaebal/panel</code></td><td>interface</td><td>callback, reaction, poll and member event metadata</td></tr>
 	</tbody>
 </table>
 
 <div class="note">
-	the panel HTML is a single self-contained page — no external assets, no CDN. it updates in
-	realtime over SSE and falls back to polling. for a production deployment, put the panel behind a
-	reverse proxy with TLS and restrict the <code>token</code> to a long random value.
-	<br /><br />
-	<strong>SQLite note:</strong> <code>@yaebal/panel/sqlite</code> uses Node's built-in
-	<code>node:sqlite</code>, so it requires Node ≥22.5. call <code>store.close()</code> on shutdown if
-	you created a <code>SqlitePanelStore</code>.
+	the panel HTML is a single self-contained page with inline SVG icons and no external assets.
+	for production, serve it behind TLS and use a long random <code>PANEL_TOKEN</code>. SQLite uses
+	Node's built-in <code>node:sqlite</code>, so <code>@yaebal/panel/sqlite</code> requires Node >= 22.5.
 </div>

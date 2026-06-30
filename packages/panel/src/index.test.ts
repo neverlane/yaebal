@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, Context, type Middleware } from "@yaebal/core";
-import { MemoryPanelStore, panelHandler, recordOutgoing, recorder } from "./index.js";
+import { MemoryPanelStore, panelHandler, recordOutgoing, recordTelegramUpdate, recorder } from "./index.js";
+import { PANEL_HTML } from "./panel-html.js";
 
 const noop = async () => {};
 const entry = <C extends Context>(c: Composer<C>) =>
 	c.toMiddleware() as unknown as Middleware<Context>;
+
+test("PANEL_HTML inline script parses", () => {
+	const script = PANEL_HTML.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+	assert.ok(script);
+	assert.doesNotThrow(() => new Function(script));
+});
 
 test("MemoryPanelStore records, preserves names, sorts and reads history", () => {
 	const s = new MemoryPanelStore();
@@ -49,6 +56,8 @@ test("recorder logs incoming private text into the store", async () => {
 	assert.equal(hist[0]?.text, "hello");
 	assert.equal(hist[0]?.direction, "in");
 	assert.equal(store.chats()[0]?.name, "@sam");
+	assert.equal(store.chats()[0]?.firstName, "Sam");
+	assert.equal(store.chats()[0]?.username, "sam");
 });
 
 function fakePanel() {
@@ -165,6 +174,55 @@ test("recorder captures a caption as the message text", async () => {
 	assert.equal(store.history(8)[0]?.text, "the report");
 });
 
+test("recordTelegramUpdate records framework-agnostic callback events", async () => {
+	const store = new MemoryPanelStore();
+
+	await recordTelegramUpdate(store, {
+		update_id: 1,
+		callback_query: {
+			id: "cb1",
+			from: { id: 7, is_bot: false, first_name: "Pat", last_name: "Lee", username: "pat" },
+			message: { message_id: 2, chat: { id: 7, type: "private" } },
+			data: "demo:open",
+		},
+	});
+
+	const chat = store.chats()[0];
+	const msg = store.history(7)[0];
+
+	assert.equal(chat?.firstName, "Pat");
+	assert.equal(chat?.lastName, "Lee");
+	assert.equal(chat?.lastEventType, "callback");
+	assert.equal(msg?.event?.type, "callback");
+	assert.equal(msg?.event?.data, "demo:open");
+});
+
+test("recorder captures inline keyboards for timeline previews", async () => {
+	const store = new MemoryPanelStore();
+
+	await recordTelegramUpdate(store, {
+		update_id: 1,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 9, type: "private" },
+			from: { id: 9, is_bot: false, first_name: "Key" },
+			text: "choose",
+			reply_markup: {
+				inline_keyboard: [[{ text: "Open", callback_data: "open" }, { text: "Docs", url: "https://yaeb.al" }]],
+			},
+		},
+	});
+
+	assert.deepEqual(store.history(9)[0]?.keyboard, {
+		type: "inline",
+		rows: [[
+			{ text: "Open", kind: "callback", callbackData: "open" },
+			{ text: "Docs", kind: "url", url: "https://yaeb.al" },
+		]],
+	});
+});
+
 test("panel send rejects an empty/missing text with 400", async () => {
 	const { handler, sent } = fakePanel();
 
@@ -192,6 +250,25 @@ test("panel send forwards whitelisted extras (parse_mode) to sendMessage", async
 	);
 
 	assert.deepEqual(sent, [{ chat_id: 1, text: "*hi*", parse_mode: "MarkdownV2" }]);
+});
+
+test("panel send forwards and self-records reply_markup previews", async () => {
+	const { handler, sent, store } = fakePanel();
+	const replyMarkup = { inline_keyboard: [[{ text: "Open", callback_data: "open" }]] };
+
+	await handler(
+		new Request("http://x/api/chats/1/send?token=secret", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify({ text: "choose", reply_markup: replyMarkup }),
+		}),
+	);
+
+	assert.deepEqual(sent.at(-1), { chat_id: 1, text: "choose", reply_markup: replyMarkup });
+	assert.deepEqual(store.history(1).at(-1)?.keyboard, {
+		type: "inline",
+		rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]],
+	});
 });
 
 test("panel API returns 404 for an unknown path", async () => {

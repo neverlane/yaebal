@@ -1,47 +1,49 @@
-# @yaebal/example-panel (a runnable operator panel)
+# @yaebal/example-panel (a runnable bot with operator panel)
 
-a single-file bot that mounts [`@yaebal/panel`](../../packages/panel) — a live operator
-dashboard you open in the browser to read incoming DMs and reply, with **media in both
-directions**. doubles as a smoke test of the panel's public api.
-
-it wires up every panel feature: the recorder, outgoing-reply logging (`recordOutgoing`),
-the login page, realtime SSE updates, the media proxy, and operator file uploads — served
-on a native node `serve`.
+a runnable bot for the [`@yaebal/panel`](../../packages/panel) operator console. it exercises the panel as
+a real support inbox: identity sidebar, generated avatars, text/media previews, media
+viewer, styled voice/video cards, albums, inline keyboards, callbacks, polls, reactions,
+event rows, outgoing logging, login and SSE.
 
 ## running
 
 - dev with reload: `pnpm --filter @yaebal/example-panel dev`
 - run once: `pnpm --filter @yaebal/example-panel start`
 
-both read configuration from a `.env` (copy `.env.example`). then open
-**http://localhost:3000** and paste your `PANEL_TOKEN` on the login screen.
+copy `.env.example`, fill `BOT_TOKEN` and `PANEL_TOKEN`, then open
+`http://localhost:3000` and paste `PANEL_TOKEN` on the login screen.
 
 ## environment variables
 
 | name          | example           | description                                                                               |
 |:--------------|:------------------|:------------------------------------------------------------------------------------------|
-| `BOT_TOKEN`   | `123456:AA-bc...` | bot token from [@BotFather](https://t.me/BotFather). required — the bot exits without it. |
+| `BOT_TOKEN`   | `123456:AA-bc...` | bot token from [@BotFather](https://t.me/BotFather). required.                            |
 | `PANEL_TOKEN` | `a-long-secret`   | shared secret to log into the panel. required.                                            |
 
 ## what to try
 
-| from telegram                         | what you see in the panel                                  |
-|:--------------------------------------|:-----------------------------------------------------------|
-| send text                             | the message appears live; the bot echoes it back           |
-| send a **photo / document / voice**   | rendered inline (image / download link / audio player)     |
-| send an **album**                     | grouped into one media bubble                              |
-| —                                     | the bot's own replies show up too (via `recordOutgoing`)   |
+| from telegram                         | what you see in the panel                                         |
+|:--------------------------------------|:------------------------------------------------------------------|
+| `/start`                              | inline keyboard preview and identity sidebar                      |
+| press an inline button                | callback event row plus bot response                              |
+| `/demo`                               | keyboard, poll, dice placeholder and outgoing message recording   |
+| send text                             | live text preview and echo                                        |
+| send a photo or album                 | media preview, grouped album and viewer dialog                    |
+| send a video                          | styled video card with expandable viewer                          |
+| send a voice note                     | styled voice message card with waveform                           |
+| send a document                       | document card with file name and MIME preview                     |
+| react to a message or answer a poll   | event rows when Telegram delivers those updates                   |
 
-| from the panel                        | what happens                                               |
-|:--------------------------------------|:-----------------------------------------------------------|
-| type a reply + **send**               | delivered via `sendMessage`                                |
-| **📎** attach a file                  | uploaded as `sendPhoto` / `sendDocument` / `sendVoice` / … |
+| from the panel                        | what happens                                                                     |
+|:--------------------------------------|:---------------------------------------------------------------------------------|
+| type a reply and send                 | delivered via `sendMessage`                                                      |
+| attach a file                         | uploaded as `sendPhoto`, `sendVideo`, `sendVoice`, `sendAudio` or `sendDocument` |
 
 ## notes
 
-- uses `MemoryPanelStore` (lost on restart). for persistence, swap in
-  `SqlitePanelStore` from `@yaebal/panel/sqlite` — see the commented line in `src/index.ts`.
-- the panel root is a self-contained SPA; no build step, no external assets.
+- uses `MemoryPanelStore`; swap in `SqlitePanelStore` from `@yaebal/panel/sqlite` for persistence.
+- requests `callback_query`, reaction, poll and member update types through `allowedUpdates`.
+- the panel root is a self-contained SPA with inline SVG icons and no external assets.
 
 ---
 

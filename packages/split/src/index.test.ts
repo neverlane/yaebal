@@ -27,6 +27,6 @@ test("a single line longer than max is hard-split", () => {
 
 test("does not split when exactly at the limit", () => {
 	const text = "a".repeat(100);
-	
+
 	assert.deepEqual(split(text, 100), [text]);
 });

@@ -61,7 +61,7 @@ test("register() pushes the list via setMyCommands", async () => {
 
 	const cmd = commands().add("start", "go", () => {});
 	await cmd.register(fakeApi as never, { languageCode: "en" });
-	
+
 	assert.deepEqual(calls, [
 		{
 			method: "setMyCommands",

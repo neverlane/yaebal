@@ -2,10 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, Context, type Middleware } from "@yaebal/core";
 import {
-	MemoryOnboardingStorage,
 	createOnboarding,
 	decodeOnboardingToken,
 	encodeOnboardingToken,
+	MemoryOnboardingStorage,
 	memoryStorage,
 } from "./index.js";
 
@@ -206,7 +206,10 @@ test("disableAll blocks start until enableAll", async () => {
 
 	await mw(msgCtx(api, "/start", 7), noop);
 	assert.equal(result, "opted-out");
-	assert.equal(calls.some((c) => c.method === "sendMessage"), false);
+	assert.equal(
+		calls.some((c) => c.method === "sendMessage"),
+		false,
+	);
 
 	await mw(msgCtx(api, "/enable", 7), noop);
 	assert.equal((await storage.get("global:7"))?.disabled, false);

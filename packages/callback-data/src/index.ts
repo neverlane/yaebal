@@ -51,7 +51,7 @@ export function callbackData<S extends Record<string, Codec>>(
 		unpack(raw) {
 			const segs = raw.split(":");
 			if (segs[0] !== prefix) return undefined;
-			
+
 			const values = segs.slice(1);
 			if (values.length !== keys.length) return undefined;
 

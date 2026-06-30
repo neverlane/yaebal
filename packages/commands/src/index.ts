@@ -52,6 +52,6 @@ export function commands(): CommandsRegistry {
 			});
 		},
 	};
-	
+
 	return registry;
 }

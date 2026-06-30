@@ -33,7 +33,7 @@ export function files(): Plugin<Context, { files: FilesControl }> {
 					return new Uint8Array(await res.arrayBuffer());
 				},
 			};
-			
+
 			return { files: control };
 		});
 }

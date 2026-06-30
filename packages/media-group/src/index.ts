@@ -45,7 +45,7 @@ export function mediaGroup(
 			if (group) {
 				group.messages.push(msg);
 				clearTimeout(group.timer);
-				
+
 				group.timer = setTimeout(() => flush(id), delayMs);
 			} else {
 				groups.set(id, { ctx, messages: [msg], timer: setTimeout(() => flush(id), delayMs) });
@@ -53,6 +53,6 @@ export function mediaGroup(
 
 			// consumed — the album is handled here
 		});
-	
+
 	return plugin;
 }

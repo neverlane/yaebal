@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/broadcast",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal broadcast — send a message to many chats, counting successes and failures.",
 	"type": "module",
 	"main": "./lib/index.js",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Composer, Context } from "./index.js";
 import type { Filter } from "./index.js";
+import { Composer, Context } from "./index.js";
 import type { Update } from "./telegram-types.js";
 
 /** minimal no-op api stub — composer tests never make real api calls. */

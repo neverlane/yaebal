@@ -35,7 +35,7 @@ export function regex(re: RegExp): Filter<Context, { match: RegExpMatchArray }> 
 export function command(name?: string): Filter<Context, { command: string; args: string[] }> {
 	return make((ctx) => {
 		const value = ctx.text;
-		if (!value || !value.startsWith("/")) return false;
+		if (!value?.startsWith("/")) return false;
 
 		const parts = value.slice(1).split(/\s+/);
 		const head = parts[0]?.split("@")[0] ?? "";

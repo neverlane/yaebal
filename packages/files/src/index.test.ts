@@ -84,7 +84,7 @@ test("download throws on a non-ok response (no silent error bytes)", async () =>
 		const c = new Composer<Context>().install(files()).use(async (ctx) => {
 			await assert.rejects((ctx as Ctx).files.download("ABC"), /download failed \(404\)/);
 		});
-		
+
 		await entry(c)(ctxWith(fakeApi("a.bin")), noop);
 	} finally {
 		globalThis.fetch = realFetch;

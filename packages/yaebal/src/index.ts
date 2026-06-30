@@ -5,14 +5,14 @@
  * auto-generated shortcut methods) onto every update via the core context factory.
  */
 
-export * from "@yaebal/core";
+export { callbackData } from "@yaebal/callback-data";
 export * from "@yaebal/contexts";
+export * from "@yaebal/core";
 export { and, filters, not, or } from "@yaebal/filters";
 export { html, htmlToEntities, md, mdToEntities } from "@yaebal/fmt";
-export { InlineKeyboard, Keyboard } from "@yaebal/keyboard";
-export { callbackData } from "@yaebal/callback-data";
-export { session } from "@yaebal/session";
 export { i18n } from "@yaebal/i18n";
+export { InlineKeyboard, Keyboard } from "@yaebal/keyboard";
+export { session } from "@yaebal/session";
 export { deleteWebhook, serve, setWebhook, webhook } from "@yaebal/web";
 
 import { type ContextByType, contextFor } from "@yaebal/contexts";
@@ -21,8 +21,8 @@ import {
 	Context,
 	Bot as CoreBot,
 	type FileReader,
-	type FilterQuery,
 	type Filtered,
+	type FilterQuery,
 	type Middleware,
 } from "@yaebal/core";
 
@@ -46,7 +46,7 @@ const autoReadFile: FileReader = async (path) => {
 	if (g.Deno) return g.Deno.readFile(path);
 	if (g.Bun) return g.Bun.file(path).bytes();
 	if (g.process?.versions?.node) return (await import("node:fs/promises")).readFile(path);
-	
+
 	throw new Error(
 		"yaebal: no filesystem in this runtime — send media.buffer()/url() instead of media.path().",
 	);
@@ -103,9 +103,8 @@ export const richContext: ContextFactory = (api, update, updateType) => {
 
 // map a filter query to the matching generated context (the part before `:`).
 type QueryHead<Q extends string> = Q extends `${infer H}:${string}` ? H : Q;
-type RichFor<Q extends string> = QueryHead<Q> extends keyof ContextByType
-	? ContextByType[QueryHead<Q>]
-	: Record<never, never>;
+type RichFor<Q extends string> =
+	QueryHead<Q> extends keyof ContextByType ? ContextByType[QueryHead<Q>] : Record<never, never>;
 
 /**
  * a {@link CoreBot} whose routers type the handler context to the matching

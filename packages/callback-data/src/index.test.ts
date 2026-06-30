@@ -36,7 +36,7 @@ test("rejects a prefix containing the separator", () => {
 
 test("prefix-only schema matches exactly", () => {
 	const ping = callbackData("ping", {});
-	
+
 	assert.equal(ping.pack({}), "ping");
 	assert.deepEqual(ping.unpack("ping"), {});
 	assert.ok(ping.filter("ping"));

@@ -3,9 +3,9 @@ import test from "node:test";
 import {
 	CallbackQueryContext,
 	ChannelPostContext,
+	contextFor,
 	MessageContext,
 	ShippingQueryContext,
-	contextFor,
 } from "./index.js";
 
 interface Call {

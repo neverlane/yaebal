@@ -1,6 +1,6 @@
 import { autoRetry } from "@yaebal/again";
 import { Bot, type UpdateName } from "@yaebal/core";
-import { MemoryPanelStore, panelHandler, recordOutgoing, recorder } from "@yaebal/panel";
+import { MemoryPanelStore, panelHandler, recorder, recordOutgoing } from "@yaebal/panel";
 import { serve } from "@yaebal/panel/serve";
 
 // a full tour of @yaebal/panel: live operator dashboard with media in both directions.
@@ -74,7 +74,9 @@ bot.on("callback_query:data", async (ctx) => {
 	await ctx.answerCallbackQuery({ text: "recorded in the panel" });
 
 	if (data === "panel:media") {
-		await ctx.send("send a photo, video, voice note or album. the panel will render it with the media viewer and styled cards.");
+		await ctx.send(
+			"send a photo, video, voice note or album. the panel will render it with the media viewer and styled cards.",
+		);
 		return;
 	}
 
@@ -87,25 +89,35 @@ bot.on("message:text", (ctx) => ctx.reply(`echo: ${ctx.text}`));
 bot.on("message:photo", (ctx) => {
 	const photos = ctx.message?.photo;
 	const fileId = photos?.[photos.length - 1]?.file_id;
-	
+
 	if (fileId) ctx.sendPhoto(fileId, { caption: "photo preview card" });
 });
 
 bot.on("message:video", (ctx) => {
 	const fileId = ctx.message?.video?.file_id;
 	if (fileId && ctx.chat?.id !== undefined) {
-		ctx.api.call("sendVideo", { chat_id: ctx.chat.id, video: fileId, caption: "video preview card" });
+		ctx.api.call("sendVideo", {
+			chat_id: ctx.chat.id,
+			video: fileId,
+			caption: "video preview card",
+		});
 	}
 });
 
 bot.on("message:voice", (ctx) => {
 	const fileId = ctx.message?.voice?.file_id;
 	if (fileId && ctx.chat?.id !== undefined) {
-		ctx.api.call("sendVoice", { chat_id: ctx.chat.id, voice: fileId, caption: "voice message style" });
+		ctx.api.call("sendVoice", {
+			chat_id: ctx.chat.id,
+			voice: fileId,
+			caption: "voice message style",
+		});
 	}
 });
 
-bot.on("message:document", (ctx) => ctx.reply("document stored in the panel with file name and mime preview"));
+bot.on("message:document", (ctx) =>
+	ctx.reply("document stored in the panel with file name and mime preview"),
+);
 
 // 3. serve the panel — login page, realtime SSE, media proxy, file uploads
 const handler = panelHandler(bot.api, store, {
@@ -118,6 +130,8 @@ serve(handler, {
 	onListen: ({ port }) => console.log(`panel: http://localhost:${port} (token = PANEL_TOKEN)`),
 });
 
-bot.onStart((info) => console.log(`bot started @${info.username} - DM it, then watch the panel update live`));
+bot.onStart((info) =>
+	console.log(`bot started @${info.username} - DM it, then watch the panel update live`),
+);
 
 await bot.start();

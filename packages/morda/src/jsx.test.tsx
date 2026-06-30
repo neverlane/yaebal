@@ -4,8 +4,8 @@ import { Composer, Context, type Middleware } from "@yaebal/core";
 import {
 	Button,
 	ButtonRow,
-	Screen,
 	jsxDialogs,
+	Screen,
 	useEffect,
 	useNavigation,
 	useState,
@@ -261,6 +261,6 @@ test("useNavigation pushes and pops across screens", async () => {
 
 	calls.length = 0;
 	await mw(cbCtx(api, dataAt(edit1?.params, 0, 0), 1, 100), noop);
-	
+
 	assert.equal(calls.find((c) => c.method === "editMessageText")?.params.text, "home");
 });

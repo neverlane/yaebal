@@ -9,65 +9,65 @@
 // set RELEASE_SKIP_GATE=1 when something upstream (e.g. CI) already ran typecheck/test/lint —
 // the gate is replaced by a plain build, which is all `pnpm publish` needs to pack lib/.
 
-import { spawn } from 'node:child_process'
+import { spawn } from "node:child_process";
 
-const SKIP_GATE = process.env.RELEASE_SKIP_GATE === '1'
+const SKIP_GATE = process.env.RELEASE_SKIP_GATE === "1";
 
 const gate = SKIP_GATE
-  ? [{ label: 'build', command: 'pnpm', args: ['build'] }]
-  : [
-      { label: 'typecheck', command: 'pnpm', args: ['typecheck'] },
-      { label: 'tests (also builds lib/)', command: 'pnpm', args: ['test'] },
-      { label: 'lint', command: 'pnpm', args: ['lint'] }
-    ]
+	? [{ label: "build", command: "pnpm", args: ["build"] }]
+	: [
+			{ label: "typecheck", command: "pnpm", args: ["typecheck"] },
+			{ label: "tests (also builds lib/)", command: "pnpm", args: ["test"] },
+			{ label: "lint", command: "pnpm", args: ["lint"] },
+		];
 
 const STEPS = [
-  ...gate,
-  { label: 'publish to npm', command: 'node', args: ['scripts/publish-all.mjs'] },
-  { label: 'github releases', command: 'node', args: ['scripts/auto-release.mjs'] }
-]
+	...gate,
+	{ label: "publish to npm", command: "node", args: ["scripts/publish-all.mjs"] },
+	{ label: "github releases", command: "node", args: ["scripts/auto-release.mjs"] },
+];
 
-const ESC = '\x1b['
-const CYAN = `${ESC}36m`
-const DIM = `${ESC}2m`
-const GREEN = `${ESC}32m`
-const RED = `${ESC}31m`
-const RESET = `${ESC}0m`
+const ESC = "\x1b[";
+const CYAN = `${ESC}36m`;
+const DIM = `${ESC}2m`;
+const GREEN = `${ESC}32m`;
+const RED = `${ESC}31m`;
+const RESET = `${ESC}0m`;
 
-async function run (step) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(step.command, step.args, { stdio: 'inherit' })
+async function run(step) {
+	return new Promise((resolve, reject) => {
+		const child = spawn(step.command, step.args, { stdio: "inherit" });
 
-    child.on('error', reject)
-    child.on('exit', (code) => {
-      if (code === 0) {
-        resolve()
+		child.on("error", reject);
+		child.on("exit", (code) => {
+			if (code === 0) {
+				resolve();
 
-        return
-      }
+				return;
+			}
 
-      reject(new Error(`${step.label} exited with code ${code ?? 'null'}`))
-    })
-  })
+			reject(new Error(`${step.label} exited with code ${code ?? "null"}`));
+		});
+	});
 }
 
-async function main () {
-  const startedAt = Date.now()
+async function main() {
+	const startedAt = Date.now();
 
-  for (const [i, step] of STEPS.entries()) {
-    console.log(`\n${CYAN}[${i + 1}/${STEPS.length}] ${step.label}${RESET}`)
-    console.log(`${DIM}$ ${step.command} ${step.args.join(' ')}${RESET}`)
+	for (const [i, step] of STEPS.entries()) {
+		console.log(`\n${CYAN}[${i + 1}/${STEPS.length}] ${step.label}${RESET}`);
+		console.log(`${DIM}$ ${step.command} ${step.args.join(" ")}${RESET}`);
 
-    await run(step)
-  }
+		await run(step);
+	}
 
-  const seconds = ((Date.now() - startedAt) / 1000).toFixed(1)
+	const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 
-  console.log(`\n${GREEN}✓ release complete in ${seconds}s${RESET}`)
+	console.log(`\n${GREEN}✓ release complete in ${seconds}s${RESET}`);
 }
 
 main().catch((error) => {
-  console.error(`\n${RED}✗ release failed${RESET}`)
-  console.error(error)
-  process.exit(1)
-})
+	console.error(`\n${RED}✗ release failed${RESET}`);
+	console.error(error);
+	process.exit(1);
+});

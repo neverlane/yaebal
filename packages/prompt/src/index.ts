@@ -46,7 +46,7 @@ export function prompt(options: PromptOptions = {}): Plugin<Context, PromptContr
 			}))
 			.use(async (ctx, next) => {
 				const key = getKey(ctx);
-				
+
 				if (key !== undefined && ctx.message) {
 					const handler = pending.get(key);
 

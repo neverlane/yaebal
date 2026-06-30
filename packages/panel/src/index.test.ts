@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, Context, type Middleware } from "@yaebal/core";
-import { MemoryPanelStore, panelHandler, recordOutgoing, recordTelegramUpdate, recorder } from "./index.js";
+import {
+	MemoryPanelStore,
+	panelHandler,
+	recorder,
+	recordOutgoing,
+	recordTelegramUpdate,
+} from "./index.js";
 import { PANEL_HTML } from "./panel-html.js";
 
 const noop = async () => {};
@@ -117,7 +123,7 @@ test("panel send posts via the api and logs an outgoing message", async () => {
 	);
 	assert.equal(res.status, 200);
 	assert.deepEqual(sent, [{ chat_id: 1, text: "yo" }]);
-	
+
 	const last = store.history(1).at(-1);
 	assert.equal(last?.direction, "out");
 	assert.equal(last?.text, "yo");
@@ -209,17 +215,24 @@ test("recorder captures inline keyboards for timeline previews", async () => {
 			from: { id: 9, is_bot: false, first_name: "Key" },
 			text: "choose",
 			reply_markup: {
-				inline_keyboard: [[{ text: "Open", callback_data: "open" }, { text: "Docs", url: "https://yaeb.al" }]],
+				inline_keyboard: [
+					[
+						{ text: "Open", callback_data: "open" },
+						{ text: "Docs", url: "https://yaeb.al" },
+					],
+				],
 			},
 		},
 	});
 
 	assert.deepEqual(store.history(9)[0]?.keyboard, {
 		type: "inline",
-		rows: [[
-			{ text: "Open", kind: "callback", callbackData: "open" },
-			{ text: "Docs", kind: "url", url: "https://yaeb.al" },
-		]],
+		rows: [
+			[
+				{ text: "Open", kind: "callback", callbackData: "open" },
+				{ text: "Docs", kind: "url", url: "https://yaeb.al" },
+			],
+		],
 	});
 });
 
@@ -397,12 +410,15 @@ test("SSE stream advertises text/event-stream and forwards a record event", asyn
 	const res = await handler(new Request("http://x/api/stream?token=secret"));
 	assert.match(res.headers.get("content-type") ?? "", /text\/event-stream/);
 
-	const reader = res.body!.getReader();
-	await reader.read(); // ": connected"
+	const reader = res.body?.getReader();
+	await reader?.read(); // ": connected"
+
 	store.record({ id: 1, name: "@u" }, { direction: "in", text: "ping", date: 1 });
-	const { value } = await reader.read();
+
+	const { value } = await reader?.read();
 	assert.match(new TextDecoder().decode(value), /event: record/);
-	await reader.cancel();
+
+	await reader?.cancel();
 });
 
 test("recordOutgoing logs bot replies sent outside the panel (private only)", () => {
@@ -497,7 +513,12 @@ test("recorder extracts a document with name + mime", async () => {
 				date: 0,
 				chat: { id: 8, type: "private" },
 				from: { id: 8, is_bot: false, first_name: "Lee" },
-				document: { file_id: "doc1", file_unique_id: "d", file_name: "report.pdf", mime_type: "application/pdf" },
+				document: {
+					file_id: "doc1",
+					file_unique_id: "d",
+					file_name: "report.pdf",
+					mime_type: "application/pdf",
+				},
 			},
 		} as never,
 		updateType: "message",

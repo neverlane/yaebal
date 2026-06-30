@@ -58,12 +58,20 @@ test("SqlitePanelStore persists attachments and media_group_id round-trip", { sk
 			date: 1,
 			attachments: [{ type: "photo", fileId: "f1" }],
 			mediaGroupId: "G1",
-			keyboard: { type: "inline", rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]] },
+			keyboard: {
+				type: "inline",
+				rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]],
+			},
 		},
 	);
 	store.record(
 		{ id: 1, name: "@u" },
-		{ direction: "in", text: "button clicked: open", date: 2, event: { type: "callback", title: "button clicked", detail: "open", data: "open" } },
+		{
+			direction: "in",
+			text: "button clicked: open",
+			date: 2,
+			event: { type: "callback", title: "button clicked", detail: "open", data: "open" },
+		},
 	);
 
 	const chat = store.chats()[0];
@@ -76,7 +84,10 @@ test("SqlitePanelStore persists attachments and media_group_id round-trip", { sk
 	const hist = store.history(1);
 	assert.deepEqual(hist[0]?.attachments, [{ type: "photo", fileId: "f1" }]);
 	assert.equal(hist[0]?.mediaGroupId, "G1");
-	assert.deepEqual(hist[0]?.keyboard, { type: "inline", rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]] });
+	assert.deepEqual(hist[0]?.keyboard, {
+		type: "inline",
+		rows: [[{ text: "Open", kind: "callback", callbackData: "open" }]],
+	});
 	// event message has no attachments/group keys
 	assert.equal(hist[1]?.attachments, undefined);
 	assert.equal(hist[1]?.mediaGroupId, undefined);

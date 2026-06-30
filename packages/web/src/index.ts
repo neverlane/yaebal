@@ -12,7 +12,7 @@ import { type UpdateSink, type WebhookOptions, webhookCallback } from "@yaebal/c
  *   serve(bot, { port: 8080, secretToken: process.env.SECRET });
  */
 
-export type { WebhookOptions, UpdateSink } from "@yaebal/core";
+export type { UpdateSink, WebhookOptions } from "@yaebal/core";
 
 /** minimal bot surface the lifecycle helpers need. */
 interface ApiBot {

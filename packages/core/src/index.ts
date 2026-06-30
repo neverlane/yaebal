@@ -5,45 +5,45 @@
  * the entity-based `format` helpers, the low-level `Api`, and the telegram types.
  */
 
+export {
+	type AfterHook,
+	type Api,
+	type ApiOptions,
+	type BeforeHook,
+	createApi,
+	type ErrorAction,
+	type ErrorHook,
+	encodeRequest,
+	type FileReader,
+	TelegramError,
+} from "./api.js";
 export { Bot, type BotOptions, type BotPlugin } from "./bot.js";
 export {
 	Composer,
 	compose,
-	matchQuery,
 	type Filter,
-	type FilterQuery,
 	type Filtered,
+	type FilterQuery,
 	type Middleware,
+	matchQuery,
 	type NextFn,
 	type Plugin,
 } from "./composer.js";
 export { Context, type ContextOptions } from "./context.js";
-export { media, isMediaSource, type MediaSource } from "./media.js";
-export { webhookCallback, type UpdateSink, type WebhookOptions } from "./webhook.js";
 export {
-	createApi,
-	encodeRequest,
-	TelegramError,
-	type Api,
-	type ApiOptions,
-	type FileReader,
-	type BeforeHook,
-	type AfterHook,
-	type ErrorHook,
-	type ErrorAction,
-} from "./api.js";
-export {
-	format,
-	Stringable,
 	bold,
-	italic,
-	underline,
-	strikethrough,
-	spoiler,
 	code,
-	pre,
+	type FormatResult,
+	format,
+	italic,
 	link,
 	mention,
-	type FormatResult,
+	pre,
+	Stringable,
+	spoiler,
+	strikethrough,
+	underline,
 } from "./format.js";
+export { isMediaSource, type MediaSource, media } from "./media.js";
 export type * from "./telegram-types.js";
+export { type UpdateSink, type WebhookOptions, webhookCallback } from "./webhook.js";

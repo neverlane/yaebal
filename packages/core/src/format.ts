@@ -43,7 +43,7 @@ export function format(strings: TemplateStringsArray, ...subs: Insertable[]): Fo
 
 			if (isFormatResult(sub)) {
 				text += sub.text;
-				
+
 				for (const entity of sub.entities) {
 					entities.push({ ...entity, offset: entity.offset + offset });
 				}

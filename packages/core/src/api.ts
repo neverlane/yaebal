@@ -1,4 +1,4 @@
-import { type MediaSource, isMediaSource } from "./media.js";
+import { isMediaSource, type MediaSource } from "./media.js";
 import type { ApiResponse, Message, Update, User } from "./telegram-types.js";
 
 /**
@@ -108,7 +108,7 @@ async function mediaToBlob(
 		if (!readFile)
 			throw new Error(
 				"media.path() needs a filesystem — use the `yaebal` package (auto-detects node/bun/deno), " +
-				"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
+					"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
 			);
 
 		const bytes = await readFile(m.path);
@@ -133,9 +133,7 @@ function isThenable(v: unknown): v is Thenable<unknown> {
 	return typeof v === "object" && v !== null && "then" in v;
 }
 
-async function resolveThenables(
-	params: Record<string, unknown>,
-): Promise<void> {
+async function resolveThenables(params: Record<string, unknown>): Promise<void> {
 	for (const key of Object.keys(params)) {
 		const v = params[key];
 		if (isThenable(v)) params[key] = await v;
@@ -241,10 +239,10 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			try {
 				let result = await rawCall<T>(method, p);
 
-			for (const hook of afterHooks) {
-				const next = await hook(method, p, result);
-				if (next !== undefined) result = next as Awaited<T>;
-			}
+				for (const hook of afterHooks) {
+					const next = await hook(method, p, result);
+					if (next !== undefined) result = next as Awaited<T>;
+				}
 
 				return result;
 			} catch (error) {
@@ -287,7 +285,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 
 			// lazily materialise `api.<method>(params)` → call(method, params).
 			const method = (params?: Record<string, unknown>) => call(prop, params);
-			
+
 			obj[prop] = method;
 			return method;
 		},

@@ -139,7 +139,7 @@ test("plural selection follows the locale's Intl.PluralRules (ru)", async () => 
 
 			return next();
 		});
-	
+
 	await entry(c)(ctxFor(11), noop);
 
 	assert.equal(one, "1 предмет"); // ru: 1 → one
@@ -161,7 +161,7 @@ test("plain-string keys keep working alongside plural objects (regression)", asy
 
 			return next();
 		});
-	
+
 	await entry(c)(ctxFor(12), noop);
 	assert.equal(hi, "Hello Sam");
 	assert.equal(bye, "Bye");
@@ -193,7 +193,7 @@ test("missing key in a locale falls back to the default locale", async () => {
 
 			return next();
 		});
-		
+
 	await entry(c)(ctxFor(4), noop);
 	assert.equal(bye, "Bye"); // fell back to en
 });

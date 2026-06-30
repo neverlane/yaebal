@@ -1,5 +1,5 @@
-import { createApi, media } from "@yaebal/core";
 import type { ApiOptions, Context, Plugin } from "@yaebal/core";
+import { createApi, media } from "@yaebal/core";
 import { PANEL_HTML } from "./panel-html.js";
 
 /** keep at most this many messages per chat in the in-memory store. */
@@ -138,7 +138,10 @@ function keyboardButton(raw: unknown): PanelKeyboardButton | undefined {
 		button.url = url;
 	} else if (raw.web_app !== undefined) button.kind = "web_app";
 	else if (raw.login_url !== undefined) button.kind = "login_url";
-	else if (raw.switch_inline_query !== undefined || raw.switch_inline_query_current_chat !== undefined) {
+	else if (
+		raw.switch_inline_query !== undefined ||
+		raw.switch_inline_query_current_chat !== undefined
+	) {
 		button.kind = "switch_inline";
 	} else if (raw.pay === true) button.kind = "pay";
 	else button.kind = "unknown";
@@ -186,7 +189,7 @@ function describe(message: Record<string, unknown> | undefined): string | undefi
 	if (typeof text === "string") return text;
 
 	const att = extractAttachments(message);
-	if (att.length > 0) return `[${att[0]!.type}]`;
+	if (att.length > 0) return `[${att[0]?.type}]`;
 
 	for (const kind of TAG_KINDS) {
 		if (message[kind] !== undefined) return `[${kind}]`;
@@ -313,8 +316,10 @@ export class MemoryPanelStore implements PanelStore {
 
 	history(chatId: number, options?: HistoryOptions): PanelMessage[] {
 		let list = this.#messages.get(chatId) ?? [];
+
 		if (options?.before !== undefined) list = list.filter((m) => m.date < options.before!);
 		if (options?.limit !== undefined) list = list.slice(-options.limit);
+
 		return list;
 	}
 
@@ -337,7 +342,7 @@ function chatIdentity(chatId: number, user: unknown): PanelChatRecord {
 		if (username) out.username = username;
 
 		const fullName = [firstName, lastName].filter(Boolean).join(" ");
-		out.name = username ? `@${username}` : (fullName || undefined);
+		out.name = username ? `@${username}` : fullName || undefined;
 	}
 
 	out.name ??= `chat ${chatId}`;
@@ -371,7 +376,9 @@ function reactionCount(raw: unknown): number | undefined {
 	return Array.isArray(raw) ? raw.length : undefined;
 }
 
-function eventRecord(update: Record<string, unknown>): { chat: PanelChatRecord; message: PanelMessage } | undefined {
+function eventRecord(
+	update: Record<string, unknown>,
+): { chat: PanelChatRecord; message: PanelMessage } | undefined {
 	if (isRecord(update.callback_query)) {
 		const query = update.callback_query;
 		const message = isRecord(query.message) ? query.message : undefined;
@@ -669,7 +676,7 @@ function createLimiter(config: PanelOptions["rateLimit"]) {
 
 function defaultClientKey(request: Request): string {
 	const fwd = request.headers.get("x-forwarded-for");
-	if (fwd) return fwd.split(",")[0]!.trim();
+	if (fwd) return fwd.split(",")[0]?.trim();
 	return request.headers.get("x-real-ip") ?? "shared";
 }
 
@@ -690,7 +697,9 @@ function streamResponse(store: PanelStore): Response {
 			};
 
 			push(": connected\n\n");
-			unsubscribe = store.subscribe?.((event) => push(`event: record\ndata: ${JSON.stringify(event)}\n\n`));
+			unsubscribe = store.subscribe?.((event) =>
+				push(`event: record\ndata: ${JSON.stringify(event)}\n\n`),
+			);
 			ping = setInterval(() => push(": ping\n\n"), 25_000);
 		},
 		cancel() {
@@ -900,10 +909,7 @@ export function panelHandler(
 						reply_markup: body.reply_markup,
 					}) ?? { direction: "out", text: body.text, date: Math.floor(Date.now() / 1000) };
 
-					await store.record(
-						{ id: chatId },
-						fallback,
-					);
+					await store.record({ id: chatId }, fallback);
 				}
 			}
 

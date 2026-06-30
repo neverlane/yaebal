@@ -58,7 +58,7 @@ test("ratelimiter drops updates over the limit and fires onLimit", async () => {
 	await mw(ctxFrom(1), noop);
 	await mw(ctxFrom(1), noop);
 	await mw(ctxFrom(1), noop); // third → dropped
-	
+
 	assert.equal(handled, 2);
 	assert.equal(limited, 1);
 

@@ -1,4 +1,4 @@
-import { type Transferable, Worker, parentPort } from "node:worker_threads";
+import { parentPort, type Transferable, Worker } from "node:worker_threads";
 
 /**
  * @yaebal/workers — a small worker_threads pool. keep the bot on the main event
@@ -77,7 +77,7 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 	const size = Math.max(1, options.size ?? 1);
 	const workers: Worker[] = [];
 	const inflight = new Map<number, Pending>();
-	
+
 	let seq = 0;
 	let next = 0;
 	let destroyed = false;
@@ -93,29 +93,29 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 
 	const spawn = (slot: number): Worker => {
 		const worker = new Worker(workerFile);
-	
+
 		worker.on("message", (msg: Response) => {
 			const pending = inflight.get(msg.id);
 			if (!pending) return;
-	
+
 			inflight.delete(msg.id);
-	
+
 			if (msg.ok) pending.resolve(msg.result);
 			else pending.reject(new Error(msg.error ?? "task failed"));
 		});
-	
+
 		worker.on("error", (error) => {
 			failWorker(worker, error);
 			if (!destroyed) workers[slot] = spawn(slot);
 		});
-	
+
 		worker.on("exit", (code) => {
 			if (destroyed) return;
-	
+
 			failWorker(worker, new Error(`worker exited (code ${code})`));
 			workers[slot] = spawn(slot);
 		});
-	
+
 		return worker;
 	};
 
@@ -125,28 +125,28 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 		size,
 		run<R>(name: string, arg?: unknown, transfer?: readonly Transferable[]): Promise<R> {
 			if (destroyed) return Promise.reject(new Error("pool is destroyed"));
-	
+
 			const worker = workers[next];
 			next = (next + 1) % workers.length;
-	
+
 			if (!worker) return Promise.reject(new Error("no worker available"));
-	
+
 			const id = seq++;
-	
+
 			return new Promise<R>((resolve, reject) => {
 				inflight.set(id, { resolve: resolve as (v: unknown) => void, reject, worker });
-	
+
 				worker.postMessage({ id, name, arg } satisfies Request, transfer ?? []);
 			});
 		},
 		async destroy(): Promise<void> {
 			destroyed = true;
-	
+
 			for (const [id, p] of inflight) {
 				inflight.delete(id);
 				p.reject(new Error("pool is destroyed"));
 			}
-	
+
 			await Promise.all(workers.map((w) => w.terminate()));
 		},
 	};

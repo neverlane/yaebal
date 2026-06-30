@@ -46,11 +46,11 @@ interface Live {
  *   ```
  *   const greet = createConversation("greet", async (cv, ctx) => {
  *     await ctx.send("what's your name?");
- * 
+ *
  *     const answer = await cv.wait();
  *     await answer.send(`hi ${answer.text}`);
  *   });
- * 
+ *
  *   bot.install(conversation([greet]));
  *   bot.command("greet", (ctx) => ctx.conversation.enter("greet"));
  *   ```
@@ -140,6 +140,6 @@ export function conversation(
 				}
 				await next();
 			});
-	
+
 	return plugin;
 }

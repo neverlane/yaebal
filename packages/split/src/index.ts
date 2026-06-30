@@ -68,7 +68,7 @@ export function splitter(max = MAX_MESSAGE_LENGTH): Plugin<Context, SplitControl
 					return out;
 				},
 			};
-			
+
 			return control;
 		});
 }

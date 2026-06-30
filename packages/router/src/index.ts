@@ -70,7 +70,7 @@ export async function loadRoutes(bot: RouteTarget, dir: string): Promise<string[
 
 		const { trigger } = routeFromFile("on", file);
 		bot.on(trigger as FilterQuery, handler);
-		
+
 		registered.push(`on:${trigger}`);
 	}
 

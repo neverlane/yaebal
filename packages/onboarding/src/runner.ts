@@ -1,7 +1,7 @@
 import type { Context, FormatResult } from "@yaebal/core";
 import { InlineKeyboard, type InlineKeyboardMarkup } from "@yaebal/keyboard";
 import type { FlowDefinition } from "./builder.js";
-import { type DecodedToken, buttonToOp, encode, newRunId } from "./tokens.js";
+import { buttonToOp, type DecodedToken, encode, newRunId } from "./tokens.js";
 import type {
 	ButtonKind,
 	FlowControl,
@@ -216,7 +216,10 @@ export function makeFlowControl(
 		await saveRecord(rt.storage, def.opts.id, scopeKey, local);
 	};
 
-	async function transition(status: FlowStatus, extra: Partial<OnboardingRecord> = {}): Promise<void> {
+	async function transition(
+		status: FlowStatus,
+		extra: Partial<OnboardingRecord> = {},
+	): Promise<void> {
 		local = { ...local, kind: "flow", flowId: def.opts.id, status, ...extra };
 		await sync();
 	}
@@ -237,7 +240,10 @@ export function makeFlowControl(
 		let preempted = false;
 		if (status !== "active" && coord?.hasActiveOther(def.opts.id)) {
 			if (def.opts.concurrency === "queue") {
-				await coord.enqueueStart({ flowId: def.opts.id, ...(opts.from ? { from: opts.from } : {}) });
+				await coord.enqueueStart({
+					flowId: def.opts.id,
+					...(opts.from ? { from: opts.from } : {}),
+				});
 				return "queued";
 			}
 
@@ -347,7 +353,10 @@ export function makeFlowControl(
 		await coord?.onFlowTerminal(def.opts.id, "completed");
 	}
 
-	async function enterStep(targetId: string, reason: "next" | "skip" | "goto"): Promise<NextResult> {
+	async function enterStep(
+		targetId: string,
+		reason: "next" | "skip" | "goto",
+	): Promise<NextResult> {
 		let nextId: string | undefined = targetId;
 		let from = local.stepId ?? null;
 		let leaveReason: LeaveReason = reason;
@@ -559,7 +568,10 @@ async function resolveMedia(
 	return typeof step.media === "function" ? await step.media(ctx) : step.media;
 }
 
-function textParams(text: { text: string; entities?: FormatResult["entities"] }): Record<string, unknown> {
+function textParams(text: {
+	text: string;
+	entities?: FormatResult["entities"];
+}): Record<string, unknown> {
 	return {
 		text: text.text,
 		...(text.entities ? { entities: text.entities } : {}),
@@ -620,7 +632,10 @@ function resolveButton(
 	button: StepButton,
 	labels: Partial<Record<ButtonKind, string>> | undefined,
 	tokens: OnboardingViewCtx,
-): { text: string; callbackData: string; url?: undefined } | { text: string; url: string; callbackData: string } | null {
+):
+	| { text: string; callbackData: string; url?: undefined }
+	| { text: string; url: string; callbackData: string }
+	| null {
 	if (typeof button === "string") {
 		const data = pickToken(button, tokens);
 		return data ? { text: labels?.[button] ?? defaultLabel(button), callbackData: data } : null;

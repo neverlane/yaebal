@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import type { UpdateSink, WebhookOptions } from "./webhook.js";
 import type { Update } from "./telegram-types.js";
+import type { UpdateSink, WebhookOptions } from "./webhook.js";
 
 const MAX_BODY = 1 << 20; // 1 MiB
 

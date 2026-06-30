@@ -4,9 +4,9 @@ import {
 	type DialogControl,
 	type DialogDef,
 	type DialogsOptions,
+	dialogs,
 	type Button as MordaButton,
 	type WindowView,
-	dialogs,
 } from "../index.js";
 import { Fragment, VNODE, type VNode } from "./jsx-runtime.js";
 
@@ -312,7 +312,7 @@ export function jsxDialogs(
 	for (const [id, Component] of Object.entries(screens)) {
 		def[id] = makeRender(id, Component, idByComponent);
 	}
-	
+
 	return dialogs(def, {
 		...options,
 		onLeave: (chatId, windowId) => {

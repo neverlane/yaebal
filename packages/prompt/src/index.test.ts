@@ -98,6 +98,6 @@ test("an unrelated message with no pending prompt falls through", async () => {
 		}),
 	);
 	await mw(msgCtx(api, "hello", 2), noop);
-	
+
 	assert.equal(seen, "hello");
 });

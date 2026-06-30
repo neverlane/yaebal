@@ -62,7 +62,7 @@ test("encodeRequest uses an injected readFile for media.path() (runtime-agnostic
 		assert.equal(p, "./pics/cat.jpg"); // path forwarded verbatim
 		return new Uint8Array([9, 8, 7]);
 	};
-	
+
 	const r = await encodeRequest({ chat_id: 1, photo: media.path("./pics/cat.jpg") }, readFile);
 	const form = r.body as FormData;
 
@@ -106,7 +106,7 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	const bot = new Bot("123:abc").on("message:text", (ctx) => {
 		seen = ctx.text;
 	});
-	
+
 	await bot.handleUpdate({
 		update_id: 1,
 		message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },

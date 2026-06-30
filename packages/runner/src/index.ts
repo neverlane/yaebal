@@ -181,7 +181,7 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 		while (!stopped) {
 			if (scheduler.size() >= concurrency) await scheduler.whenBelow(concurrency);
 			if (stopped) break;
-	
+
 			let updates: Update[];
 			try {
 				updates = await bot.api.getUpdates({
@@ -192,13 +192,13 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 				});
 			} catch (error) {
 				if (stopped) break;
-	
+
 				options.onError?.(error);
 				await delay(3000);
-	
+
 				continue;
 			}
-	
+
 			for (const update of updates) {
 				offset = update.update_id + 1;
 				scheduler.submit(seqBy(update), () => safe(update));

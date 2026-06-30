@@ -54,7 +54,7 @@ export class InlineKeyboard {
 			this.#rows.push(this.#current);
 			this.#current = [];
 		}
-		
+
 		return this;
 	}
 
@@ -110,7 +110,7 @@ export class Keyboard {
 		// clone so a returned markup never aliases the live in-progress row.
 		const keyboard =
 			this.#current.length > 0 ? [...this.#rows, [...this.#current]] : [...this.#rows];
-			
+
 		return {
 			keyboard,
 			...(this.#resize ? { resize_keyboard: true } : {}),

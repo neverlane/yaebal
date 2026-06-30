@@ -36,6 +36,6 @@ export async function broadcast(
 			options.onError?.(chatId, error);
 		}
 	}
-	
+
 	return { sent, failed };
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { type RouteTarget, loadRoutes, routeFromFile } from "./index.js";
+import { loadRoutes, type RouteTarget, routeFromFile } from "./index.js";
 
 test("routeFromFile maps commands and dotted on-queries", () => {
 	assert.deepEqual(routeFromFile("commands", "start.js"), { method: "command", trigger: "start" });
@@ -38,7 +38,7 @@ test("loadRoutes is a no-op for a missing directory", async () => {
 		command: () => assert.fail("should not register"),
 		on: () => assert.fail("should not register"),
 	};
-	
+
 	const registered = await loadRoutes(bot, "/no/such/dir/here");
 	assert.deepEqual(registered, []);
 });

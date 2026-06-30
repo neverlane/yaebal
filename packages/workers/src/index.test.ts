@@ -46,6 +46,6 @@ test("spreads many concurrent tasks across the pool", async () => {
 test("rejects after destroy", async () => {
 	const pool = createPool(workerFile, { size: 1 });
 	await pool.destroy();
-	
+
 	await assert.rejects(() => pool.run("add", [1, 1]), /destroyed/);
 });

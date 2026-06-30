@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { BOT_API_VERSION } from "./index.js";
 import type { Message, SendMessageParams, Update, User } from "./index.js";
+import { BOT_API_VERSION } from "./index.js";
 
 test("exposes the generated Bot API version", () => {
 	assert.match(BOT_API_VERSION, /^\d+\.\d+$/);
@@ -27,6 +27,6 @@ test("generated method params accept a real call", () => {
 
 test("Message is a usable type reference", () => {
 	const msg: Pick<Message, "message_id" | "date"> = { message_id: 10, date: 0 };
-	
+
 	assert.equal(msg.message_id, 10);
 });

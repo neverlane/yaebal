@@ -23,7 +23,7 @@ export function Fragment(props: { children?: unknown }): VNode {
 
 export namespace JSX {
 	export type Element = VNode;
-	
+
 	export interface ElementChildrenAttribute {
 		children: Record<never, never>;
 	}

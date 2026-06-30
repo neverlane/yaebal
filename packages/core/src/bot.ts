@@ -1,12 +1,13 @@
-import { type Api, type FileReader, createApi } from "./api.js";
+import { type Api, createApi, type FileReader } from "./api.js";
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
 import type { Update, UpdateName, User } from "./telegram-types.js";
 
-export type BotPlugin<
-	In extends Context = Context,
-	Out extends object = Record<never, never>,
-> = <C extends In>(bot: Bot<C>) => Bot<C & Out>;
+export type BotPlugin<In extends Context = Context, Out extends object = Record<never, never>> = <
+	C extends In,
+>(
+	bot: Bot<C>,
+) => Bot<C & Out>;
 
 export interface BotOptions {
 	apiRoot?: string;
@@ -98,9 +99,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	): Bot<C & Add>;
 	override install<Add extends object>(plugin: (bot: Bot<C>) => Bot<C & Add>): Bot<C & Add>;
 	override install<Add extends object>(
-		plugin:
-			| ((composer: Composer<C>) => Composer<C & Add>)
-			| ((bot: Bot<C>) => Bot<C & Add>),
+		plugin: ((composer: Composer<C>) => Composer<C & Add>) | ((bot: Bot<C>) => Bot<C & Add>),
 	): Bot<C & Add> {
 		// biome-ignore lint/suspicious/noExplicitAny: overloaded plugin entry point
 		(plugin as any)(this);
@@ -172,7 +171,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 					if (!this.#running) break;
 
 					console.error("[yaebal] getUpdates failed, retrying in 3s:", error);
-					
+
 					await new Promise((r) => setTimeout(r, 3000));
 					continue;
 				}

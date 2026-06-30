@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/morda",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal dialogs engine — declarative windows, callback routing, stack navigation.",
 	"type": "module",
 	"main": "./lib/index.js",

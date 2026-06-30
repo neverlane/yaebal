@@ -103,7 +103,7 @@ export class Context {
 	answerCallbackQuery(extra: Record<string, unknown> = {}): Promise<boolean> {
 		const id = this.callbackQuery?.id;
 		if (id === undefined) return Promise.resolve(false);
-		
+
 		return this.api.answerCallbackQuery({ callback_query_id: id, ...extra });
 	}
 }

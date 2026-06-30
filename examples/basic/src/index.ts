@@ -1,11 +1,11 @@
 import { autoRetry } from "@yaebal/again";
 import { callbackData } from "@yaebal/callback-data";
-import { Bot, type Context, type Plugin, bold, format, italic, media } from "@yaebal/core";
+import { Bot, bold, type Context, format, italic, media, type Plugin } from "@yaebal/core";
 import { and, command, isPrivate, regex } from "@yaebal/filters";
 import { html } from "@yaebal/fmt";
 import { i18n } from "@yaebal/i18n";
 import { InlineKeyboard } from "@yaebal/keyboard";
-import { type DialogDef, back, button, dialogs, switchTo } from "@yaebal/morda";
+import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
 import { type SceneDef, scenes } from "@yaebal/scenes";
 import { session } from "@yaebal/session";

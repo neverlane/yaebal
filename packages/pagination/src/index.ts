@@ -78,7 +78,7 @@ export function pagination<T>(options: PaginationOptions<T>): Pagination {
 		},
 		async send(ctx, page = 0) {
 			const v = await view(ctx, page);
-			
+
 			return ctx.send(v.text, { reply_markup: v.markup });
 		},
 	};

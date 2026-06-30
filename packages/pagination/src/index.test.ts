@@ -112,7 +112,7 @@ test("pressing next edits the message to the following page", async () => {
 
 	// page 1 → both prev and next
 	const flat = edit?.params.reply_markup.inline_keyboard.flat() as Array<{ text: string }>;
-	
+
 	assert.deepEqual(
 		flat.map((b) => b.text),
 		["◀", "▶"],

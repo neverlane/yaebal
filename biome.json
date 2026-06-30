@@ -25,7 +25,18 @@
 	},
 	"linter": {
 		"enabled": true,
-		"rules": { "preset": "recommended" }
+		"rules": {
+			"preset": "recommended",
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"correctness": {
+				"noUnsafeOptionalChaining": "off"
+			},
+			"suspicious": {
+				"noThenProperty": "off"
+			}
+		}
 	},
 	"javascript": {
 		"formatter": { "quoteStyle": "double", "semicolons": "always" }

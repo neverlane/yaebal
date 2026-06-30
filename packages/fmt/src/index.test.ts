@@ -8,7 +8,7 @@ test("html: basic tags map to entities", () => {
 		text: "hi",
 		entities: [{ type: "bold", offset: 0, length: 2 }],
 	});
-	
+
 	assert.deepEqual(html`a <i>b</i> c`, {
 		text: "a b c",
 		entities: [{ type: "italic", offset: 2, length: 1 }],

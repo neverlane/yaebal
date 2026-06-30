@@ -37,7 +37,7 @@ export function decideRetry(
 	if (retryOnInternal && error.code >= 500) {
 		return { retry: true, delayMs: Math.min(2 ** attempt * 1000, maxDelayMs) };
 	}
-	
+
 	return undefined;
 }
 
@@ -56,7 +56,7 @@ export function autoRetry(api: Api, options?: AutoRetryOptions): void;
 export function autoRetry(
 	apiOrOptions?: Api | AutoRetryOptions,
 	options: AutoRetryOptions = {},
-): BotPlugin | void {
+): BotPlugin | undefined {
 	if (isApi(apiOrOptions)) return installAutoRetry(apiOrOptions, options);
 
 	const pluginOptions = apiOrOptions ?? {};
@@ -69,6 +69,6 @@ export function autoRetry(
 
 function parseRetryAfter(message: string): number | undefined {
 	const m = message.match(/retry after (\d+)/i);
-	
+
 	return m ? Number(m[1]) : undefined;
 }

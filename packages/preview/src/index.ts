@@ -451,7 +451,7 @@ function picture(
 	src: string | undefined,
 	natW: number | undefined,
 	natH: number | undefined,
-	p: Palette,
+	_p: Palette,
 	clip: string,
 	spoiler: boolean,
 	overlay: (x: number, y: number, w: number, h: number) => string,
@@ -505,7 +505,12 @@ const durPill = (x: number, bottomY: number, text: string): string =>
 	`<rect x="${round(x + 8)}" y="${round(bottomY - 26)}" width="${text.length * 6.5 + 12}" height="18" rx="9" fill="rgba(0,0,0,0.45)"/><text x="${round(x + 14)}" y="${round(bottomY - 13)}" font-size="11" font-weight="500" fill="#fff" font-family="${FONT}">${esc(text)}</text>`;
 
 /** a 252-wide single-row card (audio/voice/document/contact). */
-function card(p: Palette, base: string, h: number, draw: (x: number, y: number) => string): Block {
+function card(
+	_p: Palette,
+	_base: string,
+	h: number,
+	draw: (x: number, y: number) => string,
+): Block {
 	return { w: MW, h, render: (x, y) => draw(x, y) };
 }
 
@@ -536,7 +541,7 @@ function mapTile(x: number, y: number, w: number, h: number, p: Palette, clip: s
 	const py = y + h / 2;
 
 	s += `<path d="M${round(px)},${round(py - 14)} a8,8 0 0 1 8,8 c0,6 -8,14 -8,14 c0,0 -8,-8 -8,-14 a8,8 0 0 1 8,-8 z" fill="#e74c3c"/><circle cx="${round(px)}" cy="${round(py - 6)}" r="3" fill="#fff"/></g>`;
-	
+
 	return s;
 }
 
@@ -599,7 +604,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			blocks.push({ block: pic(m.photo.at(-1)?.width, m.photo.at(-1)?.height), bleed: true });
 		else if (m.animation)
 			blocks.push({
-				block: pic(m.animation.width, m.animation.height, (x, y2, w) => badge(x, y2, "GIF")),
+				block: pic(m.animation.width, m.animation.height, (x, y2, _w) => badge(x, y2, "GIF")),
 				bleed: true,
 			});
 		else if (m.video)
@@ -659,12 +664,11 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 					const cy = y2 + 22;
 					const title = a.title ?? a.file_name ?? "audio";
 					const sub = a.performer ?? dur(a.duration);
-					
+
 					return `<circle cx="${round(x + 22)}" cy="${round(cy)}" r="22" fill="${p.bar}"/><path d="M${round(x + 17)},${round(cy - 9)} l13,9 l-13,9 z" fill="#fff"/><text x="${round(x + 54)}" y="${round(cy - 2)}" font-size="13.5" font-weight="600" fill="${base}" font-family="${FONT}">${esc(title)}</text><text x="${round(x + 54)}" y="${round(cy + 15)}" font-size="12" fill="${p.meta}" font-family="${FONT}">${esc(sub)}</text>`;
 				}),
 				bleed: false,
 			});
-
 		} else if (m.document) {
 			const d = m.document;
 			const kb = d.file_size
@@ -674,7 +678,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			blocks.push({
 				block: card(p, base, 44, (x, y2) => {
 					const cy = y2 + 22;
-					
+
 					return `<rect x="${round(x)}" y="${round(y2)}" width="44" height="44" rx="12" fill="${p.bar}"/><path d="M${round(x + 14)},${round(cy - 11)} h11 l5,5 v17 h-16 z" fill="rgba(255,255,255,0.9)"/><text x="${round(x + 54)}" y="${round(cy - 2)}" font-size="13.5" font-weight="600" fill="${base}" font-family="${FONT}">${esc(d.file_name ?? "document")}</text><text x="${round(x + 54)}" y="${round(cy + 15)}" font-size="12" fill="${p.meta}" font-family="${FONT}">${esc(kb)}</text>`;
 				}),
 				bleed: false,
@@ -687,7 +691,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			blocks.push({
 				block: card(p, base, 44, (x, y2) => {
 					const cy = y2 + 22;
-					
+
 					return `<circle cx="${round(x + 22)}" cy="${round(cy)}" r="22" fill="${col}"/><text x="${round(x + 22)}" y="${round(cy + 6)}" font-size="17" font-weight="600" fill="#fff" text-anchor="middle" font-family="${FONT}">${esc(nm[0]?.toUpperCase() ?? "?")}</text><text x="${round(x + 54)}" y="${round(cy - 2)}" font-size="13.5" font-weight="600" fill="${base}" font-family="${FONT}">${esc(nm)}</text><text x="${round(x + 54)}" y="${round(cy + 15)}" font-size="12" fill="${p.meta}" font-family="${FONT}">${esc(c.phone_number)}</text>`;
 				}),
 				bleed: false,
@@ -699,7 +703,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 				1,
 				poll.total_voter_count || poll.options.reduce((a, o) => a + o.voter_count, 0),
 			);
-			
+
 			const opts = poll.options;
 			const rowH = 34;
 			const h = 26 + opts.length * rowH + 16;
@@ -711,9 +715,9 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 					render: (x, y2) => {
 						const w = maxBubbleW - PADX * 2;
 						let s = `<text x="${round(x)}" y="${round(y2 + 15)}" font-size="14" font-weight="600" fill="${base}" font-family="${FONT}">${esc(poll.question)}</text>`;
-						
+
 						s += `<text x="${round(x)}" y="${round(y2 + 15)}" dx="0" font-size="11" fill="${p.meta}" font-family="${FONT}" text-anchor="end" transform="translate(${round(w)},0)">${poll.is_anonymous === false ? "Public" : "Anonymous"}</text>`;
-						
+
 						opts.forEach((o, i) => {
 							const oy = y2 + 26 + i * rowH;
 							const pct = Math.round((o.voter_count / total) * 100);
@@ -722,7 +726,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 							s += `<rect x="${round(x)}" y="${round(oy + 18)}" width="${round(w)}" height="4" rx="2" fill="${p.barTrack}"/>`;
 							s += `<rect x="${round(x)}" y="${round(oy + 18)}" width="${round((w * pct) / 100)}" height="4" rx="2" fill="${p.bar}"/>`;
 						});
-						
+
 						return s;
 					},
 				},
@@ -876,6 +880,6 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 	const H = Math.round(y - GAP + PAD);
 	const defs = `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${p.bg0}"/><stop offset="1" stop-color="${p.bg1}"/></linearGradient></defs>`;
 	const open = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" font-family="${FONT}">`;
-	
+
 	return `${open}${defs}<rect width="${W}" height="${H}" fill="url(#bg)"/>${body.join("")}</svg>`;
 }

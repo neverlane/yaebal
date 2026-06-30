@@ -56,6 +56,6 @@ test("typed routers expose the generated shortcuts + narrowed fields", () => {
 		void args;
 		void ctx.react; // command handlers get the message context
 	});
-	
+
 	assert.ok(bot);
 });

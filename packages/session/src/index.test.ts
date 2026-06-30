@@ -125,6 +125,6 @@ test("a throwing handler leaves storage untouched", async () => {
 	await assert.rejects(async () => {
 		await entry(c)(mkCtx(5), noop);
 	}, /boom/);
-	
+
 	assert.equal(await storage.get("5"), undefined);
 });

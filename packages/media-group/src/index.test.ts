@@ -81,7 +81,7 @@ test("separate albums fire independently", async () => {
 	await mw(albumCtx("a", "1"), noop);
 	await mw(albumCtx("b", "1"), noop);
 	await mw(albumCtx("b", "2"), noop);
-	
+
 	await wait(25);
 	assert.deepEqual(sizes.sort(), [1, 2]);
 });

@@ -1,10 +1,9 @@
 import type { Context, Plugin } from "@yaebal/core";
 import type { FlowDefinition } from "./builder.js";
-import { memoryStorage } from "./storage.js";
-import { decode } from "./tokens.js";
-import type { AdvanceFor, FlowControl, OnboardingNamespace, OnboardingStorage } from "./types.js";
 import {
 	answerCallback,
+	type FlowCoordinator,
+	type FlowRuntime,
 	getInternals,
 	globalKey,
 	handleCallback,
@@ -14,9 +13,10 @@ import {
 	makeFlowControl,
 	resolveCurrentStep,
 	resolveScopeKey,
-	type FlowCoordinator,
-	type FlowRuntime,
 } from "./runner.js";
+import { memoryStorage } from "./storage.js";
+import { decode } from "./tokens.js";
+import type { AdvanceFor, FlowControl, OnboardingNamespace, OnboardingStorage } from "./types.js";
 
 const NS_MARKER = Symbol.for("@yaebal/onboarding/ns");
 
@@ -286,7 +286,14 @@ async function refreshNamespace(ns: InternalNamespace): Promise<void> {
 			await rt.storage.set(`flow:${flowId}:${scopeKey}`, activeRecord);
 		}
 
-		const control = makeFlowControl(rt, ns["~ctx"], scopeKey, activeRecord, globalRec, ns["~coord"]);
+		const control = makeFlowControl(
+			rt,
+			ns["~ctx"],
+			scopeKey,
+			activeRecord,
+			globalRec,
+			ns["~coord"],
+		);
 		ns[flowId] = control;
 		ns["~controls"].set(flowId, control);
 		ns["~storages"].set(flowId, rt.storage);

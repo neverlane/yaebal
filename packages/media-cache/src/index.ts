@@ -1,4 +1,11 @@
-import { type Api, type Context, type MediaSource, type Message, isMediaSource, media } from "@yaebal/core";
+import {
+	type Api,
+	type Context,
+	isMediaSource,
+	type MediaSource,
+	type Message,
+	media,
+} from "@yaebal/core";
 import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
 
 export interface MediaCacheOptions {
@@ -34,8 +41,12 @@ export interface MediaCache {
 }
 
 export interface CachedMedia {
-	path(p: string): MediaSource & { then(resolve: (value: string | MediaSource) => unknown): unknown };
-	url(u: string): MediaSource & { then(resolve: (value: string | MediaSource) => unknown): unknown };
+	path(
+		p: string,
+	): MediaSource & { then(resolve: (value: string | MediaSource) => unknown): unknown };
+	url(
+		u: string,
+	): MediaSource & { then(resolve: (value: string | MediaSource) => unknown): unknown };
 }
 
 function extractFileId(result: Message, field: string): string | undefined {
@@ -44,10 +55,7 @@ function extractFileId(result: Message, field: string): string | undefined {
 	return (node as { file_id?: string } | undefined)?.file_id;
 }
 
-const MEDIA_METHODS: Record<
-	string,
-	{ param: string; field: string }
-> = {
+const MEDIA_METHODS: Record<string, { param: string; field: string }> = {
 	sendPhoto: { param: "photo", field: "photo" },
 	sendDocument: { param: "document", field: "document" },
 	sendAudio: { param: "audio", field: "audio" },
@@ -85,7 +93,7 @@ export function mediaCache(options: MediaCacheOptions = {}): MediaCache {
 	const storage = options.storage ?? new MemoryStorage<string>();
 
 	const send = async (
-		ctx: Context,
+		_ctx: Context,
 		key: string,
 		source: MediaSource | string,
 		field: "photo" | "document",

@@ -191,7 +191,7 @@ export class SqlitePanelStore implements PanelStore {
 
 		return rows.reverse().map((r) => {
 			const msg: PanelMessage = { direction: r.direction, text: r.text, date: r.date };
-			
+
 			if (r.attachments) msg.attachments = JSON.parse(r.attachments) as PanelAttachment[];
 			if (r.media_group) msg.mediaGroupId = r.media_group;
 			if (r.keyboard) msg.keyboard = JSON.parse(r.keyboard) as PanelKeyboard;

@@ -28,7 +28,7 @@ test("throttle registers a before hook that resolves", async () => {
 
 	throttle(api, { minIntervalMs: 0 });
 	assert.equal(typeof hook, "function");
-	
+
 	await hook?.("sendMessage", undefined); // interval 0 → no delay
 });
 

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, Context, type Middleware } from "@yaebal/core";
 import { MemoryStorage } from "@yaebal/session";
-import { type DialogDef, type DialogState, back, button, dialogs, switchTo } from "./index.js";
+import { back, button, type DialogDef, type DialogState, dialogs, switchTo } from "./index.js";
 
 const noop = async () => {};
 const entry = <C extends Context>(c: Composer<C>) =>
@@ -173,7 +173,7 @@ test("a press whose window is not the stack top is ignored", async () => {
 
 test("back() at the root closes the dialog", async () => {
 	const { api, calls } = fakeApi();
-	
+
 	const storage = new MemoryStorage<DialogState>();
 	const mw = entry(
 		new Composer<Context>()

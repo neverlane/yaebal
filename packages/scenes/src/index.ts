@@ -136,6 +136,6 @@ export function scenes(
 
 				if (!consumed) await next();
 			});
-			
+
 	return plugin;
 }

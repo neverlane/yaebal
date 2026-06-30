@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/workers",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal workers — a tiny worker_threads pool to offload CPU-heavy tasks from handlers.",
 	"type": "module",
 	"main": "./lib/index.js",

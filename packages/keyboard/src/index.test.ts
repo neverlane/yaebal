@@ -9,7 +9,7 @@ test("inline keyboard builds rows", () => {
 		.row()
 		.url("site", "https://yaeb.al")
 		.build();
-	
+
 	assert.deepEqual(kb, {
 		inline_keyboard: [
 			[
@@ -32,7 +32,7 @@ test("webApp and switchInline buttons", () => {
 		.webApp("open", "https://yaeb.al")
 		.switchInline("share", "q")
 		.build();
-	
+
 	assert.deepEqual(kb, {
 		inline_keyboard: [
 			[
@@ -62,7 +62,7 @@ test("reply keyboard omits flags when unset", () => {
 test("built markup does not alias the live builder", () => {
 	const b = new InlineKeyboard().text("A", "a");
 	const first = b.build();
-	
+
 	b.text("B", "b"); // mutating the builder after build()
 	assert.deepEqual(first, { inline_keyboard: [[{ text: "A", callback_data: "a" }]] });
 });

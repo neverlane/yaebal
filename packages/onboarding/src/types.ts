@@ -86,7 +86,10 @@ export interface StepHooks<Steps extends string> {
 	renderIn?: "dm" | "group" | "any" | ((ctx: Context) => boolean);
 	controls?: ControlsConfig;
 	onEnter?: (ctx: Context) => MaybePromise<unknown>;
-	onLeave?: (ctx: Context, meta: { to: Steps | null; reason: LeaveReason }) => MaybePromise<unknown>;
+	onLeave?: (
+		ctx: Context,
+		meta: { to: Steps | null; reason: LeaveReason },
+	) => MaybePromise<unknown>;
 }
 
 export type StepConfig<Data extends object, Steps extends string> = StepContent<Data, Steps> &
@@ -153,7 +156,9 @@ export interface AdvanceForOpts<Steps extends string = string> {
 	from?: Steps;
 }
 
-export type AdvanceFor<Steps extends string = string> = (opts: AdvanceForOpts<Steps>) => Promise<NextResult>;
+export type AdvanceFor<Steps extends string = string> = (
+	opts: AdvanceForOpts<Steps>,
+) => Promise<NextResult>;
 
 export type OnboardingPlugin<Id extends string, Steps extends string> = Plugin<
 	Context,

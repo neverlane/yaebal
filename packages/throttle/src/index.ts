@@ -37,7 +37,7 @@ function installThrottle(api: Api, options: ThrottleOptions = {}): void {
 
 		const wait = slot.at - now;
 		if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-		
+
 		return undefined; // keep params unchanged
 	});
 }
@@ -49,7 +49,7 @@ export function throttle(api: Api, options?: ThrottleOptions): void;
 export function throttle(
 	apiOrOptions?: Api | ThrottleOptions,
 	options: ThrottleOptions = {},
-): BotPlugin | void {
+): BotPlugin | undefined {
 	if (isApi(apiOrOptions)) return installThrottle(apiOrOptions, options);
 
 	const pluginOptions = apiOrOptions ?? {};

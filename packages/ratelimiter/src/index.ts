@@ -60,6 +60,6 @@ export function ratelimiter(
 
 			await next();
 		});
-		
+
 	return plugin;
 }

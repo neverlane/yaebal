@@ -145,6 +145,6 @@ test("scoped derive runs only for the listed update types", async () => {
 	);
 	await mw(msgCtx("hi"), noop); // message → derived
 	await mw(cbCtx(), noop); // callback_query → skipped
-	
+
 	assert.deepEqual(tags, [7, undefined]);
 });

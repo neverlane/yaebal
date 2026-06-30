@@ -139,7 +139,7 @@ test("run: processes a batch, keeps per-chat order, advances offset, drains on s
 
 	await tick();
 	await tick();
-	
+
 	await handle.stop();
 
 	assert.ok(order.includes(1) && order.includes(2) && order.includes(3));

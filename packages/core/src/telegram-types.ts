@@ -6,7 +6,7 @@
  */
 import type { Update } from "@yaebal/types";
 
-export type { User, Chat, MessageEntity, Message, CallbackQuery, Update } from "@yaebal/types";
+export type { CallbackQuery, Chat, Message, MessageEntity, Update, User } from "@yaebal/types";
 
 /** the keys of `Update` that carry a payload (everything except `update_id`). */
 export type UpdateName = Exclude<keyof Update, "update_id" | symbol | number>;

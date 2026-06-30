@@ -30,7 +30,7 @@ test("a wizard collects input across messages and leaves", async () => {
 	const asked: string[] = [];
 	const defs: Record<string, SceneDef> = {
 		reg: {
-			enter: (ctx) => {
+			enter: (_ctx) => {
 				asked.push("name?");
 			},
 			steps: [
@@ -135,7 +135,7 @@ test("a step that does not advance re-runs (validation)", async () => {
 	await mw(msgCtx("/ask", 3), noop);
 	await mw(msgCtx("nope", 3), noop); // stays
 	assert.deepEqual((await storage.get("3")) ?? null, { scene: "ask", step: 0 });
-	
+
 	await mw(msgCtx("ok", 3), noop); // leaves
 	assert.equal(await storage.get("3"), undefined);
 	assert.equal(attempts, 2);

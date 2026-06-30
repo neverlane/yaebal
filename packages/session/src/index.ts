@@ -61,7 +61,7 @@ export function session<S>(options: SessionOptions<S>): Plugin<Context, { sessio
 			.derive(async (ctx) => {
 				const key = getKey(ctx);
 				const value = key === undefined ? initial() : ((await storage.get(key)) ?? initial());
-				
+
 				return { session: value };
 			});
 }

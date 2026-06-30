@@ -44,7 +44,7 @@ test("broadcast merges extra params into every send", async () => {
 			return Promise.resolve({ message_id: 1 });
 		},
 	} as never;
-	
+
 	await broadcast(api, [10], "yo", { extra: { parse_mode: "HTML" } });
 	assert.deepEqual(seen, [{ chat_id: 10, text: "yo", parse_mode: "HTML" }]);
 });

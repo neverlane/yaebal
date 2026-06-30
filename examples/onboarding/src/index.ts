@@ -18,13 +18,8 @@ const welcome = createOnboarding({ id: "welcome", concurrency: "preempt" })
 		buttons: ["next", "dismiss"],
 	})
 	.step("features", {
-		text:
-			"yaebal onboarding keeps flow state, renders inline buttons, and gives handlers a typed ctx.onboarding.welcome control.",
-		buttons: [
-			"next",
-			{ text: "jump to commands", goto: "commands" },
-			"exit",
-		],
+		text: "yaebal onboarding keeps flow state, renders inline buttons, and gives handlers a typed ctx.onboarding.welcome control.",
+		buttons: ["next", { text: "jump to commands", goto: "commands" }, "exit"],
 	})
 	.step("commands", {
 		text: "try /status during the tour, /exit to leave it, /disable to opt out, and /tour to restart.",
@@ -34,7 +29,9 @@ const welcome = createOnboarding({ id: "welcome", concurrency: "preempt" })
 		text: "all set. the flow will now mark itself completed.",
 	})
 	.onComplete((ctx) => ctx.send("welcome aboard - run /tour any time to see it again."))
-	.onExit((ctx, meta) => ctx.send(`left onboarding at ${meta.at || "unknown"}. run /tour to restart.`))
+	.onExit((ctx, meta) =>
+		ctx.send(`left onboarding at ${meta.at || "unknown"}. run /tour to restart.`),
+	)
 	.onDismiss((ctx) => ctx.send("onboarding dismissed. run /enable if you want to allow it again."))
 	.build();
 

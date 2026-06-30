@@ -1,6 +1,6 @@
 # @yaebal/media-cache
 
-Reuse a `file_id` instead of re-uploading the same file.
+reuse a `file_id` instead of re-uploading the same file.
 
 ## manual mode
 
@@ -31,11 +31,11 @@ bot.command("logo", async (ctx) => {
 })
 ```
 
-Keyed by the source path or URL — if you send the same path twice, it reuses the `file_id` from the first response.
+keyed by the source path or URL — if you send the same path twice, it reuses the `file_id` from the first response.
 
 ## storage
 
-Defaults to in-memory (`MemoryStorage`, lost on restart). Pass a persistent storage:
+defaults to in-memory (`MemoryStorage`, lost on restart). pass a persistent storage:
 
 ```ts
 import { mediaCache } from "@yaebal/media-cache"
@@ -47,4 +47,4 @@ const cache = mediaCache({
 
 ---
 
-Part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

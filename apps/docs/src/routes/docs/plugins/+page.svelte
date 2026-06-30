@@ -36,14 +36,14 @@ const bot = new Bot(token)
 		["@yaebal/broadcast", "/docs/plugins/broadcast/", "send a message to many chats"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes via webhooks"],
-		["@yaebal/runner", "/docs/plugins/runner/", "concurrent long-polling for scale"],
+		["@yaebal/runner", "/docs/runner/", "concurrent long-polling for scale"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect album updates into one handler"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "reuse a file_id instead of re-uploading"],
 		["@yaebal/split", "/docs/plugins/split/", "break long messages into telegram-sized chunks"],
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next"],
 		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to SVG"],
-		["@yaebal/workers", "/docs/plugins/workers/", "worker_threads pool to offload CPU-heavy work"],
+		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy work"],
 		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api, update & context factories"],
 	];
 </script>

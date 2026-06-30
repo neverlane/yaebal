@@ -12,6 +12,7 @@ coverage/
 *.tsbuildinfo
 
 apps/docs/**/.svelte-kit
+apps/docs/**/build
 packages/**/lib
 
 vite.config.js.timestamp-*

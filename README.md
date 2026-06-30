@@ -32,6 +32,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | example                                | what it shows                                                                                          | run                                            |
 |:---------------------------------------|:-------------------------------------------------------------------------------------------------------|:-----------------------------------------------|
 | [basic](/examples/basic/)              | a tour wiring most plugins — keyboard, callback-data, session, morda, i18n, scenes, prompt, media      | `pnpm --filter @yaebal/example-basic dev`      |
+| [simple](/examples/simple/)            | toml routes with a typescript handler registry                                                         | `pnpm --filter @yaebal/example-simple dev`     |
 | [onboarding](/examples/onboarding/)    | first-run product tour with typed flow controls, inline buttons and opt-out state                      | `pnpm --filter @yaebal/example-onboarding dev` |
 | [panel](/examples/panel/)              | the operator [panel](/packages/panel/) end-to-end: avatars, media viewer, keyboards, callbacks, events | `pnpm --filter @yaebal/example-panel dev`      |
 
@@ -58,6 +59,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | [@yaebal/conversation](/packages/conversation/)   | await-style multi-step dialogs (coroutine, no replay)                      |
 | [@yaebal/prompt](/packages/prompt/)               | ask a question, handle the next message                                    |
 | [@yaebal/router](/packages/router/)               | file-based routing from a `routes/` directory                              |
+| [@yaebal/toml](/packages/toml/)                   | declarative toml routes with a handler registry                            |
 | [@yaebal/throttle](/packages/throttle/)           | space out outgoing api calls to avoid 429s                                 |
 | [@yaebal/files](/packages/files/)                 | resolve and download telegram files                                        |
 | [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                                           |

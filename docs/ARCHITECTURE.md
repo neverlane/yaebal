@@ -210,6 +210,7 @@ core по-прежнему держит свой минимальный ручн
 | **`@yaebal/throttle`** ✅ | rate-limit исходящих (не словить flood); слоты через `api.before` | — | grammY transformer-throttler |
 | **`@yaebal/ratelimiter`** ✅ | анти-спам входящих: дропает апдейты сверх лимита за окно (per-user) | — | grammY ratelimiter, @gramio/rate-limiter |
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` в именах | — | @gramio/autoload + storona |
+| **`@yaebal/toml`** ✅ | декларативные toml маршруты: commands, hears, message filters, callback queries и handler registry | — | config-driven routing |
 | **`@yaebal/listai`** | пагинация | `keyboard` | @gramio/pagination |
 | **`@yaebal/narezka`** | резать длинные сообщения на части | — | @gramio/split |
 | **`@yaebal/onboarding`** ✅ | onboarding — декларативные туториалы, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |

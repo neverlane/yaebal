@@ -84,6 +84,7 @@ export const nav: NavSection[] = [
 			{ label: "workers", href: "/docs/workers" },
 			{ label: "runtimes", href: "/docs/runtimes" },
 			{ label: "router", href: "/docs/plugins/router" },
+			{ label: "toml", href: "/docs/plugins/toml", badge: "new" },
 			{ label: "test", href: "/docs/plugins/test" },
 		],
 	},

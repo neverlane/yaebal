@@ -1,0 +1,37 @@
+[bot]
+name = "demo"
+
+[[commands]]
+name = "start"
+description = "start command"
+reply = "Привет! Я бот из TOML."
+
+[[commands]]
+name = "ping"
+handler = "ping"
+
+[[hears]]
+text = "ping"
+reply = "pong"
+
+[[hears]]
+text = "admin"
+handler = "adminPanel"
+
+[[messages]]
+on = "message:text"
+contains = "yaebal"
+reply = "yaebal мощь"
+
+[[messages]]
+on = "message:text"
+equals = "secret"
+handler = "secretHandler"
+
+[[callbacks]]
+data = "buy"
+reply = "Вы нажали купить"
+
+[[callbacks]]
+data = "profile"
+handler = "profileCallback"

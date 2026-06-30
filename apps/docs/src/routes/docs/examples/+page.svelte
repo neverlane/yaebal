@@ -36,6 +36,13 @@ pnpm --filter @yaebal/example-panel dev`;
 		["/disable", "calls ctx.onboarding.disableAll()"],
 		["/enable", "reenables and undismisses the flow"],
 	];
+
+	const simple = [
+		["/start", "a reply defined directly in bot.toml"],
+		["/ping", "a named typescript handler from the registry"],
+		["ping", "a hears route that replies pong"],
+		["profile callback", "a callback_query route backed by a named handler"],
+	];
 </script>
 
 <svelte:head>
@@ -54,6 +61,24 @@ pnpm --filter @yaebal/example-panel dev`;
 	want a standalone project instead of the monorepo? scaffold one with
 	<a href="/docs/scaffolding/">create-yaebal</a> — <code>pnpm create yaebal my-bot</code>.
 </p>
+
+<h2>simple <span class="muted">— toml routes</span></h2>
+<p>
+	a compact bot powered by <a href="/docs/plugins/toml/">@yaebal/toml</a>: routes live in
+	<code>bot.toml</code>, complex logic stays in the typescript handler registry. source:
+	<a href={`${GH}/simple`}>examples/simple</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>try</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each simple as [action, desc]}
+			<tr><td><code>{action}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-simple dev</code> (needs <code>BOT_TOKEN</code>).</p>
 
 <h2>basic <span class="muted">— a plugin tour</span></h2>
 <p>

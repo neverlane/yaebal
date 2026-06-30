@@ -30,6 +30,7 @@ const bot = new Bot(token)
 		["@yaebal/conversation", "/docs/plugins/conversation/", "await-style multi-step dialogs (coroutine, no replay)"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, handle the next message"],
 		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
+		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a handler registry"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "rate-limit outgoing api calls"],
 		["@yaebal/files", "/docs/plugins/files/", "resolve and download telegram files"],
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who spam"],
@@ -54,7 +55,7 @@ const bot = new Bot(token)
 
 <h1>plugins</h1>
 <p class="lead">
-	28 first-party plugins. each is a typed composer extension — installing one enriches the context
+	29 first-party plugins. each is a typed composer extension — installing one enriches the context
 	type, and its dependencies are checked at compile time.
 </p>
 

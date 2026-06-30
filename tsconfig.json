@@ -25,6 +25,7 @@
 		{ "path": "./packages/media-group" },
 		{ "path": "./packages/split" },
 		{ "path": "./packages/commands" },
+		{ "path": "./packages/toml" },
 		{ "path": "./packages/pagination" },
 		{ "path": "./packages/media-cache" },
 		{ "path": "./packages/types" },
@@ -36,6 +37,7 @@
 		{ "path": "./packages/workers" },
 		{ "path": "./packages/filters" },
 		{ "path": "./packages/test" },
-		{ "path": "./examples/basic" }
+		{ "path": "./examples/basic" },
+		{ "path": "./examples/simple" }
 	]
 }

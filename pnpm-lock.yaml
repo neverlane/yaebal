@@ -145,6 +145,19 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/simple:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/toml':
+        specifier: workspace:*
+        version: link:../../packages/toml
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.0.1
+
   packages/again:
     dependencies:
       '@yaebal/core':
@@ -452,6 +465,25 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+
+  packages/toml:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+      smol-toml:
+        specifier: ^1.7.0
+        version: 1.7.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/types:
     devDependencies:
@@ -1628,6 +1660,10 @@ packages:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
 
+  smol-toml@1.7.0:
+    resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
+    engines: {node: '>= 18'}
+
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -1792,6 +1828,9 @@ packages:
 
   zimmerframe@1.1.4:
     resolution: {integrity: sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ==}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -2830,6 +2869,8 @@ snapshots:
 
   slash@3.0.0: {}
 
+  smol-toml@1.7.0: {}
+
   source-map-js@1.2.1: {}
 
   space-separated-tokens@2.0.2: {}
@@ -2984,5 +3025,7 @@ snapshots:
       isexe: 2.0.0
 
   zimmerframe@1.1.4: {}
+
+  zod@4.4.3: {}
 
   zwitch@2.0.4: {}

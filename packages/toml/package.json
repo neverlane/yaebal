@@ -1,0 +1,42 @@
+{
+	"name": "@yaebal/toml",
+	"version": "0.0.1",
+	"description": "yaebal toml — declarative toml routes for yaebal bots.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --experimental-strip-types --test tests/*.test.ts"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"smol-toml": "^1.7.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "toml", "config", "routes"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/toml"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

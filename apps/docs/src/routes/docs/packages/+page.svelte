@@ -28,6 +28,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/onboarding", "/docs/plugins/onboarding/", "declarative first-run tutorials with inline controls"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, await the next message as the answer"],
 		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
+		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a typescript handler registry"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "rate-limit outgoing API calls"],
 		["@yaebal/files", "/docs/plugins/files/", "resolve and download Telegram files"],
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who send too many requests"],

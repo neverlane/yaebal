@@ -1,0 +1,12 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["DOM"],
+		"types": ["node"]
+	},
+	"references": [{ "path": "../../packages/core" }, { "path": "../../packages/toml" }],
+	"include": ["index.ts"]
+}

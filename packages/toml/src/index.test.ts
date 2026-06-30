@@ -5,7 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { Composer } from "@yaebal/core";
 import { callbackUpdate, createContext, messageUpdate, mockApi, runMiddleware } from "@yaebal/test";
-import { installToml, parseTomlConfig, validateTomlConfig } from "../lib/index.js";
+import { installToml, parseTomlConfig, validateTomlConfig } from "./index.js";
 
 test("parse raw toml string", () => {
 	const config = parseTomlConfig(`

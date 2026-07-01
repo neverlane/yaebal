@@ -66,8 +66,28 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
 		ts.typescriptDefaults.addExtraLib(meta, "file:///node_modules/yaebal/index.d.ts");
 	}
 
+	const FONT_FAMILY = "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+	const FONT_SIZE = 13.5;
+
+	// monaco caches character-width metrics at creation time — if the webfont hasn't
+	// finished loading yet, it measures the fallback font and the grid stays misaligned
+	// even after IBM Plex Mono swaps in. force the exact weights/size to load first.
+	async function loadEditorFont(): Promise<void> {
+		if (!document.fonts?.load) return;
+
+		try {
+			await Promise.all([
+				document.fonts.load(`400 ${FONT_SIZE}px "IBM Plex Mono"`),
+				document.fonts.load(`500 ${FONT_SIZE}px "IBM Plex Mono"`),
+			]);
+		} catch {
+			/* webfont failed to load — Monaco falls back to the next stack entry */
+		}
+	}
+
 	onMount(async () => {
 		try {
+			await loadEditorFont();
 			monaco = await loadMonaco();
 			const ts = monaco.languages.typescript;
 
@@ -108,9 +128,13 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
 				theme: theme === "dark" ? "yaebal-dark" : "vs",
 				automaticLayout: true,
 				minimap: { enabled: false },
-				fontSize: 13.5,
-				fontFamily: "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-				fontLigatures: true,
+				fontSize: FONT_SIZE,
+				fontFamily: FONT_FAMILY,
+				// IBM Plex Mono has no ligature glyphs, and enabling this drops Monaco out of its
+				// fixed-width character grid into native text shaping — the moment the exact
+				// webfont isn't what's painting (load race, blocked font, etc.) lines stop lining
+				// up and the editor reads as a proportional font.
+				fontLigatures: false,
 				lineHeight: 1.7,
 				letterSpacing: 0.2,
 				scrollBeyondLastLine: false,

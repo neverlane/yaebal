@@ -47,6 +47,7 @@ bot.start();`;
 	<a class="brand unbounded" href="/">yaebal</a>
 	<nav class="top-actions">
 		<a class="link" href="/docs/getting-started/">docs</a>
+		<a class="link" href="/playground/">playground</a>
 		<a class="link" href={GITHUB} target="_blank" rel="noopener noreferrer">github</a>
 		<a class="link" href={NPMX} target="_blank" rel="noreferrer">npmx</a>
 		<ThemeToggle />

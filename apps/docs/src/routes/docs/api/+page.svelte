@@ -20,10 +20,10 @@ bot.on("message", (ctx) => ctx.send("hello!"));`;
 </script>
 
 <svelte:head>
-	<title>Bot API reference — yaebal</title>
+	<title>bot api reference — yaebal</title>
 </svelte:head>
 
-<h1>Bot API reference</h1>
+<h1>bot api reference</h1>
 <p class="lead">
 	every Telegram Bot API method and type — <strong>{apiMethods.length} methods</strong>,
 	<strong>{apiTypes.length} types</strong>, Bot API <strong>{BOT_API_VERSION}</strong> — with a
@@ -92,6 +92,10 @@ bot.on("message", (ctx) => ctx.send("hello!"));`;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		color: var(--secondary);
+	}
+
+	h2 {
+		text-transform: lowercase;
 	}
 
 	@media (hover: hover) {

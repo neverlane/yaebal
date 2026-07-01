@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from "svelte";
+	import { slide } from "svelte/transition";
 
 	import { type ChatMessage, renderChat } from "@yaebal/preview";
 
@@ -7,6 +8,7 @@
 	import { page } from "$app/stores";
 
 	import MonacoEditor from "$lib/MonacoEditor.svelte";
+	import TokenSelect from "$lib/TokenSelect.svelte";
 	import { EXAMPLES } from "$lib/examples";
 
 	import type { Step } from "$lib/playground";
@@ -317,6 +319,18 @@ bot.start();`;
 			run();
 		}
 	}
+
+	function goBack(e: MouseEvent) {
+		if (typeof window !== "undefined" && window.history.length > 1) {
+			e.preventDefault();
+			window.history.back();
+		}
+	}
+
+	const tokenOptions = $derived([
+		{ id: "", label: "— none · mock —" },
+		...tokens.map((t) => ({ id: t.id, label: t.label })),
+	]);
 </script>
 
 <svelte:head>
@@ -328,12 +342,24 @@ bot.start();`;
 <div class="pg">
 	<header class="top">
 		<div class="brand">
-			<a class="home" href="{base}/docs/getting-started" aria-label="back to docs">←</a>
+			<a class="home" href="{base}/docs/getting-started" aria-label="back to docs" onclick={goBack}>
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="m15 18-6-6 6-6" />
+				</svg>
+			</a>
 			<span class="logo unbounded">yaebal</span>
 			<span class="chip">playground</span>
 		</div>
 		<div class="top-r">
-			<button class="share" onclick={share}>{copied ? "✓ link copied" : "⤴ share"}</button>
+			<button class="share" onclick={share}>
+				{#if copied}
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+					<span>link copied</span>
+				{:else}
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7M16 6l-4-4-4 4M12 2v14" /></svg>
+					<span>share</span>
+				{/if}
+			</button>
 			<span class="hint mono">⌘↵ run</span>
 		</div>
 	</header>
@@ -344,25 +370,46 @@ bot.start();`;
 		style="--cols: {sideW}px 7px minmax(0, {split}fr) 7px minmax(0, {1 - split}fr);"
 	>
 		<aside class="side">
-			<div class="side-h"><span>projects</span><button class="mini" onclick={addProject} aria-label="new project">＋</button></div>
+			<div class="side-h">
+				<span>projects</span>
+				<button class="mini" onclick={addProject} aria-label="new project">
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+				</button>
+			</div>
 			<ul class="projects">
 				{#each projects as p (p.id)}
 					<li class:active={p.id === activeId}>
 						<button class="pname" onclick={() => switchProject(p.id)} ondblclick={() => renameProject(p)} title="double-click to rename">{p.name}</button>
-						<button class="mini ghost" onclick={() => deleteProject(p.id)} aria-label="delete project">✕</button>
+						<button class="mini ghost" onclick={() => deleteProject(p.id)} aria-label="delete project">
+							<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+						</button>
 					</li>
 				{/each}
 			</ul>
 
-			<div class="side-h"><span>bot token</span><button class="mini" onclick={() => (showTokens = !showTokens)} aria-label={showTokens ? "hide token manager" : "show token manager"} aria-expanded={showTokens}>⚙</button></div>
-			<select class="tok-select mono" bind:value={activeTokenId} onchange={() => pickToken(activeTokenId)}>
-				<option value="">— none · mock —</option>
-				{#each tokens as t (t.id)}<option value={t.id}>{t.label}</option>{/each}
-			</select>
+			<div class="side-h">
+				<span>bot token</span>
+				<button class="mini" class:mini-on={showTokens} onclick={() => (showTokens = !showTokens)} aria-label={showTokens ? "hide token manager" : "show token manager"} aria-expanded={showTokens}>
+					<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+						<circle cx="12" cy="12" r="3" />
+						<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+					</svg>
+				</button>
+			</div>
+			<TokenSelect
+				options={tokenOptions}
+				bind:value={activeTokenId}
+				onchange={pickToken}
+			/>
 			{#if showTokens}
-				<div class="tok-manage">
+				<div class="tok-manage" transition:slide={{ duration: 180 }}>
 					{#each tokens as t (t.id)}
-						<div class="tok-row"><span class="mono">{t.label}</span><button class="mini ghost" onclick={() => removeToken(t.id)} aria-label="remove token">✕</button></div>
+						<div class="tok-row">
+							<span class="mono">{t.label}</span>
+							<button class="mini ghost" onclick={() => removeToken(t.id)} aria-label="remove token">
+								<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+							</button>
+						</div>
 					{/each}
 					<input class="ti mono" placeholder="label" aria-label="token label" bind:value={newLabel} />
 					<input class="ti mono" type="password" placeholder="123456:ABC-token" aria-label="bot token" bind:value={newTok} />
@@ -383,7 +430,16 @@ bot.start();`;
 					<button class:on={mode === "live"} onclick={() => (mode = "live")}>live</button>
 				</div>
 				<button class="run" class:danger={!!live} onclick={run} disabled={busy}>
-					{#if mode === "live"}{live ? "■ Stop" : "▶ Start"}{:else}{busy ? "running…" : "▶ Run"}{/if}
+					{#if mode === "live" && live}
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" /></svg>
+						<span>Stop</span>
+					{:else if busy}
+						<span class="spin" aria-hidden="true"></span>
+						<span>running…</span>
+					{:else}
+						<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4.5v15l13-7.5-13-7.5Z" /></svg>
+						<span>{mode === "live" ? "Start" : "Run"}</span>
+					{/if}
 				</button>
 			</div>
 			<div class="editor"><MonacoEditor bind:value={code} {theme} /></div>
@@ -395,7 +451,7 @@ bot.start();`;
 		<section class="pane">
 			<div class="bar">
 				<span class="label">result</span>
-				{#if mode === "live" && live}<span class="dot">● live</span>{/if}
+				{#if mode === "live" && live}<span class="dot"><span class="pulse" aria-hidden="true"></span>live</span>{/if}
 			</div>
 			<div class="chat" bind:this={chatBox}>
 				{#if error}
@@ -405,7 +461,7 @@ bot.start();`;
 					<div class="chat-svg">{@html svg}</div>
 				{:else}
 					<div class="empty">
-						<span class="emoji">💬</span>
+						<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>
 						<span class="mono">{mode === "live" ? "press start, then message your bot" : "run to see the conversation"}</span>
 					</div>
 				{/if}
@@ -413,7 +469,9 @@ bot.start();`;
 			{#if mode === "mock"}
 				<div class="composer">
 					<input class="msg mono" placeholder="message the bot…" bind:value={msg} onkeydown={(e) => e.key === "Enter" && send()} />
-					<button class="send" onclick={send} disabled={busy} aria-label="send message">↩</button>
+					<button class="send" onclick={send} disabled={busy} aria-label="send message">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z" /></svg>
+					</button>
 				</div>
 			{/if}
 			<div class="console">
@@ -629,8 +687,9 @@ bot.start();`;
 	.projects li {
 		display: flex;
 		align-items: center;
-		border-radius: 9px;
-		padding-left: 4px;
+		gap: 4px;
+		border-radius: 12px;
+		padding: 4px;
 		transition: background 0.12s;
 	}
 
@@ -648,8 +707,9 @@ bot.start();`;
 		text-align: left;
 		background: transparent;
 		box-shadow: none;
-		padding: 7px 6px;
-		font-size: 13px;
+		padding: 9px 4px 9px 8px;
+		font-size: 13.5px;
+		font-weight: 500;
 		color: var(--secondary);
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -658,12 +718,17 @@ bot.start();`;
 
 	.projects li.active .pname {
 		color: var(--primary);
-		font-weight: 500;
 	}
 
-	.projects li.active .mini {
+	.projects li.active .mini.ghost {
 		color: var(--primary);
-		opacity: 0.7;
+		opacity: 0.85;
+		background: rgba(0, 0, 0, 0.1);
+	}
+
+	.projects li.active .mini.ghost:hover {
+		opacity: 1;
+		background: rgba(0, 0, 0, 0.16);
 	}
 
 	.mini {
@@ -676,6 +741,7 @@ bot.start();`;
 		color: var(--gray);
 		border-radius: 7px;
 		flex: none;
+		transition: background 0.14s ease, color 0.14s ease;
 	}
 
 	.mini:hover {
@@ -683,15 +749,20 @@ bot.start();`;
 		background: var(--button-hover);
 	}
 
-	.tok-select {
-		width: 100%;
-		padding: 8px 10px;
-		border-radius: 9px;
-		background: var(--button);
+	.mini.ghost {
+		width: 26px;
+		height: 26px;
+		border-radius: 8px;
+		background: rgba(127, 127, 127, 0.16);
+	}
+
+	.mini.ghost:hover {
+		background: rgba(127, 127, 127, 0.28);
+	}
+
+	.mini-on {
 		color: var(--secondary);
-		border: 1px solid var(--input-border);
-		font-size: 12px;
-		outline: none;
+		background: var(--button);
 	}
 
 	.tok-manage {
@@ -776,8 +847,32 @@ bot.start();`;
 	}
 
 	.dot {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 		font-size: 11px;
 		color: var(--green);
+	}
+
+	.pulse {
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: var(--green);
+		box-shadow: 0 0 0 0 rgba(48, 189, 27, 0.5);
+		animation: pulse 1.6s ease-out infinite;
+	}
+
+	@keyframes pulse {
+		0% {
+			box-shadow: 0 0 0 0 rgba(48, 189, 27, 0.45);
+		}
+		70% {
+			box-shadow: 0 0 0 6px rgba(48, 189, 27, 0);
+		}
+		100% {
+			box-shadow: 0 0 0 0 rgba(48, 189, 27, 0);
+		}
 	}
 
 	.seg {
@@ -828,6 +923,21 @@ bot.start();`;
 		background: var(--red);
 	}
 
+	.run .spin {
+		width: 11px;
+		height: 11px;
+		border: 2px solid rgba(255, 255, 255, 0.3);
+		border-top-color: currentColor;
+		border-radius: 999px;
+		animation: spin 0.7s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
 	.editor {
 		flex: 1;
 		min-height: 0;
@@ -870,9 +980,8 @@ bot.start();`;
 		font-size: 12px;
 	}
 
-	.empty .emoji {
-		font-size: 30px;
-		opacity: 0.55;
+	.empty svg {
+		opacity: 0.4;
 	}
 
 	.err {

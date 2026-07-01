@@ -10,7 +10,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 	const core = [
 		["yaebal", "/docs/yaebal/", "batteries-included entry — core + auto-generated contexts + common plugins, one import"],
 		["@yaebal/core", "/docs/core/", "Bot, Composer, context, filter queries, media helpers — the engine everything else builds on"],
-		["@yaebal/types", "/docs/types/", "full Telegram Bot API types, code-generated from the ark0f schema; single source of truth for all interfaces"],
+		["@yaebal/types", "/docs/types/", "full Telegram Bot API types, code-generated from our own parser of the live docs; single source of truth for all interfaces"],
 		["@yaebal/contexts", "/docs/contexts/", "per-update context classes with auto-generated shortcut methods (ctx.reply, ctx.sendPhoto, …)"],
 	];
 

@@ -2,14 +2,14 @@
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
-export interface BusinessConnectionContext extends t.BusinessConnection {}
-export class BusinessConnectionContext {
+export interface ManagedBotContext extends t.ManagedBotUpdated {}
+export class ManagedBotContext {
 	readonly api: Api;
 	readonly update: t.Update;
 	constructor(api: Api, update: t.Update) {
 		this.api = api;
 		this.update = update;
-		Object.assign(this, update.business_connection ?? {});
+		Object.assign(this, update.managed_bot ?? {});
 	}
 	/** id of the user this update is from. */
 	get senderId(): number {

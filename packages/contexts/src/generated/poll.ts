@@ -1,4 +1,4 @@
-// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 

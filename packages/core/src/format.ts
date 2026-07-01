@@ -56,7 +56,7 @@ export function format(strings: TemplateStringsArray, ...subs: Insertable[]): Fo
 	return { text, entities };
 }
 
-function wrap(type: string, extra: Partial<MessageEntity> = {}) {
+function wrap(type: MessageEntity["type"], extra: Partial<MessageEntity> = {}) {
 	return (value: string): Stringable =>
 		new Stringable(value, [{ type, offset: 0, length: value.length, ...extra }]);
 }

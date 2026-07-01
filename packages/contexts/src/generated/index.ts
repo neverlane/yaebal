@@ -1,4 +1,4 @@
-// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 import { MessageContext } from "../sugar/message.js";
@@ -9,6 +9,7 @@ import { BusinessConnectionContext } from "./business-connection.js";
 import { BusinessMessageContext } from "../sugar/business-message.js";
 import { EditedBusinessMessageContext } from "../sugar/edited-business-message.js";
 import { DeletedBusinessMessagesContext } from "./deleted-business-messages.js";
+import { GuestMessageContext } from "./guest-message.js";
 import { MessageReactionContext } from "./message-reaction.js";
 import { MessageReactionCountContext } from "./message-reaction-count.js";
 import { InlineQueryContext } from "../sugar/inline-query.js";
@@ -24,6 +25,7 @@ import { ChatMemberContext } from "./chat-member.js";
 import { ChatJoinRequestContext } from "../sugar/chat-join-request.js";
 import { ChatBoostContext } from "./chat-boost.js";
 import { RemovedChatBoostContext } from "./removed-chat-boost.js";
+import { ManagedBotContext } from "./managed-bot.js";
 
 export { MessageContext } from "../sugar/message.js";
 export { MessageContextBase } from "./message.js";
@@ -39,6 +41,7 @@ export { BusinessMessageContextBase } from "./business-message.js";
 export { EditedBusinessMessageContext } from "../sugar/edited-business-message.js";
 export { EditedBusinessMessageContextBase } from "./edited-business-message.js";
 export { DeletedBusinessMessagesContext } from "./deleted-business-messages.js";
+export { GuestMessageContext } from "./guest-message.js";
 export { MessageReactionContext } from "./message-reaction.js";
 export { MessageReactionCountContext } from "./message-reaction-count.js";
 export { InlineQueryContext } from "../sugar/inline-query.js";
@@ -59,8 +62,9 @@ export { ChatJoinRequestContext } from "../sugar/chat-join-request.js";
 export { ChatJoinRequestContextBase } from "./chat-join-request.js";
 export { ChatBoostContext } from "./chat-boost.js";
 export { RemovedChatBoostContext } from "./removed-chat-boost.js";
+export { ManagedBotContext } from "./managed-bot.js";
 
-/** Maps an update type to its context class. */
+/** maps an update type to its context class. */
 export interface ContextByType {
 	message: MessageContext;
 	edited_message: EditedMessageContext;
@@ -70,6 +74,7 @@ export interface ContextByType {
 	business_message: BusinessMessageContext;
 	edited_business_message: EditedBusinessMessageContext;
 	deleted_business_messages: DeletedBusinessMessagesContext;
+	guest_message: GuestMessageContext;
 	message_reaction: MessageReactionContext;
 	message_reaction_count: MessageReactionCountContext;
 	inline_query: InlineQueryContext;
@@ -85,6 +90,7 @@ export interface ContextByType {
 	chat_join_request: ChatJoinRequestContext;
 	chat_boost: ChatBoostContext;
 	removed_chat_boost: RemovedChatBoostContext;
+	managed_bot: ManagedBotContext;
 }
 
 const CONTEXTS = {
@@ -96,6 +102,7 @@ const CONTEXTS = {
 	business_message: BusinessMessageContext,
 	edited_business_message: EditedBusinessMessageContext,
 	deleted_business_messages: DeletedBusinessMessagesContext,
+	guest_message: GuestMessageContext,
 	message_reaction: MessageReactionContext,
 	message_reaction_count: MessageReactionCountContext,
 	inline_query: InlineQueryContext,
@@ -111,9 +118,10 @@ const CONTEXTS = {
 	chat_join_request: ChatJoinRequestContext,
 	chat_boost: ChatBoostContext,
 	removed_chat_boost: RemovedChatBoostContext,
+	managed_bot: ManagedBotContext,
 } satisfies { [K in keyof ContextByType]: new (api: Api, update: t.Update) => ContextByType[K] };
 
-/** Build the right context for an update. */
+/** build the right context for an update. */
 export function contextFor<K extends keyof ContextByType>(
 	type: K,
 	api: Api,

@@ -13,7 +13,7 @@
 } from "@yaebal/types";`;
 
 	const versionConst = `import { BOT_API_VERSION } from "@yaebal/types";
-console.log(BOT_API_VERSION); // e.g. "8.3"`;
+console.log(BOT_API_VERSION); // e.g. "10.1"`;
 
 	const methodsInterface = `import type { BotApiMethods, SendMessageParams } from "@yaebal/types";
 
@@ -28,14 +28,15 @@ const params: SendMessageParams = {
   parse_mode: "HTML", // optional fields are typed too
 };`;
 
-	const regen = `# refresh schema.json from ark0f's machine-readable Bot API schema, then:
-pnpm --filter @yaebal/types generate`;
+	const regen = `# scrapes core.telegram.org/bots/api, refreshes schema.json, regenerates src/telegram.ts,
+# and bumps the package version to the Bot API version — no-op if already up to date
+pnpm --filter @yaebal/types update-schema`;
 
 	const fileHead = `// AUTO-GENERATED from the Telegram Bot API schema — do not edit by hand.
 // regenerate with: pnpm --filter @yaebal/types generate
-// source: https://ark0f.github.io/tg-bot-api/
+// source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
-export const BOT_API_VERSION = "8.3";
+export const BOT_API_VERSION = "10.1";
 
 export interface AffiliateInfo { /* … */ }
 export interface Animation { /* … */ }
@@ -54,10 +55,11 @@ export interface BotApiMethods {
 
 <h1>@yaebal/types</h1>
 <p class="lead">
-	full Telegram Bot API types, code-generated from the
-	<a href="https://ark0f.github.io/tg-bot-api/">ark0f machine-readable schema</a>. the single
-	source of truth for every interface in the yaebal ecosystem — <code>@yaebal/contexts</code> and
-	<code>@yaebal/core</code> both read from it.
+	full Telegram Bot API types, code-generated from a schema scraped directly off
+	<a href="https://core.telegram.org/bots/api">core.telegram.org/bots/api</a> by our own parser —
+	no dependency on a third-party schema project. the single source of truth for every interface in
+	the yaebal ecosystem — <code>@yaebal/contexts</code> and <code>@yaebal/core</code> both read from
+	it.
 </p>
 
 <h2>what it exports</h2>
@@ -94,7 +96,7 @@ export interface BotApiMethods {
 		<tr>
 			<td><code>BOT_API_VERSION</code></td>
 			<td><code>string</code></td>
-			<td>the Bot API version the current file was generated from, e.g. <code>"8.3"</code>.</td>
+			<td>the Bot API version the current file was generated from, e.g. <code>"10.1"</code>.</td>
 		</tr>
 	</tbody>
 </table>
@@ -118,12 +120,23 @@ export interface BotApiMethods {
 
 <h2>regenerating</h2>
 <p>
-	the generator script (<code>scripts/generate.mjs</code>) reads <code>schema.json</code> (the
-	ark0f schema snapshot checked into the repo) and rewrites <code>src/telegram.ts</code>. update
-	<code>schema.json</code> to the latest version from
-	<a href="https://ark0f.github.io/tg-bot-api/">ark0f.github.io/tg-bot-api</a>, then run:
+	<code>scripts/lib/parse-schema.mjs</code> is our own parser for
+	<a href="https://core.telegram.org/bots/api">core.telegram.org/bots/api</a> — it scrapes the
+	live docs HTML straight into the same <code>schema.json</code> shape
+	<code>scripts/generate.mjs</code> already consumes, so there is no third-party schema in the
+	loop. <code>scripts/update-schema.mjs</code> ties the two together: it fetches the live docs,
+	compares the parsed version against the committed <code>schema.json</code>, and — only if
+	newer — refreshes <code>schema.json</code>, regenerates <code>src/telegram.ts</code> (and
+	<code>@yaebal/contexts</code>), and bumps <code>@yaebal/types</code>'s own version to match the
+	Bot API version:
 </p>
 <Code code={regen} lang="sh" title="terminal" />
+<p>
+	a scheduled workflow (<code>.github/workflows/update-bot-api-types.yml</code>) runs this once a
+	day; if there's a newer Bot API version it opens a PR (<code>feat(types): update to bot api
+	vX.Y.Z</code>) after typecheck/build/test/lint all pass. merging it publishes
+	<code>@yaebal/types@X.Y.Z</code> through the normal release pipeline — no manual step required.
+</p>
 
 <h2>relationship to other packages</h2>
 <table>

@@ -1,4 +1,4 @@
-// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
@@ -11,15 +11,15 @@ export class ChatBoostContext {
 		this.update = update;
 		Object.assign(this, update.chat_boost ?? {});
 	}
-	/** Id of the chat this update is in. */
+	/** id of the chat this update is in. */
 	get chatId(): number {
 		return this.chat.id;
 	}
-	/** Whether this is a private (1:1) chat. */
+	/** whether this is a private (1:1) chat. */
 	get isPM(): boolean {
 		return this.chat.type === "private";
 	}
-	/** Whether this is a group or supergroup. */
+	/** whether this is a group or supergroup. */
 	get isGroup(): boolean {
 		return this.chat.type === "group" || this.chat.type === "supergroup";
 	}
@@ -30,6 +30,10 @@ export class ChatBoostContext {
 	/** Use this method to send photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendPhoto(params: Omit<t.SendPhotoParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPhoto", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to send live photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendLivePhoto(params: Omit<t.SendLivePhotoParams, "chat_id">) {
+		return this.api.call<t.Message>("sendLivePhoto", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to send audio files, if you want Telegram clients to display them in the music player. Your audio must be in the .MP3 or .M4A format. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send audio files of up to 50 MB in size, this limit may be changed in the future.  For sending voice messages, use the [sendVoice](https://core.telegram.org/bots/api/#sendvoice) method instead. */
 	sendAudio(params: Omit<t.SendAudioParams, "chat_id">) {
@@ -59,7 +63,7 @@ export class ChatBoostContext {
 	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPaidMedia", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to send a group of photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an array of [Messages](https://core.telegram.org/bots/api/#message) that were sent is returned. */
+	/** Use this method to send a group of photos, live photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects that were sent is returned. */
 	sendMediaGroup(params: Omit<t.SendMediaGroupParams, "chat_id">) {
 		return this.api.call<t.Message[]>("sendMediaGroup", { chat_id: this.chat.id, ...params });
 	}
@@ -79,9 +83,17 @@ export class ChatBoostContext {
 	sendPoll(params: Omit<t.SendPollParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPoll", { chat_id: this.chat.id, ...params });
 	}
+	/** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendChecklist(params: Omit<t.SendChecklistParams, "chat_id">) {
+		return this.api.call<t.Message>("sendChecklist", { chat_id: this.chat.id, ...params });
+	}
 	/** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendDice(params: Omit<t.SendDiceParams, "chat_id">) {
 		return this.api.call<t.Message>("sendDice", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to stream a partial message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendMessage](https://core.telegram.org/bots/api/#sendmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
+	sendMessageDraft(params: Omit<t.SendMessageDraftParams, "chat_id">) {
+		return this.api.call<boolean>("sendMessageDraft", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method when you need to tell the user that something is happening on the bot's side. The status is set for 5 seconds or less (when a message arrives from your bot, Telegram clients clear its typing status). Returns *True* on success.  Example: The [ImageBot](https://t.me/imagebot) needs some time to process a request and upload the image. Instead of sending a text message along the lines of “Retrieving image, please wait…”, the bot may use [sendChatAction](https://core.telegram.org/bots/api/#sendchataction) with *action* = *upload\_photo*. The user will see a “sending photo” status for the bot.  We only recommend using this method when a response from the bot will take a **noticeable** amount of time to arrive. */
 	sendChatAction(params: Omit<t.SendChatActionParams, "chat_id">) {
@@ -139,11 +151,11 @@ export class ChatBoostContext {
 	setChatDescription(params: Omit<t.SetChatDescriptionParams, "chat_id">) {
 		return this.api.call<boolean>("setChatDescription", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to remove a message from the list of pinned messages in a chat. If the chat is not a private chat, the bot must be an administrator in the chat for this to work and must have the 'can\_pin\_messages' administrator right in a supergroup or 'can\_edit\_messages' administrator right in a channel. Returns *True* on success. */
+	/** Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns *True* on success. */
 	unpin(params: Omit<t.UnpinChatMessageParams, "chat_id">) {
 		return this.api.call<boolean>("unpinChatMessage", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to clear the list of pinned messages in a chat. If the chat is not a private chat, the bot must be an administrator in the chat for this to work and must have the 'can\_pin\_messages' administrator right in a supergroup or 'can\_edit\_messages' administrator right in a channel. Returns *True* on success. */
+	/** Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns *True* on success. */
 	unpinAllChatMessages(params?: Omit<t.UnpinAllChatMessagesParams, "chat_id">) {
 		return this.api.call<boolean>("unpinAllChatMessages", { chat_id: this.chat.id, ...params });
 	}
@@ -155,8 +167,8 @@ export class ChatBoostContext {
 	getChat(params?: Omit<t.GetChatParams, "chat_id">) {
 		return this.api.call<t.ChatFullInfo>("getChat", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to get a list of administrators in a chat, which aren't bots. Returns an Array of [ChatMember](https://core.telegram.org/bots/api/#chatmember) objects. */
-	getChatAdministrators(params?: Omit<t.GetChatAdministratorsParams, "chat_id">) {
+	/** Use this method to get a list of administrators in a chat. Returns an Array of [ChatMember](https://core.telegram.org/bots/api/#chatmember) objects. */
+	getChatAdministrators(params: Omit<t.GetChatAdministratorsParams, "chat_id">) {
 		return this.api.call<t.ChatMember[]>("getChatAdministrators", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get the number of members in a chat. Returns *Int* on success. */
@@ -171,11 +183,11 @@ export class ChatBoostContext {
 	deleteChatStickerSet(params?: Omit<t.DeleteChatStickerSetParams, "chat_id">) {
 		return this.api.call<boolean>("deleteChatStickerSet", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to create a topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
+	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 	createForumTopic(params: Omit<t.CreateForumTopicParams, "chat_id">) {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to edit name and icon of a topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
+	/** Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
 	editForumTopic(params: Omit<t.EditForumTopicParams, "chat_id">) {
 		return this.api.call<boolean>("editForumTopic", { chat_id: this.chat.id, ...params });
 	}
@@ -187,11 +199,11 @@ export class ChatBoostContext {
 	reopenForumTopic(params: Omit<t.ReopenForumTopicParams, "chat_id">) {
 		return this.api.call<boolean>("reopenForumTopic", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to delete a forum topic along with all its messages in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_delete\_messages* administrator rights. Returns *True* on success. */
+	/** Use this method to delete a forum topic along with all its messages in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_delete\_messages* administrator rights. Returns *True* on success. */
 	deleteForumTopic(params: Omit<t.DeleteForumTopicParams, "chat_id">) {
 		return this.api.call<boolean>("deleteForumTopic", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to clear the list of pinned messages in a forum topic. The bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
+	/** Use this method to clear the list of pinned messages in a forum topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
 	unpinAllForumTopicMessages(params: Omit<t.UnpinAllForumTopicMessagesParams, "chat_id">) {
 		return this.api.call<boolean>("unpinAllForumTopicMessages", { chat_id: this.chat.id, ...params });
 	}
@@ -227,7 +239,23 @@ export class ChatBoostContext {
 	getChatMenuButton(params?: Omit<t.GetChatMenuButtonParams, "chat_id">) {
 		return this.api.call<t.MenuButton>("getChatMenuButton", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to edit text and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
+	/** Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success. */
+	sendGift(params: Omit<t.SendGiftParams, "chat_id">) {
+		return this.api.call<boolean>("sendGift", { chat_id: this.chat.id, ...params });
+	}
+	/** Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
+	verifyChat(params: Omit<t.VerifyChatParams, "chat_id">) {
+		return this.api.call<boolean>("verifyChat", { chat_id: this.chat.id, ...params });
+	}
+	/** Removes verification from a chat that is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
+	removeChatVerification(params?: Omit<t.RemoveChatVerificationParams, "chat_id">) {
+		return this.api.call<boolean>("removeChatVerification", { chat_id: this.chat.id, ...params });
+	}
+	/** Returns the gifts owned by a chat. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
+	getChatGifts(params: Omit<t.GetChatGiftsParams, "chat_id">) {
+		return this.api.call<t.OwnedGifts>("getChatGifts", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editText(params: Omit<t.EditMessageTextParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageText", { chat_id: this.chat.id, ...params });
 	}
@@ -235,7 +263,7 @@ export class ChatBoostContext {
 	editCaption(params: Omit<t.EditMessageCaptionParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageCaption", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to edit animation, audio, document, photo, or video messages, or to add media to text messages. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file\_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
+	/** Use this method to edit animation, audio, document, live photo, photo, or video messages, or to replace a text or a rich message with a media. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editMedia(params: Omit<t.EditMessageMediaParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageMedia", { chat_id: this.chat.id, ...params });
 	}
@@ -255,21 +283,21 @@ export class ChatBoostContext {
 	deleteMessages(params: Omit<t.DeleteMessagesParams, "chat_id">) {
 		return this.api.call<boolean>("deleteMessages", { chat_id: this.chat.id, ...params });
 	}
+	/** Use this method to remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success. */
+	deleteAllMessageReactions(params: Omit<t.DeleteAllMessageReactionsParams, "chat_id">) {
+		return this.api.call<boolean>("deleteAllMessageReactions", { chat_id: this.chat.id, ...params });
+	}
 	/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendSticker(params: Omit<t.SendStickerParams, "chat_id">) {
 		return this.api.call<t.Message>("sendSticker", { chat_id: this.chat.id, ...params });
 	}
-	/** Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success. */
-	sendGift(params: Omit<t.SendGiftParams, "chat_id">) {
-		return this.api.call<boolean>("sendGift", { chat_id: this.chat.id, ...params });
+	/** Use this method to send rich messages. If the message contains a block with a media element, then the bot must have the right to send the media to the chat. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendRichMessage(params: Omit<t.SendRichMessageParams, "chat_id">) {
+		return this.api.call<t.Message>("sendRichMessage", { chat_id: this.chat.id, ...params });
 	}
-	/** Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyChat(params: Omit<t.VerifyChatParams, "chat_id">) {
-		return this.api.call<boolean>("verifyChat", { chat_id: this.chat.id, ...params });
-	}
-	/** Removes verification from a chat that is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
-	removeChatVerification(params?: Omit<t.RemoveChatVerificationParams, "chat_id">) {
-		return this.api.call<boolean>("removeChatVerification", { chat_id: this.chat.id, ...params });
+	/** Use this method to stream a partial rich message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendRichMessage](https://core.telegram.org/bots/api/#sendrichmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
+	sendRichMessageDraft(params: Omit<t.SendRichMessageDraftParams, "chat_id">) {
+		return this.api.call<boolean>("sendRichMessageDraft", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to send invoices. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendInvoice(params: Omit<t.SendInvoiceParams, "chat_id">) {

@@ -57,7 +57,7 @@ const byName = (a, b) => (a.name < b.name ? -1 : 1);
 
 let body = `// AUTO-GENERATED from the Telegram Bot API schema — do not edit by hand.
 // regenerate with: pnpm --filter @yaebal/types generate
-// source: https://ark0f.github.io/tg-bot-api/
+// source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
 /** the Telegram Bot API version these types were generated from. */
 export const BOT_API_VERSION = ${JSON.stringify(schema.version?.major != null ? `${schema.version.major}.${schema.version.minor}` : String(schema.version))};

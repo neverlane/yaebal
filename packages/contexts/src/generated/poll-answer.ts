@@ -1,4 +1,4 @@
-// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
@@ -11,11 +11,11 @@ export class PollAnswerContext {
 		this.update = update;
 		Object.assign(this, update.poll_answer ?? {});
 	}
-	/** Id of the user this update is from. */
+	/** id of the user this update is from. */
 	get senderId(): number | undefined {
 		return this.user?.id;
 	}
-	/** First name of the user this update is from. */
+	/** first name of the user this update is from. */
 	get firstName(): string | undefined {
 		return this.user?.first_name;
 	}

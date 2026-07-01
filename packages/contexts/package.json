@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/contexts",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -28,7 +31,13 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "context", "codegen"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"context",
+		"codegen"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

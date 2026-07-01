@@ -2,14 +2,14 @@
 	import Code from "$lib/Code.svelte";
 
 	const pipeline = `Telegram Bot API (HTML)
-        │  ark0f parses → machine-readable JSON
+        │  our own parser (scripts/lib/parse-schema.mjs) → machine-readable JSON
         ▼
 packages/types/schema.json        ← single source of truth
         │
         ├──────────►  packages/types/scripts/generate.mjs     → telegram.ts (types)
         │
         └──────────►  packages/contexts/scripts/generate.mjs
-                            ├─ Update.props      → 23 context types
+                            ├─ Update.props      → 25 context types
                             ├─ payload fields    → providers (which ids it carries)
                             └─ each API method   → matched shortcut
                                       ▼
@@ -102,7 +102,7 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 </p>
 <Code code={providers} title="providers" lang="text" />
 <p>
-	<strong>2. matching</strong> — for each of the 135 Bot API methods, it collects the id-arguments
+	<strong>2. matching</strong> — for each of the 180 Bot API methods, it collects the id-arguments
 	(<code>chat_id</code>, <code>message_id</code>, <code>user_id</code>, query ids). if the
 	context's providers cover the required ones, it emits a shortcut with those keys
 	<code>Omit</code>-ted from the params:

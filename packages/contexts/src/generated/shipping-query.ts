@@ -1,4 +1,4 @@
-// AUTO-GENERATED — do not edit by hand. Regenerate: pnpm --filter @yaebal/contexts generate
+// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
@@ -11,11 +11,11 @@ export class ShippingQueryContextBase {
 		this.update = update;
 		Object.assign(this, update.shipping_query ?? {});
 	}
-	/** Id of the user this update is from. */
+	/** id of the user this update is from. */
 	get senderId(): number {
 		return this.from.id;
 	}
-	/** First name of the user this update is from. */
+	/** first name of the user this update is from. */
 	get firstName(): string | undefined {
 		return this.from.first_name;
 	}
@@ -23,9 +23,61 @@ export class ShippingQueryContextBase {
 	getUserProfilePhotos(params: Omit<t.GetUserProfilePhotosParams, "user_id">) {
 		return this.api.call<t.UserProfilePhotos>("getUserProfilePhotos", { user_id: this.from.id, ...params });
 	}
-	/** Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](https://core.telegram.org/bots/webapps#initializing-mini-apps). Returns *True* on success. */
+	/** Use this method to get a list of profile audios for a user. Returns a [UserProfileAudios](https://core.telegram.org/bots/api/#userprofileaudios) object. */
+	getUserProfileAudios(params: Omit<t.GetUserProfileAudiosParams, "user_id">) {
+		return this.api.call<t.UserProfileAudios>("getUserProfileAudios", { user_id: this.from.id, ...params });
+	}
+	/** Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](/bots/webapps#initializing-mini-apps). Returns *True* on success. */
 	setUserEmojiStatus(params: Omit<t.SetUserEmojiStatusParams, "user_id">) {
 		return this.api.call<boolean>("setUserEmojiStatus", { user_id: this.from.id, ...params });
+	}
+	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
+	getUserPersonalChatMessages(params: Omit<t.GetUserPersonalChatMessagesParams, "user_id">) {
+		return this.api.call<t.Message[]>("getUserPersonalChatMessages", { user_id: this.from.id, ...params });
+	}
+	/** Use this method to get the token of a managed bot. Returns the token as *String* on success. */
+	getManagedBotToken(params?: Omit<t.GetManagedBotTokenParams, "user_id">) {
+		return this.api.call<string>("getManagedBotToken", { user_id: this.from.id, ...params });
+	}
+	/** Use this method to revoke the current token of a managed bot and generate a new one. Returns the new token as *String* on success. */
+	replaceManagedBotToken(params?: Omit<t.ReplaceManagedBotTokenParams, "user_id">) {
+		return this.api.call<string>("replaceManagedBotToken", { user_id: this.from.id, ...params });
+	}
+	/** Use this method to get the access settings of a managed bot. Returns a [BotAccessSettings](https://core.telegram.org/bots/api/#botaccesssettings) object on success. */
+	getManagedBotAccessSettings(params?: Omit<t.GetManagedBotAccessSettingsParams, "user_id">) {
+		return this.api.call<t.BotAccessSettings>("getManagedBotAccessSettings", { user_id: this.from.id, ...params });
+	}
+	/** Use this method to change the access settings of a managed bot. Returns *True* on success. */
+	setManagedBotAccessSettings(params: Omit<t.SetManagedBotAccessSettingsParams, "user_id">) {
+		return this.api.call<boolean>("setManagedBotAccessSettings", { user_id: this.from.id, ...params });
+	}
+	/** Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success. */
+	sendGift(params: Omit<t.SendGiftParams, "user_id">) {
+		return this.api.call<boolean>("sendGift", { user_id: this.from.id, ...params });
+	}
+	/** Gifts a Telegram Premium subscription to the given user. Returns *True* on success. */
+	giftPremiumSubscription(params: Omit<t.GiftPremiumSubscriptionParams, "user_id">) {
+		return this.api.call<boolean>("giftPremiumSubscription", { user_id: this.from.id, ...params });
+	}
+	/** Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
+	verifyUser(params: Omit<t.VerifyUserParams, "user_id">) {
+		return this.api.call<boolean>("verifyUser", { user_id: this.from.id, ...params });
+	}
+	/** Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
+	removeUserVerification(params?: Omit<t.RemoveUserVerificationParams, "user_id">) {
+		return this.api.call<boolean>("removeUserVerification", { user_id: this.from.id, ...params });
+	}
+	/** Returns the gifts owned and hosted by a user. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
+	getUserGifts(params: Omit<t.GetUserGiftsParams, "user_id">) {
+		return this.api.call<t.OwnedGifts>("getUserGifts", { user_id: this.from.id, ...params });
+	}
+	/** Stores a message that can be sent by a user of a Mini App. Returns a [PreparedInlineMessage](https://core.telegram.org/bots/api/#preparedinlinemessage) object. */
+	savePreparedInlineMessage(params: Omit<t.SavePreparedInlineMessageParams, "user_id">) {
+		return this.api.call<t.PreparedInlineMessage>("savePreparedInlineMessage", { user_id: this.from.id, ...params });
+	}
+	/** Stores a keyboard button that can be used by a user within a Mini App. Returns a [PreparedKeyboardButton](https://core.telegram.org/bots/api/#preparedkeyboardbutton) object. */
+	savePreparedKeyboardButton(params: Omit<t.SavePreparedKeyboardButtonParams, "user_id">) {
+		return this.api.call<t.PreparedKeyboardButton>("savePreparedKeyboardButton", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to upload a file with a sticker for later use in the [createNewStickerSet](https://core.telegram.org/bots/api/#createnewstickerset), [addStickerToSet](https://core.telegram.org/bots/api/#addstickertoset), or [replaceStickerInSet](https://core.telegram.org/bots/api/#replacestickerinset) methods (the file can be used multiple times). Returns the uploaded [File](https://core.telegram.org/bots/api/#file) on success. */
 	uploadStickerFile(params: Omit<t.UploadStickerFileParams, "user_id">) {
@@ -46,22 +98,6 @@ export class ShippingQueryContextBase {
 	/** Use this method to set the thumbnail of a regular or mask sticker set. The format of the thumbnail file must match the format of the stickers in the set. Returns *True* on success. */
 	setStickerSetThumbnail(params: Omit<t.SetStickerSetThumbnailParams, "user_id">) {
 		return this.api.call<boolean>("setStickerSetThumbnail", { user_id: this.from.id, ...params });
-	}
-	/** Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success. */
-	sendGift(params: Omit<t.SendGiftParams, "user_id">) {
-		return this.api.call<boolean>("sendGift", { user_id: this.from.id, ...params });
-	}
-	/** Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyUser(params: Omit<t.VerifyUserParams, "user_id">) {
-		return this.api.call<boolean>("verifyUser", { user_id: this.from.id, ...params });
-	}
-	/** Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
-	removeUserVerification(params?: Omit<t.RemoveUserVerificationParams, "user_id">) {
-		return this.api.call<boolean>("removeUserVerification", { user_id: this.from.id, ...params });
-	}
-	/** Stores a message that can be sent by a user of a Mini App. Returns a [PreparedInlineMessage](https://core.telegram.org/bots/api/#preparedinlinemessage) object. */
-	savePreparedInlineMessage(params: Omit<t.SavePreparedInlineMessageParams, "user_id">) {
-		return this.api.call<t.PreparedInlineMessage>("savePreparedInlineMessage", { user_id: this.from.id, ...params });
 	}
 	/** If you sent an invoice requesting a shipping address and the parameter *is\_flexible* was specified, the Bot API will send an [Update](https://core.telegram.org/bots/api/#update) with a *shipping\_query* field to the bot. Use this method to reply to shipping queries. On success, *True* is returned. */
 	answer(params: Omit<t.AnswerShippingQueryParams, "shipping_query_id">) {

@@ -156,6 +156,7 @@ const FIXTURE_HTML = `
 <h4><a class="anchor" name="june-11-2026" href="#june-11-2026"><i class="anchor-icon"></i></a>June 11, 2026</h4>
 <p><strong>Bot API 10.1</strong></p>
 
+<h3><a class="anchor" name="available-methods" href="#available-methods"><i class="anchor-icon"></i></a>Available methods</h3>
 <h4><a class="anchor" name="getme" href="#getme"><i class="anchor-icon"></i></a>getMe</h4>
 <p>A simple method for testing your bot's authentication token. Returns basic information about the bot in form of a <a href="#user">User</a> object.</p>
 
@@ -169,6 +170,7 @@ const FIXTURE_HTML = `
 </tbody>
 </table>
 
+<h3><a class="anchor" name="available-types" href="#available-types"><i class="anchor-icon"></i></a>Available types</h3>
 <h4><a class="anchor" name="user" href="#user"><i class="anchor-icon"></i></a>User</h4>
 <p>This object represents a Telegram user.</p>
 <table class="table">
@@ -198,13 +200,16 @@ test("parseSchema: end-to-end fixture", () => {
 
 	assert.equal(schema.methods.length, 2);
 	assert.equal(schema.objects.length, 3);
+	assert.deepEqual(schema.category_order, ["Available methods", "Available types"]);
 
 	const getMe = schema.methods.find((m) => m.name === "getMe");
 	assert.equal(getMe.arguments, undefined);
 	assert.deepEqual(getMe.return_type, { type: "reference", reference: "User" });
+	assert.equal(getMe.category, "Available methods");
 
 	const sendChatAction = schema.methods.find((m) => m.name === "sendChatAction");
 	assert.deepEqual(sendChatAction.return_type, { type: "bool", default: true });
+	assert.equal(sendChatAction.category, "Available methods");
 	const action = sendChatAction.arguments.find((a) => a.name === "action");
 	assert.equal(action.required, true);
 	assert.deepEqual(action.enum, ["typing", "upload_photo"]);
@@ -219,6 +224,7 @@ test("parseSchema: end-to-end fixture", () => {
 
 	const user = schema.objects.find((o) => o.name === "User");
 	assert.equal(user.type, "properties");
+	assert.equal(user.category, "Available types");
 	const id = user.properties.find((p) => p.name === "id");
 	assert.equal(id.required, true);
 	const username = user.properties.find((p) => p.name === "username");

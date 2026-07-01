@@ -67,12 +67,30 @@ export function parseVersion(html) {
 	};
 }
 
+const H3_RE = /<h3><a class="anchor" name="([^"]+)" href="#\1"><i class="anchor-icon"><\/i><\/a>([^<]+)<\/h3>/g;
 const H4_RE = /<h4><a class="anchor" name="([^"]+)" href="#\1"><i class="anchor-icon"><\/i><\/a>([^<]+)<\/h4>/g;
 const IDENTIFIER = /^[A-Za-z][A-Za-z0-9]*$/;
 
-/** every top-level `<h4>` entry with its raw content up to the next `<h4>` (any kind). */
+/** the docs' `<h3>` section headers (e.g. "Available methods", "Stickers"), in document order. */
+function parseCategories(html) {
+	return [...html.matchAll(H3_RE)].map((m) => ({ index: m.index, name: m[2].trim() }));
+}
+
+/** the nearest `<h3>` category at or before `index`. */
+function categoryAt(categories, index) {
+	let current;
+	for (const c of categories) {
+		if (c.index > index) break;
+		current = c.name;
+	}
+
+	return current;
+}
+
+/** every top-level `<h4>` entry with its raw content up to the next `<h4>` (any kind), tagged with its `<h3>` category. */
 function splitSections(html) {
 	const heads = [...html.matchAll(H4_RE)];
+	const categories = parseCategories(html);
 	const sections = [];
 
 	for (let i = 0; i < heads.length; i++) {
@@ -83,7 +101,12 @@ function splitSections(html) {
 		const start = head.index + head[0].length;
 		const end = i + 1 < heads.length ? heads[i + 1].index : html.length;
 
-		sections.push({ name, anchor: head[1], content: html.slice(start, end) });
+		sections.push({
+			name,
+			anchor: head[1],
+			category: categoryAt(categories, head.index),
+			content: html.slice(start, end),
+		});
 	}
 
 	return sections;
@@ -139,6 +162,7 @@ function parseMethod(section) {
 		description: markdown,
 		...(arguments_.length > 0 ? { arguments: arguments_ } : {}),
 		return_type: extractReturnType(raw),
+		category: section.category,
 		documentation_link: `${API_URL}/#${section.anchor}`,
 	};
 }
@@ -148,7 +172,12 @@ function parseObject(section) {
 	const table = parseTable(rest);
 	const listItems = table ? null : parseListItems(rest);
 
-	const base = { name: section.name, description: markdown, documentation_link: `${API_URL}/#${section.anchor}` };
+	const base = {
+		name: section.name,
+		description: markdown,
+		category: section.category,
+		documentation_link: `${API_URL}/#${section.anchor}`,
+	};
 
 	if (table && !table.header.includes("Required")) {
 		const properties = table.rows.map((cells) => {
@@ -186,5 +215,8 @@ export function parseSchema(html) {
 		else objects.push(parseObject(section));
 	}
 
-	return { version, recent_changes, methods, objects };
+	// section order (methods and objects interleaved as they appear in the docs), deduped
+	const category_order = [...new Set(sections.map((s) => s.category).filter(Boolean))];
+
+	return { version, recent_changes, category_order, methods, objects };
 }

@@ -1,13 +1,14 @@
 {
 	"name": "@yaebal/docs",
-	"version": "0.0.7",
+	"version": "0.1.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && pagefind --site build",
 		"preview": "vite preview",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"generate:api": "node scripts/generate-api-reference.mjs"
 	},
 	"dependencies": {
 		"@yaebal/preview": "workspace:*",

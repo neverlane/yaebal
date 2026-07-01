@@ -1,31 +1,10 @@
 // generates src/telegram.ts from the machine-readable Telegram Bot API schema (schema.json).
 // run: node scripts/generate.mjs (re-run after refreshing schema.json)
 import { readFileSync, writeFileSync } from "node:fs";
+import { fieldType, pascal } from "./lib/render-type.mjs";
 
 const root = new URL("..", import.meta.url);
 const schema = JSON.parse(readFileSync(new URL("schema.json", root), "utf8"));
-
-const fieldType = (node) => {
-	switch (node?.type) {
-		case "integer":
-		case "float":
-			return "number";
-		case "string":
-			return Array.isArray(node.enum) ? node.enum.map((v) => JSON.stringify(v)).join(" | ") : "string";
-		case "bool":
-			return "boolean";
-		case "reference":
-			return node.reference;
-		case "array": {
-			const inner = fieldType(node.array);
-			return inner.includes("|") ? `(${inner})[]` : `${inner}[]`;
-		}
-		case "any_of":
-			return node.any_of.map(fieldType).join(" | ");
-		default:
-			return "unknown";
-	}
-};
 
 const jsdoc = (desc, indent = "") => {
 	if (!desc) return "";
@@ -36,8 +15,6 @@ const jsdoc = (desc, indent = "") => {
 
 const field = (f, indent = "\t") =>
 	`${jsdoc(f.description, indent)}${indent}${f.name}${f.required ? "" : "?"}: ${fieldType(f)};\n`;
-
-const pascal = (name) => name[0].toUpperCase() + name.slice(1);
 
 const emitObject = (o) => {
 	let out = jsdoc(o.description);

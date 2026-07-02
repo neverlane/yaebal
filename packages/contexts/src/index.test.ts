@@ -4,6 +4,7 @@ import {
 	CallbackQueryContext,
 	ChannelPostContext,
 	contextFor,
+	GuestMessageContext,
 	MessageContext,
 	ShippingQueryContext,
 } from "./index.js";
@@ -223,6 +224,39 @@ test("shipping query answer takes a positional ok", () => {
 	assert.deepEqual(calls[0], {
 		m: "answerShippingQuery",
 		p: { shipping_query_id: "sq1", ok: true },
+	});
+});
+
+test("guest message answer fills guest_query_id and accepts a bare result", () => {
+	const { api, calls } = recorder();
+	const ctx = new GuestMessageContext(api, {
+		update_id: 1,
+		guest_message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "private" },
+			guest_query_id: "gq1",
+		},
+	} as never);
+	assert.equal(ctx.guest_query_id, "gq1");
+
+	ctx.answer({
+		type: "article",
+		id: "1",
+		title: "hi",
+		input_message_content: { message_text: "hi" },
+	});
+	assert.deepEqual(calls[0], {
+		m: "answerGuestQuery",
+		p: {
+			guest_query_id: "gq1",
+			result: {
+				type: "article",
+				id: "1",
+				title: "hi",
+				input_message_content: { message_text: "hi" },
+			},
+		},
 	});
 });
 

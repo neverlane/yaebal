@@ -18,6 +18,7 @@ const ID_FILLABLE = [
 	"inline_query_id",
 	"shipping_query_id",
 	"pre_checkout_query_id",
+	"guest_query_id",
 	"from_chat_id",
 ];
 
@@ -29,6 +30,7 @@ const TARGET_IDS = new Set([
 	"inline_query_id",
 	"shipping_query_id",
 	"pre_checkout_query_id",
+	"guest_query_id",
 ]);
 
 const QUERY_ID = {
@@ -56,6 +58,7 @@ const SHORT = {
 	answerInlineQuery: "answer",
 	answerShippingQuery: "answer",
 	answerPreCheckoutQuery: "answer",
+	answerGuestQuery: "answer",
 };
 
 // update prop -> public class comes from src/sugar/<kebab>.ts (extends the generated *Base)
@@ -71,6 +74,7 @@ const SUGARED = {
 	shipping_query: true,
 	pre_checkout_query: true,
 	chat_join_request: true,
+	guest_message: true,
 };
 
 const capFirst = (s) => s[0].toUpperCase() + s.slice(1);
@@ -97,7 +101,7 @@ const returnType = (node) => {
 	}
 };
 
-function providersFor(payload) {
+function providersFor(payload, propName) {
 	const fields = new Map((payload.properties || []).map((f) => [f.name, f]));
 	const p = {};
 
@@ -111,6 +115,13 @@ function providersFor(payload) {
 
 	const qid = QUERY_ID[payload.name];
 	if (qid && fields.has("id")) p[qid] = "this.id";
+
+	// guest_message reuses the plain Message payload (unlike callback/inline/shipping/
+	// pre-checkout, which have their own dedicated query object) — guest_query_id only
+	// means something for that one update slot, so gate on propName, not on the payload.
+	if (propName === "guest_message" && fields.has("guest_query_id")) {
+		p.guest_query_id = "this.guest_query_id";
+	}
 
 	if (payload.name === "CallbackQuery") {
 		p.chat_id = "this.message?.chat.id";
@@ -244,7 +255,7 @@ for (const prop of payloadProps) {
 	const pascal = snakePascal(prop.name);
 	const sugared = !!SUGARED[prop.name];
 	const className = sugared ? `${pascal}ContextBase` : `${pascal}Context`;
-	const methods = methodsFor(providersFor(payload), payloadName === "Message");
+	const methods = methodsFor(providersFor(payload, prop.name), payloadName === "Message");
 	const getters = gettersFor(payload);
 
 	const file = `${header}export interface ${className} extends t.${payloadName} {}

@@ -2,8 +2,8 @@
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
-export interface GuestMessageContext extends t.Message {}
-export class GuestMessageContext {
+export interface GuestMessageContextBase extends t.Message {}
+export class GuestMessageContextBase {
 	readonly api: Api;
 	readonly update: t.Update;
 	constructor(api: Api, update: t.Update) {
@@ -306,6 +306,10 @@ export class GuestMessageContext {
 	/** Use this method to clear the list of pinned messages in a General forum topic. The bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
 	unpinAllGeneralForumTopicMessages(params?: Omit<t.UnpinAllGeneralForumTopicMessagesParams, "chat_id">) {
 		return this.api.call<boolean>("unpinAllGeneralForumTopicMessages", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to reply to a received guest message. On success, a [SentGuestMessage](https://core.telegram.org/bots/api/#sentguestmessage) object is returned. */
+	answer(params: Omit<t.AnswerGuestQueryParams, "guest_query_id">) {
+		return this.api.call<t.SentGuestMessage>("answerGuestQuery", { guest_query_id: this.guest_query_id, ...params });
 	}
 	/** Use this method to get the list of boosts added to a chat by a user. Requires administrator rights in the chat. Returns a [UserChatBoosts](https://core.telegram.org/bots/api/#userchatboosts) object. */
 	getUserChatBoosts(params?: Omit<t.GetUserChatBoostsParams, "chat_id" | "user_id">) {

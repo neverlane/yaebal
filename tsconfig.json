@@ -31,6 +31,7 @@
 		{ "path": "./packages/types" },
 		{ "path": "./packages/contexts" },
 		{ "path": "./packages/fmt" },
+		{ "path": "./packages/rich" },
 		{ "path": "./packages/create-yaebal" },
 		{ "path": "./packages/runner" },
 		{ "path": "./packages/conversation" },
@@ -38,6 +39,7 @@
 		{ "path": "./packages/filters" },
 		{ "path": "./packages/test" },
 		{ "path": "./examples/basic" },
-		{ "path": "./examples/simple" }
+		{ "path": "./examples/simple" },
+		{ "path": "./examples/keyboard" }
 	]
 }

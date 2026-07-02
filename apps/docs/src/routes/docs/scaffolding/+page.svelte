@@ -18,7 +18,7 @@ pnpm create yaebal my-bot --plugins all --no-install`;
 -m, --pm <npm|pnpm|yarn|bun|deno>     package manager         (default: detected)
 -t, --template <name>                 minimal · echo · commands · buttons ·
                                       conversation · i18n · session-counter ·
-                                      webhook · runner
+                                      webhook · runner · rich-message
 -p, --plugins <a,b | all | none>      comma list of @yaebal plugins
     --git / --no-git                  initialise a git repo (+ first commit)
     --install / --no-install          install dependencies after scaffolding
@@ -136,6 +136,7 @@ pnpm dev`;
 		<tr><td><code>session-counter</code></td><td>per-chat counter on <code>ctx.session</code> (session)</td></tr>
 		<tr><td><code>webhook</code></td><td>edge/serverless deploy via <code>serve()</code> (web)</td></tr>
 		<tr><td><code>runner</code></td><td>concurrent long-polling via <code>run()</code> (runner)</td></tr>
+		<tr><td><code>rich-message</code></td><td><code>sendRichMessage</code> block builder + a streaming draft demo (rich)</td></tr>
 	</tbody>
 </table>
 <p>plugins listed in brackets are added and wired automatically — on top of anything you pick yourself.</p>

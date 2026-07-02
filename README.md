@@ -40,7 +40,7 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 
 > need a fresh project instead of the monorepo? scaffold one with
 > [`create-yaebal`](/packages/create-yaebal/): `pnpm create yaebal my-bot`. it opens a centred,
-> keyboard-driven ansi wizard that runs everywhere out of the box (node 20+/bun/deno · 9 templates ·
+> keyboard-driven ansi wizard that runs everywhere out of the box (node 20+/bun/deno · 10 templates ·
 > every `@yaebal` plugin), falls back to plain prompts without a tty, and takes flags for ci —
 > `--plugins all --yes`.
 
@@ -77,4 +77,3 @@ runnable, single-file bots under [`examples/`](/examples/) — clone, drop a tok
 | [@yaebal/pagination](/packages/pagination/)       | paginated lists with inline prev/next                                        |
 | [@yaebal/preview](/packages/preview/)             | render telegram-style chats to SVG                                           |
 | [@yaebal/workers](/packages/workers/)             | worker_threads pool to offload CPU-heavy work                                |
-     |

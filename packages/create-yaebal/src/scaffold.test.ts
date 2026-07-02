@@ -96,6 +96,22 @@ test("renderFiles: rich templates pull in plugins, imports and wiring", () => {
 	assert.match(conv, /\.install\(conversation\(\[greet\]\)\)/);
 });
 
+test("renderFiles: rich-message template wires ctx.sendRichMessage/richMessageDraft", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [], template: "rich-message" });
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+	const src = f["src/index.ts"] ?? "";
+
+	assert.ok(pkg.dependencies["@yaebal/rich"]);
+	assert.match(
+		src,
+		/import \{ rich, document, heading, paragraph, bold, thinking \} from "@yaebal\/rich";/,
+	);
+	assert.match(src, /\.install\(rich\(\)\)/);
+	assert.match(src, /ctx\.sendRichMessage\(/);
+	assert.match(src, /ctx\.richMessageDraft\(1\)/);
+	assert.match(src, /draft\.commit\(/);
+});
+
 test("renderFiles: a template plugin is never wired twice", () => {
 	// user explicitly picks session AND the session-counter template
 	const f = renderFiles({

@@ -65,6 +65,7 @@ a template pulls in the plugins it needs, adds the real imports + wiring, and (f
 | `session-counter` | per-chat counter on `ctx.session` (session)                       |
 | `webhook`         | edge/serverless deploy via `serve()` (web)                        |
 | `runner`          | concurrent long-polling via `run()` (runner)                      |
+| `rich-message`    | `sendRichMessage` block builder + a streaming draft demo (rich)   |
 
 bracketed plugins are added & wired automatically, on top of anything you pick yourself.
 

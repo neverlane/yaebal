@@ -17,7 +17,8 @@ export type TemplateId =
 	| "i18n"
 	| "session-counter"
 	| "webhook"
-	| "runner";
+	| "runner"
+	| "rich-message";
 
 export interface Choice<T extends string> {
 	value: T;
@@ -49,6 +50,11 @@ export const TEMPLATES: Choice<TemplateId>[] = [
 	{ value: "session-counter", label: "session-counter", hint: "per-chat counter on ctx.session" },
 	{ value: "webhook", label: "webhook", hint: "edge/serverless deploy via @yaebal/web" },
 	{ value: "runner", label: "runner", hint: "concurrent long-polling via @yaebal/runner" },
+	{
+		value: "rich-message",
+		label: "rich-message",
+		hint: "sendRichMessage block builder + a streaming draft demo via @yaebal/rich",
+	},
 ];
 
 /**
@@ -118,6 +124,14 @@ export const PLUGINS: PluginDef[] = [
 		wire: "install",
 		import: 'import { files } from "@yaebal/files";',
 		install: "files()",
+	},
+	{
+		id: "rich",
+		dep: "@yaebal/rich",
+		hint: "ctx.sendRichMessage / ctx.richMessageDraft — telegram's block-tree messages",
+		wire: "install",
+		import: 'import { rich } from "@yaebal/rich";',
+		install: "rich()",
 	},
 	{
 		id: "prompt",

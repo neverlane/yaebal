@@ -88,6 +88,7 @@ bot.on("message:text", (ctx) => ctx.reply(\`you said: \${ctx.text}\`));`,
 \t\treply_markup: new InlineKeyboard()
 \t\t\t.text("👍 like", vote.pack({ choice: "up" }))
 \t\t\t.text("👎 dislike", vote.pack({ choice: "down" }))
+\t\t\t.style("danger") // styles the button just added — "👎 dislike"
 \t\t\t.build(),
 \t}),
 );
@@ -156,6 +157,30 @@ bot.on("message:text", (ctx) => ctx.reply(ctx.text));`,
 		bootstrap: `const handle = run(bot, { concurrency: 50 });
 process.once("SIGINT", () => handle.stop());
 console.log("✓ runner polling (concurrency 50) — press ctrl-c to stop");`,
+	},
+	"rich-message": {
+		plugins: ["rich"],
+		imports: ['import { rich, document, heading, paragraph, bold, thinking } from "@yaebal/rich";'],
+		install: ["rich()"],
+		body: `bot.command("start", (ctx) =>
+\tctx.sendRichMessage(
+\t\tdocument([
+\t\t\theading(1, "hello!"),
+\t\t\tparagraph("this is a ", bold("rich message"), " — a block-tree document, not just text."),
+\t\t]),
+\t),
+);
+
+bot.command("ask", async (ctx) => {
+\t// sendRichMessageDraft is ephemeral (30s) and never persists on its own —
+\t// RichMessageDraft keeps it alive and requires an explicit commit().
+\tconst draft = ctx.richMessageDraft(1);
+\tawait draft.push(document([thinking("thinking…")]));
+
+\tawait new Promise((resolve) => setTimeout(resolve, 800)); // stand in for a real llm stream
+
+\tawait draft.commit(document([paragraph("here's your (fake) streamed answer ✨")]));
+});`,
 	},
 };
 

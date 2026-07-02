@@ -20,6 +20,7 @@ plus a set of first-party plugins:
 - [create-yaebal](/packages/create-yaebal/) — `pnpm create yaebal` scaffolder for a new bot
 - [@yaebal/types](/packages/types/) — full Bot API types, code-generated from the schema
 - [@yaebal/contexts](/packages/contexts/) — per-update context classes with **auto-generated** shortcut methods
+- [@yaebal/test](/packages/test/) — the most complete test framework for Telegram bots
 - [examples tree](/examples/) — runnable bots you can clone and run
 - [docs app](/apps/docs/) — the SvelteKit documentation site
 - [architecture](/docs/ARCHITECTURE.md) — design, plugin catalog, roadmap

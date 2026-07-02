@@ -38,7 +38,7 @@
 			bind:this={menuButton}
 			class="menu"
 			onclick={() => (menuOpen = !menuOpen)}
-			aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+			aria-label={menuOpen ? "close navigation menu" : "open navigation menu"}
 			aria-expanded={menuOpen}
 			aria-controls="docs-sidebar"
 		>
@@ -57,7 +57,7 @@
 	</div>
 
 	{#if menuOpen}
-		<button class="backdrop" onclick={closeMenu} aria-label="Close navigation menu"></button>
+		<button class="backdrop" onclick={closeMenu} aria-label="close navigation menu"></button>
 	{/if}
 
 	<main id="main-content" class="content">
@@ -67,7 +67,7 @@
 
 				<footer class="doc-footer">
 					{#if editUrl}
-						<a class="edit" href={editUrl} target="_blank" rel="noopener noreferrer" aria-label="Edit this page on GitHub">
+						<a class="edit" href={editUrl} target="_blank" rel="noopener noreferrer" aria-label="edit this page on github">
 							<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 								<path d="M12 20h9" />
 								<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
@@ -76,7 +76,7 @@
 						</a>
 					{/if}
 
-					<div class="pager" aria-label="Page navigation">
+					<div class="pager" aria-label="page navigation">
 						{#if neighbors.previous}
 							<a class="page-card prev" href={neighbors.previous.href}>
 								<span>previous</span>
@@ -93,7 +93,7 @@
 				</footer>
 			</article>
 
-			<aside class="toc-wrap" aria-label="Table of contents">
+			<aside class="toc-wrap" aria-label="table of contents">
 				<Toc />
 			</aside>
 		</div>

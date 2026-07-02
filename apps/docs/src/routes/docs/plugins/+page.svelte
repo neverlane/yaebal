@@ -45,7 +45,7 @@ const bot = new Bot(token)
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next"],
 		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to SVG"],
 		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy work"],
-		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api, update & context factories"],
+		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api with real hooks & error simulation, update factories for every update kind"],
 	];
 </script>
 

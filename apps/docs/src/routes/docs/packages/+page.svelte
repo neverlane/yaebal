@@ -46,7 +46,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 	const scaling: [string, string, string][] = [
 		["@yaebal/runner", "/docs/runner/", "concurrent update processing with per-chat sequentialization"],
 		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy tasks from handlers"],
-		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api, update & context factories, middleware runner"],
+		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api with real hooks & error simulation, update factories for every update kind, webhook helpers"],
 		["create-yaebal", "/docs/scaffolding/", "project scaffolder — pnpm create yaebal my-bot"],
 	];
 </script>

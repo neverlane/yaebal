@@ -29,12 +29,29 @@ pnpm --filter @yaebal/example-panel dev`;
 		["reply from the panel", "delivered via sendMessage; uploads infer sendPhoto / sendVideo / sendVoice / sendDocument"],
 	];
 
+	const keyboard = [
+		["/start", "text, style, url, row — the basics, and reply_markup taking the builder directly"],
+		["/gallery", "every remaining inline button: webApp, login, switchInline*, copyText"],
+		["/grid", "buttons built from an array with add() + columns()"],
+		["/contact", "reply keyboard: requestContact, requestLocation, requestPoll, webApp"],
+		["/profile", "reply keyboard: requestUsers, requestChat, requestManagedBot"],
+		["/hide", "Keyboard.remove()"],
+		["/ask", "Keyboard.forceReply(), with a handler that recognizes the reply"],
+	];
+
 	const onboarding = [
 		["/start", "starts or resumes the welcome flow"],
 		["/tour", "force-restarts the tour after completion"],
 		["/status", "reads ctx.onboarding.welcome state"],
 		["/disable", "calls ctx.onboarding.disableAll()"],
 		["/enable", "reenables and undismisses the flow"],
+	];
+
+	const rich = [
+		["/start", "document() with a heading, bold/link inline marks, and a blockquote"],
+		["/report", "table()/cell(), a checkbox list(), and a collapsible details()"],
+		["/media", "image()/video()/audio() blocks with captions"],
+		["/ask <question>", "streams a fake answer via RichMessageDraft (thinking() → pushes → commit())"],
 	];
 
 	const simple = [
@@ -97,6 +114,25 @@ pnpm --filter @yaebal/example-panel dev`;
 </table>
 <p>run it: <code>pnpm --filter @yaebal/example-basic dev</code> (needs <code>BOT_TOKEN</code>).</p>
 
+<h2>keyboard <span class="muted">— every button type</span></h2>
+<p>
+	a tour of every <a href="/docs/plugins/keyboard/">@yaebal/keyboard</a> feature: inline and
+	reply keyboards, every button type, styling, dynamic buttons via <code>add()</code>/<code>columns()</code>,
+	request user/chat/managed-bot, and <code>Keyboard.remove()</code>/<code>Keyboard.forceReply()</code>.
+	source: <a href={`${GH}/keyboard`}>examples/keyboard</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each keyboard as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-keyboard dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
 <h2>onboarding <span class="muted">— product tour</span></h2>
 <p>
 	the <a href="/docs/plugins/onboarding/">onboarding</a> plugin in isolation: typed flow controls,
@@ -114,6 +150,25 @@ pnpm --filter @yaebal/example-panel dev`;
 	</tbody>
 </table>
 <p>run it: <code>pnpm --filter @yaebal/example-onboarding dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
+<h2>rich-messages <span class="muted">— sendRichMessage / sendRichMessageDraft</span></h2>
+<p>
+	a tour of <a href="/docs/plugins/rich/">@yaebal/rich</a>: block/inline builders, sending a
+	document, streaming a fake answer via <code>RichMessageDraft</code>, and reading
+	<code>message.rich_message</code> back with <code>richMessageToPlainText</code>. source:
+	<a href={`${GH}/rich-messages`}>examples/rich-messages</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each rich as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-rich-messages dev</code> (needs <code>BOT_TOKEN</code>).</p>
 
 <h2>panel <span class="muted">— operator dashboard</span></h2>
 <p>

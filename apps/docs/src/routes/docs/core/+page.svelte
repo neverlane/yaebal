@@ -158,7 +158,9 @@ if (matchQuery(ctx, "message:text")) {
 	Core includes entity-based formatting helpers: <code>format</code>, <code>Stringable</code>,
 	<code>bold</code>, <code>italic</code>, <code>underline</code>, <code>strikethrough</code>,
 	<code>spoiler</code>, <code>code</code>, <code>pre</code>, <code>link</code>, and
-	<code>mention</code>. For HTML/Markdown parsing, use <a href="/docs/plugins/fmt/">@yaebal/fmt</a>.
+	<code>mention</code>. For HTML/Markdown parsing, use <a href="/docs/plugins/fmt/">@yaebal/fmt</a>. For
+	telegram's block-tree rich message format (<code>sendRichMessage</code>/<code>sendRichMessageDraft</code>),
+	use <a href="/docs/plugins/rich/">@yaebal/rich</a>.
 </p>
 
 <div class="note">

@@ -23,6 +23,7 @@ const bot = new Bot(token)
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
 		["@yaebal/filters", "/docs/plugins/filters/", "composable, type-narrowing update filters (ctx.filter)"],
 		["@yaebal/fmt", "/docs/plugins/fmt/", "`` html`` `` / `` md`` `` tagged templates with auto-escaping"],
+		["@yaebal/rich", "/docs/plugins/rich/", "sendRichMessage / sendRichMessageDraft: block builder + streaming drafts"],
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "/docs/plugins/i18n/", "per-chat locale, ctx.t / ctx.changeLanguage"],
 		["@yaebal/scenes", "/docs/plugins/scenes/", "step-by-step wizards over multiple messages"],
@@ -55,7 +56,7 @@ const bot = new Bot(token)
 
 <h1>plugins</h1>
 <p class="lead">
-	29 first-party plugins. each is a typed composer extension — installing one enriches the context
+	30 first-party plugins. each is a typed composer extension — installing one enriches the context
 	type, and its dependencies are checked at compile time.
 </p>
 

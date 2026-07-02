@@ -6,7 +6,7 @@ a focused tour of `@yaebal/rich`: building blocks and inline marks, sending a do
 
 ```sh
 cp examples/rich-messages/.env.example examples/rich-messages/.env   # then add your token
-pnpm --filter @yaebal/example-rich-messages dev                     # reloads on change
+pnpm --filter @yaebal/example-rich-messages dev                      # reloads on change
 ```
 
 - dev with reload: `pnpm --filter @yaebal/example-rich-messages dev`
@@ -20,11 +20,11 @@ pnpm --filter @yaebal/example-rich-messages dev                     # reloads on
 
 ## commands
 
-| command         | what it shows                                                          |
-|:----------------|:-------------------------------------------------------------------------|
-| `/start`        | `document()` with a heading, bold/link inline marks, and a blockquote  |
-| `/report`       | `table()`/`cell()`, a checkbox `list()`, and a collapsible `details()` |
-| `/media`        | `image()`/`video()`/`audio()` blocks with captions                    |
+| command           | what it shows                                                                                 |
+|:------------------|:----------------------------------------------------------------------------------------------|
+| `/start`          | `document()` with a heading, bold/link inline marks, and a blockquote                         |
+| `/report`         | `table()`/`cell()`, a checkbox `list()`, and a collapsible `details()`                        |
+| `/media`          | `image()`/`video()`/`audio()` blocks with captions                                            |
 | `/ask <question>` | streams a fake answer via `RichMessageDraft` (`thinking()` → incremental pushes → `commit()`) |
 
 sending any rich message back to the bot (e.g. forwarding one) triggers `message:rich_message`, which replies with the block tree flattened to plain text via `richMessageToPlainText`.

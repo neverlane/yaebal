@@ -52,6 +52,7 @@ export const nav: NavSection[] = [
 			{ label: "callback-data", href: "/docs/plugins/callback-data" },
 			{ label: "pagination", href: "/docs/plugins/pagination" },
 			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
+			{ label: "rich (sendRichMessage)", href: "/docs/plugins/rich", badge: "new" },
 			{ label: "filters", href: "/docs/plugins/filters" },
 			{ label: "commands", href: "/docs/plugins/commands" },
 		],

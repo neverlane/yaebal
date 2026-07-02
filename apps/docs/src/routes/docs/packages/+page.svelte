@@ -16,6 +16,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 
 	const plugins: [string, string, string][] = [
 		["@yaebal/fmt", "/docs/plugins/fmt/", "html`` / md`` tagged templates → entities, with auto-escaped interpolation"],
+		["@yaebal/rich", "/docs/plugins/rich/", "sendRichMessage / sendRichMessageDraft: block builder, streaming drafts, full read-side coverage"],
 		["@yaebal/filters", "/docs/plugins/filters/", "composable, type-narrowing update filters (and / or / not)"],
 		["@yaebal/conversation", "/docs/plugins/conversation/", "await-style multi-step dialogs (coroutine, no replay)"],
 		["@yaebal/again", "/docs/plugins/again/", "auto-retry on 429 / flood-wait / transient 5xx errors"],

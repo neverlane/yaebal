@@ -20,6 +20,7 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 .omc/
+.serena/
 
 # temp / cache
 tmp/

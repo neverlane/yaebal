@@ -16,6 +16,24 @@ function resolveText(text: SendText): { text: string; entities?: FormatResult["e
 	return { text: text.text, entities: text.entities };
 }
 
+function isFormatResult(value: unknown): value is FormatResult {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"text" in value &&
+		"entities" in value &&
+		Array.isArray((value as FormatResult).entities)
+	);
+}
+
+/** if `extra.caption` is a `FormatResult`, split it into `caption`/`caption_entities`. */
+function resolveCaption(extra: Record<string, unknown>): Record<string, unknown> {
+	const { caption } = extra;
+	if (!isFormatResult(caption)) return extra;
+
+	return { ...extra, caption: caption.text, caption_entities: caption.entities };
+}
+
 /**
  * the base context every update is wrapped in. plugins and `derive`/`decorate`
  * enrich it with extra properties; those extras are tracked at the type level
@@ -77,16 +95,26 @@ export class Context {
 		});
 	}
 
-	/** send a photo. accepts a {@link MediaSource} or a raw file_id / URL string. */
+	/**
+	 * send a photo. accepts a {@link MediaSource} or a raw file_id / URL string.
+	 * `extra.caption` accepts a plain string or a `format`/`fmt` result.
+	 */
 	sendPhoto(photo: MediaSource | string, extra: Record<string, unknown> = {}): Promise<Message> {
 		const chatId = this.chat?.id;
 		if (chatId === undefined)
 			return Promise.reject(new Error("sendPhoto(): no chat in this update"));
 
-		return this.api.call<Message>("sendPhoto", { chat_id: chatId, photo, ...extra });
+		return this.api.call<Message>("sendPhoto", {
+			chat_id: chatId,
+			photo,
+			...resolveCaption(extra),
+		});
 	}
 
-	/** send a document. accepts a {@link MediaSource} or a raw file_id / URL string. */
+	/**
+	 * send a document. accepts a {@link MediaSource} or a raw file_id / URL string.
+	 * `extra.caption` accepts a plain string or a `format`/`fmt` result.
+	 */
 	sendDocument(
 		document: MediaSource | string,
 		extra: Record<string, unknown> = {},
@@ -96,7 +124,11 @@ export class Context {
 			return Promise.reject(new Error("sendDocument(): no chat in this update"));
 		}
 
-		return this.api.call<Message>("sendDocument", { chat_id: chatId, document, ...extra });
+		return this.api.call<Message>("sendDocument", {
+			chat_id: chatId,
+			document,
+			...resolveCaption(extra),
+		});
 	}
 
 	/** answer the current callback query (no-op if there is none). */

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Context, createBot, richContext } from "./index.js";
+import { callbackData, Context, createBot, richContext, session } from "./index.js";
 
 const api = {} as never;
 
@@ -60,6 +60,35 @@ test("typed routers expose the generated shortcuts + narrowed fields", () => {
 	bot.on("guest_message", (ctx) => {
 		void ctx.answer; // GuestMessageContext shortcut — answerGuestQuery, not sendMessage
 		void ctx.guest_bot_caller_user; // who summoned the guest bot
+	});
+
+	assert.ok(bot);
+});
+
+test("typed enrichment keeps generated shortcuts", () => {
+	const vibe = callbackData("vibe", { score: Number });
+	const bot = createBot("123:abc")
+		.install(session({ initial: () => ({ fire: 0 }) }))
+		.derive((ctx) => ({ who: ctx.from?.first_name ?? "friend" }));
+
+	bot.on("message:text", (ctx) => {
+		const text: string = ctx.text;
+		const who: string = ctx.who;
+		const fire: number = ++ctx.session.fire;
+
+		void text;
+		void who;
+		void fire;
+		void ctx.react;
+	});
+
+	bot.callbackQuery(vibe.pattern, (ctx) => {
+		const who: string = ctx.who;
+		const fire: number = ctx.session.fire;
+
+		void who;
+		void fire;
+		void ctx.answer;
 	});
 
 	assert.ok(bot);

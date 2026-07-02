@@ -6,4 +6,4 @@ this folder is managed by [changesets](https://github.com/changesets/changesets)
 - `pnpm version-packages` — apply pending changesets: bump versions + write changelogs.
 - `pnpm release` — build everything, then `changeset publish` to npm.
 
-`@yaebal/docs` and `@yaebal/example-basic` are ignored (never published).
+`@yaebal/docs` and `@yaebal/example-*` are ignored (never published).

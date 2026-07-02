@@ -193,6 +193,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/broadcast:
     dependencies:
@@ -435,6 +438,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.0
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/router:
     dependencies:
@@ -468,6 +474,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/session:
     dependencies:

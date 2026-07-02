@@ -244,7 +244,7 @@ export async function startLive(
 
 	bot.api.before((method: string, params: Record<string, unknown> | undefined) => {
 		if (method !== "getUpdates" && method !== "getMe") {
-			const m = mapCall({ method, params });
+			const m = mapCall({ method, params, at: Date.now() });
 			if (m) onMsg({ from: "bot", name: "bot", ...m });
 		}
 

@@ -22,7 +22,8 @@
 		"@yaebal/session": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { type Api, Composer, Context } from "@yaebal/core";
+import { Composer, Context } from "@yaebal/core";
+import { mockApi } from "@yaebal/test";
 import {
 	bold,
 	document,
@@ -18,59 +19,46 @@ import {
 // plaintext flattening (plaintext.test.ts), and RichMessageDraft's rewrite/write/send
 // state machine (draft.test.ts) all have their own dedicated test files.
 
-function mockApi(): Api & { calls: [string, Record<string, unknown> | undefined][] } {
-	const calls: [string, Record<string, unknown> | undefined][] = [];
-
-	return {
-		calls,
-		call: async (method: string, params?: Record<string, unknown>) => {
-			calls.push([method, params]);
-			return {} as never;
-		},
-	} as unknown as Api & { calls: [string, Record<string, unknown> | undefined][] };
-}
-
 test("sendRichMessage posts chat_id + rich_message to the raw api", async () => {
-	const api = mockApi();
+	const { api, calls } = mockApi();
 
 	await sendRichMessage(api, 42, document([paragraph("hi")]), { reply_markup: { x: 1 } });
 
-	assert.deepEqual(api.calls, [
-		[
-			"sendRichMessage",
-			{ chat_id: 42, rich_message: { html: "<p>hi</p>" }, reply_markup: { x: 1 } },
-		],
-	]);
+	assert.equal(calls[0]?.method, "sendRichMessage");
+	assert.deepEqual(calls[0]?.params, {
+		chat_id: 42,
+		rich_message: { html: "<p>hi</p>" },
+		reply_markup: { x: 1 },
+	});
 });
 
 test("sendRichMessage unwraps a markdown RichDocument with its fluent flags", async () => {
-	const api = mockApi();
+	const { api, calls } = mockApi();
 
 	await sendRichMessage(api, 42, md`# hi ${bold("there")}`.rtl());
 
-	assert.deepEqual(api.calls, [
-		[
-			"sendRichMessage",
-			{ chat_id: 42, rich_message: { markdown: "# hi **there**", is_rtl: true } },
-		],
-	]);
+	assert.equal(calls[0]?.method, "sendRichMessage");
+	assert.deepEqual(calls[0]?.params, {
+		chat_id: 42,
+		rich_message: { markdown: "# hi **there**", is_rtl: true },
+	});
 });
 
 test("sendRichMessageDraft posts draft_id alongside chat_id + rich_message", async () => {
-	const api = mockApi();
+	const { api, calls } = mockApi();
 
 	await sendRichMessageDraft(api, 42, 7, "<tg-thinking>…</tg-thinking>");
 
-	assert.deepEqual(api.calls, [
-		[
-			"sendRichMessageDraft",
-			{ chat_id: 42, draft_id: 7, rich_message: { html: "<tg-thinking>…</tg-thinking>" } },
-		],
-	]);
+	assert.equal(calls[0]?.method, "sendRichMessageDraft");
+	assert.deepEqual(calls[0]?.params, {
+		chat_id: 42,
+		draft_id: 7,
+		rich_message: { html: "<tg-thinking>…</tg-thinking>" },
+	});
 });
 
 test("rich() plugin decorates ctx.sendRichMessage/ctx.richMessageDraft bound to the current chat", async () => {
-	const api = mockApi();
+	const { api, calls } = mockApi();
 	const composer = new Composer().install(rich());
 
 	const ctx = new Context({
@@ -90,17 +78,15 @@ test("rich() plugin decorates ctx.sendRichMessage/ctx.richMessageDraft bound to 
 	};
 
 	await decorated.sendRichMessage(document([paragraph("hi")]));
-	assert.deepEqual(api.calls[0], [
-		"sendRichMessage",
-		{ chat_id: 5, rich_message: { html: "<p>hi</p>" } },
-	]);
+	assert.equal(calls[0]?.method, "sendRichMessage");
+	assert.deepEqual(calls[0]?.params, { chat_id: 5, rich_message: { html: "<p>hi</p>" } });
 
 	const draft = decorated.richMessageDraft(1);
 	assert.ok(draft instanceof RichMessageDraft);
 });
 
 test("rich() plugin routes ctx.sendRichMessage through the business connection/topic", async () => {
-	const api = mockApi();
+	const { api, calls } = mockApi();
 	const composer = new Composer().install(rich());
 
 	const ctx = new Context({
@@ -123,19 +109,17 @@ test("rich() plugin routes ctx.sendRichMessage through the business connection/t
 	const decorated = ctx as unknown as { sendRichMessage: (input: unknown) => Promise<unknown> };
 	await decorated.sendRichMessage(document([paragraph("hi")]));
 
-	assert.deepEqual(api.calls[0], [
-		"sendRichMessage",
-		{
-			chat_id: 5,
-			rich_message: { html: "<p>hi</p>" },
-			business_connection_id: "bc1",
-			message_thread_id: 9,
-		},
-	]);
+	assert.equal(calls[0]?.method, "sendRichMessage");
+	assert.deepEqual(calls[0]?.params, {
+		chat_id: 5,
+		rich_message: { html: "<p>hi</p>" },
+		business_connection_id: "bc1",
+		message_thread_id: 9,
+	});
 });
 
 test("sendRichMessage()/richMessageDraft() reject when the update has no chat", async () => {
-	const api = mockApi();
+	const { api } = mockApi();
 	const composer = new Composer().install(rich());
 
 	const ctx = new Context({

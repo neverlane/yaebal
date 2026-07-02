@@ -9,6 +9,10 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
+		},
+		"./test-pack": {
+			"types": "./lib/test-pack.d.ts",
+			"import": "./lib/test-pack.js"
 		}
 	},
 	"files": ["lib", "src"],
@@ -21,7 +25,8 @@
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

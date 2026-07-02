@@ -15,14 +15,15 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib/*.test.js"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

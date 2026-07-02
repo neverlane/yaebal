@@ -1,8 +1,14 @@
 # @yaebal/test
 
-testing utilities for yaebal bots — a fake `Api` that records every call (and can drive real
-`before`/`after`/`onError` hooks, simulate failures, and retries), update factories for every
-update kind telegram sends, context builders, and helpers for webhook/keyboard assertions.
+**the most complete test framework for Telegram bots on the market — full stop.**
+
+`@yaebal/test` wraps your bot in a `TestEnv` and hands you virtual **users** and **chats** that
+send it *real* Telegram updates — messages, commands, media, reactions, inline-button clicks,
+joins, payments — exactly the way real users would. every outgoing api call is intercepted (no
+real HTTP, ever), recorded, and answered with sensible auto-stubs you can override or fail on
+demand. a virtual clock lets you skip real time for TTL/retry tests. satellite plugins can ship
+their own test fixtures. and if you need a raw update shape the actors don't cover yet, the whole
+low-level fixture-builder layer is still there underneath.
 
 zero dependency on any test runner or assertion library — works with `node:test`, vitest,
 bun:test, jest, ava, anything that can `await` a promise and call `assert`.
@@ -13,239 +19,406 @@ bun:test, jest, ava, anything that can `await` a promise and call `assert`.
 pnpm add -D @yaebal/test
 ```
 
-## usage
+## quick start
 
 ```ts
-import { callbackUpdate, createContext, messageUpdate, mockApi, runMiddleware } from "@yaebal/test";
+import { Composer } from "@yaebal/core";
+import { createTestEnv } from "@yaebal/test";
 import { expect, test } from "vitest"; // or node:test, or whatever you use
 
+const bot = new Composer().command("start", (ctx) => ctx.reply("Welcome!"));
+
 test("replies to /start", async () => {
-  const { api, calls } = mockApi();
-  const update = messageUpdate({ text: "/start", chatId: 42 });
-  const ctx = createContext(update, api);
+  const env = createTestEnv(bot);
+  const linia = env.createUser({ firstName: "Linia" });
 
-  await runMiddleware(bot, ctx);
+  await linia.sendCommand("start");
 
-  expect(calls[0]?.method).toBe("sendMessage");
+  expect(env.lastApiCall("sendMessage")?.params?.text).toBe("Welcome!");
 });
 
-test("callback query", async () => {
-  const { api, calls } = mockApi();
-  const update = callbackUpdate({ data: "vote:up", chatId: 1 });
-  const ctx = createContext(update, api);
+test("clicking a button fires the callback handler", async () => {
+  const env = createTestEnv(bot);
+  const linia = env.createUser();
 
-  await runMiddleware(bot, ctx);
-
-  expect(calls[0]?.method).toBe("answerCallbackQuery");
+  await linia.sendCommand("start");
+  const bubble = env.lastBotMessage({ withReplyMarkup: true });
+  if (bubble) await linia.on(bubble).clickByText("Next »");
 });
 ```
 
-or skip a step with the `*Context` shortcuts:
+## `createTestEnv(bot, options?)`
+
+the orchestrator. wraps any `Composer`/`Bot`, intercepts every outgoing api call, and gives you
+actor factories plus every assertion/stub helper below.
 
 ```ts
-import { messageContext, runMiddleware } from "@yaebal/test";
-
-const ctx = messageContext({ text: "/start", chatId: 42 });
-await runMiddleware(bot, ctx);
+const env = createTestEnv(bot, {
+  results?: Record<string, MockResult>, // seed permanent api replies
+  strictApi?: boolean,                  // throw on an unstubbed method with no builtin default
+  strictDispatch?: boolean,             // throw if an update falls through with no handler
+  packs?: TestPack[],                   // satellite-plugin test fixtures, see below
+});
 ```
 
-## mockApi
+- **`env.createUser(options?)`** — a `UserActor` linked to the environment
+- **`env.createChat(options)`** — a `ChatActor` (`group`/`supergroup`/`channel`/`private`)
+- **`env.dispatch(update)`** / **`env.inject(update)`** — the escape hatch: ship a raw `Update`
+  through the bot, for shapes the actors don't cover yet
+- **`env.users`** / **`env.chats`** — every actor created so far
 
-`mockApi(options?)` returns a fake `Api` plus inspection helpers. Every method records
-`{ method, params }` into `calls` and resolves to a sensible default: an auto-incrementing
-`{ message_id }` for `send*`/`copyMessage`/`forwardMessage`, `true` for `answerCallbackQuery`,
-a stub bot for `getMe`, `{}` otherwise.
+## actors — users drive the scenario
 
 ```ts
-const { api, calls, hooks, lastCall, callsTo, setResult, reset } = mockApi();
+const linia = env.createUser({ firstName: "Linia", username: "linia" });
 ```
 
-- **`calls`** — every recorded call, in order.
-- **`lastCall(method?)`** — the most recent call, optionally filtered to a method.
-- **`callsTo(method)`** — every call to a given method, in order.
-- **`setResult(method, result)`** — override a method's canned result/error after creation.
-- **`reset()`** — clears `calls` and per-method attempt counters (keeps hooks and overrides).
-- **`hooks`** — the `before`/`after`/`onError` arrays your code under test registered on the api.
-
-### canned results & error simulation
-
-Pass `results` to control exactly what a method returns — a static value, an `Error` (which
-makes the call throw, e.g. `TelegramError`), or a function of `(params, attempt)`:
+### text, replies, commands
 
 ```ts
+await linia.sendMessage("hello");
+await linia.sendMessage(group, "hello group");           // ChatActor as the first arg
+await linia.sendReply(originalMsg, "thanks!");            // reply_to_message + same chat, inferred
+await linia.sendCommand("start");                         // text: "/start", bot_command entity
+await linia.sendCommand("start", "ref42");                // text: "/start ref42"
+```
+
+`sendMessage`/`sendReply`/`sendCommand` all accept a plain string **or a `format()` result** from
+`@yaebal/core` (or anything shaped like one) — entities are extracted automatically, the same way
+a real client would attach them:
+
+```ts
+import { bold, format } from "@yaebal/core";
+
+await linia.sendMessage(format`Check out ${bold("this")}`); // ctx.message.entities is populated
+```
+
+### media
+
+every method auto-generates `file_id`/`file_unique_id` and the fields Telegram requires. all
+accept an optional leading `ChatActor` to target a specific chat.
+
+```ts
+await linia.sendPhoto({ caption: "Look!", spoiler: true });
+await linia.sendVideo();
+await linia.sendDocument();
+await linia.sendVoice();
+await linia.sendAudio();
+await linia.sendAnimation();
+await linia.sendVideoNote();
+await linia.sendSticker({ emoji: "🔥" });
+await linia.sendLocation({ latitude: 48.8566, longitude: 2.3522 });
+await linia.sendContact({ phone_number: "+1234567890", first_name: "Bob" });
+await linia.sendVenue({ location: { latitude: 48.85, longitude: 2.35 }, title: "Louvre", address: "Paris" });
+await linia.sendDice("🎯");
+
+await linia.sendMediaGroup(group, [
+  { photo: [{ file_id: "f1", file_unique_id: "u1", width: 800, height: 600 }] },
+  { photo: [{ file_id: "f2", file_unique_id: "u2", width: 800, height: 600 }] },
+]); // one update per item, all sharing media_group_id
+```
+
+### editing, forwarding, pinning
+
+```ts
+const msg = await linia.sendMessage("original");
+await linia.editMessage(msg, "edited");        // dispatches edited_message
+await linia.forwardMessage(msg, group);        // forward_origin set, defaults to linia's own PM
+await linia.pinMessage(msg);                   // service message with pinned_message set
+```
+
+### buttons, reactions, joins
+
+```ts
+await linia.click("vote:up", msg);             // raw callback_data
+await linia.on(msg).click("vote:up");          // same, message pre-bound
+await linia.on(msg).clickByText("Next »");     // scans msg's inline_keyboard for the label
+
+await linia.react("👍", msg);                  // old_reaction inferred from linia's last react()
+await linia.react(["👍", "🔥"], msg);
+await linia.react([], msg);                    // clear all of linia's reactions
+
+await linia.join(group);                       // chat.members + a chat_member update + service msg
+await linia.leave(group);
+```
+
+reaction state is tracked per-message automatically — you never spell out `old_reaction` by hand,
+and it's tracked independently per user:
+
+```ts
+await linia.react("👍", msg);   // old: [], new: ["👍"]
+await linia.react("❤", msg);    // old: ["👍"], new: ["❤"]  — inferred, not passed in
+await bob.react("🔥", msg);      // linia's and bob's state don't interfere
+```
+
+### inline mode & payments
+
+```ts
+await linia.sendInlineQuery("cats", group);          // chat_type derived from group.type
+await linia.chooseInlineResult("result-1", "cats");
+
+await linia.sendPreCheckoutQuery({ currency: "XTR", total_amount: 100, invoice_payload: "sub" });
+await linia.sendShippingQuery({ invoice_payload: "physical_item" });
+
+// the full flow: pre_checkout_query → verifies the bot answered { ok: true } → successful_payment.
+// throws if the bot never answers, or answers with ok: false — exactly like real Telegram would
+// never deliver successful_payment in that case.
+await linia.sendSuccessfulPayment({ invoice_payload: "sub_monthly" });
+```
+
+### `.in(chat)` — scope every send to one chat
+
+```ts
+const group = env.createChat({ type: "group", title: "devs" });
+
+await linia.in(group).sendMessage("morning team");
+await linia.in(group).sendCommand("help");
+await linia.in(group).sendPhoto({ caption: "lunch" });
+await linia.in(group).join();
+await linia.in(group).on(msg).clickByText("yes");
+```
+
+### `.on(message)` — scope click/react/edit/forward/pin to one message
+
+```ts
+await linia.on(msg).click("action:1");
+await linia.on(msg).clickByText("Next »");
+await linia.on(msg).react("👍");
+await linia.on(msg).editMessage("updated");
+```
+
+## chats
+
+```ts
+const group = env.createChat({ type: "group", title: "devs" });
+const channel = env.createChat({ type: "channel", title: "News", username: "news" });
+```
+
+- **`chat.members`** — the `Set<UserActor>` currently joined (via `.join()`)
+- **`chat.setMembership(userId, { status, since? })`** / **`chat.membershipOf(user)`** — track
+  arbitrary membership status for `getChatMember`-style assertions
+- **`chat.post(text)`** — an anonymous channel post (`update.channel_post`, no `from` — matches
+  real Telegram). throws on non-channel chats.
+
+## inspecting what the bot did
+
+```ts
+await linia.sendMessage("hi");
+
+env.apiCalls;                       // every recorded { method, params, result | error, at }
+env.lastApiCall("sendMessage");     // most recent call to a method (or overall, with no arg)
+env.callsTo("sendMessage");         // every call to a method, in order
+env.clearApiCalls();                // reset between logical phases of a test
+```
+
+### `env.lastBotMessage(query?)` — the bot's own messages, live
+
+returns a `BotMessage` mirror of the bot's most recent `send*`/`forwardMessage`/`copyMessage` —
+populated straight from the outgoing params, no `onApi` override required. **it's kept in sync in
+place** as `editMessageText`/`editMessageCaption`/`editMessageReplyMarkup` calls land, even for a
+reference captured *before* the edit — so `user.on(bubble).clickByText(...)` always sees the
+current buttons:
+
+```ts
+bot.on("message", (ctx) =>
+  ctx.send("Pick:", { reply_markup: { inline_keyboard: [[{ text: "Next", callback_data: "next" }]] } }),
+);
+bot.callbackQuery("next", async (ctx) => {
+  const { chat, message_id } = ctx.callbackQuery.message;
+  await ctx.api.call("editMessageText", { chat_id: chat.id, message_id, text: "Done!" });
+});
+
+await linia.sendMessage("hi");
+const bubble = env.lastBotMessage()!;
+await linia.on(bubble).clickByText("Next");
+bubble.text; // "Done!" — same object, mutated in place
+```
+
+filters (all optional, combined with AND): `{ chat }` scope to a chat; `{ withReplyMarkup: true }`
+skip plain status messages and find the last interactive bubble; `{ where: (call) => boolean }`
+for an arbitrary predicate over the call that produced/last touched the message.
+**`env.botMessage(chatId, messageId)`** looks one up directly.
+
+## mocking the api
+
+without any setup, `@yaebal/test` returns sensible auto-stubs: an auto-incrementing `message_id`
+for `send*`/`copyMessage`/`forwardMessage`, `true` for `answerCallbackQuery`, a stub bot for
+`getMe`, `{}` otherwise.
+
+### `env.onApi(method, reply, opts?)` — override a reply
+
+```ts
+env.onApi("getMe", { id: 7, is_bot: true, first_name: "MyBot", username: "my_bot" });
+env.onApi("sendMessage", (params) => ({ message_id: 1, date: 0, chat: { id: params.chat_id, type: "private" }, text: params.text }));
+```
+
+permanent by default; `{ times: 1 }` (or any N) makes it a one-shot that then falls back to the
+next queued or permanent reply — perfect for "first call fails, second succeeds":
+
+```ts
+env.onApi("sendMessage", apiError(429, "Too Many Requests", { retry_after: 1 }), { times: 1 });
+env.onApi("sendMessage", { message_id: 1, date: 0, chat: { id: 1, type: "private" } });
+```
+
+### `apiError(code, description, parameters?)` — simulate a real Telegram failure
+
+```ts
+import { apiError } from "@yaebal/test";
 import { TelegramError } from "@yaebal/core";
-import { mockApi } from "@yaebal/test";
 
-const { api } = mockApi({
-  results: {
-    sendMessage: { message_id: 42 },
-    getChat: () => ({ id: 1, type: "private" }),
-    // fails twice, then succeeds — great for testing retry plugins like @yaebal/again
-    getMe: (params, attempt) =>
-      attempt <= 2 ? new TelegramError("getMe", 429, "retry after 0") : { id: 1, is_bot: true, first_name: "bot" },
-  },
-});
+env.onApi("sendMessage", apiError(403, "Forbidden: bot was blocked by the user"));
+
+// the bot sees a real TelegramError (TestApiError extends it):
+try {
+  await ctx.reply("hi");
+} catch (error) {
+  error instanceof TelegramError; // true
+  error.code;                     // 403
+}
 ```
 
-### real hooks, not no-ops
+**`env.offApi(method?)`** drops a method's override (or every override, with no argument).
 
-Unlike a bare stub, `before`/`after`/`onError` registered on a `mockApi()` actually run through
-the call pipeline — register a hook exactly as you would on the production `Api` and it fires,
-including retries requested by an `onError` hook (see [`@yaebal/again`](../again)'s retry
-policy). The mock never actually waits on a requested `delayMs`, so retry tests settle instantly:
+### `strictApi` / `strictDispatch`
 
 ```ts
-const { api } = mockApi({ results: { sendMessage: new TelegramError("sendMessage", 429, "retry after 0") } });
-
-api.onError((_method, _error, attempt) => (attempt === 1 ? { retry: true } : undefined));
-
-await api.sendMessage({ chat_id: 1 }); // retries once, then throws (no result override for attempt 2)
+const env = createTestEnv(bot, { strictApi: true });    // throw on an unstubbed method — catch "forgot to mock this"
+const env2 = createTestEnv(bot, { strictDispatch: true }); // throw if no handler consumed the dispatched update
 ```
 
-## contexts
+## the virtual clock — skip real time
 
-`createContext(update, api?, updateType?)` wraps an `Update` in a core `Context`. The api
-defaults to a fresh `mockApi().api`; the update type is auto-detected via `detectUpdateType`
-unless you pass `updateType`. Run a composer's middleware against it with
-`runMiddleware(composer, ctx)` — it resolves once the chain settles.
-
-`messageContext(options?, api?)` and `callbackContext(options?, api?)` build the update and the
-context in one call, for the two most common cases.
-
-## building updates
-
-Factories exist for every update kind telegram sends:
-
-| factory                    | update key             |
-|:---------------------------|:-----------------------|
-| `messageUpdate`            | `message`              |
-| `editedMessageUpdate`      | `edited_message`       |
-| `channelPostUpdate`        | `channel_post`         |
-| `editedChannelPostUpdate`  | `edited_channel_post`  |
-| `callbackUpdate`           | `callback_query`       |
-| `inlineQueryUpdate`        | `inline_query`         |
-| `chosenInlineResultUpdate` | `chosen_inline_result` |
-| `shippingQueryUpdate`      | `shipping_query`       |
-| `preCheckoutQueryUpdate`   | `pre_checkout_query`   |
-| `pollUpdate`               | `poll`                 |
-| `pollAnswerUpdate`         | `poll_answer`          |
-| `myChatMemberUpdate`       | `my_chat_member`       |
-| `chatMemberUpdate`         | `chat_member`          |
-| `chatJoinRequestUpdate`    | `chat_join_request`    |
-
-`createUpdate` is the escape hatch for anything else, filling in a fresh `update_id`.
-`detectUpdateType` infers which payload key an update carries.
+TTL expirations, retry backoffs, debounces — none of it should cost real wall-clock time in a
+test suite.
 
 ```ts
-import { createUpdate, detectUpdateType, pollUpdate } from "@yaebal/test";
+const env = createTestEnv(bot);
+env.useFakeTimers(); // arm it *before* the code under test schedules a timer you want to control
 
-const poll = pollUpdate({ question: "coffee or tea?", options: ["coffee", "tea"] });
+await linia.sendCommand("start"); // handler calls setTimeout(..., 60 * 60 * 1000) internally
 
-// hand-build any update shape; update_id is filled in for you
+await env.advanceTime(60 * 60 * 1000); // fires it instantly
+```
+
+`advanceTime` arms the clock for you if you haven't already (handy when you're timing something
+your own test code schedules, after the fact). Intervals re-arm and may fire multiple times in one
+`advance()` call; timers scheduled from inside a firing callback are picked up by the same call.
+**Always call `env.shutdown()` in your teardown** — it restores the real `Date.now`/timers so the
+next test isn't left on virtual time.
+
+For standalone use outside a `TestEnv`:
+
+```ts
+import { installTestClock } from "@yaebal/test";
+
+const clock = installTestClock(1_700_000_000_000);
+setInterval(() => {/* … */}, 1000);
+await clock.advance(3500); // fires 3 times
+clock.restore();
+```
+
+## satellite-plugin test packs
+
+a `TestPack` is an explicit (never a global registry — yaebal doesn't do implicit plugin wiring)
+hook a plugin package can ship so its own tests — or yours — get sensible fixtures for free:
+
+```ts
+import type { TestPack } from "@yaebal/test";
+
+export function myPluginTestPack(options?: MyPluginOptions): TestPack {
+  return {
+    name: "my-plugin",
+    setup(env) {
+      installMyPlugin(env.api, options); // wire whatever the plugin needs onto env.api/env
+    },
+  };
+}
+```
+
+```ts
+const env = createTestEnv(bot, { packs: [myPluginTestPack()] });
+```
+
+`@yaebal/again` ships one: `import { againTestPack } from "@yaebal/again/test-pack"` wires
+`autoRetry` onto `env.api` so retry tests don't call it by hand.
+
+## fixture builders — the escape hatch
+
+every actor method is sugar over a raw `Update`. reach for these directly for shapes the actors
+don't cover, or full field-by-field control — `createUpdate` fills in a fresh `update_id`, the
+rest build one payload key each: `messageUpdate`, `editedMessageUpdate`, `channelPostUpdate`,
+`editedChannelPostUpdate`, `callbackUpdate`, `inlineQueryUpdate`, `chosenInlineResultUpdate`,
+`shippingQueryUpdate`, `preCheckoutQueryUpdate`, `pollUpdate`, `pollAnswerUpdate`,
+`myChatMemberUpdate`, `chatMemberUpdate`, `chatJoinRequestUpdate`. `detectUpdateType` infers which
+payload key an update carries, and `buildUser` builds a `User` with an auto-allocated id.
+
+```ts
+import { createUpdate } from "@yaebal/test";
+
 const custom = createUpdate({
   edited_message: { message_id: 1, date: 0, chat: { id: 1, type: "private" } },
 });
-
-detectUpdateType(custom); // → "edited_message"
+await env.dispatch(custom);
 ```
 
-## inline keyboards
-
-`findButton(markup, match)` searches a `reply_markup`-shaped object (e.g. from a recorded call's
-params) for a button whose text matches a string or regex, returning it with its `row`/`col`:
-
-```ts
-import { findButton, messageContext, mockApi, runMiddleware } from "@yaebal/test";
-
-const { api, calls } = mockApi();
-await runMiddleware(bot, messageContext({ text: "/menu" }, api));
-
-const next = findButton(calls[0]?.params?.reply_markup, "Next »");
-assert.equal(next?.callback_data, "page:2");
-```
+`findButton(markup, match)` searches a `reply_markup` (plain JSON, or a builder instance like
+`InlineKeyboard` — unwrapped via `toJSON()` automatically) for a button whose text matches a
+string or regex, returning it with its `row`/`col`. this is what `clickByText` uses internally.
 
 ## webhooks & runners
 
-`webhookRequest(update, options?)` builds a `Request` the way telegram would POST it to a
-webhook handler (`@yaebal/core`'s `webhookCallback`, or `@yaebal/web`'s `webhook`):
-
 ```ts
-import { webhookRequest } from "@yaebal/test";
 import { webhookCallback } from "@yaebal/core";
+import { messageUpdate, webhookRequest } from "@yaebal/test";
 
 const handler = webhookCallback(bot, { secretToken: "s3cret" });
 const res = await handler(webhookRequest(messageUpdate({ text: "hi" }), { secretToken: "s3cret" }));
 assert.equal(res.status, 200);
 ```
 
-`collectUpdates()` gives you a minimal `UpdateSink` (the `{ handleUpdate }` shape webhooks and
-runners expect) that just records what it receives — handy when you don't need a full `Bot`:
-
-```ts
-import { collectUpdates, messageUpdate } from "@yaebal/test";
-
-const { sink, updates } = collectUpdates();
-await sink.handleUpdate(messageUpdate({ text: "hi" }));
-assert.equal(updates.length, 1);
-```
-
-`withFetch(handler, fn)` stubs `globalThis.fetch` for the duration of `fn`, restoring the
-original afterwards even if `fn` throws — for code that proxies uploads or downloads:
-
-```ts
-import { withFetch } from "@yaebal/test";
-
-await withFetch(
-  async (url) => new Response(new Uint8Array([1, 2, 3]), { headers: { "content-type": "image/jpeg" } }),
-  async () => {
-    const res = await panelHandler(request);
-    assert.equal(res.status, 200);
-  },
-);
-```
+`collectUpdates()` gives a minimal `UpdateSink` (the `{ handleUpdate }` shape webhooks/runners
+expect) that just records what it receives. `withFetch(handler, fn)` stubs `globalThis.fetch` for
+the duration of `fn`, restoring it after — even if `fn` throws — for code that proxies uploads or
+downloads.
 
 ## api reference
 
-| export                     | signature                                                       | description                                                                  |
-|:---------------------------|:----------------------------------------------------------------|:-----------------------------------------------------------------------------|
-| `mockApi`                  | `(options?: MockApiOptions) => MockApi`                         | fake `Api` recording every call, with working hooks and configurable results |
-| `createUpdate`             | `(partial?: Partial<Update>) => Update`                         | build an update, filling in a fresh `update_id`                              |
-| `messageUpdate`            | `(options?: MessageUpdateOptions) => Update`                    | build a `message` update                                                     |
-| `editedMessageUpdate`      | `(options?: MessageUpdateOptions) => Update`                    | build an `edited_message` update                                             |
-| `channelPostUpdate`        | `(options?: MessageUpdateOptions) => Update`                    | build a `channel_post` update                                                |
-| `editedChannelPostUpdate`  | `(options?: MessageUpdateOptions) => Update`                    | build an `edited_channel_post` update                                        |
-| `callbackUpdate`           | `(options?: CallbackUpdateOptions) => Update`                   | build a `callback_query` update                                              |
-| `inlineQueryUpdate`        | `(options?: InlineQueryUpdateOptions) => Update`                | build an `inline_query` update                                               |
-| `chosenInlineResultUpdate` | `(options?: ChosenInlineResultUpdateOptions) => Update`         | build a `chosen_inline_result` update                                        |
-| `shippingQueryUpdate`      | `(options?: ShippingQueryUpdateOptions) => Update`              | build a `shipping_query` update                                              |
-| `preCheckoutQueryUpdate`   | `(options?: PreCheckoutQueryUpdateOptions) => Update`           | build a `pre_checkout_query` update                                          |
-| `pollUpdate`               | `(options?: PollUpdateOptions) => Update`                       | build a `poll` update                                                        |
-| `pollAnswerUpdate`         | `(options?: PollAnswerUpdateOptions) => Update`                 | build a `poll_answer` update                                                 |
-| `myChatMemberUpdate`       | `(options?: ChatMemberUpdateOptions) => Update`                 | build a `my_chat_member` update                                              |
-| `chatMemberUpdate`         | `(options?: ChatMemberUpdateOptions) => Update`                 | build a `chat_member` update                                                 |
-| `chatJoinRequestUpdate`    | `(options?: ChatJoinRequestUpdateOptions) => Update`            | build a `chat_join_request` update                                           |
-| `createContext`            | `(update, api?, updateType?) => Context`                        | wrap an update in a core `Context`                                           |
-| `messageContext`           | `(options?: MessageUpdateOptions, api?: Api) => Context`        | build a `message` update and wrap it in one call                             |
-| `callbackContext`          | `(options?: CallbackUpdateOptions, api?: Api) => Context`       | build a `callback_query` update and wrap it in one call                      |
-| `runMiddleware`            | `(composer: Composer<C>, ctx: C) => Promise<void>`              | run a composer's middleware against a context                                |
-| `detectUpdateType`         | `(update: Update) => UpdateName`                                | infer the payload key; defaults to `"message"`                               |
-| `findButton`               | `(markup, match: string \| RegExp) => FoundButton \| undefined` | find an inline keyboard button by text                                       |
-| `collectUpdates`           | `() => UpdateCollector`                                         | a minimal `UpdateSink` that records what it receives                         |
-| `webhookRequest`           | `(update, options?: WebhookRequestOptions) => Request`          | build a webhook POST request carrying an update                              |
-| `withFetch`                | `(handler: typeof fetch, fn) => Promise<T>`                     | stub `globalThis.fetch` for `fn`, restoring it after                         |
+| export | signature | description |
+|:---|:---|:---|
+| `createTestEnv` | `(bot, options?) => TestEnv` | the main entry point |
+| `TestEnv` | class | `api`, `apiCalls`, `hooks`, `users`, `chats`, `createUser`, `createChat`, `dispatch`/`inject`, `onApi`/`offApi`, `lastApiCall`/`callsTo`/`clearApiCalls`, `lastBotMessage`/`botMessage`, `useFakeTimers`/`advanceTime`, `onPostDispatch`, `answeredPreCheckoutQuery`, `shutdown` |
+| `UserActor` | class | see actors above |
+| `ChatActor` | class | `id`, `type`, `title?`, `username?`, `members`, `setMembership`/`membershipOf`, `post` |
+| `apiError` | `(code, description, parameters?) => ApiErrorSentinel` | simulate a real Telegram error response |
+| `isApiErrorSentinel` | `(value) => value is ApiErrorSentinel` | typeguard for a stored `apiError(...)` |
+| `TestApiError` | class extends `TelegramError` | adds `.parameters` |
+| `installTestClock` | `(startAt?) => TestClock` | standalone virtual clock: `.now()`, `.advance(ms)`, `.restore()` |
+| `mockApi` | `(options?) => MockApi` | the fake `Api` underneath `TestEnv` — usable standalone |
+| `findButton` | `(markup, match) => FoundButton \| undefined` | find an inline keyboard button by text |
+| `toPlain` | `(value) => T` | unwrap a builder's `toJSON()`, or pass through |
+| `createUpdate` / `messageUpdate` / … | see fixture builders above | raw update construction |
+| `detectUpdateType` | `(update) => UpdateName` | infer the payload key; defaults to `"message"` |
+| `collectUpdates` | `() => UpdateCollector` | a minimal `UpdateSink` that records what it receives |
+| `webhookRequest` | `(update, options?) => Request` | build a webhook POST request carrying an update |
+| `withFetch` | `(handler, fn) => Promise<T>` | stub `globalThis.fetch` for `fn`, restoring it after |
 
-### interfaces
+## upgrading from 0.1.x
 
-| type                    | fields                                                                                                                   |
-|:------------------------|:-------------------------------------------------------------------------------------------------------------------------|
-| `RecordedCall`          | `method: string` · `params: Record<string, unknown> \| undefined`                                                        |
-| `MockApiOptions`        | `results?: Record<string, unknown \| Error \| ((params, attempt: number) => unknown)>`                                   |
-| `MockApi`               | `api: Api` · `calls: RecordedCall[]` · `hooks` · `lastCall` · `callsTo` · `setResult` · `reset`                          |
-| `MessageUpdateOptions`  | `text?: string` · `chatId?: number` · `fromId?: number` · `chatType?: "private" \| "group" \| "supergroup" \| "channel"` |
-| `CallbackUpdateOptions` | `data?: string` · `chatId?: number` · `fromId?: number`                                                                  |
-| `FoundButton`           | the button's own fields, plus `row: number` · `col: number`                                                              |
-| `UpdateCollector`       | `sink: UpdateSink` · `updates: Update[]`                                                                                 |
-| `WebhookRequestOptions` | `url?: string` · `method?: string` · `secretToken?: string` · `headers?: Record<string, string>`                         |
+`@yaebal/test` `0.2` replaces the old flat api (`mockApi()` + `createContext()` + `messageUpdate()` + `runMiddleware()` wired together by hand) with the actor-driven `TestEnv` above:
+
+```diff
+- const { api, calls } = mockApi();
+- await runMiddleware(bot, createContext(messageUpdate({ text: "/start" }), api));
+- assert.equal(calls[0]?.method, "sendMessage");
++ const env = createTestEnv(bot);
++ await env.createUser().sendCommand("start");
++ assert.equal(env.lastApiCall("sendMessage")?.method, "sendMessage");
+```
+
+`mockApi`, `createUpdate`/`messageUpdate`/etc., `findButton`, `webhookRequest`, `collectUpdates`,
+and `withFetch` are all still here, unchanged in spirit — only `createContext`, `messageContext`,
+`callbackContext`, and `runMiddleware` are gone, folded into `TestEnv.dispatch`/actors. `setResult`
+is now `onApi`.
 
 ---
 

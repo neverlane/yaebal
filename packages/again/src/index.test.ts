@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Api, ErrorHook } from "@yaebal/core";
-import { TelegramError } from "@yaebal/core";
+import { Composer, type Context, TelegramError } from "@yaebal/core";
+import { apiError, createTestEnv } from "@yaebal/test";
 import { autoRetry, decideRetry } from "./index.js";
+import { againTestPack } from "./test-pack.js";
 
 test("429 with retry_after waits exactly that long", () => {
 	assert.deepEqual(
@@ -56,4 +58,28 @@ test("autoRetry can be installed as a bot plugin", () => {
 	autoRetry({ maxRetries: 1 })({ api } as never);
 
 	assert.equal(typeof hook, "function");
+});
+
+test("againTestPack: a bot under test transparently retries a 429 and succeeds", async () => {
+	const bot = new Composer<Context>().on("message:text", (ctx) => ctx.reply("pong"));
+	const env = createTestEnv(bot, { packs: [againTestPack({ maxRetries: 2 })] });
+
+	env.onApi("sendMessage", apiError(429, "Too Many Requests: retry after 0"), { times: 1 });
+
+	await env.createUser().sendMessage("ping");
+
+	assert.equal(env.callsTo("sendMessage").length, 2); // first attempt failed, second succeeded
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "pong");
+});
+
+test("againTestPack: exhausting maxRetries still throws", async () => {
+	const bot = new Composer<Context>().on("message:text", async (ctx) => {
+		await assert.rejects(ctx.reply("pong"), TelegramError);
+	});
+	const env = createTestEnv(bot, { packs: [againTestPack({ maxRetries: 1 })] });
+
+	env.onApi("sendMessage", apiError(429, "Too Many Requests: retry after 0"));
+
+	await env.createUser().sendMessage("ping");
+	assert.equal(env.callsTo("sendMessage").length, 2); // 1 initial attempt + 1 retry, then gives up
 });

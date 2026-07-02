@@ -109,7 +109,7 @@ test("renderFiles: rich-message template wires ctx.sendRichMessage/richMessageDr
 	assert.match(src, /\.install\(rich\(\)\)/);
 	assert.match(src, /ctx\.sendRichMessage\(/);
 	assert.match(src, /ctx\.richMessageDraft\(1\)/);
-	assert.match(src, /draft\.commit\(/);
+	assert.match(src, /draft\.send\(/);
 });
 
 test("renderFiles: a template plugin is never wired twice", () => {

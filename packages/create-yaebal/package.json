@@ -1,6 +1,6 @@
 {
 	"name": "create-yaebal",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "scaffold a new yaebal telegram bot.",
 	"type": "module",
 	"bin": {
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"devDependencies": {
 		"@types/node": "latest"

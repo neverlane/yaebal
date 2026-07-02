@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/keyboard",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal keyboard builder — fluent inline & reply keyboard builders.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/types": "workspace:*"

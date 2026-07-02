@@ -122,11 +122,15 @@ export function dialogs(
 			const w = st.stack[st.stack.length - 1];
 			if (w === undefined || key === undefined) return;
 			const view = await renderWindow(w, dctx);
+			// a dialog opened in a business chat was sent via ctx.send() (routed through the
+			// connection); editing/deleting it later must go through the same connection, or
+			// Telegram rejects the call outright.
 			await ctx.api.call("editMessageText", {
 				chat_id: st.chatId,
 				message_id: st.messageId,
 				text: view.text,
 				reply_markup: renderKeyboard(w, view),
+				...ctx.businessRouting(),
 			});
 			await storage.set(key, st);
 		};
@@ -162,10 +166,16 @@ export function dialogs(
 				const popped = st.stack.pop();
 				if (popped !== undefined && chatId !== undefined) options.onLeave?.(chatId, popped);
 				if (st.stack.length === 0) {
-					await ctx.api.call("deleteMessage", {
-						chat_id: st.chatId,
-						message_id: st.messageId,
-					});
+					// deleteMessage can't touch business chats — route via deleteBusinessMessages.
+					const businessConnectionId = ctx.businessConnectionId;
+					if (businessConnectionId === undefined) {
+						await ctx.api.call("deleteMessage", { chat_id: st.chatId, message_id: st.messageId });
+					} else {
+						await ctx.api.call("deleteBusinessMessages", {
+							business_connection_id: businessConnectionId,
+							message_ids: [st.messageId],
+						});
+					}
 					await storage.delete(key);
 					return;
 				}

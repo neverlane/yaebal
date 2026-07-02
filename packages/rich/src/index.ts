@@ -6,12 +6,17 @@
  * parses it server-side, and you get the same tree back on `message.rich_message`.
  * this package covers all three parts of that surface:
  *
- * - **write**: `document()` + block builders (blocks.ts) and inline mark builders
- *   (inline.ts) assemble an `InputRichMessage` without hand-written angle brackets.
+ * - **write**: one dual-dialect builder set. every builder (`bold`, `paragraph`,
+ *   `table`, …) returns a dialect-agnostic `RichNode`; the `html`/`md` template
+ *   tags (or `document()`) pick the wire dialect once, at the edge, and emit a
+ *   `RichDocument` — the `rich_message` envelope with fluent `.rtl()` /
+ *   `.noEntityDetection()` flags. interpolated text is always dialect-escaped,
+ *   so user input can never inject markup in either dialect.
  * - **stream**: `RichMessageDraft` (draft.ts) owns the fiddly part of
  *   `sendRichMessageDraft` — the draft is ephemeral (telegram drops it 30s after
- *   the last push) and must be closed with a real `sendRichMessage` or explicitly
- *   cancelled.
+ *   the last push) and must be closed with a real `sendRichMessage` (`send()`) or
+ *   explicitly `cancel()`led. `rewrite()` replaces the whole draft, `write()`
+ *   appends to it.
  * - **read**: type guards (guards.ts) and plain-text flattening (plaintext.ts)
  *   cover every `RichBlock`/`RichText` variant telegram can hand back.
  *
@@ -95,9 +100,17 @@ export {
 	details,
 	divider,
 	footer,
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6,
 	heading,
 	image,
 	item,
+	join,
+	type ListItem,
 	type ListItemOptions,
 	type ListOptions,
 	list,
@@ -109,13 +122,16 @@ export {
 	preformatted,
 	pullquote,
 	slideshow,
+	type TableCell,
 	type TableCellOptions,
 	type TableOptions,
 	table,
 	thinking,
 	video,
 } from "./blocks.js";
+export { RichDocument } from "./document.js";
 export { RichMessageDraft, type RichMessageDraftOptions } from "./draft.js";
+export { escapeMarkdown, escapeMarkdownUrl } from "./escape.js";
 export {
 	isAnchorBlock,
 	isAnchorLink,
@@ -137,6 +153,7 @@ export {
 	isFooter,
 	isHashtag,
 	isHeading,
+	isItalic,
 	isList,
 	isMap,
 	isMarked,
@@ -167,17 +184,14 @@ export {
 	anchor,
 	anchorLink,
 	bold,
+	br,
 	code,
 	customEmoji,
 	dateTime,
-	html,
-	type Insertable,
-	isRichNode,
 	italic,
 	link,
 	marked,
 	math,
-	type RichNode,
 	reference,
 	referenceLink,
 	spoiler,
@@ -185,15 +199,16 @@ export {
 	subscript,
 	superscript,
 	textMention,
-	toHtml,
 	underline,
 } from "./inline.js";
-export { type DocumentOptions, document, markdown } from "./message.js";
-
+export { type Dialect, isRichNode, type Level, RichError, type RichNode } from "./node.js";
 export { richBlockToPlainText, richMessageToPlainText, richTextToPlainText } from "./plaintext.js";
+export { escapeFor, type Insertable, render } from "./render.js";
 export {
 	type RichContext,
+	type RichSource,
 	rich,
 	sendRichMessage,
 	sendRichMessageDraft,
 } from "./send.js";
+export { type DocumentOptions, document, html, md, type RichTemplate } from "./template.js";

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/contexts",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -18,7 +18,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib",
+		"test": "node --test \"lib/**/*.test.js\"",
 		"generate": "node scripts/generate.mjs"
 	},
 	"dependencies": {

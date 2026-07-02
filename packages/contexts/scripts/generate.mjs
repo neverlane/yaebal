@@ -20,6 +20,9 @@ const ID_FILLABLE = [
 	"pre_checkout_query_id",
 	"guest_query_id",
 	"from_chat_id",
+	"business_connection_id",
+	"message_thread_id",
+	"direct_messages_topic_id",
 ];
 
 // a shortcut must target one of these (otherwise it's not really "this thing")
@@ -113,6 +116,13 @@ function providersFor(payload, propName) {
 	if (fields.has("message_id")) p.message_id = "this.message_id";
 	if (fields.has("from")) p.user_id = fields.get("from").required ? "this.from.id" : "this.from?.id";
 
+	// forum topic / direct-messages-topic this message lives in — replies, sends and the
+	// editForumTopic-family default to staying in it instead of falling back to General.
+	if (fields.has("message_thread_id")) p.message_thread_id = "this.message_thread_id";
+	if (fields.has("direct_messages_topic")) {
+		p.direct_messages_topic_id = "this.direct_messages_topic?.topic_id";
+	}
+
 	const qid = QUERY_ID[payload.name];
 	if (qid && fields.has("id")) p[qid] = "this.id";
 
@@ -126,19 +136,57 @@ function providersFor(payload, propName) {
 	if (payload.name === "CallbackQuery") {
 		p.chat_id = "this.message?.chat.id";
 		p.message_id = "this.message?.message_id";
+		// a button on a business message / forum topic: acting on it must inherit that
+		// routing, otherwise the edit/reply is sent as the bot, or lands outside the topic.
+		// (`message` is MaybeInaccessibleMessage, hence the `in` narrowing on each field —
+		// InaccessibleMessage only carries chat/message_id/date.)
+		p.business_connection_id =
+			'this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined';
+		p.message_thread_id =
+			'this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined';
+		p.direct_messages_topic_id =
+			'this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined';
 	}
+
+	// business updates act on behalf of the connected account: every call that accepts
+	// business_connection_id must carry it, or Telegram routes the action as the bot.
+	if (propName === "business_message" || propName === "edited_business_message") {
+		p.business_connection_id = "this.business_connection_id";
+	}
+	if (propName === "deleted_business_messages") p.business_connection_id = "this.business_connection_id";
+	if (propName === "business_connection") p.business_connection_id = "this.id";
 
 	return p;
 }
 
-function methodsFor(providers, isMessage) {
+// these three can legitimately be undefined at runtime even when "filled" (e.g. a
+// non-topic message has no message_thread_id, a callback on a plain message has no
+// business_connection_id) — emitted as a conditional spread so the call object never
+// carries a literal `key: undefined`, instead of the plain `key: expr` used below for
+// ids that are always present once filled (chat_id, message_id, …).
+const SOFT_FILLS = new Set(["business_connection_id", "message_thread_id", "direct_messages_topic_id"]);
+
+const fillPiece = (f, providers) =>
+	SOFT_FILLS.has(f)
+		? `...((${providers[f]}) === undefined ? {} : { ${f}: ${providers[f]} })`
+		: `${f}: ${providers[f]}`;
+
+function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 	const lines = [];
 	const used = new Set();
 
 	if (isMessage && providers.chat_id && providers.message_id) {
+		// same extra routing ids as send() below (business connection / thread / dm topic),
+		// so a reply doesn't silently drop out of them.
+		const routingIds = ["business_connection_id", "message_thread_id", "direct_messages_topic_id"].filter(
+			(id) => providers[id] !== undefined,
+		);
+		const replyExtra = routingIds.map((id) => `, ${fillPiece(id, providers)}`).join("");
+		const replyOmit = ["chat_id", ...routingIds].map((id) => JSON.stringify(id)).join(" | ");
+
 		lines.push(`	/** reply to this message. */
-	reply(params: Omit<t.SendMessageParams, "chat_id">) {
-		return this.api.call<t.Message>("sendMessage", { chat_id: ${providers.chat_id}, reply_parameters: { message_id: this.message_id }, ...params });
+	reply(params: Omit<t.SendMessageParams, ${replyOmit}>) {
+		return this.api.call<t.Message>("sendMessage", { chat_id: ${providers.chat_id}, reply_parameters: { message_id: this.message_id }${replyExtra}, ...params });
 	}`);
 		used.add("reply");
 	}
@@ -158,7 +206,7 @@ function methodsFor(providers, isMessage) {
 			.filter((n) => !fills.includes(n) && !(hasFromChat && n === "chat_id"));
 		
 		if (unfilledRequired.length) continue;
-		if (!fills.some((n) => TARGET_IDS.has(n))) continue;
+		if (!fills.some((n) => targetIds.has(n))) continue;
 
 		const name = SHORT[m.name] ?? m.name;
 
@@ -167,7 +215,7 @@ function methodsFor(providers, isMessage) {
 
 		const paramsType = `t.${capFirst(m.name)}Params`;
 		const omit = fills.map((f) => JSON.stringify(f)).join(" | ");
-		const fillObj = fills.map((f) => `${f}: ${providers[f]}`).join(", ");
+		const fillObj = fills.map((f) => fillPiece(f, providers)).join(", ");
 		const ret = m.return_type ? returnType(m.return_type) : "unknown";
 		const otherArgs = args.some((a) => !fills.includes(a.name));
 		const sig = otherArgs ? `params: Omit<${paramsType}, ${omit}>` : `params?: Omit<${paramsType}, ${omit}>`;
@@ -229,6 +277,22 @@ function gettersFor(payload) {
 	}`);
 	}
 
+	if (fields.has("business_connection_id")) {
+		const o = fields.get("business_connection_id").required ? "" : " | undefined";
+
+		lines.push(`	/** camel-case alias for \`business_connection_id\`. */
+	get businessConnectionId(): string${o} {
+		return this.business_connection_id;
+	}`);
+	}
+
+	if (fields.has("message_thread_id")) {
+		lines.push(`	/** camel-case alias for \`message_thread_id\` (the forum topic this message is in, if any). */
+	get messageThreadId(): number | undefined {
+		return this.message_thread_id;
+	}`);
+	}
+
 	return lines;
 }
 
@@ -255,7 +319,13 @@ for (const prop of payloadProps) {
 	const pascal = snakePascal(prop.name);
 	const sugared = !!SUGARED[prop.name];
 	const className = sugared ? `${pascal}ContextBase` : `${pascal}Context`;
-	const methods = methodsFor(providersFor(payload, prop.name), payloadName === "Message");
+	// business contexts also treat business_connection_id as a shortcut target, so the
+	// account-level methods (postStory, setBusinessAccountName, …) land on them. on
+	// callback_query it stays a passive fill only — the id is usually absent there.
+	const targetIds = prop.name.includes("business")
+		? new Set([...TARGET_IDS, "business_connection_id"])
+		: TARGET_IDS;
+	const methods = methodsFor(providersFor(payload, prop.name), payloadName === "Message", targetIds);
 	const getters = gettersFor(payload);
 
 	const file = `${header}export interface ${className} extends t.${payloadName} {}

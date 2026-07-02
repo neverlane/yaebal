@@ -173,13 +173,13 @@ console.log("✓ runner polling (concurrency 50) — press ctrl-c to stop");`,
 
 bot.command("ask", async (ctx) => {
 \t// sendRichMessageDraft is ephemeral (30s) and never persists on its own —
-\t// RichMessageDraft keeps it alive and requires an explicit commit().
+\t// RichMessageDraft keeps it alive and requires an explicit send().
 \tconst draft = ctx.richMessageDraft(1);
-\tawait draft.push(document([thinking("thinking…")]));
+\tawait draft.rewrite(document([thinking("thinking…")]));
 
 \tawait new Promise((resolve) => setTimeout(resolve, 800)); // stand in for a real llm stream
 
-\tawait draft.commit(document([paragraph("here's your (fake) streamed answer ✨")]));
+\tawait draft.send(document([paragraph("here's your (fake) streamed answer ✨")]));
 });`,
 	},
 };

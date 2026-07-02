@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/again",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "yaebal auto-retry plugin — retries on 429/flood-wait and transient 5xx.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

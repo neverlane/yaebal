@@ -114,6 +114,64 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	assert.equal(seen, "hi");
 });
 
+test("Context routes business updates through the connection", async () => {
+	const calls: { m: string; p: unknown }[] = [];
+	const api = {
+		call: (m: string, p: unknown) => {
+			calls.push({ m, p });
+			return Promise.resolve({});
+		},
+		sendMessage: (p: unknown) => {
+			calls.push({ m: "sendMessage", p });
+			return Promise.resolve({});
+		},
+	} as never;
+
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api,
+		updateType: "business_message",
+		update: {
+			update_id: 1,
+			business_message: {
+				message_id: 5,
+				date: 0,
+				chat: { id: 42, type: "private" },
+				business_connection_id: "bc1",
+				text: "hi",
+			},
+		} as never,
+	});
+
+	// business_message is visible through the message getter (chat/text/reply work)
+	assert.equal(ctx.text, "hi");
+	assert.equal(ctx.businessConnectionId, "bc1");
+
+	await ctx.reply("yo");
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: {
+			chat_id: 42,
+			business_connection_id: "bc1",
+			reply_parameters: { message_id: 5 },
+			text: "yo",
+		},
+	});
+
+	// plain messages keep the exact same params shape as before (no undefined keys)
+	calls.length = 0;
+	const plain = new Context({
+		api,
+		updateType: "message",
+		update: {
+			update_id: 2,
+			message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },
+		} as never,
+	});
+	await plain.send("hello");
+	assert.deepEqual(calls[0], { m: "sendMessage", p: { chat_id: 1, text: "hello" } });
+});
+
 test("Bot.install accepts bot plugins and keeps enriched context", async () => {
 	let seen = "";
 	const stamp: BotPlugin<Context, { stamp: string }> = (bot) => bot.decorate({ stamp: "ok" });

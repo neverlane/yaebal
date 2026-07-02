@@ -678,7 +678,7 @@ function defaultClientKey(request: Request): string {
 	const fwd = request.headers.get("x-forwarded-for");
 	const forwardedIp = fwd?.split(",")[0]?.trim();
 	if (forwardedIp) return forwardedIp;
-	
+
 	return request.headers.get("x-real-ip") ?? "shared";
 }
 

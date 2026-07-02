@@ -1,6 +1,6 @@
 {
 	"name": "yaebal",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "yaebal — batteries-included Telegram Bot API framework: core + auto-generated contexts + the common plugins, one import.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*",

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/test",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal test — testing utilities for yaebal bots: mock api, update factories, and context builders.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

@@ -57,7 +57,13 @@ function msgCtx(api: never, text: string, userId = 1, chatId = userId): Context 
 	});
 }
 
-function callbackCtx(api: never, data: string, userId = 1, chatId = userId): Context {
+function callbackCtx(
+	api: never,
+	data: string,
+	userId = 1,
+	chatId = userId,
+	businessConnectionId?: string,
+): Context {
 	return new Context({
 		api,
 		update: {
@@ -65,7 +71,12 @@ function callbackCtx(api: never, data: string, userId = 1, chatId = userId): Con
 			callback_query: {
 				id: "cb",
 				from: { id: userId, is_bot: false, first_name: "u" },
-				message: { message_id: 100, date: 0, chat: { id: chatId, type: "private" } },
+				message: {
+					message_id: 100,
+					date: 0,
+					chat: { id: chatId, type: "private" },
+					...(businessConnectionId ? { business_connection_id: businessConnectionId } : {}),
+				},
 				data,
 			},
 		} as never,
@@ -179,6 +190,32 @@ test("start renders the first step; callback next renders and completes the last
 	const done = await storage.get("flow:welcome_test_start:1");
 	assert.equal(done?.status, "completed");
 	assert.equal(done?.stepId, "done");
+});
+
+test("callback next in a business chat routes the edit through the connection", async () => {
+	const { api, calls } = fakeApi();
+	const storage = memoryStorage();
+
+	const welcome = createOnboarding({ id: "welcome_test_biz", storage })
+		.step("hello", { text: "hello", buttons: ["next"] })
+		.step("done", { text: "done" })
+		.build();
+
+	const mw = entry(
+		new Composer<Context>().install(welcome).command("start", async (ctx) => {
+			await ctx.onboarding.welcome_test_biz.start();
+		}),
+	);
+
+	await mw(msgCtx(api, "/start"), noop);
+	const sent = findCall(calls, "sendMessage");
+	const next = buttonData(sent.params, "next");
+
+	calls.length = 0;
+	await mw(callbackCtx(api, next, 1, 1, "bc1"), noop);
+
+	const edit = findCall(calls, "editMessageText");
+	assert.equal(edit.params.business_connection_id, "bc1");
 });
 
 test("disableAll blocks start until enableAll", async () => {

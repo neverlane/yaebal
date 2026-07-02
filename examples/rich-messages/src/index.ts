@@ -5,13 +5,17 @@ import {
 	bold,
 	cell,
 	details,
+	divider,
 	document,
+	footer,
 	heading,
+	html,
 	image,
 	isTable,
 	item,
 	link,
 	list,
+	md,
 	paragraph,
 	rich,
 	richMessageToPlainText,
@@ -20,8 +24,9 @@ import {
 	video,
 } from "@yaebal/rich";
 
-// a focused tour of @yaebal/rich: building blocks/inline marks, sending a
-// document, streaming a draft (RichMessageDraft), and reading rich_message back.
+// a focused tour of @yaebal/rich: the dual-dialect builders (every builder works
+// in both the html and markdown template), sending a document, streaming a draft
+// (RichMessageDraft), and reading rich_message back.
 //
 // pnpm --filter @yaebal/example-rich-messages dev (needs BOT_TOKEN in .env)
 
@@ -32,7 +37,7 @@ if (!token) {
 }
 
 // a fake "generator" standing in for an LLM stream, so the demo has no external
-// dependency. draft.push() is what you'd call once per real token/chunk.
+// dependency. draft.rewrite() is what you'd call once per real token/chunk.
 async function* fakeAnswerStream(question: string): AsyncGenerator<string> {
 	const words =
 		`you asked: "${question}". here is a fake answer, streamed word by word so you can see the draft update live.`.split(
@@ -49,31 +54,47 @@ const bot = new Bot(token)
 	.install(rich())
 	.command("start", (ctx) =>
 		ctx.sendRichMessage(
-			document([
-				heading(1, "@yaebal/rich"),
-				paragraph(
+			html`
+				${heading(1, "@yaebal/rich")}
+
+				${paragraph(
 					"this bot demonstrates ",
 					bold("sendRichMessage"),
 					" — telegram's block-tree message format. try ",
 					bold("/report"),
 					", ",
+					bold("/md"),
+					", ",
 					bold("/ask <question>"),
 					", or ",
 					bold("/media"),
 					".",
-				),
-				blockquote(
+				)}
+
+				${blockquote(
 					[paragraph("unlike parse_mode/entities, this is a real document tree.")],
 					"the docs",
-				),
-				paragraph(
-					"see ",
-					link("https://yaeb.al/docs/plugins/rich", "the plugin docs"),
-					" for the full api.",
-				),
-			]),
+				)}
+
+				${paragraph("see ", link("https://yaeb.al/docs/plugins/rich", "the plugin docs"), " for the full api.")}
+			`,
 		),
 	)
+	.command("md", (ctx) => {
+		// the exact same builders that fed html`…` above also work under md`…` —
+		// one builder set, either wire dialect, chosen at the template tag.
+		const title = "@yaebal/rich, in markdown";
+
+		return ctx.sendRichMessage(
+			md`
+				${heading(1, title)}
+
+				${paragraph("same builders, ", bold("different dialect"), " — telegram renders this as markdown.")}
+
+				${list(["dual-dialect builders", "one escaping pass per interpolation", "no duplicated api"])}
+			`,
+		);
+	})
 	.command("report", (ctx) =>
 		ctx.sendRichMessage(
 			document([
@@ -81,8 +102,8 @@ const bot = new Bot(token)
 				table(
 					[
 						[cell("day", { header: true }), cell("messages", { header: true, align: "right" })],
-						[cell("mon"), cell("128", { align: "right" })],
-						[cell("tue"), cell("342", { align: "right" })],
+						[cell("mon"), cell(128, { align: "right" })],
+						[cell("tue"), cell(342, { align: "right" })],
 					],
 					{ bordered: true },
 				),
@@ -112,16 +133,26 @@ const bot = new Bot(token)
 		// draft_id just needs to be non-zero and stable for this one streamed answer.
 		const draft = ctx.richMessageDraft(Date.now() % 1_000_000 || 1);
 
-		await draft.push(document([thinking("thinking…")]));
+		// rewrite() replaces the whole draft each time — right for a token stream, where
+		// every chunk is a longer version of the *same* growing paragraph.
+		await draft.rewrite(document([thinking("thinking…")]));
 
 		let answer = "";
 		for await (const chunk of fakeAnswerStream(question)) {
 			answer += chunk;
-			await draft.push(document([paragraph(answer)]));
+			await draft.rewrite(document([paragraph(answer)]));
 		}
 
-		// required: a draft never persists on its own — commit the final answer.
-		await draft.commit(document([paragraph(answer.trim())]));
+		// write() appends without re-supplying what's already there — handy for a
+		// trailing block that should follow the streamed answer, not replace it.
+		await draft.write(document([divider(), footer("streamed via @yaebal/rich")]));
+
+		// required: a draft never persists on its own. send() with no argument would
+		// auto-assemble from the rewrite()/write() calls above; passing an explicit
+		// override here trims the trailing whitespace `answer` accumulated.
+		await draft.send(
+			document([paragraph(answer.trim()), divider(), footer("streamed via @yaebal/rich")]),
+		);
 	})
 	.on("message:rich_message", (ctx) => {
 		const richMessage = ctx.message?.rich_message;
@@ -141,6 +172,7 @@ const bot = new Bot(token)
 			.call("setMyCommands", {
 				commands: [
 					{ command: "start", description: "show what this bot can do" },
+					{ command: "md", description: "the same builders, rendered as markdown" },
 					{ command: "report", description: "table + checklist + details demo" },
 					{ command: "media", description: "photo/video/audio blocks demo" },
 					{ command: "ask", description: "stream a fake answer via sendRichMessageDraft" },

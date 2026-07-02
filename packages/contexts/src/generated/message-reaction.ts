@@ -95,10 +95,6 @@ export class MessageReactionContext {
 	sendPoll(params: Omit<t.SendPollParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPoll", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendChecklist(params: Omit<t.SendChecklistParams, "chat_id">) {
-		return this.api.call<t.Message>("sendChecklist", { chat_id: this.chat.id, ...params });
-	}
 	/** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendDice(params: Omit<t.SendDiceParams, "chat_id">) {
 		return this.api.call<t.Message>("sendDice", { chat_id: this.chat.id, ...params });
@@ -207,26 +203,6 @@ export class MessageReactionContext {
 	createForumTopic(params: Omit<t.CreateForumTopicParams, "chat_id">) {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	editForumTopic(params: Omit<t.EditForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("editForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to close an open topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	closeForumTopic(params: Omit<t.CloseForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("closeForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to reopen a closed topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	reopenForumTopic(params: Omit<t.ReopenForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("reopenForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to delete a forum topic along with all its messages in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_delete\_messages* administrator rights. Returns *True* on success. */
-	deleteForumTopic(params: Omit<t.DeleteForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("deleteForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to clear the list of pinned messages in a forum topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
-	unpinAllForumTopicMessages(params: Omit<t.UnpinAllForumTopicMessagesParams, "chat_id">) {
-		return this.api.call<boolean>("unpinAllForumTopicMessages", { chat_id: this.chat.id, ...params });
-	}
 	/** Use this method to edit the name of the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights. Returns *True* on success. */
 	editGeneralForumTopic(params: Omit<t.EditGeneralForumTopicParams, "chat_id">) {
 		return this.api.call<boolean>("editGeneralForumTopic", { chat_id: this.chat.id, ...params });
@@ -271,10 +247,6 @@ export class MessageReactionContext {
 	removeChatVerification(params?: Omit<t.RemoveChatVerificationParams, "chat_id">) {
 		return this.api.call<boolean>("removeChatVerification", { chat_id: this.chat.id, ...params });
 	}
-	/** Marks incoming message as read on behalf of a business account. Requires the *can\_read\_messages* business bot right. Returns *True* on success. */
-	readBusinessMessage(params: Omit<t.ReadBusinessMessageParams, "chat_id" | "message_id">) {
-		return this.api.call<boolean>("readBusinessMessage", { chat_id: this.chat.id, message_id: this.message_id, ...params });
-	}
 	/** Returns the gifts owned by a chat. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
 	getChatGifts(params: Omit<t.GetChatGiftsParams, "chat_id">) {
 		return this.api.call<t.OwnedGifts>("getChatGifts", { chat_id: this.chat.id, ...params });
@@ -298,10 +270,6 @@ export class MessageReactionContext {
 	/** Use this method to stop updating a live location message before *live\_period* expires. On success, if the message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. */
 	stopMessageLiveLocation(params: Omit<t.StopMessageLiveLocationParams, "chat_id" | "message_id">) {
 		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { chat_id: this.chat.id, message_id: this.message_id, ...params });
-	}
-	/** Use this method to edit a checklist on behalf of a connected business account. On success, the edited [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	editMessageChecklist(params: Omit<t.EditMessageChecklistParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message>("editMessageChecklist", { chat_id: this.chat.id, message_id: this.message_id, ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editReplyMarkup(params: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">) {

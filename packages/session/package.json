@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/session",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal session plugin — per-chat state with pluggable storage adapters.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test \"lib/**/*.test.js\""
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

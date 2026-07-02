@@ -51,11 +51,58 @@ export class Context {
 	}
 
 	get message(): Message | undefined {
-		return this.update.message ?? this.update.edited_message ?? this.update.channel_post;
+		return (
+			this.update.message ??
+			this.update.edited_message ??
+			this.update.channel_post ??
+			this.update.business_message ??
+			this.update.edited_business_message
+		);
 	}
 
 	get callbackQuery(): CallbackQuery | undefined {
 		return this.update.callback_query;
+	}
+
+	/**
+	 * the business connection this update belongs to, if any. `send`/`reply` thread it
+	 * into outgoing calls automatically — without it Telegram would deliver the message
+	 * as the bot (into the bot's own chat with the user) instead of as the connected
+	 * business account.
+	 */
+	get businessConnectionId(): string | undefined {
+		const cbMessage = this.callbackQuery?.message;
+
+		return (
+			this.message?.business_connection_id ??
+			this.update.deleted_business_messages?.business_connection_id ??
+			this.update.business_connection?.id ??
+			(cbMessage && "business_connection_id" in cbMessage
+				? cbMessage.business_connection_id
+				: undefined)
+		);
+	}
+
+	/** the forum topic this update's message is in, if any — `send`/`reply` stay in it. */
+	get messageThreadId(): number | undefined {
+		const cbMessage = this.callbackQuery?.message;
+
+		return (
+			this.message?.message_thread_id ??
+			(cbMessage && "message_thread_id" in cbMessage ? cbMessage.message_thread_id : undefined)
+		);
+	}
+
+	/** the direct-messages topic (channel DM chat) this update's message is in, if any. */
+	get directMessagesTopicId(): number | undefined {
+		const cbMessage = this.callbackQuery?.message;
+
+		return (
+			this.message?.direct_messages_topic?.topic_id ??
+			(cbMessage && "direct_messages_topic" in cbMessage
+				? cbMessage.direct_messages_topic?.topic_id
+				: undefined)
+		);
 	}
 
 	get from(): User | undefined {
@@ -82,7 +129,42 @@ export class Context {
 			return Promise.reject(new Error("send(): no chat in this update"));
 		}
 
-		return this.api.sendMessage({ chat_id: chatId, ...resolveText(text), ...extra });
+		return this.api.sendMessage({
+			chat_id: chatId,
+			...this.routing(),
+			...resolveText(text),
+			...extra,
+		});
+	}
+
+	/**
+	 * the business connection this update's message must be routed through, as a spreadable
+	 * params fragment — empty object if there isn't one. safe for any method (send or edit).
+	 * exposed so plugins that build their own `api.call(...)` params (editMessageText,
+	 * deleteMessage, …) get the same routing send/sendPhoto/sendDocument use, instead of
+	 * re-deriving it by hand.
+	 */
+	businessRouting(): Record<string, unknown> {
+		const id = this.businessConnectionId;
+		return id === undefined ? {} : { business_connection_id: id };
+	}
+
+	/**
+	 * full outgoing routing for a NEW message: {@link businessRouting} plus the forum /
+	 * direct-messages topic this update's message lives in, so a reply doesn't fall back to
+	 * General. only send-family methods accept the topic ids — edits don't.
+	 */
+	routing(): Record<string, unknown> {
+		const messageThreadId = this.messageThreadId;
+		const directMessagesTopicId = this.directMessagesTopicId;
+
+		return {
+			...this.businessRouting(),
+			...(messageThreadId === undefined ? {} : { message_thread_id: messageThreadId }),
+			...(directMessagesTopicId === undefined
+				? {}
+				: { direct_messages_topic_id: directMessagesTopicId }),
+		};
 	}
 
 	/** reply to the triggering message. */
@@ -107,6 +189,7 @@ export class Context {
 		return this.api.call<Message>("sendPhoto", {
 			chat_id: chatId,
 			photo,
+			...this.routing(),
 			...resolveCaption(extra),
 		});
 	}
@@ -127,6 +210,7 @@ export class Context {
 		return this.api.call<Message>("sendDocument", {
 			chat_id: chatId,
 			document,
+			...this.routing(),
 			...resolveCaption(extra),
 		});
 	}

@@ -1,9 +1,15 @@
 import type { Api, Context, Message, Plugin } from "@yaebal/core";
 import type { InputRichMessage } from "@yaebal/types";
+import { RichDocument } from "./document.js";
 import { RichMessageDraft, type RichMessageDraftOptions } from "./draft.js";
 
-function toInput(input: InputRichMessage | string): InputRichMessage {
-	return typeof input === "string" ? { html: input } : input;
+/** everything the send/draft surface accepts: a template/`document()` result, a raw payload, or an html string. */
+export type RichSource = RichDocument | InputRichMessage | string;
+
+function toInput(input: RichSource): InputRichMessage {
+	if (typeof input === "string") return { html: input };
+	if (input instanceof RichDocument) return input.toInputRichMessage();
+	return input;
 }
 
 /**
@@ -17,7 +23,7 @@ function toInput(input: InputRichMessage | string): InputRichMessage {
 export function sendRichMessage(
 	api: Api,
 	chatId: number | string,
-	input: InputRichMessage | string,
+	input: RichSource,
 	extra: Record<string, unknown> = {},
 ): Promise<Message> {
 	return api.call<Message>("sendRichMessage", {
@@ -36,7 +42,7 @@ export function sendRichMessageDraft(
 	api: Api,
 	chatId: number,
 	draftId: number,
-	input: InputRichMessage | string,
+	input: RichSource,
 	extra: Record<string, unknown> = {},
 ): Promise<boolean> {
 	return api.call<boolean>("sendRichMessageDraft", {
@@ -49,10 +55,7 @@ export function sendRichMessageDraft(
 
 export interface RichContext {
 	/** `ctx.send`-flavored `sendRichMessage`, bound to the current chat. */
-	sendRichMessage(
-		input: InputRichMessage | string,
-		extra?: Record<string, unknown>,
-	): Promise<Message>;
+	sendRichMessage(input: RichSource, extra?: Record<string, unknown>): Promise<Message>;
 	/** open a `RichMessageDraft` streaming session bound to the current chat. */
 	richMessageDraft(draftId: number, options?: RichMessageDraftOptions): RichMessageDraft;
 }
@@ -67,7 +70,7 @@ export function rich(): Plugin<Context, RichContext> {
 					return Promise.reject(new Error("sendRichMessage(): no chat in this update"));
 				}
 
-				return sendRichMessage(this.api, chatId, input, extra);
+				return sendRichMessage(this.api, chatId, input, { ...this.routing(), ...extra });
 			},
 			richMessageDraft(this: Context, draftId, options) {
 				const chatId = this.chat?.id;
@@ -75,7 +78,11 @@ export function rich(): Plugin<Context, RichContext> {
 					throw new Error("richMessageDraft(): no chat in this update");
 				}
 
-				return new RichMessageDraft(this.api, chatId, draftId, options);
+				return new RichMessageDraft(this.api, chatId, draftId, {
+					messageThreadId: this.messageThreadId,
+					businessConnectionId: this.businessConnectionId,
+					...options,
+				});
 			},
 		});
 }

@@ -57,5 +57,57 @@ test("typed routers expose the generated shortcuts + narrowed fields", () => {
 		void ctx.react; // command handlers get the message context
 	});
 
+	bot.on("guest_message", (ctx) => {
+		void ctx.answer; // GuestMessageContext shortcut — answerGuestQuery, not sendMessage
+		void ctx.guest_bot_caller_user; // who summoned the guest bot
+	});
+
 	assert.ok(bot);
+});
+
+test("guest_message answer() posts a real message via answerGuestQuery", async () => {
+	const guestUpdate = {
+		update_id: 1,
+		guest_message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "private" },
+			guest_query_id: "gq1",
+			guest_bot_caller_user: { id: 7, is_bot: false, first_name: "u" },
+		},
+	} as never;
+
+	const calls: { method: string; params: unknown }[] = [];
+	const stubApi = {
+		call: (method: string, params: unknown) => {
+			calls.push({ method, params });
+			return Promise.resolve({ inline_message_id: "im1" });
+		},
+	} as never;
+
+	const ctx = richContext(stubApi, guestUpdate, "guest_message") as Context & {
+		answer: (result: unknown) => Promise<unknown>;
+		guest_bot_caller_user?: { first_name: string };
+	};
+
+	assert.equal(ctx.guest_bot_caller_user?.first_name, "u");
+
+	await ctx.answer({
+		type: "article",
+		id: "1",
+		title: "hi",
+		input_message_content: { message_text: "hi" },
+	});
+	assert.deepEqual(calls[0], {
+		method: "answerGuestQuery",
+		params: {
+			guest_query_id: "gq1",
+			result: {
+				type: "article",
+				id: "1",
+				title: "hi",
+				input_message_content: { message_text: "hi" },
+			},
+		},
+	});
 });

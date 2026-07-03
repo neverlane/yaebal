@@ -164,6 +164,6 @@ export default {
 		border-radius: 8px;
 		background: var(--blue);
 		color: var(--white);
-		font-family: "IBM Plex Mono", monospace;
+		font-family: "JetBrains Mono", monospace;
 	}
 </style>

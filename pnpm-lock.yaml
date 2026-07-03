@@ -29,6 +29,9 @@ importers:
       '@yaebal/test':
         specifier: workspace:*
         version: link:../../packages/test
+      interactjs:
+        specifier: ^1.10.27
+        version: 1.10.27
       shiki:
         specifier: ^4.3.0
         version: 4.3.0
@@ -39,11 +42,11 @@ importers:
         specifier: workspace:*
         version: link:../../packages/yaebal
     devDependencies:
-      '@fontsource/ibm-plex-mono':
-        specifier: ^5.1.0
-        version: 5.2.7
       '@fontsource/ibm-plex-sans':
         specifier: ^5.1.0
+        version: 5.2.8
+      '@fontsource/jetbrains-mono':
+        specifier: ^5.2.8
         version: 5.2.8
       '@fontsource/unbounded':
         specifier: ^5.1.0
@@ -867,11 +870,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fontsource/ibm-plex-mono@5.2.7':
-    resolution: {integrity: sha512-MKAb8qV+CaiMQn2B0dIi1OV3565NYzp3WN5b4oT6LTkk+F0jR6j0ZN+5BKJiIhffDC3rtBULsYZE65+0018z9w==}
-
   '@fontsource/ibm-plex-sans@5.2.8':
     resolution: {integrity: sha512-eztSXjDhPhcpxNIiGTgMebdLP9qS4rWkysuE1V7c+DjOR0qiezaiDaTwQE7bTnG5HxAY/8M43XKDvs3cYq6ZYQ==}
+
+  '@fontsource/jetbrains-mono@5.2.8':
+    resolution: {integrity: sha512-6w8/SG4kqvIMu7xd7wt6x3idn1Qux3p9N62s6G3rfldOUYHpWcc2FKrqf+Vo44jRvqWj2oAtTHrZXEP23oSKwQ==}
 
   '@fontsource/unbounded@5.2.8':
     resolution: {integrity: sha512-tBHtKB+s5tKvQXEWy5h86sDY5hzVLsEbW6TGphSjUY9b/gawUPvXv5vFS4ZdPbGDcvSqMMy6eXkqdcsKI29dig==}
@@ -884,6 +887,9 @@ packages:
     peerDependenciesMeta:
       '@types/node':
         optional: true
+
+  '@interactjs/types@1.10.27':
+    resolution: {integrity: sha512-BUdv0cvs4H5ODuwft2Xp4eL8Vmi3LcihK42z0Ft/FbVJZoRioBsxH+LlsBdK4tAie7PqlKGy+1oyOncu1nQ6eA==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -1367,6 +1373,9 @@ packages:
   ignore@5.3.2:
     resolution: {integrity: sha512-hsBTNUqQTDwkWtcdYI2i06Y/nUBEsNEDJKjWdigLvegy8kDuJAS8uRlpkkcQpyEXL0Z/pjDy5HBmMjRCJ2gq+g==}
     engines: {node: '>= 4'}
+
+  interactjs@1.10.27:
+    resolution: {integrity: sha512-y/8RcCftGAF24gSp76X2JS3XpHiUvDQyhF8i7ujemBz77hwiHDuJzftHx7thY8cxGogwGiPJ+o97kWB6eAXnsA==}
 
   is-extglob@2.1.1:
     resolution: {integrity: sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ==}
@@ -2157,9 +2166,9 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@fontsource/ibm-plex-mono@5.2.7': {}
-
   '@fontsource/ibm-plex-sans@5.2.8': {}
+
+  '@fontsource/jetbrains-mono@5.2.8': {}
 
   '@fontsource/unbounded@5.2.8': {}
 
@@ -2169,6 +2178,8 @@ snapshots:
       iconv-lite: 0.7.2
     optionalDependencies:
       '@types/node': 26.0.1
+
+  '@interactjs/types@1.10.27': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
@@ -2613,6 +2624,10 @@ snapshots:
       safer-buffer: 2.1.2
 
   ignore@5.3.2: {}
+
+  interactjs@1.10.27:
+    dependencies:
+      '@interactjs/types': 1.10.27
 
   is-extglob@2.1.1: {}
 

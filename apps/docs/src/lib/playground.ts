@@ -2,24 +2,197 @@ import { type ChatMessage, renderChat } from "@yaebal/preview";
 import { type RecordedCall, callbackUpdate, messageUpdate, mockApi } from "@yaebal/test";
 import { type Bot, createBot, richContext } from "yaebal";
 
-export type Step = { user: string } | { click: string; label?: string };
+export type Step = { user: string } | { click: string; label?: string } | { system: string };
 
 interface InlineBtn {
 	text: string;
+	callback_data?: string;
+}
+
+type KeyboardBtn = string | InlineBtn;
+
+interface ReplyMarkup {
+	inline_keyboard?: InlineBtn[][];
+	keyboard?: KeyboardBtn[][];
 }
 
 const cap = (s: string): string => (s.length > 600 ? `${s.slice(0, 600)}…` : s);
 
+const asText = (v: unknown, fallback = ""): string => cap(String(v ?? fallback));
+
+function buttonText(button: KeyboardBtn): string {
+	return typeof button === "string" ? button : button.text;
+}
+
+function mapButtons(markup: unknown): string[][] | undefined {
+	const rm = markup as ReplyMarkup | undefined;
+	const keyboard = rm?.inline_keyboard ?? rm?.keyboard;
+
+	return keyboard?.map((row) => row.map(buttonText));
+}
+
+function collectCallbackLabels(markup: unknown, labels: Map<string, string>): void {
+	const rm = markup as ReplyMarkup | undefined;
+
+	for (const row of rm?.inline_keyboard ?? []) {
+		for (const button of row) {
+			if (button.callback_data) labels.set(button.callback_data, button.text);
+		}
+	}
+}
+
+function quote(value: string): string {
+	return `"${value.replaceAll('"', '\\"')}"`;
+}
+
+function answerText(params: Record<string, unknown> | undefined): string {
+	if (typeof params?.text === "string") return params.text;
+
+	const chars = Object.entries(params ?? {})
+		.filter(([key, value]) => /^\d+$/.test(key) && typeof value === "string")
+		.sort(([a], [b]) => Number(a) - Number(b))
+		.map(([, value]) => value as string);
+
+	return chars.join("");
+}
+
+function setMessageId(update: unknown, messageId: number): void {
+	const u = update as {
+		message?: { message_id?: number };
+		callback_query?: { message?: { message_id?: number } };
+	};
+
+	if (u.message) u.message.message_id = messageId;
+	if (u.callback_query?.message) u.callback_query.message.message_id = messageId;
+}
+
+const isEditCall = (method: string): boolean => method.startsWith("editMessage");
+
+const fileId = (v: unknown, fallback: string): string => String(v ?? fallback);
+
+const mediaMeta = (v: unknown): Record<string, unknown> =>
+	typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
+
 export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 	const p = (c.params ?? {}) as Record<string, unknown>;
-	const rm = p.reply_markup as { inline_keyboard?: InlineBtn[][] } | undefined;
-	const buttons = rm?.inline_keyboard?.map((row) => row.map((b) => b.text));
+	const buttons = mapButtons(p.reply_markup);
+	const entities = p.entities as ChatMessage["entities"] | undefined;
+	const captionEntities = p.caption_entities as ChatMessage["captionEntities"] | undefined;
+	const caption = p.caption ? asText(p.caption) : undefined;
+	const common = { buttons, caption, captionEntities };
+
 	switch (c.method) {
 		case "sendMessage":
 		case "editMessageText":
-			return { text: cap(String(p.text ?? "")), buttons };
+			return { text: asText(p.text), entities, buttons };
+		case "editMessageCaption":
+			return { caption: caption ?? "", captionEntities, buttons };
 		case "sendPhoto":
-			return { photo: [], caption: p.caption ? cap(String(p.caption)) : undefined, buttons };
+			return { photo: [], ...common };
+		case "sendAnimation": {
+			const m = mediaMeta(p.animation);
+			return {
+				animation: {
+					file_id: fileId(p.animation, "animation"),
+					file_unique_id: "animation",
+					width: Number(m.width ?? 320),
+					height: Number(m.height ?? 180),
+					duration: Number(m.duration ?? 0),
+				} as ChatMessage["animation"],
+				...common,
+			};
+		}
+		case "sendVideo": {
+			const m = mediaMeta(p.video);
+			return {
+				video: {
+					file_id: fileId(p.video, "video"),
+					file_unique_id: "video",
+					width: Number(m.width ?? 320),
+					height: Number(m.height ?? 180),
+					duration: Number(m.duration ?? 0),
+				} as ChatMessage["video"],
+				...common,
+			};
+		}
+		case "sendVoice":
+			return {
+				voice: {
+					file_id: fileId(p.voice, "voice"),
+					file_unique_id: "voice",
+					duration: Number(mediaMeta(p.voice).duration ?? p.duration ?? 0),
+				} as ChatMessage["voice"],
+				buttons,
+			};
+		case "sendAudio": {
+			const m = mediaMeta(p.audio);
+			return {
+				audio: {
+					file_id: fileId(p.audio, "audio"),
+					file_unique_id: "audio",
+					duration: Number(m.duration ?? p.duration ?? 0),
+					performer: String(m.performer ?? p.performer ?? ""),
+					title: String(m.title ?? p.title ?? "audio"),
+					file_name: String(m.file_name ?? p.title ?? "audio"),
+				} as ChatMessage["audio"],
+				...common,
+			};
+		}
+		case "sendDocument": {
+			const m = mediaMeta(p.document);
+			return {
+				document: {
+					file_id: fileId(p.document, "document"),
+					file_unique_id: "document",
+					file_name: String(m.file_name ?? p.file_name ?? "document"),
+					mime_type: String(m.mime_type ?? p.mime_type ?? "file"),
+					file_size: Number(m.file_size ?? p.file_size ?? 0),
+				} as ChatMessage["document"],
+				...common,
+			};
+		}
+		case "sendLocation":
+			return {
+				location: {
+					latitude: Number(p.latitude ?? 0),
+					longitude: Number(p.longitude ?? 0),
+				} as ChatMessage["location"],
+				buttons,
+			};
+		case "sendVenue":
+			return {
+				venue: {
+					location: { latitude: Number(p.latitude ?? 0), longitude: Number(p.longitude ?? 0) },
+					title: String(p.title ?? "venue"),
+					address: String(p.address ?? ""),
+				} as ChatMessage["venue"],
+				buttons,
+			};
+		case "sendContact":
+			return {
+				contact: {
+					phone_number: String(p.phone_number ?? ""),
+					first_name: String(p.first_name ?? "contact"),
+					last_name: p.last_name ? String(p.last_name) : undefined,
+				} as ChatMessage["contact"],
+				buttons,
+			};
+		case "sendPoll":
+			return {
+				poll: {
+					id: "poll",
+					question: String(p.question ?? "poll"),
+					options: Array.isArray(p.options)
+						? p.options.map((o, i) => ({ text: String(o), voter_count: i === 0 ? 1 : 0 }))
+						: [],
+					total_voter_count: 1,
+					is_closed: false,
+					is_anonymous: true,
+					type: "regular",
+					allows_multiple_answers: false,
+				} as ChatMessage["poll"],
+				buttons,
+			};
 		case "answerCallbackQuery":
 			return null;
 		default:
@@ -55,21 +228,86 @@ export async function feedSteps(
 	steps: Step[],
 ): Promise<ChatMessage[]> {
 	const convo: ChatMessage[] = [];
+	const callbackLabels = new Map<string, string>();
+	let nextMessageId = 1;
+	let lastBotMessageId: number | undefined;
+	let ts = 0;
 
 	for (const step of steps) {
+		ts += 1;
 		const before = calls.length;
-		if ("user" in step) {
-			convo.push({ from: "user", text: step.user, status: "read" });
-			await bot.handleUpdate(messageUpdate({ text: step.user }));
-		} else {
-			convo.push({ from: "user", text: step.label ?? step.click, status: "read" });
-			await bot.handleUpdate(callbackUpdate({ data: step.click }));
+
+		if ("system" in step) {
+			convo.push({ from: "system", text: step.system });
+			continue;
 		}
+
+		if ("user" in step) {
+			const messageId = nextMessageId++;
+			const update = messageUpdate({ text: step.user });
+			setMessageId(update, messageId);
+
+			convo.push({
+				from: "user",
+				text: step.user,
+				status: "read",
+				messageId,
+				debug: `incoming message, ts: ${ts}, id: ${messageId}`,
+			});
+			await bot.handleUpdate(update);
+		} else {
+			const label = callbackLabels.get(step.click) ?? step.click;
+			const targetId = lastBotMessageId ?? 1;
+			const update = callbackUpdate({ data: step.click });
+			setMessageId(update, targetId);
+
+			convo.push({
+				from: "system",
+				text: `inline pressed: button ${quote(label)} with data ${quote(step.click)}`,
+			});
+			await bot.handleUpdate(update);
+		}
+
 		for (const c of calls.slice(before)) {
+			collectCallbackLabels(c.params?.reply_markup, callbackLabels);
+
+			if (c.method === "answerCallbackQuery") {
+				const text = answerText(c.params);
+				convo.push({
+					from: "system",
+					text: text ? `callback answered: ${quote(text)}` : "callback answered",
+				});
+				continue;
+			}
+
 			const msg = mapCall(c);
-			if (msg) convo.push({ from: "bot", name: "bot", ...msg });
+			if (!msg) continue;
+
+			const params = c.params ?? {};
+			const edited = isEditCall(c.method);
+			const messageId = edited
+				? Number(params.message_id ?? lastBotMessageId ?? nextMessageId)
+				: nextMessageId++;
+			const replyTo =
+				typeof params.reply_parameters === "object" &&
+				params.reply_parameters !== null &&
+				"message_id" in params.reply_parameters
+					? `, reply_to: ${(params.reply_parameters as { message_id: unknown }).message_id}`
+					: "";
+
+			if (!edited) lastBotMessageId = messageId;
+
+			convo.push({
+				from: "bot",
+				name: "bot",
+				...msg,
+				messageId,
+				debug: edited
+					? `edited message, ts: ${ts}, id: ${messageId}`
+					: `${c.method}, ts: ${ts}, id: ${messageId}${replyTo}`,
+			});
 		}
 	}
-	
+
 	return convo;
 }

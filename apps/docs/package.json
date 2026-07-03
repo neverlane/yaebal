@@ -13,13 +13,14 @@
 	"dependencies": {
 		"@yaebal/preview": "workspace:*",
 		"@yaebal/test": "workspace:*",
-		"yaebal": "workspace:*",
+		"interactjs": "^1.10.27",
 		"shiki": "^4.3.0",
-		"sucrase": "^3.35.1"
+		"sucrase": "^3.35.1",
+		"yaebal": "workspace:*"
 	},
 	"devDependencies": {
-		"@fontsource/ibm-plex-mono": "^5.1.0",
 		"@fontsource/ibm-plex-sans": "^5.1.0",
+		"@fontsource/jetbrains-mono": "^5.2.8",
 		"@fontsource/unbounded": "^5.1.0",
 		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/kit": "^2.68.0",

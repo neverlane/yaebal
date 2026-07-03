@@ -159,7 +159,7 @@
 	.hl :global(code),
 	.hl :global(.shiki),
 	.hl :global(.shiki span) {
-		font-family: "IBM Plex Mono", monospace !important;
+		font-family: "JetBrains Mono", monospace !important;
 		font-variant-ligatures: none;
 	}
 

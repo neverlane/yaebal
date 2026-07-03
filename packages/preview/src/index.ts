@@ -31,7 +31,7 @@ import type {
 	Voice,
 } from "@yaebal/types";
 
-export type Side = "user" | "bot";
+export type Side = "user" | "bot" | "system";
 export type TickStatus = "sent" | "delivered" | "read";
 
 export interface ChatMessage {
@@ -43,6 +43,10 @@ export interface ChatMessage {
 	status?: TickStatus;
 	/** keyboard rows rendered as buttons under the message. */
 	buttons?: string[][];
+	/** rendered as compact diagnostic text above the bubble. */
+	debug?: string | string[];
+	/** rendered in the time/meta slot when `time` is not provided. */
+	messageId?: string | number;
 
 	/** message text. spread `@yaebal/fmt`'s `md`/`html` to also pass `entities`. */
 	text?: string;
@@ -70,6 +74,27 @@ export interface ChatMessage {
 	location?: Location;
 	contact?: Contact;
 	poll?: Poll;
+}
+
+function wrapPlainText(text: string, maxChars: number): string[] {
+	const words = text.split(/\s+/).filter(Boolean);
+	const lines: string[] = [];
+	let line = "";
+
+	for (const word of words) {
+		if (!line) {
+			line = word;
+			continue;
+		}
+
+		if (line.length + 1 + word.length > maxChars) {
+			lines.push(line);
+			line = word;
+		} else line += ` ${word}`;
+	}
+
+	if (line) lines.push(line);
+	return lines.length ? lines : [text];
 }
 
 export interface RenderOptions {
@@ -440,7 +465,7 @@ function meta(
 		s += `<text x="${round(rightX - tickW)}" y="${round(bottomY - 4)}" font-size="11" fill="${color}" text-anchor="end" font-family="${FONT}">${esc(time)}</text>`;
 
 	if (out && status)
-		s += ticks(round(rightX - 12), round(bottomY - 8), status, scrim ? "#fff" : p.tick);
+		s += ticks(round(rightX - 12), round(bottomY - 5), status, scrim ? "#fff" : p.tick);
 
 	return s;
 }
@@ -567,7 +592,31 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 		const out = m.from === "user";
 		const indent = out ? 0 : AV + AVGAP;
 		const base = out ? p.outText : p.inText;
-		const time = m.time ?? "";
+		const time = m.time ?? (m.messageId === undefined ? "" : `#${m.messageId}`);
+
+		if (m.from === "system") {
+			const text = m.text ?? "";
+			if (!text) continue;
+
+			const maxW = W - PAD * 4;
+			const lines = wrapPlainText(text, Math.max(18, Math.floor(maxW / 6.2)));
+			const textW = Math.max(...lines.map((line) => line.length * 6.2));
+			const bw = clamp(textW + 22, 80, W - PAD * 2);
+			const bh = lines.length * 15 + 10;
+			const bx = (W - bw) / 2;
+
+			body.push(
+				`<rect x="${round(bx)}" y="${round(y)}" width="${round(bw)}" height="${round(bh)}" rx="${round(bh / 2)}" fill="${p.button}" stroke="${p.buttonStroke}"/>`,
+			);
+			lines.forEach((line, i) => {
+				body.push(
+					`<text x="${round(W / 2)}" y="${round(y + 18 + i * 15)}" font-size="12" fill="${p.meta}" text-anchor="middle" font-family="${FONT}">${esc(line)}</text>`,
+				);
+			});
+			y += bh + GAP;
+
+			continue;
+		}
 
 		// sticker = standalone, no bubble
 		if (m.sticker) {
@@ -795,8 +844,21 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			const padBot = lastIsText ? PADY : blocks[blocks.length - 1]?.bleed ? 0 : PADY;
 			const bubbleH = padTop + nameH + inner + padBot;
 
+			const debugLines = [m.debug].flat().filter((line): line is string => !!line);
+			const debugH = debugLines.length ? debugLines.length * 14 + 4 : 0;
 			const bx = out ? W - PAD - bubbleW : PAD + indent;
-			const by = y;
+			const by = y + debugH;
+
+			if (debugLines.length) {
+				const tx = out ? bx + bubbleW : bx;
+				const anchor = out ? "end" : "start";
+
+				debugLines.forEach((line, i) => {
+					body.push(
+						`<text x="${round(tx)}" y="${round(y + 11 + i * 14)}" font-size="11" fill="${p.meta}" text-anchor="${anchor}" font-family="${MONO}">${esc(line)}</text>`,
+					);
+				});
+			}
 
 			const path = out
 				? rr(bx, by, bubbleW, bubbleH, RAD, RAD, TAIL, RAD)

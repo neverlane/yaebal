@@ -166,6 +166,12 @@ export interface LiveSession {
 	stop(): void;
 }
 
+export interface LiveSettings {
+	apiRoot?: string;
+	proxyUrl?: string;
+	corsProxy?: boolean;
+}
+
 // biome-ignore lint/suspicious/noExplicitAny: dynamic bot shape patched at runtime
 type LiveBot = any;
 
@@ -174,6 +180,7 @@ export async function startLive(
 	token: string,
 	onMsg: (m: ChatMessage) => void,
 	onLog: (l: LogLine) => void,
+	settings: LiveSettings = {},
 ): Promise<LiveSession> {
 	const js = transform(code, { transforms: ["typescript", "imports"], filePath: "playground.ts" }).code;
 
@@ -187,10 +194,15 @@ export async function startLive(
 		b.start = async () => {};
 		return b;
 	};
+	const configuredApiRoot = settings.corsProxy && settings.proxyUrl ? settings.proxyUrl : settings.apiRoot;
+	const withSettings = (o: object = {}) => ({
+		...(configuredApiRoot ? { apiRoot: configuredApiRoot } : {}),
+		...o,
+	});
 
 	class PatchedBot extends (yaebal.Bot as new (t: string, o?: object) => LiveBot) {
 		constructor(t?: string, o: object = {}) {
-			super(t || token, o);
+			super(t || token, withSettings(o));
 			tame(this);
 		}
 	}
@@ -198,7 +210,7 @@ export async function startLive(
 	const patched = {
 		...yaebal,
 		Bot: PatchedBot,
-		createBot: (t?: string, o: object = {}) => tame(yaebal.createBot(t || token, o)),
+		createBot: (t?: string, o: object = {}) => tame(yaebal.createBot(t || token, withSettings(o))),
 	};
 
 	const MODULES: Record<string, unknown> = {
@@ -217,7 +229,14 @@ export async function startLive(
 		return m;
 	};
 
-	const proc = { env: { BOT_TOKEN: token } as Record<string, string>, argv: [] as string[] };
+	const proc = {
+		env: {
+			BOT_TOKEN: token,
+			...(configuredApiRoot ? { YAEBAL_API_ROOT: configuredApiRoot } : {}),
+			...(settings.proxyUrl ? { YAEBAL_PROXY_URL: settings.proxyUrl } : {}),
+		} as Record<string, string>,
+		argv: [] as string[],
+	};
 	const sandboxConsole = {
 		log: (...a: unknown[]) => onLog({ level: "log", text: fmt(a) }),
 		info: (...a: unknown[]) => onLog({ level: "log", text: fmt(a) }),

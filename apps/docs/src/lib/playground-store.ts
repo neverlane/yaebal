@@ -2,6 +2,7 @@ export interface Project {
 	id: string;
 	name: string;
 	code: string;
+	steps?: ({ user: string } | { click: string; label?: string } | { system: string })[];
 }
 
 export interface Token {
@@ -38,7 +39,12 @@ const uid = (): string => `${Date.now().toString(36)}-${(counter++).toString(36)
 
 export const loadProjects = (): Project[] => read<Project>(local(), PKEY);
 export const saveProjects = (p: Project[]): void => write(local(), PKEY, p);
-export const newProject = (name: string, code: string): Project => ({ id: uid(), name, code });
+export const newProject = (name: string, code: string, steps: Project["steps"] = []): Project => ({
+	id: uid(),
+	name,
+	code,
+	steps,
+});
 
 export const loadTokens = (): Token[] => read<Token>(session(), TKEY);
 export const saveTokens = (t: Token[]): void => write(session(), TKEY, t);

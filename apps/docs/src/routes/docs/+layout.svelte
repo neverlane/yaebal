@@ -350,7 +350,7 @@
 		font-weight: 600;
 	}
 	.prose :global(code:not(pre code)) {
-		font-family: "IBM Plex Mono", monospace;
+		font-family: "JetBrains Mono", monospace;
 		font-size: 0.86em;
 		padding: 2px 6px;
 		border-radius: 6px;

@@ -40,6 +40,7 @@
 		{ "path": "./packages/test" },
 		{ "path": "./examples/basic" },
 		{ "path": "./examples/simple" },
-		{ "path": "./examples/keyboard" }
+		{ "path": "./examples/keyboard" },
+		{ "path": "./examples/broadcast" }
 	]
 }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { encodeRequest } from "./api.js";
+import { createApi, encodeRequest, TelegramError } from "./api.js";
 import { Bot, type BotPlugin } from "./bot.js";
 import type { Context } from "./context.js";
 import { isMediaSource, media } from "./media.js";
@@ -55,6 +55,36 @@ test("encodeRequest rejects nested media (fails loud, no garbage)", async () => 
 
 test("encodeRequest throws a helpful error for media.path() without a readFile (edge)", async () => {
 	await assert.rejects(() => encodeRequest({ photo: media.path("./a.jpg") }), /needs a filesystem/);
+});
+
+test("createApi exposes Telegram response parameters on TelegramError", async () => {
+	const previousFetch = globalThis.fetch;
+
+	globalThis.fetch = async () =>
+		new Response(
+			JSON.stringify({
+				ok: false,
+				error_code: 429,
+				description: "Too Many Requests",
+				parameters: { retry_after: 7 },
+			}),
+			{ headers: { "content-type": "application/json" } },
+		);
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+
+		await assert.rejects(api.call("sendMessage", { chat_id: 1 }), (error: unknown) => {
+			assert.ok(error instanceof TelegramError);
+			assert.equal(error.method, "sendMessage");
+			assert.equal(error.code, 429);
+			assert.equal(error.description, "Too Many Requests");
+			assert.deepEqual(error.parameters, { retry_after: 7 });
+			return true;
+		});
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
 });
 
 test("encodeRequest uses an injected readFile for media.path() (runtime-agnostic)", async () => {
@@ -198,4 +228,35 @@ test("Bot.onStop handlers run once per stop cycle", async () => {
 	await bot.stop();
 
 	assert.equal(stopped, 1);
+});
+
+test("Api before hooks run for every retry attempt", async () => {
+	const previousFetch = globalThis.fetch;
+	let attempts = 0;
+
+	globalThis.fetch = async () => {
+		attempts++;
+		if (attempts === 1) {
+			return new Response(JSON.stringify({ ok: false, error_code: 502, description: "Bad Gateway" }), {
+				headers: { "content-type": "application/json" },
+			});
+		}
+
+		return new Response(JSON.stringify({ ok: true, result: true }), {
+			headers: { "content-type": "application/json" },
+		});
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+		let beforeRuns = 0;
+
+		api.before((method, params) => ({ ...params, marker: ++beforeRuns, method }));
+		api.onError((_method, _error, attempt) => (attempt === 1 ? { retry: true } : undefined));
+
+		assert.equal(await api.call("sendMessage", { chat_id: 1 }), true);
+		assert.equal(beforeRuns, 2);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
 });

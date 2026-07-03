@@ -1,5 +1,5 @@
 import { isMediaSource, type MediaSource } from "./media.js";
-import type { ApiResponse, Message, Update, User } from "./telegram-types.js";
+import type { ApiResponse, Message, ResponseParameters, Update, User } from "./telegram-types.js";
 
 /**
  * resolve a local `media.path()` into bytes. runtime-specific (node:fs, Bun.file,
@@ -13,13 +13,17 @@ export type FileReader = (path: string) => Promise<Uint8Array>;
 export class TelegramError extends Error {
 	readonly method: string;
 	readonly code: number;
+	readonly description: string;
+	readonly parameters?: ResponseParameters;
 
-	constructor(method: string, code: number, description: string) {
+	constructor(method: string, code: number, description: string, parameters?: ResponseParameters) {
 		super(`[${method}] ${code}: ${description}`);
 
 		this.name = "TelegramError";
 		this.method = method;
 		this.code = code;
+		this.description = description;
+		this.parameters = parameters;
 	}
 }
 
@@ -49,6 +53,7 @@ export type ErrorHook = (
 	method: string,
 	error: unknown,
 	attempt: number,
+	params: Record<string, unknown> | undefined,
 ) => ErrorAction | undefined | Promise<ErrorAction | undefined>;
 
 /**
@@ -218,7 +223,8 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		});
 
 		const data = (await res.json()) as ApiResponse<T>;
-		if (!data.ok) throw new TelegramError(method, data.error_code, data.description);
+		if (!data.ok)
+			throw new TelegramError(method, data.error_code, data.description, data.parameters);
 
 		return data.result;
 	};
@@ -227,15 +233,15 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		method: string,
 		params?: Record<string, unknown>,
 	): Promise<T> => {
-		let p = params;
-		for (const hook of beforeHooks) {
-			const next = await hook(method, p);
-			if (next !== undefined) p = next;
-		}
-
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
 		// attempts). with no hook requesting a retry it throws on the first failure.
 		for (let attempt = 1; ; attempt++) {
+			let p = params;
+			for (const hook of beforeHooks) {
+				const next = await hook(method, p);
+				if (next !== undefined) p = next;
+			}
+
 			try {
 				let result = await rawCall<T>(method, p);
 
@@ -249,10 +255,9 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 				let retry: ErrorAction | undefined;
 
 				for (const hook of errorHooks) {
-					const action = await hook(method, error, attempt);
-					if (action?.retry) {
+					const action = await hook(method, error, attempt, p);
+					if (!retry && action?.retry) {
 						retry = action;
-						break;
 					}
 				}
 

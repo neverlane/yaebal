@@ -63,7 +63,7 @@ test("mockApi results: a function sees params and a running attempt count", asyn
 		results: {
 			sendMessage: (params: Record<string, unknown> | undefined, attempt: number) =>
 				attempt <= 2
-					? new TelegramError("sendMessage", 429, "retry after 0")
+					? new TelegramError("sendMessage", 429, "Too Many Requests", { retry_after: 0 })
 					: { message_id: 1, echo: params?.text },
 		},
 	});

@@ -191,7 +191,7 @@ core по-прежнему держит свой минимальный ручн
 ### Ядро экосистемы (первые)
 | Пакет | Что делает | Зависит | Цепляется | Источник |
 |---|---|---|---|---|
-| **`@yaebal/again`** ✅ | auto-retry на 429/flood-wait + transient 5xx | — | `api.onError` | grammY auto-retry, @gramio/auto-retry |
+| **`@yaebal/again`** ✅ | awaited retry на 429 `response_parameters.retry_after` + transient 5xx, без парсинга текста ошибки | — | `api.onError` | grammY auto-retry, @gramio/auto-retry |
 | **`@yaebal/session`** ✅ | session — per-chat стейт; `load → next → save` middleware. Несёт `StorageAdapter` + `MemoryStorage` | — | `use` → `ctx.session` | все три |
 | **`@yaebal/sklad`** | storage-адаптеры (file/redis). **Отложен:** `MemoryStorage` пока живёт в `session`; выделить пакет, когда появится первый персистентный адаптер (нужен для `morda` на M2) | — | — | grammY storages |
 | **`@yaebal/keyboard`** ✅ | builder inline/reply-клавиатур (чистый хелпер) | — | export | @gramio/keyboards |
@@ -213,14 +213,14 @@ core по-прежнему держит свой минимальный ручн
 | Пакет | Что делает | Зависит | Источник |
 |---|---|---|---|
 | **`@yaebal/i18n`** ✅ | `ctx.t` + `changeLanguage`, локаль per-chat, fallback на default-локаль; питает `useTranslation` | `session` | @gramio/i18n, grammY i18n |
-| **`@yaebal/throttle`** ✅ | rate-limit исходящих (не словить flood); слоты через `api.before` | — | grammY transformer-throttler |
+| **`@yaebal/throttle`** ✅ | outbound scheduler: global/private/group buckets, per-method limits, priority queue, shared storage, cancel/abort, metrics, retry_after feedback | — | puregram throttler, grammY transformer-throttler |
 | **`@yaebal/ratelimiter`** ✅ | анти-спам входящих: дропает апдейты сверх лимита за окно (per-user) | — | grammY ratelimiter, @gramio/rate-limiter |
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` в именах | — | @gramio/autoload + storona |
 | **`@yaebal/toml`** ✅ | декларативные toml маршруты: commands, hears, message filters, callback queries и handler registry | — | config-driven routing |
 | **`@yaebal/listai`** | пагинация | `keyboard` | @gramio/pagination |
 | **`@yaebal/narezka`** | резать длинные сообщения на части | — | @gramio/split |
 | **`@yaebal/onboarding`** ✅ | onboarding — декларативные туториалы, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
-| **`@yaebal/broadcast`** ✅ | массовая рассылка, `{sent, failed}`, переживает блокировки. Пара к `throttle` | — | @gramio/broadcast |
+| **`@yaebal/broadcast`** ✅ | typed broadcast jobs: storage adapter, worker, retry, rate limit, skipped recipients, progress, pause/resume/cancel, events | `core`, `types` | native ops plugin |
 | **`@yaebal/komandy`** | управление командами/скоупами | — | grammY commands |
 | **`@yaebal/tolpa`** | runner — конкурентный поллинг, масштаб | — | grammY runner |
 

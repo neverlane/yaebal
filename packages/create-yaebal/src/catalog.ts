@@ -18,7 +18,8 @@ export type TemplateId =
 	| "session-counter"
 	| "webhook"
 	| "runner"
-	| "rich-message";
+	| "rich-message"
+	| "broadcast";
 
 export interface Choice<T extends string> {
 	value: T;
@@ -54,6 +55,11 @@ export const TEMPLATES: Choice<TemplateId>[] = [
 		value: "rich-message",
 		label: "rich-message",
 		hint: "sendRichMessage block builder + a streaming draft demo via @yaebal/rich",
+	},
+	{
+		value: "broadcast",
+		label: "broadcast",
+		hint: "subscriber list + typed broadcast jobs via @yaebal/broadcast",
 	},
 ];
 
@@ -145,7 +151,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "again",
 		dep: "@yaebal/again",
-		hint: "auto-retry on 429 / flood-wait / 5xx",
+		hint: "awaited retry on structured retry_after / 5xx",
 		wire: "setup",
 		import: 'import { autoRetry } from "@yaebal/again";',
 		setup: "autoRetry(bot.api);",
@@ -154,7 +160,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "throttle",
 		dep: "@yaebal/throttle",
-		hint: "space out outgoing api calls",
+		hint: "priority outbound scheduler with Telegram buckets",
 		wire: "setup",
 		import: 'import { throttle } from "@yaebal/throttle";',
 		setup: "throttle(bot.api);",
@@ -255,9 +261,9 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "broadcast",
 		dep: "@yaebal/broadcast",
-		hint: "send a message to many chats",
+		hint: "typed broadcast jobs with progress, retry and controls",
 		wire: "dep",
-		import: 'import { broadcast } from "@yaebal/broadcast";',
+		import: 'import { Broadcast } from "@yaebal/broadcast";',
 	},
 	{
 		id: "split",

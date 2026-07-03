@@ -274,6 +274,7 @@ try {
 } catch (error) {
   error instanceof TelegramError; // true
   error.code;                     // 403
+  error.parameters;               // response_parameters when Telegram sends them
 }
 ```
 
@@ -391,7 +392,7 @@ downloads.
 | `ChatActor` | class | `id`, `type`, `title?`, `username?`, `members`, `setMembership`/`membershipOf`, `post` |
 | `apiError` | `(code, description, parameters?) => ApiErrorSentinel` | simulate a real Telegram error response |
 | `isApiErrorSentinel` | `(value) => value is ApiErrorSentinel` | typeguard for a stored `apiError(...)` |
-| `TestApiError` | class extends `TelegramError` | adds `.parameters` |
+| `TestApiError` | class extends `TelegramError` | test subclass carrying the same structured `.parameters` |
 | `installTestClock` | `(startAt?) => TestClock` | standalone virtual clock: `.now()`, `.advance(ms)`, `.restore()` |
 | `mockApi` | `(options?) => MockApi` | the fake `Api` underneath `TestEnv` — usable standalone |
 | `findButton` | `(markup, match) => FoundButton \| undefined` | find an inline keyboard button by text |

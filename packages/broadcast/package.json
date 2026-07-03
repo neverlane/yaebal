@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/broadcast",
-	"version": "0.0.3",
-	"description": "yaebal broadcast — send a message to many chats, counting successes and failures.",
+	"version": "0.1.0",
+	"description": "yaebal broadcast — typed broadcast jobs with storage, retry, progress and controls.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -15,10 +15,11 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*"
+		"@yaebal/core": "workspace:*",
+		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

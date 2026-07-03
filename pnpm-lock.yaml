@@ -73,6 +73,19 @@ importers:
         specifier: ^8.1.0
         version: 8.1.0(@types/node@26.1.0)(esbuild@0.28.1)
 
+  examples/again:
+    dependencies:
+      '@yaebal/again':
+        specifier: workspace:*
+        version: link:../../packages/again
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/basic:
     dependencies:
       '@yaebal/again':
@@ -115,6 +128,19 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+
+  examples/broadcast:
+    dependencies:
+      '@yaebal/broadcast':
+        specifier: workspace:*
+        version: link:../../packages/broadcast
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
 
   examples/keyboard:
     dependencies:
@@ -184,6 +210,22 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/throttle:
+    dependencies:
+      '@yaebal/again':
+        specifier: workspace:*
+        version: link:../../packages/again
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/throttle':
+        specifier: workspace:*
+        version: link:../../packages/throttle
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   packages/again:
     dependencies:
       '@yaebal/core':
@@ -202,6 +244,9 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: latest

@@ -180,7 +180,54 @@ bot.command("ask", async (ctx) => {
 \tawait new Promise((resolve) => setTimeout(resolve, 800)); // stand in for a real llm stream
 
 \tawait draft.send(document([paragraph("here's your (fake) streamed answer ✨")]));
-});`,
+		});`,
+	},
+	broadcast: {
+		plugins: ["broadcast"],
+		imports: ['import { Broadcast } from "@yaebal/broadcast";'],
+		body: `const subscribers = new Set<number>();
+
+const broadcaster = new Broadcast(bot.api, {
+	concurrency: 3,
+	rateLimit: { limit: 20, windowMs: 1_000 },
+	retry: { attempts: 5, fixedDelayMs: 1_000 },
+}).type("digest", (chatId: number, text: string) =>
+	bot.api.sendMessage({ chat_id: chatId, text, disable_notification: true }),
+);
+
+bot.command("start", (ctx) => {
+	if (ctx.chat?.id !== undefined) subscribers.add(ctx.chat.id);
+	return ctx.reply("subscribed. send /broadcast text to queue a local demo broadcast.");
+});
+
+bot.command("broadcast", async (ctx) => {
+	const text = ctx.args.join(" ").trim();
+	if (!text) return ctx.reply("usage: /broadcast text");
+
+	const audience = [...subscribers];
+	if (audience.length === 0) return ctx.reply("no subscribers yet.");
+
+	const job = await broadcaster.start(
+		"digest",
+		audience.map((chatId) => [chatId, text] as const),
+	);
+	await ctx.reply("queued " + audience.length + " deliveries. job id: " + job.id);
+
+	const result = await job.wait();
+	return ctx.reply(
+		"done: " + result.sent + " sent, " + result.skipped + " skipped, " + result.failed + " failed.",
+	);
+});
+
+bot.command("status", async (ctx) => {
+	const jobs = (await broadcaster.listJobs()).slice(-5).reverse();
+	return ctx.reply(
+		jobs.map((job) => job.id + ": " + job.status + " " + job.sent + "/" + job.total + " sent").join("\\n") ||
+			"no jobs yet.",
+	);
+});
+
+bot.onStop(() => broadcaster.stop({ drain: true }));`,
 	},
 };
 

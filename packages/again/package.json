@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/again",
-	"version": "0.0.4",
-	"description": "yaebal auto-retry plugin — retries on 429/flood-wait and transient 5xx.",
+	"version": "0.1.0",
+	"description": "yaebal auto-retry plugin - retries 429 retry_after and transient 5xx errors.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",

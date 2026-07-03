@@ -7,7 +7,7 @@ import { type AutoRetryOptions, autoRetry } from "./index.js";
  *
  * @example
  * const env = createTestEnv(bot, { packs: [againTestPack({ maxRetries: 2 })] });
- * env.onApi("sendMessage", apiError(429, "retry after 0"), { times: 1 });
+ * env.onApi("sendMessage", apiError(429, "Too Many Requests", { retry_after: 0 }), { times: 1 });
  * await env.createUser().sendCommand("start"); // retries once, then succeeds
  */
 export function againTestPack(options?: AutoRetryOptions): TestPack {

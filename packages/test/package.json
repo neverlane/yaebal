@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/test",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "yaebal test — an actor-driven test framework for yaebal bots: users/chats that send real updates, a virtual clock, apiError stubs, and satellite-plugin test packs.",
 	"type": "module",
 	"main": "./lib/index.js",

@@ -4,6 +4,7 @@ import {
 	type BeforeHook,
 	type ErrorAction,
 	type ErrorHook,
+	type ResponseParameters,
 	TelegramError,
 } from "@yaebal/core";
 import { normalizeParams } from "./normalize.js";
@@ -32,7 +33,7 @@ export interface ApiErrorSentinel {
 	readonly __yaebalApiError: true;
 	code: number;
 	description: string;
-	parameters?: Record<string, unknown>;
+	parameters?: ResponseParameters;
 }
 
 /**
@@ -46,7 +47,7 @@ export interface ApiErrorSentinel {
 export function apiError(
 	code: number,
 	description: string,
-	parameters?: Record<string, unknown>,
+	parameters?: ResponseParameters,
 ): ApiErrorSentinel {
 	return { __yaebalApiError: true, code, description, parameters };
 }
@@ -58,16 +59,8 @@ export function isApiErrorSentinel(value: unknown): value is ApiErrorSentinel {
 
 /** a {@link TelegramError} carrying the optional `parameters` bag (e.g. `retry_after`) real errors ship. */
 export class TestApiError extends TelegramError {
-	readonly parameters?: Record<string, unknown>;
-
-	constructor(
-		method: string,
-		code: number,
-		description: string,
-		parameters?: Record<string, unknown>,
-	) {
-		super(method, code, description);
-		this.parameters = parameters;
+	constructor(method: string, code: number, description: string, parameters?: ResponseParameters) {
+		super(method, code, description, parameters);
 	}
 }
 
@@ -142,7 +135,7 @@ interface MethodOverride {
  * `calls` and resolves to a sensible default (auto-incrementing `message_id` for `send*`, `true`
  * for `answerCallbackQuery`, `{}` otherwise) — or to whatever `onApi`/`options.results` says.
  * `before`/`after`/`onError` are real hook registrars (not no-ops): register a hook the same way
- * you would on the production `Api` and it actually runs, including retries requested by an
+ * you would on the production `Api` and it actually runs on each attempt, including retries requested by an
  * `onError` hook. the mock never actually waits on a requested `delayMs` — retries settle
  * instantly, so tests stay fast (pair with {@link installTestClock} if the code under test
  * schedules the retry itself via `setTimeout`).
@@ -198,13 +191,13 @@ export function mockApi(options: MockApiOptions = {}): MockApi {
 	}
 
 	const call = async (method: string, rawParams?: Record<string, unknown>): Promise<never> => {
-		let p = normalizeParams(rawParams);
-		for (const hook of hooks.before) {
-			const next = await hook(method, p);
-			if (next !== undefined) p = next;
-		}
-
 		for (let attempt = 1; ; attempt++) {
+			let p = normalizeParams(rawParams);
+			for (const hook of hooks.before) {
+				const next = await hook(method, p);
+				if (next !== undefined) p = next;
+			}
+
 			let result: unknown;
 
 			try {
@@ -213,10 +206,9 @@ export function mockApi(options: MockApiOptions = {}): MockApi {
 			} catch (error) {
 				let retry: ErrorAction | undefined;
 				for (const hook of hooks.onError) {
-					const action = await hook(method, error, attempt);
-					if (action?.retry) {
+					const action = await hook(method, error, attempt, p);
+					if (!retry && action?.retry) {
 						retry = action;
-						break;
 					}
 				}
 

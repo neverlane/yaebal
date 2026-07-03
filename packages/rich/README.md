@@ -2,7 +2,7 @@
 
 `sendRichMessage` / `sendRichMessageDraft` — telegram's block-tree message format. one dual-dialect builder set, a draft/streaming session that owns the 30s ttl, and full read-side coverage (type guards + plain-text flattening) of everything telegram can hand back on `message.rich_message`.
 
-unlike classic `parse_mode`/entities (see [`@yaebal/fmt`](https://www.npmjs.com/package/@yaebal/fmt)), a rich message isn't a flat `{ text, entities }` pair — it's a document: paragraphs, headings, tables, lists, collages, slideshows, block quotes, a collapsible `<details>`, even a `<tg-thinking>` placeholder for streaming an in-progress answer. you write extended html (or markdown), telegram parses it server-side into a `RichMessage.blocks` tree, and that same tree is what you read back.
+unlike classic `parse_mode`/entities (see [`@yaebal/fmt`](https://npmx.dev/package/@yaebal/fmt)), a rich message isn't a flat `{ text, entities }` pair — it's a document: paragraphs, headings, tables, lists, collages, slideshows, block quotes, a collapsible `<details>`, even a `<tg-thinking>` placeholder for streaming an in-progress answer. you write extended html (or markdown), telegram parses it server-side into a `RichMessage.blocks` tree, and that same tree is what you read back.
 
 ## install
 
@@ -20,7 +20,7 @@ import { html, md, heading, paragraph, bold, link, sendRichMessage } from "@yaeb
 const title = "release notes";
 const body = [
   heading(1, title),
-  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaeb.al", "the docs"), "."),
+  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), "."),
 ];
 
 await sendRichMessage(ctx.api, ctx.chat.id, html(body)); // <h1>…</h1><p>…</p>
@@ -33,7 +33,7 @@ there is no `md.bold`/`md.paragraph` shadow api to learn, nothing to keep in syn
 const doc = html`
   ${heading(1, title)}
 
-  ${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaeb.al", "the docs"), ".")}
+  ${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), ".")}
 `;
 
 await sendRichMessage(ctx.api, ctx.chat.id, doc);
@@ -41,13 +41,13 @@ await sendRichMessage(ctx.api, ctx.chat.id, doc);
 
 literal template text passes through unchanged; only `${…}` interpolation is touched:
 
-| interpolation                    | what happens                                                    |
-|:----------------------------------|:-----------------------------------------------------------------|
-| `${string}` / `${number}` / `${bigint}` | dialect-escaped — renders literally, can't inject formatting |
-| `${builderNode}`                  | rendered into the template's dialect                              |
-| `${anotherDocument}`              | inlined as-is if dialects match, throws `RichError` if they don't |
-| `${array}`                        | each item rendered and concatenated                                |
-| `${null \| undefined \| false}`   | empty string — so `cond && bold("x")` composes cleanly             |
+| interpolation                           | what happens                                                       |
+|:----------------------------------------|:-------------------------------------------------------------------|
+| `${string}` / `${number}` / `${bigint}` | dialect-escaped — renders literally, can't inject formatting       |
+| `${builderNode}`                        | rendered into the template's dialect                               |
+| `${anotherDocument}`                    | inlined as-is if dialects match, throws `RichError` if they don't  |
+| `${array}`                              | each item rendered and concatenated                                |
+| `${null \| undefined \| false}`         | empty string — so `cond && bold("x")` composes cleanly             |
 
 multi-line templates are **dedented** (common leading indentation stripped) so you can write at your code's natural indent level. `html`/`md` also accept a plain string (passed through as-is, no escaping/dedent — for already-formatted content) or an array of blocks (each rendered and, for markdown, blank-line-joined — the form to reach for when composing from data instead of prose):
 
@@ -158,23 +158,23 @@ in html this is a full `<table>` with `colspan`/`rowspan`/`valign`/per-cell `<th
 
 ## api
 
-| export                                                                                                 | what                                                                      |
-|:-------------------------------------------------------------------------------------------------------|:--------------------------------------------------------------------------|
-| `html` / `md`                                                                                          | tagged templates — same builders, either dialect, auto-escaped interpolation |
-| `document`                                                                                              | options-object form: assemble blocks into a `RichDocument` with an explicit dialect |
-| `RichDocument`                                                                                          | the sendable result — `.rtl()`/`.noEntityDetection()`, `toInputRichMessage()`/`toJSON()` |
-| `bold`/`italic`/`underline`/`strikethrough`/`spoiler`/`code`/`marked`/`subscript`/`superscript`/`br`   | inline marks                                                              |
-| `link`/`textMention`/`anchor`/`anchorLink`/`customEmoji`/`dateTime`/`math`/`reference`/`referenceLink` | inline nodes with data                                                    |
-| `paragraph`/`heading`/`h1`–`h6`/`preformatted`/`footer`/`divider`/`mathBlock`/`anchorBlock`            | simple blocks                                                             |
-| `blockquote`/`pullquote`/`details`/`list`/`item`/`table`/`cell`/`join`                                 | structural blocks & composition                                          |
-| `collage`/`slideshow`/`map`/`image`/`video`/`audio`/`thinking`                                         | media & draft-only blocks                                                |
-| `RichNode`/`isRichNode`/`makeNode`/`Dialect`/`Level`/`RichError`                                        | the node contract, for writing your own dual-dialect builder             |
-| `escapeMarkdown`/`escapeMarkdownUrl`                                                                    | the raw markdown escapers the builders use internally                    |
-| `sendRichMessage`/`sendRichMessageDraft`                                                                | standalone send functions, no plugin required                            |
-| `rich()`                                                                                                | plugin: adds `ctx.sendRichMessage`/`ctx.richMessageDraft`                |
-| `RichMessageDraft`                                                                                      | the draft/streaming session class — `rewrite()`/`write()`/`send()`/`cancel()` |
-| `isParagraph`, `isTable`, `isCustomEmoji`, …                                                            | one type guard per `RichBlock`/`RichText` variant                        |
-| `richTextToPlainText`/`richBlockToPlainText`/`richMessageToPlainText`                                   | flatten to plain text                                                    |
+| export                                                                                                 | what                                                                                     |
+|:-------------------------------------------------------------------------------------------------------|:-----------------------------------------------------------------------------------------|
+| `html` / `md`                                                                                          | tagged templates — same builders, either dialect, auto-escaped interpolation             |
+| `document`                                                                                             | options-object form: assemble blocks into a `RichDocument` with an explicit dialect      |
+| `RichDocument`                                                                                         | the sendable result — `.rtl()`/`.noEntityDetection()`, `toInputRichMessage()`/`toJSON()` |
+| `bold`/`italic`/`underline`/`strikethrough`/`spoiler`/`code`/`marked`/`subscript`/`superscript`/`br`   | inline marks                                                                             |
+| `link`/`textMention`/`anchor`/`anchorLink`/`customEmoji`/`dateTime`/`math`/`reference`/`referenceLink` | inline nodes with data                                                                   |
+| `paragraph`/`heading`/`h1`–`h6`/`preformatted`/`footer`/`divider`/`mathBlock`/`anchorBlock`            | simple blocks                                                                            |
+| `blockquote`/`pullquote`/`details`/`list`/`item`/`table`/`cell`/`join`                                 | structural blocks & composition                                                          |
+| `collage`/`slideshow`/`map`/`image`/`video`/`audio`/`thinking`                                         | media & draft-only blocks                                                                |
+| `RichNode`/`isRichNode`/`makeNode`/`Dialect`/`Level`/`RichError`                                       | the node contract, for writing your own dual-dialect builder                             |
+| `escapeMarkdown`/`escapeMarkdownUrl`                                                                   | the raw markdown escapers the builders use internally                                    |
+| `sendRichMessage`/`sendRichMessageDraft`                                                               | standalone send functions, no plugin required                                            |
+| `rich()`                                                                                               | plugin: adds `ctx.sendRichMessage`/`ctx.richMessageDraft`                                |
+| `RichMessageDraft`                                                                                     | the draft/streaming session class — `rewrite()`/`write()`/`send()`/`cancel()`            |
+| `isParagraph`, `isTable`, `isCustomEmoji`, …                                                           | one type guard per `RichBlock`/`RichText` variant                                        |
+| `richTextToPlainText`/`richBlockToPlainText`/`richMessageToPlainText`                                  | flatten to plain text                                                                    |
 
 plus the full generated type surface (`RichMessage`, `RichBlock`, `RichText`, and every `RichBlock*`/`RichText*` interface) re-exported from `@yaebal/types` for convenience.
 

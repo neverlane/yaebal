@@ -90,14 +90,16 @@ test("renders a poll with percentage bars", () => {
 				id: "1",
 				question: "tabs or spaces?",
 				options: [
-					{ text: "tabs", voter_count: 3 },
-					{ text: "spaces", voter_count: 1 },
+					{ persistent_id: "tabs", text: "tabs", voter_count: 3 },
+					{ persistent_id: "spaces", text: "spaces", voter_count: 1 },
 				],
 				total_voter_count: 4,
 				is_closed: false,
 				is_anonymous: true,
 				type: "regular",
 				allows_multiple_answers: false,
+				allows_revoting: false,
+				members_only: false,
 			},
 		},
 	]);

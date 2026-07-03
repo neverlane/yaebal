@@ -1,87 +1,141 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
 
 	const GH = "https://github.com/neverlane/yaebal/tree/master/examples";
 
 	const run = `# from a clone of the monorepo
 pnpm install
 
-# copy the env template, then add your token(s)
-cp examples/panel/.env.example examples/panel/.env
+# copy an env template, then add BOT_TOKEN
+cp examples/commerce-suite/.env.example examples/commerce-suite/.env
 
-# run with reload (reads .env)
-pnpm --filter @yaebal/example-panel dev`;
+# run with reload
+pnpm --filter @yaebal/example-commerce-suite dev`;
 
-	const basic = [
-		["/start", "a formatted greeting with an inline keyboard (keyboard + callback-data)"],
-		["/count", "a per-chat counter (session)"],
-		["/menu", "a two-window dialog with stack navigation (morda)"],
-		["/photo", "sends a photo by url (media)"],
-		["/lang", "toggles the locale and replies in it (i18n)"],
-		["/register", "a name → age wizard (scenes)"],
-		["/name", "asks once and handles the reply (prompt)"],
+	const test = `# smoke-test every example workspace
+pnpm -r --filter "./examples/*" run test
+
+# run the actor-driven test example only
+pnpm --filter @yaebal/example-testing-lab test`;
+
+	const examples = [
+		{
+			name: "basic",
+			focus: "whole-stack plugin tour",
+			plugins: "again, callback-data, filters, fmt, i18n, keyboard, morda, prompt, scenes, session, throttle",
+			run: "pnpm --filter @yaebal/example-basic dev",
+		},
+		{
+			name: "again",
+			focus: "awaited retry and retry metrics",
+			plugins: "again",
+			run: "pnpm --filter @yaebal/example-again dev",
+		},
+		{
+			name: "throttle",
+			focus: "outbound buckets, priorities, cancellation",
+			plugins: "again, throttle",
+			run: "pnpm --filter @yaebal/example-throttle dev",
+		},
+		{
+			name: "broadcast",
+			focus: "typed delivery jobs and controls",
+			plugins: "broadcast",
+			run: "pnpm --filter @yaebal/example-broadcast dev",
+		},
+		{
+			name: "keyboard",
+			focus: "every inline and reply keyboard feature",
+			plugins: "keyboard",
+			run: "pnpm --filter @yaebal/example-keyboard dev",
+		},
+		{
+			name: "simple",
+			focus: "toml routes plus handler registry",
+			plugins: "toml",
+			run: "pnpm --filter @yaebal/example-simple dev",
+		},
+		{
+			name: "onboarding",
+			focus: "first-run tour, dismiss, opt-out",
+			plugins: "onboarding",
+			run: "pnpm --filter @yaebal/example-onboarding dev",
+		},
+		{
+			name: "rich-messages",
+			focus: "rich blocks and draft streaming",
+			plugins: "rich",
+			run: "pnpm --filter @yaebal/example-rich-messages dev",
+		},
+		{
+			name: "panel",
+			focus: "operator dashboard and media timeline",
+			plugins: "again, panel",
+			run: "pnpm --filter @yaebal/example-panel dev",
+		},
+		{
+			name: "commerce-suite",
+			focus: "shop bot with cart, catalog and locale",
+			plugins: "callback-data, commands, filters, fmt, i18n, keyboard, pagination, ratelimiter, session",
+			run: "pnpm --filter @yaebal/example-commerce-suite dev",
+		},
+		{
+			name: "dialog-quest",
+			focus: "cockpit menu, wizard, prompt and support flow",
+			plugins: "conversation, morda, prompt, scenes, session",
+			run: "pnpm --filter @yaebal/example-dialog-quest dev",
+		},
+		{
+			name: "media-studio",
+			focus: "albums, files, cache, previews and long reports",
+			plugins: "files, media-cache, media-group, preview, split",
+			run: "pnpm --filter @yaebal/example-media-studio dev",
+		},
+		{
+			name: "modular-router",
+			focus: "file-based routes for larger bots",
+			plugins: "keyboard, router",
+			run: "pnpm --filter @yaebal/example-modular-router dev",
+		},
+		{
+			name: "webhook-edge",
+			focus: "fetch webhook handler and local node adapter",
+			plugins: "keyboard, web",
+			run: "pnpm --filter @yaebal/example-webhook-edge dev",
+		},
+		{
+			name: "runner-workers",
+			focus: "concurrent polling and worker offload",
+			plugins: "runner, workers",
+			run: "pnpm --filter @yaebal/example-runner-workers dev",
+		},
+		{
+			name: "testing-lab",
+			focus: "bot factory with actor-driven tests",
+			plugins: "callback-data, keyboard, session, test",
+			run: "pnpm --filter @yaebal/example-testing-lab test",
+		},
+		{
+			name: "inline-search",
+			focus: "inline query results and chosen-result analytics",
+			plugins: "fmt",
+			run: "pnpm --filter @yaebal/example-inline-search dev",
+		},
+		{
+			name: "payments-stars",
+			focus: "stars invoices, pre-checkout, refund",
+			plugins: "callback-data, keyboard",
+			run: "pnpm --filter @yaebal/example-payments-stars dev",
+		},
 	];
 
-	const again = [
-		["/start", "explains the auto-retry example"],
-		["/burst", "sends a burst; structured retry_after waits are awaited and retried"],
-		["/stats", "prints retry counts grouped by reason"],
-	];
-
-	const throttle = [
-		["/start", "explains the outbound scheduler example"],
-		["/burst", "queues multiple messages behind the per-chat bucket"],
-		["/priority", "queues low-priority work and an urgent message"],
-		["/cancel", "aborts a queued request before it drains"],
-		["/metrics", "prints live scheduler metrics"],
-	];
-
-	const broadcast = [
-		["/start", "subscribes the current chat to the demo audience"],
-		["/broadcast text", "queues a typed broadcast job for all subscribers"],
-		["/status", "prints recent jobs, events and worker metrics"],
-		["/pause job_id", "pauses a queued or running job"],
-		["/resume job_id", "resumes a paused job"],
-		["/cancel job_id", "cancels a job"],
-	];
-
-	const panelTour: [string, string][] = [
-		["/start", "inline keyboard preview, avatar sidebar and callback buttons"],
-		["press a button", "callback event row plus the bot response"],
-		["send photo / album / video / voice", "media viewer, album grid, styled video card and voice waveform"],
-		["reply from the panel", "delivered via sendMessage; uploads infer sendPhoto / sendVideo / sendVoice / sendDocument"],
-	];
-
-	const keyboard = [
-		["/start", "text, style, url, row — the basics, and reply_markup taking the builder directly"],
-		["/gallery", "every remaining inline button: webApp, login, switchInline*, copyText"],
-		["/grid", "buttons built from an array with add() + columns()"],
-		["/contact", "reply keyboard: requestContact, requestLocation, requestPoll, webApp"],
-		["/profile", "reply keyboard: requestUsers, requestChat, requestManagedBot"],
-		["/hide", "Keyboard.remove()"],
-		["/ask", "Keyboard.forceReply(), with a handler that recognizes the reply"],
-	];
-
-	const onboarding = [
-		["/start", "starts or resumes the welcome flow"],
-		["/tour", "force-restarts the tour after completion"],
-		["/status", "reads ctx.onboarding.welcome state"],
-		["/disable", "calls ctx.onboarding.disableAll()"],
-		["/enable", "reenables and undismisses the flow"],
-	];
-
-	const rich = [
-		["/start", "document() with a heading, bold/link inline marks, and a blockquote"],
-		["/report", "table()/cell(), a checkbox list(), and a collapsible details()"],
-		["/media", "image()/video()/audio() blocks with captions"],
-		["/ask <question>", "streams a fake answer via RichMessageDraft (thinking() → pushes → commit())"],
-	];
-
-	const simple = [
-		["/start", "a reply defined directly in bot.toml"],
-		["/ping", "a named typescript handler from the registry"],
-		["ping", "a hears route that replies pong"],
-		["profile callback", "a callback_query route backed by a named handler"],
+	const packs = [
+		["state and ui", "basic, commerce-suite, dialog-quest, testing-lab"],
+		["media", "media-studio, rich-messages, keyboard"],
+		["ops", "again, throttle, broadcast, panel, runner-workers, webhook-edge"],
+		["telegram surface", "inline-search, payments-stars, onboarding"],
+		["large project layout", "modular-router, simple"],
 	];
 </script>
 
@@ -91,192 +145,66 @@ pnpm --filter @yaebal/example-panel dev`;
 
 <h1>examples</h1>
 <p class="lead">
-	runnable, single-file bots in the <a href={GH}>monorepo</a> under <code>examples/</code>. each is a
-	workspace package wired to the local source, so it's also a live smoke test of the public API.
-	clone, drop a token in <code>.env</code>, and run.
+	runnable bots in the <a href={GH}>monorepo</a> under <code>examples/</code>. each one is a private
+	workspace package wired to local source, so it doubles as a live public api smoke test.
 </p>
 
 <Code code={run} lang="sh" title="terminal" />
-<p>
-	want a standalone project instead of the monorepo? scaffold one with
-	<a href="/docs/scaffolding/">create-yaebal</a> — <code>pnpm create yaebal my-bot</code>.
-</p>
-
-<h2>simple <span class="muted">— toml routes</span></h2>
-<p>
-	a compact bot powered by <a href="/docs/plugins/toml/">@yaebal/toml</a>: routes live in
-	<code>bot.toml</code>, complex logic stays in the typescript handler registry. source:
-	<a href={`${GH}/simple`}>examples/simple</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>try</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each simple as [action, desc]}
-			<tr><td><code>{action}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-simple dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>basic <span class="muted">— a plugin tour</span></h2>
-<p>
-	a single bot wiring most of the first-party plugins. each command demonstrates one of them.
-	source: <a href={`${GH}/basic`}>examples/basic</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each basic as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-basic dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>again <span class="muted">— awaited retry</span></h2>
-<p>
-	<a href="/docs/plugins/again/">@yaebal/again</a> in isolation: structured
-	<code>response_parameters.retry_after</code>, bounded retry budget and retry metrics. source:
-	<a href={`${GH}/again`}>examples/again</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each again as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-again dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>throttle <span class="muted">— outbound scheduler</span></h2>
-<p>
-	<a href="/docs/plugins/throttle/">@yaebal/throttle</a> with Telegram buckets, per-method
-	priorities, request cancellation and metrics. source:
-	<a href={`${GH}/throttle`}>examples/throttle</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each throttle as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-throttle dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>broadcast <span class="muted">— typed delivery jobs</span></h2>
-<p>
-	<a href="/docs/plugins/broadcast/">@yaebal/broadcast</a> with typed job definitions, local
-	storage, retry, progress, pause/resume/cancel and graceful shutdown. source:
-	<a href={`${GH}/broadcast`}>examples/broadcast</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each broadcast as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-broadcast dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>keyboard <span class="muted">— every button type</span></h2>
-<p>
-	a tour of every <a href="/docs/plugins/keyboard/">@yaebal/keyboard</a> feature: inline and
-	reply keyboards, every button type, styling, dynamic buttons via <code>add()</code>/<code>columns()</code>,
-	request user/chat/managed-bot, and <code>Keyboard.remove()</code>/<code>Keyboard.forceReply()</code>.
-	source: <a href={`${GH}/keyboard`}>examples/keyboard</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each keyboard as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-keyboard dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>onboarding <span class="muted">— product tour</span></h2>
-<p>
-	the <a href="/docs/plugins/onboarding/">onboarding</a> plugin in isolation: typed flow controls,
-	inline next/skip/exit buttons, completion hooks, force restart and opt-out. source:
-	<a href={`${GH}/onboarding`}>examples/onboarding</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each onboarding as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-onboarding dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>rich-messages <span class="muted">— sendRichMessage / sendRichMessageDraft</span></h2>
-<p>
-	a tour of <a href="/docs/plugins/rich/">@yaebal/rich</a>: block/inline builders, sending a
-	document, streaming a fake answer via <code>RichMessageDraft</code>, and reading
-	<code>message.rich_message</code> back with <code>richMessageToPlainText</code>. source:
-	<a href={`${GH}/rich-messages`}>examples/rich-messages</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>command</th><th>what it shows</th></tr>
-	</thead>
-	<tbody>
-		{#each rich as [cmd, desc]}
-			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>run it: <code>pnpm --filter @yaebal/example-rich-messages dev</code> (needs <code>BOT_TOKEN</code>).</p>
-
-<h2>panel <span class="muted">— operator dashboard</span></h2>
-<p>
-	the <a href="/docs/plugins/panel/">panel</a> end-to-end: a live operator dashboard with avatars,
-	media viewer, keyboard previews, callbacks, event rows, outgoing logging, login, realtime SSE and
-	the media proxy. source: <a href={`${GH}/panel`}>examples/panel</a>.
-</p>
-<table>
-	<thead>
-		<tr><th>try</th><th>what happens</th></tr>
-	</thead>
-	<tbody>
-		{#each panelTour as [action, result]}
-			<tr><td>{action}</td><td>{result}</td></tr>
-		{/each}
-	</tbody>
-</table>
-<p>
-	run it: <code>pnpm --filter @yaebal/example-panel dev</code> (needs <code>BOT_TOKEN</code> +
-	<code>PANEL_TOKEN</code>), then open <code>http://localhost:3000</code> and paste the panel token.
-</p>
 
 <div class="note">
-	examples are <code>private</code> workspace packages — they're not published to npm. they exist to
-	run locally and to keep the public API honest as the framework evolves.
+	for a complete plugin coverage matrix, see <a href={`${GH}/README.md`}>examples/readme.md</a>.
+	for a standalone project, use <a href="/docs/scaffolding/">create-yaebal</a>.
+</div>
+
+<h2>playground quick tours</h2>
+<p>these snippets run in-browser with mock telegram updates, then can switch to live mode with a token.</p>
+<Try id="keyboard-callback" title="keyboard.ts" />
+<Try id="fmt-html" title="formatting.ts" />
+<Try id="media-poll" title="media-poll.ts" />
+
+<h2>example catalog</h2>
+<table>
+	<thead>
+		<tr><th>example</th><th>focus</th><th>plugins</th><th>run</th></tr>
+	</thead>
+	<tbody>
+		{#each examples as item}
+			<tr>
+				<td><a href={`${GH}/${item.name}`}>{item.name}</a></td>
+				<td>{item.focus}</td>
+				<td>{item.plugins}</td>
+				<td><code>{item.run}</code></td>
+			</tr>
+		{/each}
+	</tbody>
+</table>
+
+<h2>recipe packs</h2>
+<table>
+	<thead>
+		<tr><th>need</th><th>copy from</th></tr>
+	</thead>
+	<tbody>
+		{#each packs as [need, names]}
+			<tr><td>{need}</td><td>{names}</td></tr>
+		{/each}
+	</tbody>
+</table>
+
+<h2>tests</h2>
+<p>
+	every example has a <code>test</code> script. most examples typecheck as no-network smoke tests;
+	<code>testing-lab</code> runs real actor-driven tests with <code>@yaebal/test</code>.
+</p>
+<Code code={test} lang="sh" title="terminal" />
+
+<div class="note">
+	plugin packages keep focused tests under <code>packages/*/src/*.test.ts</code>; examples prove the
+	public imports still compose in real bot shapes.
 </div>
 
 <style>
-	.muted {
-		color: var(--muted, #888);
-		font-weight: 400;
-		font-size: 0.8em;
+	td code {
+		white-space: nowrap;
 	}
 </style>

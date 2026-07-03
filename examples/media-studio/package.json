@@ -1,0 +1,23 @@
+{
+	"name": "@yaebal/example-media-studio",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types --env-file=.env src/index.ts",
+		"start": "node --experimental-strip-types --env-file=.env src/index.ts",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "pnpm typecheck"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/files": "workspace:*",
+		"@yaebal/media-cache": "workspace:*",
+		"@yaebal/media-group": "workspace:*",
+		"@yaebal/preview": "workspace:*",
+		"@yaebal/split": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

@@ -84,20 +84,28 @@ if yaebal saves you time, star the repo. it helps people find a young project.
 
 ### examples
 
-runnable, single-file bots live under [`examples/`](/examples/). clone the repo, drop a token in
-`.env`, and run one package.
+runnable bots live under [`examples/`](/examples/). clone the repo, drop a token in `.env`, and run one package. the full plugin coverage matrix is in [`examples/readme.md`](/examples/README.md).
 
-| example                                   | what it shows                                                                                                                  | run                                               |
-|:------------------------------------------|:-------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------------|
-| [basic](/examples/basic/)                 | a tour wiring most plugins: keyboard, callback-data, session, morda, i18n, scenes, prompt, media                               | `pnpm --filter @yaebal/example-basic dev`         |
-| [again](/examples/again/)                 | awaited auto-retry on structured `retry_after` and transient 5xx                                                               | `pnpm --filter @yaebal/example-again dev`         |
-| [throttle](/examples/throttle/)           | outbound scheduler with buckets, priority, cancellation and metrics                                                            | `pnpm --filter @yaebal/example-throttle dev`      |
-| [broadcast](/examples/broadcast/)         | typed broadcast jobs with progress, retry, pause, resume and cancel                                                            | `pnpm --filter @yaebal/example-broadcast dev`     |
-| [keyboard](/examples/keyboard/)           | every [@yaebal/keyboard](/packages/keyboard/) feature: button types, styling, dynamic buttons, request user/chat/managed-bot   | `pnpm --filter @yaebal/example-keyboard dev`      |
-| [simple](/examples/simple/)               | toml routes with a typescript handler registry                                                                                 | `pnpm --filter @yaebal/example-simple dev`        |
-| [onboarding](/examples/onboarding/)       | first-run product tour with typed flow controls, inline buttons and opt-out state                                              | `pnpm --filter @yaebal/example-onboarding dev`    |
-| [rich-messages](/examples/rich-messages/) | [@yaebal/rich](/packages/rich/) tour: block/inline builders, `sendRichMessage`, streaming a draft, reading `rich_message` back | `pnpm --filter @yaebal/example-rich-messages dev` |
-| [panel](/examples/panel/)                 | the operator [panel](/packages/panel/) end-to-end: avatars, media viewer, keyboards, callbacks, events                         | `pnpm --filter @yaebal/example-panel dev`         |
+| example | what it shows | run |
+|:--|:--|:--|
+| [basic](/examples/basic/) | whole-stack tour: keyboard, callback-data, session, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev` |
+| [again](/examples/again/) | awaited retry on structured `retry_after` and transient 5xx | `pnpm --filter @yaebal/example-again dev` |
+| [throttle](/examples/throttle/) | outbound scheduler with buckets, priority, cancellation and metrics | `pnpm --filter @yaebal/example-throttle dev` |
+| [broadcast](/examples/broadcast/) | typed broadcast jobs with progress, retry, pause, resume and cancel | `pnpm --filter @yaebal/example-broadcast dev` |
+| [keyboard](/examples/keyboard/) | every keyboard button type, dynamic grids, reply keyboards and request buttons | `pnpm --filter @yaebal/example-keyboard dev` |
+| [simple](/examples/simple/) | toml routes with a typescript handler registry | `pnpm --filter @yaebal/example-simple dev` |
+| [onboarding](/examples/onboarding/) | first-run product tour with typed flow controls and opt-out state | `pnpm --filter @yaebal/example-onboarding dev` |
+| [rich-messages](/examples/rich-messages/) | rich block builders, draft streaming and `rich_message` readback | `pnpm --filter @yaebal/example-rich-messages dev` |
+| [panel](/examples/panel/) | operator dashboard with media viewer, keyboards, callbacks and events | `pnpm --filter @yaebal/example-panel dev` |
+| [commerce-suite](/examples/commerce-suite/) | shop bot: cart session, i18n, pagination, callback data, command registry, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
+| [dialog-quest](/examples/dialog-quest/) | morda cockpit, scenes, prompt, conversation and session profile | `pnpm --filter @yaebal/example-dialog-quest dev` |
+| [media-studio](/examples/media-studio/) | albums, file links, media cache, generated svg previews and long-message splitting | `pnpm --filter @yaebal/example-media-studio dev` |
+| [modular-router](/examples/modular-router/) | file-based routes from `routes/commands` and `routes/on` | `pnpm --filter @yaebal/example-modular-router dev` |
+| [webhook-edge](/examples/webhook-edge/) | fetch webhook handler, local node adapter, secret token and `setWebhook` | `pnpm --filter @yaebal/example-webhook-edge dev` |
+| [runner-workers](/examples/runner-workers/) | concurrent polling plus worker thread offload | `pnpm --filter @yaebal/example-runner-workers dev` |
+| [testing-lab](/examples/testing-lab/) | bot factory with real actor-driven `node:test` coverage | `pnpm --filter @yaebal/example-testing-lab test` |
+| [inline-search](/examples/inline-search/) | inline query results, offset pagination and chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |
+| [payments-stars](/examples/payments-stars/) | telegram stars invoices, pre-checkout approval, successful payment and refund | `pnpm --filter @yaebal/example-payments-stars dev` |
 
 ### plugins
 

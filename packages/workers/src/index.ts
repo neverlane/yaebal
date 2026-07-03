@@ -7,10 +7,11 @@ import { parentPort, type Transferable, Worker } from "node:worker_threads";
  *
  *   // tasks.ts (runs in a worker)
  *   import { register } from "@yaebal/workers";
- *   register({ resize: (buf) => sharp(buf).resize(100).toBuffer() });
+ *   type Tasks = { resize: (buf: Buffer) => Promise<Buffer> };
+ *   register<Tasks>({ resize: (buf) => sharp(buf).resize(100).toBuffer() });
  *
  *   // bot
- *   const pool = createPool(new URL("./tasks.js", import.meta.url), { size: 4 });
+ *   const pool = createPool<Tasks>(new URL("./tasks.js", import.meta.url), { size: 4 });
  *   bot.on("message:photo", async (ctx) => {
  *     const thumb = await pool.run("resize", await ctx.download());
  *     await ctx.sendPhoto(media.buffer(thumb));
@@ -30,17 +31,35 @@ interface Response {
 	error?: string;
 }
 
-// biome-ignore lint/suspicious/noExplicitAny: task args/results cross the thread boundary untyped
-export type TaskHandlers = Record<string, (arg: any) => unknown | Promise<unknown>>;
+type Awaitable<T> = T | Promise<T>;
+type TaskFn = (...args: never[]) => unknown;
+type AnyTasks = Record<string, (arg?: unknown) => unknown>;
+type TaskName<Tasks> = Extract<keyof Tasks, string>;
+type TaskArg<Fn> = Fn extends (...args: infer Args) => unknown
+	? Args extends []
+		? undefined
+		: Args[0]
+	: never;
+type TaskResult<Fn> = Fn extends (...args: never[]) => infer Result ? Awaited<Result> : never;
+type RunArgs<Fn> = undefined extends TaskArg<Fn>
+	? [arg?: TaskArg<Fn>, transfer?: readonly Transferable[]]
+	: [arg: TaskArg<Fn>, transfer?: readonly Transferable[]];
+
+export type TaskDefinitions = Record<string, TaskFn>;
+export type TaskHandlers<Tasks extends TaskDefinitions = AnyTasks> = {
+	[Name in TaskName<Tasks>]: (arg: TaskArg<Tasks[Name]>) => Awaitable<TaskResult<Tasks[Name]>>;
+};
 
 /** call inside a worker file: handle each task the pool sends and reply with the result. */
-export function register(handlers: TaskHandlers): void {
+export function register<Tasks extends TaskDefinitions = AnyTasks>(handlers: TaskHandlers<Tasks>): void {
 	if (!parentPort) throw new Error("register() must be called inside a worker thread");
 
 	const port = parentPort;
+	const handlersByName = handlers as Record<string, (arg: unknown) => Awaitable<unknown>>;
+
 	port.on("message", async (msg: Request) => {
 		try {
-			const fn = handlers[msg.name];
+			const fn = handlersByName[msg.name];
 			if (!fn) throw new Error(`unknown task: ${msg.name}`);
 
 			const result = await fn(msg.arg);
@@ -57,9 +76,9 @@ export interface PoolOptions {
 	size?: number;
 }
 
-export interface Pool {
+export interface Pool<Tasks extends TaskDefinitions = AnyTasks> {
 	/** run a registered task on the next worker (round-robin). */
-	run<R = unknown>(name: string, arg?: unknown, transfer?: readonly Transferable[]): Promise<R>;
+	run<Name extends TaskName<Tasks>>(name: Name, ...args: RunArgs<Tasks[Name]>): Promise<TaskResult<Tasks[Name]>>;
 	/** terminate all workers and reject anything still in flight. */
 	destroy(): Promise<void>;
 	/** number of worker threads. */
@@ -73,7 +92,7 @@ interface Pending {
 }
 
 /** create a pool of `size` workers from `workerFile` (a built .js path or file URL). */
-export function createPool(workerFile: string | URL, options: PoolOptions = {}): Pool {
+export function createPool<Tasks extends TaskDefinitions = AnyTasks>(workerFile: string | URL, options: PoolOptions = {}): Pool<Tasks> {
 	const size = Math.max(1, options.size ?? 1);
 	const workers: Worker[] = [];
 	const inflight = new Map<number, Pending>();
@@ -123,9 +142,10 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 
 	return {
 		size,
-		run<R>(name: string, arg?: unknown, transfer?: readonly Transferable[]): Promise<R> {
+		run<Name extends TaskName<Tasks>>(name: Name, ...args: RunArgs<Tasks[Name]>): Promise<TaskResult<Tasks[Name]>> {
 			if (destroyed) return Promise.reject(new Error("pool is destroyed"));
 
+			const [arg, transfer] = args;
 			const worker = workers[next];
 			next = (next + 1) % workers.length;
 
@@ -133,7 +153,7 @@ export function createPool(workerFile: string | URL, options: PoolOptions = {}):
 
 			const id = seq++;
 
-			return new Promise<R>((resolve, reject) => {
+			return new Promise<TaskResult<Tasks[Name]>>((resolve, reject) => {
 				inflight.set(id, { resolve: resolve as (v: unknown) => void, reject, worker });
 
 				worker.postMessage({ id, name, arg } satisfies Request, transfer ?? []);

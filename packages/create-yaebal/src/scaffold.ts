@@ -44,6 +44,17 @@ interface Scripts {
 	start: string;
 }
 
+type BotTemplateId = Exclude<TemplateId, "plugin">;
+type NodePackageManager = Exclude<PackageManager, "deno">;
+
+interface PluginIdentifiers {
+	exportName: string;
+	contextKey: string;
+	optionsType: string;
+	controlType: string;
+	contextType: string;
+}
+
 const SCRIPTS: Record<Runtime, Scripts> = {
 	node: {
 		dev: "node --watch --experimental-strip-types src/index.ts",
@@ -59,7 +70,7 @@ const SCRIPTS: Record<Runtime, Scripts> = {
 const DEFAULT_BOOTSTRAP = `await bot.start();
 console.log("✓ bot is running — press ctrl-c to stop");`;
 
-const TEMPLATES: Record<TemplateId, TemplateSpec> = {
+const BOT_TEMPLATES: Record<BotTemplateId, TemplateSpec> = {
 	minimal: {
 		body: `bot.command("start", (ctx) => ctx.reply("hello! i'm a yaebal bot 🤖"));
 bot.on("message:text", (ctx) => ctx.reply(ctx.text));`,
@@ -231,6 +242,47 @@ bot.onStop(() => broadcaster.stop({ drain: true }));`,
 	},
 };
 
+const RESERVED_IDENTIFIERS = new Set([
+	"await",
+	"break",
+	"case",
+	"catch",
+	"class",
+	"const",
+	"continue",
+	"debugger",
+	"default",
+	"delete",
+	"do",
+	"else",
+	"enum",
+	"export",
+	"extends",
+	"false",
+	"finally",
+	"for",
+	"function",
+	"if",
+	"import",
+	"in",
+	"instanceof",
+	"new",
+	"null",
+	"return",
+	"super",
+	"switch",
+	"this",
+	"throw",
+	"true",
+	"try",
+	"typeof",
+	"var",
+	"void",
+	"while",
+	"with",
+	"yield",
+]);
+
 /** default package manager that matches a runtime when the user didn't pick one */
 export function defaultPackageManager(runtime: Runtime): PackageManager {
 	if (runtime === "bun") return "bun";
@@ -238,12 +290,254 @@ export function defaultPackageManager(runtime: Runtime): PackageManager {
 	return "pnpm";
 }
 
+/** library packages are authored for npm-style package managers; deno falls back to pnpm. */
+export function nodePackageManager(pm: PackageManager): NodePackageManager {
+	return pm === "deno" ? "pnpm" : pm;
+}
+
 const pkgOf = (importLine: string): string | undefined => importLine.match(/from "([^"]+)"/)?.[1];
+
+function wordsFromName(name: string): string[] {
+	const unscoped = name.split("/").pop() ?? name;
+	const words = unscoped
+		.replace(/^yaebal[._-]/, "")
+		.replace(/^plugin[._-]/, "")
+		.split(/[^a-zA-Z0-9]+/)
+		.filter(Boolean);
+
+	return words.length > 0 ? words : ["plugin"];
+}
+
+function upperFirst(value: string): string {
+	return value.length === 0 ? value : value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function safeIdentifier(value: string): string {
+	let id = value.replace(/[^a-zA-Z0-9_$]/g, "");
+	if (!/^[a-zA-Z_$]/.test(id)) id = `yaebal${upperFirst(id)}`;
+	if (RESERVED_IDENTIFIERS.has(id)) id = `${id}Plugin`;
+	return id;
+}
+
+function pluginIdentifiers(name: string): PluginIdentifiers {
+	const words = wordsFromName(name);
+	const [first = "plugin", ...rest] = words;
+	const base = safeIdentifier(
+		[first.toLowerCase(), ...rest.map((word) => upperFirst(word.toLowerCase()))].join(""),
+	);
+	const pascal = upperFirst(base);
+
+	return {
+		exportName: base,
+		contextKey: base,
+		optionsType: `${pascal}Options`,
+		controlType: `${pascal}Control`,
+		contextType: `${pascal}Context`,
+	};
+}
+
+function renderPluginSource(name: string, ids: PluginIdentifiers): string {
+	return `import type { Context, Plugin } from "@yaebal/core";
+
+export interface ${ids.optionsType} {
+	/** Text prepended by the sample formatter. Replace this with your real options. */
+	prefix?: string;
+}
+
+export interface ${ids.controlType} {
+	format(message: string): string;
+	reply(message: string): ReturnType<Context["reply"]>;
+}
+
+export interface ${ids.contextType} {
+	${ids.contextKey}: ${ids.controlType};
+}
+
+/** Adds \`ctx.${ids.contextKey}\` to every update. */
+export function ${ids.exportName}(options: ${ids.optionsType} = {}): Plugin<Context, ${ids.contextType}> {
+	const prefix = options.prefix ?? ${JSON.stringify(name)};
+
+	return (composer) =>
+		composer.derive((ctx) => {
+			const control: ${ids.controlType} = {
+				format(message) {
+					return \`\${prefix} \${message}\`;
+				},
+				reply(message) {
+					return ctx.reply(control.format(message));
+				},
+			};
+
+			return { ${ids.contextKey}: control };
+		});
+}
+`;
+}
+
+function renderPluginTest(ids: PluginIdentifiers): string {
+	return `import assert from "node:assert/strict";
+import test from "node:test";
+import { Bot } from "@yaebal/core";
+import { ${ids.exportName} } from "./index.js";
+
+test("${ids.exportName}: adds ctx.${ids.contextKey}", async () => {
+	let formatted = "";
+
+	const bot = new Bot("123:abc")
+		.install(${ids.exportName}({ prefix: "test" }))
+		.on("message:text", (ctx) => {
+			formatted = ctx.${ids.contextKey}.format(ctx.text);
+		});
+
+	await bot.handleUpdate({
+		update_id: 1,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" },
+			text: "hello",
+		},
+	} as never);
+
+	assert.equal(formatted, "test hello");
+});
+`;
+}
+
+function renderPluginExample(ids: PluginIdentifiers): string {
+	return `import { Bot } from "@yaebal/core";
+import { ${ids.exportName} } from "../lib/index.js";
+
+const token = process.env.BOT_TOKEN;
+if (!token) {
+	console.error("set BOT_TOKEN in your environment (see .env.example)");
+	process.exit(1);
+}
+
+const bot = new Bot(token).install(${ids.exportName}({ prefix: "example" }));
+
+bot.command("start", (ctx) => ctx.${ids.contextKey}.reply("hello from your plugin"));
+bot.on("message:text", (ctx) => ctx.${ids.contextKey}.reply(ctx.text));
+
+await bot.start();
+console.log("bot is running - press ctrl-c to stop");
+`;
+}
+
+function renderPluginFiles(opts: ScaffoldOptions): Record<string, string> {
+	const pm = nodePackageManager(opts.packageManager ?? defaultPackageManager(opts.runtime));
+	const ids = pluginIdentifiers(opts.name);
+
+	const pkg = {
+		name: opts.name,
+		version: "0.0.0",
+		description: "A yaebal plugin.",
+		type: "module",
+		main: "./lib/index.js",
+		types: "./lib/index.d.ts",
+		exports: {
+			".": {
+				types: "./lib/index.d.ts",
+				import: "./lib/index.js",
+			},
+		},
+		files: ["lib", "src", "examples"],
+		scripts: {
+			build: "tsc -p tsconfig.json",
+			typecheck: "tsc -p tsconfig.json --noEmit",
+			test: "tsc -p tsconfig.json && node --test lib/*.test.js",
+			example: "tsc -p tsconfig.json && node examples/basic.mjs",
+			prepack: "npm run build",
+		},
+		peerDependencies: { "@yaebal/core": ">=0.0.0" },
+		devDependencies: {
+			"@types/node": "^22.0.0",
+			"@yaebal/core": "latest",
+			typescript: "^5.7.0",
+		},
+		engines: { node: ">=20" },
+		keywords: ["telegram", "telegram-bot", "yaebal", "plugin"],
+		license: "MIT",
+	};
+
+	const tsconfig = {
+		compilerOptions: {
+			target: "ES2022",
+			module: "NodeNext",
+			moduleResolution: "NodeNext",
+			lib: ["ES2023"],
+			declaration: true,
+			declarationMap: true,
+			sourceMap: true,
+			strict: true,
+			noUncheckedIndexedAccess: true,
+			noImplicitOverride: true,
+			esModuleInterop: true,
+			forceConsistentCasingInFileNames: true,
+			skipLibCheck: true,
+			verbatimModuleSyntax: true,
+			isolatedModules: true,
+			rootDir: "src",
+			outDir: "lib",
+			types: ["node"],
+		},
+		include: ["src/**/*.ts"],
+	};
+
+	const installCmd = installCommand(pm);
+	const typecheckCmd = scriptCommand(pm, "typecheck");
+	const testCmd = scriptCommand(pm, "test");
+	const buildCmd = scriptCommand(pm, "build");
+	const exampleCmd = scriptCommand(pm, "example");
+
+	const readme = `# ${opts.name}
+
+A ready-to-edit [yaebal](https://github.com/neverlane/yaebal) plugin package.
+
+## Layout
+
+- \`src/index.ts\` - plugin implementation and public types
+- \`src/index.test.ts\` - type-safe smoke test for the context extension
+- \`examples/basic.mjs\` - tiny bot using the built plugin
+- \`package.json\` - ESM exports, build/test scripts, peer dependency on \`@yaebal/core\`
+
+## Quick Start
+
+\`\`\`sh
+${installCmd}
+${typecheckCmd}
+${testCmd}
+${buildCmd}
+\`\`\`
+
+## Try The Example
+
+\`\`\`sh
+# export BOT_TOKEN=123:abc or load it from .env yourself
+${exampleCmd}
+\`\`\`
+
+The sample plugin exports \`${ids.exportName}()\` and adds \`ctx.${ids.contextKey}\`. Rename those identifiers when you replace the sample behavior.
+`;
+
+	return {
+		"package.json": `${JSON.stringify(pkg, null, "\t")}\n`,
+		"tsconfig.json": `${JSON.stringify(tsconfig, null, "\t")}\n`,
+		"src/index.ts": renderPluginSource(opts.name, ids),
+		"src/index.test.ts": renderPluginTest(ids),
+		"examples/basic.mjs": renderPluginExample(ids),
+		".env.example": "BOT_TOKEN=\n",
+		".gitignore": "node_modules\nlib\n.env\n*.log\n",
+		"README.md": readme,
+	};
+}
 
 /** turn options into a `relative path → file content` map. pure. */
 export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 	const templateId = opts.template ?? "minimal";
-	const spec = TEMPLATES[templateId];
+	if (templateId === "plugin") return renderPluginFiles(opts);
+
+	const spec = BOT_TEMPLATES[templateId];
 	const pm = opts.packageManager ?? defaultPackageManager(opts.runtime);
 
 	const chosen = opts.plugins.map(findPlugin).filter((p): p is NonNullable<typeof p> => !!p);
@@ -408,6 +702,20 @@ export function runCommand(pm: PackageManager, script: "dev" | "start"): string 
 			return `bun run ${script}`;
 		case "deno":
 			return script === "dev" ? SCRIPTS.deno.dev : SCRIPTS.deno.start;
+		default:
+			return `pnpm ${script}`;
+	}
+}
+
+/** the package-manager-neutral way to run a package.json script. */
+export function scriptCommand(pm: PackageManager, script: string): string {
+	switch (nodePackageManager(pm)) {
+		case "npm":
+			return `npm run ${script}`;
+		case "yarn":
+			return `yarn ${script}`;
+		case "bun":
+			return `bun run ${script}`;
 		default:
 			return `pnpm ${script}`;
 	}

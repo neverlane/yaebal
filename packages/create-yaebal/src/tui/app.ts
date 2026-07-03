@@ -81,6 +81,9 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	if (args.packageManager) locked.pm = true;
 	if (args.template) locked.template = true;
 	if (args.plugins) locked.plugins = true;
+	const selectedTemplate = () => TEMPLATES[state.templateIdx]?.value ?? "minimal";
+	const shouldSkip = (step: StepId) =>
+		Boolean(locked[step]) || (step === "plugins" && selectedTemplate() === "plugin");
 
 	const write = (s: string) => output.write(s);
 
@@ -173,6 +176,7 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	}
 
 	function reviewLines(): string[] {
+		const isPluginTemplate = selectedTemplate() === "plugin";
 		const sel = sanitizePlugins([...state.selected]);
 		const kv = (k: string, v: string) => `${dim(`  ${k.padEnd(9)}`)} ${text(clip(v, TW - 12))}`;
 		return [
@@ -182,7 +186,10 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 			kv("runtime", RUNTIMES[state.runtimeIdx]?.label ?? "node.js"),
 			kv("pkg mgr", PACKAGE_MANAGERS[state.pmIdx]?.label ?? "pnpm"),
 			kv("template", TEMPLATES[state.templateIdx]?.label ?? "minimal"),
-			kv("plugins", sel.length ? sel.join(", ") : "none"),
+			kv(
+				"plugins",
+				isPluginTemplate ? "n/a (plugin template)" : sel.length ? sel.join(", ") : "none",
+			),
 			"",
 			rowLine(state.reviewCursor === 0, [
 				{ t: ` ${state.git ? "◉" : "◯"} `, fg: state.git ? theme.accent : theme.dim },
@@ -298,21 +305,21 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				runtime: RUNTIMES[state.runtimeIdx]?.value ?? "node",
 				packageManager: PACKAGE_MANAGERS[state.pmIdx]?.value ?? "pnpm",
 				template: TEMPLATES[state.templateIdx]?.value ?? "minimal",
-				plugins: sanitizePlugins([...state.selected]),
+				plugins: selectedTemplate() === "plugin" ? [] : sanitizePlugins([...state.selected]),
 				git: state.git,
 				install: state.install,
 			});
 
 		const nextStep = () => {
 			let i = state.step + 1;
-			while (i < STEPS.length && locked[STEPS[i] as StepId]) i++;
+			while (i < STEPS.length && shouldSkip(STEPS[i] as StepId)) i++;
 			if (i >= STEPS.length) return commit();
 			state.step = i;
 			render();
 		};
 		const prevStep = () => {
 			let i = state.step - 1;
-			while (i >= 0 && locked[STEPS[i] as StepId]) i--;
+			while (i >= 0 && shouldSkip(STEPS[i] as StepId)) i--;
 			if (i < 0) return;
 			state.step = i;
 			render();

@@ -1,8 +1,8 @@
 # create-yaebal
 
-scaffold a type-safe [yaebal](https://github.com/neverlane/yaebal) Telegram bot — a beautiful
-terminal ui when your terminal supports it, plain prompts when it doesn't, and a one-shot flags
-mode for ci.
+scaffold a type-safe [yaebal](https://github.com/neverlane/yaebal) Telegram bot or plugin — a
+beautiful terminal ui when your terminal supports it, plain prompts when it doesn't, and a one-shot
+flags mode for ci.
 
 ```sh
 pnpm create yaebal
@@ -41,7 +41,7 @@ pnpm create yaebal my-bot --plugins all --yes --no-install
 |:-------------------------------------------|:---------------------------------------|
 | `-r, --runtime <node\|bun\|deno>`          | target runtime (default: detected)     |
 | `-m, --pm <npm\|pnpm\|yarn\|bun\|deno>`    | package manager (default: detected)    |
-| `-t, --template <minimal\|echo\|commands>` | starter template                       |
+| `-t, --template <id>`                      | starter template or plugin package     |
 | `-p, --plugins <a,b \| all \| none>`       | comma list of `@yaebal` plugins        |
 | `--git` / `--no-git`                       | initialise a git repo (+ first commit) |
 | `--install` / `--no-install`               | install dependencies after scaffolding |
@@ -66,6 +66,8 @@ a template pulls in the plugins it needs, adds the real imports + wiring, and (f
 | `webhook`         | edge/serverless deploy via `serve()` (web)                        |
 | `runner`          | concurrent long-polling via `run()` (runner)                      |
 | `rich-message`    | `sendRichMessage` block builder + a streaming draft demo (rich)   |
+| `broadcast`       | subscriber list + typed broadcast jobs (broadcast)                |
+| `plugin`          | reusable plugin package with `src`, tests and examples            |
 
 bracketed plugins are added & wired automatically, on top of anything you pick yourself.
 
@@ -94,6 +96,20 @@ cd my-bot
 pnpm install
 # add your BOT_TOKEN to .env
 pnpm dev
+```
+
+for `--template plugin`, the generated project is a publishable package instead:
+
+```text
+my-plugin/
+  package.json          # esm exports, build/typecheck/test/example scripts
+  tsconfig.json         # strict, declarations, nodenext
+  src/index.ts          # installable yaebal plugin
+  src/index.test.ts     # context-extension smoke test
+  examples/basic.mjs    # bot using the built plugin
+  .env.example
+  .gitignore
+  README.md
 ```
 
 ---

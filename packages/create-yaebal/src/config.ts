@@ -24,13 +24,14 @@ export function defaults(args: ParsedArgs): Selections {
 	const runtime = args.runtime ?? detectRuntime();
 	const packageManager =
 		args.packageManager ?? detectPackageManager() ?? defaultPackageManager(runtime);
+	const template = args.template ?? "minimal";
 
 	return {
 		name: args.name ?? "my-bot",
 		runtime,
 		packageManager,
-		template: args.template ?? "minimal",
-		plugins: args.plugins ?? ["session", "again", "fmt"],
+		template,
+		plugins: template === "plugin" ? [] : (args.plugins ?? ["session", "again", "fmt"]),
 		git: args.git ?? true,
 		install: args.install ?? false,
 	};

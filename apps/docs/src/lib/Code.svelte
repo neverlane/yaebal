@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from "svelte";
 	import { getHighlighter, langOf } from "./highlight";
 
 	let {
@@ -20,18 +19,34 @@
 	let copied = $state(false);
 	let timer: ReturnType<typeof setTimeout>;
 
-	onMount(async () => {
-		try {
-			const hl = await getHighlighter();
+	$effect(() => {
+		const source = code.trim();
+		const language = langOf(lang);
+		let cancelled = false;
 
-			html = hl.codeToHtml(code.trim(), {
-				lang: langOf(lang),
-				themes: { light: "github-light", dark: "github-dark" },
-				defaultColor: false,
-			});
-		} catch {
-			html = "";
-		}
+		html = "";
+
+		void (async () => {
+			try {
+				const hl = await getHighlighter();
+
+				if (cancelled) return;
+
+				html = hl.codeToHtml(source, {
+					lang: language,
+					themes: { light: "github-light", dark: "github-dark" },
+					defaultColor: false,
+				});
+			} catch {
+				if (cancelled) return;
+
+				html = "";
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
 	});
 
 	async function copy() {

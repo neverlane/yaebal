@@ -89,7 +89,6 @@
 
 	.section-title {
 		font-size: 11px;
-		text-transform: uppercase;
 		letter-spacing: 1px;
 		color: var(--gray);
 		padding: 0 5px;
@@ -123,7 +122,6 @@
 	.badge {
 		font-size: 9.5px;
 		font-weight: 600;
-		text-transform: uppercase;
 		letter-spacing: 0.5px;
 		padding: 2px 6px;
 		border-radius: 6px;

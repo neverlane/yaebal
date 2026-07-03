@@ -201,7 +201,6 @@
 
 	.page-card span {
 		font-size: 11px;
-		text-transform: uppercase;
 		letter-spacing: 0.7px;
 		color: var(--gray);
 	}
@@ -308,6 +307,12 @@
 		line-height: 1.6;
 		margin-bottom: 8px;
 	}
+	.prose :global(:where(h1, h2, h3, p, li, th, td, .lead, .note)) {
+		text-transform: lowercase;
+	}
+	.prose :global(:where(code, pre, .code, .code *)) {
+		text-transform: none;
+	}
 	.prose :global(h2) {
 		margin-top: 44px;
 		margin-bottom: 12px;
@@ -381,7 +386,6 @@
 		font-weight: 600;
 		color: var(--gray);
 		font-size: 12.5px;
-		text-transform: uppercase;
 		letter-spacing: 0.4px;
 	}
 	.prose :global(.note) {

@@ -15,6 +15,7 @@
 		"test": "pnpm build && pnpm -r --filter \"./packages/*\" run test",
 		"dev": "pnpm --filter @yaebal/example-basic run dev",
 		"docs:dev": "pnpm --filter @yaebal/docs run dev",
+		"docs:check": "pnpm --filter @yaebal/docs run check:all",
 		"docs:build": "pnpm --filter @yaebal/docs run build",
 		"lint": "biome lint .",
 		"lint:fix": "biome check --write .",

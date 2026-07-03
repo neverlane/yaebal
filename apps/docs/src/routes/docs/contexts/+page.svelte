@@ -155,8 +155,8 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 	<tbody>
 		<tr><td>shortcuts</td><td>hand-written</td><td>generated from schema</td></tr>
 		<tr><td>coverage</td><td>what a maintainer wrapped</td><td>everything fillable</td></tr>
-		<tr><td>new API method</td><td>wait for a PR</td><td><code>pnpm generate</code></td></tr>
-		<tr><td>version lag</td><td>contexts trail the API</td><td>contexts == schema version</td></tr>
+		<tr><td>new api method</td><td>wait for a pr</td><td><code>pnpm generate</code></td></tr>
+		<tr><td>version lag</td><td>contexts trail the api</td><td>contexts == schema version</td></tr>
 		<tr><td>ergonomics</td><td>hand-tuned</td><td>autogen + thin sugar layer</td></tr>
 	</tbody>
 </table>
@@ -168,7 +168,6 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 		margin-left: 10px;
 		font-size: 11px;
 		font-weight: 600;
-		text-transform: uppercase;
 		letter-spacing: 0.6px;
 		padding: 4px 9px;
 		border-radius: 8px;

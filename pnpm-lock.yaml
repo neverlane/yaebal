@@ -145,6 +145,81 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/commerce-suite:
+    dependencies:
+      '@yaebal/callback-data':
+        specifier: workspace:*
+        version: link:../../packages/callback-data
+      '@yaebal/commands':
+        specifier: workspace:*
+        version: link:../../packages/commands
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/filters':
+        specifier: workspace:*
+        version: link:../../packages/filters
+      '@yaebal/fmt':
+        specifier: workspace:*
+        version: link:../../packages/fmt
+      '@yaebal/i18n':
+        specifier: workspace:*
+        version: link:../../packages/i18n
+      '@yaebal/keyboard':
+        specifier: workspace:*
+        version: link:../../packages/keyboard
+      '@yaebal/pagination':
+        specifier: workspace:*
+        version: link:../../packages/pagination
+      '@yaebal/ratelimiter':
+        specifier: workspace:*
+        version: link:../../packages/ratelimiter
+      '@yaebal/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/dialog-quest:
+    dependencies:
+      '@yaebal/conversation':
+        specifier: workspace:*
+        version: link:../../packages/conversation
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/morda':
+        specifier: workspace:*
+        version: link:../../packages/morda
+      '@yaebal/prompt':
+        specifier: workspace:*
+        version: link:../../packages/prompt
+      '@yaebal/scenes':
+        specifier: workspace:*
+        version: link:../../packages/scenes
+      '@yaebal/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/inline-search:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/fmt':
+        specifier: workspace:*
+        version: link:../../packages/fmt
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/keyboard:
     dependencies:
       '@yaebal/core':
@@ -153,6 +228,47 @@ importers:
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../../packages/keyboard
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/media-studio:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/files':
+        specifier: workspace:*
+        version: link:../../packages/files
+      '@yaebal/media-cache':
+        specifier: workspace:*
+        version: link:../../packages/media-cache
+      '@yaebal/media-group':
+        specifier: workspace:*
+        version: link:../../packages/media-group
+      '@yaebal/preview':
+        specifier: workspace:*
+        version: link:../../packages/preview
+      '@yaebal/split':
+        specifier: workspace:*
+        version: link:../../packages/split
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/modular-router:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/keyboard':
+        specifier: workspace:*
+        version: link:../../packages/keyboard
+      '@yaebal/router':
+        specifier: workspace:*
+        version: link:../../packages/router
     devDependencies:
       '@types/node':
         specifier: latest
@@ -187,6 +303,22 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/payments-stars:
+    dependencies:
+      '@yaebal/callback-data':
+        specifier: workspace:*
+        version: link:../../packages/callback-data
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/keyboard':
+        specifier: workspace:*
+        version: link:../../packages/keyboard
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/rich-messages:
     dependencies:
       '@yaebal/core':
@@ -195,6 +327,22 @@ importers:
       '@yaebal/rich':
         specifier: workspace:*
         version: link:../../packages/rich
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/runner-workers:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/runner':
+        specifier: workspace:*
+        version: link:../../packages/runner
+      '@yaebal/workers':
+        specifier: workspace:*
+        version: link:../../packages/workers
     devDependencies:
       '@types/node':
         specifier: latest
@@ -213,6 +361,28 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/testing-lab:
+    dependencies:
+      '@yaebal/callback-data':
+        specifier: workspace:*
+        version: link:../../packages/callback-data
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/keyboard':
+        specifier: workspace:*
+        version: link:../../packages/keyboard
+      '@yaebal/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../../packages/test
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/throttle:
     dependencies:
       '@yaebal/again':
@@ -224,6 +394,22 @@ importers:
       '@yaebal/throttle':
         specifier: workspace:*
         version: link:../../packages/throttle
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
+  examples/webhook-edge:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/keyboard':
+        specifier: workspace:*
+        version: link:../../packages/keyboard
+      '@yaebal/web':
+        specifier: workspace:*
+        version: link:../../packages/web
     devDependencies:
       '@types/node':
         specifier: latest

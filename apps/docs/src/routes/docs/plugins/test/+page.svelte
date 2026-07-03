@@ -116,6 +116,7 @@ try {
 } catch (error) {
   error instanceof TelegramError; // true
   error.code;                     // 403
+  error.parameters;               // response_parameters when Telegram sends them
 }`;
 
 	const strictModes = `const env = createTestEnv(bot, { strictApi: true });      // throw on an unstubbed method
@@ -387,7 +388,7 @@ await withFetch(
 		<tr><td><code>ChatActor</code></td><td>class</td><td><code>id</code>, <code>type</code>, <code>title?</code>, <code>username?</code>, <code>members</code>, <code>setMembership</code>/<code>membershipOf</code>, <code>post</code></td></tr>
 		<tr><td><code>apiError</code></td><td><code>(code, description, parameters?) =&gt; ApiErrorSentinel</code></td><td>simulate a real Telegram error response</td></tr>
 		<tr><td><code>isApiErrorSentinel</code></td><td><code>(value) =&gt; value is ApiErrorSentinel</code></td><td>typeguard for a stored <code>apiError(...)</code></td></tr>
-		<tr><td><code>TestApiError</code></td><td>class extends <code>TelegramError</code></td><td>adds <code>.parameters</code></td></tr>
+		<tr><td><code>TestApiError</code></td><td>class extends <code>TelegramError</code></td><td>test subclass carrying the same structured <code>.parameters</code></td></tr>
 		<tr><td><code>installTestClock</code></td><td><code>(startAt?) =&gt; TestClock</code></td><td>standalone virtual clock: <code>.now()</code>, <code>.advance(ms)</code>, <code>.restore()</code></td></tr>
 		<tr><td><code>mockApi</code></td><td><code>(options?) =&gt; MockApi</code></td><td>the fake <code>Api</code> underneath <code>TestEnv</code> — usable standalone</td></tr>
 		<tr><td><code>findButton</code></td><td><code>(markup, match) =&gt; FoundButton | undefined</code></td><td>find an inline keyboard button by text</td></tr>

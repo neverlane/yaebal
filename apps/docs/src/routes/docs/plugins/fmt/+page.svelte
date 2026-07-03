@@ -6,7 +6,7 @@
 	const basic = `import { html, md } from "@yaebal/fmt";
 
 // parses into MessageEntity[] — no parse_mode, nothing to escape
-ctx.send(html\`<b>hello</b> <a href="https://yaeb.al">docs</a>\`);
+ctx.send(html\`<b>hello</b> <a href="https://yaebal.pages.dev">docs</a>\`);
 ctx.send(md\`**hello** and \\\`code\\\` and ||spoiler||\`);`;
 
 	const escape = `const name = "<script>**hax**";

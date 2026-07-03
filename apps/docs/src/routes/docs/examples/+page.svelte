@@ -22,6 +22,29 @@ pnpm --filter @yaebal/example-panel dev`;
 		["/name", "asks once and handles the reply (prompt)"],
 	];
 
+	const again = [
+		["/start", "explains the auto-retry example"],
+		["/burst", "sends a burst; structured retry_after waits are awaited and retried"],
+		["/stats", "prints retry counts grouped by reason"],
+	];
+
+	const throttle = [
+		["/start", "explains the outbound scheduler example"],
+		["/burst", "queues multiple messages behind the per-chat bucket"],
+		["/priority", "queues low-priority work and an urgent message"],
+		["/cancel", "aborts a queued request before it drains"],
+		["/metrics", "prints live scheduler metrics"],
+	];
+
+	const broadcast = [
+		["/start", "subscribes the current chat to the demo audience"],
+		["/broadcast text", "queues a typed broadcast job for all subscribers"],
+		["/status", "prints recent jobs, events and worker metrics"],
+		["/pause job_id", "pauses a queued or running job"],
+		["/resume job_id", "resumes a paused job"],
+		["/cancel job_id", "cancels a job"],
+	];
+
 	const panelTour: [string, string][] = [
 		["/start", "inline keyboard preview, avatar sidebar and callback buttons"],
 		["press a button", "callback event row plus the bot response"],
@@ -113,6 +136,60 @@ pnpm --filter @yaebal/example-panel dev`;
 	</tbody>
 </table>
 <p>run it: <code>pnpm --filter @yaebal/example-basic dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
+<h2>again <span class="muted">— awaited retry</span></h2>
+<p>
+	<a href="/docs/plugins/again/">@yaebal/again</a> in isolation: structured
+	<code>response_parameters.retry_after</code>, bounded retry budget and retry metrics. source:
+	<a href={`${GH}/again`}>examples/again</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each again as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-again dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
+<h2>throttle <span class="muted">— outbound scheduler</span></h2>
+<p>
+	<a href="/docs/plugins/throttle/">@yaebal/throttle</a> with Telegram buckets, per-method
+	priorities, request cancellation and metrics. source:
+	<a href={`${GH}/throttle`}>examples/throttle</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each throttle as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-throttle dev</code> (needs <code>BOT_TOKEN</code>).</p>
+
+<h2>broadcast <span class="muted">— typed delivery jobs</span></h2>
+<p>
+	<a href="/docs/plugins/broadcast/">@yaebal/broadcast</a> with typed job definitions, local
+	storage, retry, progress, pause/resume/cancel and graceful shutdown. source:
+	<a href={`${GH}/broadcast`}>examples/broadcast</a>.
+</p>
+<table>
+	<thead>
+		<tr><th>command</th><th>what it shows</th></tr>
+	</thead>
+	<tbody>
+		{#each broadcast as [cmd, desc]}
+			<tr><td><code>{cmd}</code></td><td>{desc}</td></tr>
+		{/each}
+	</tbody>
+</table>
+<p>run it: <code>pnpm --filter @yaebal/example-broadcast dev</code> (needs <code>BOT_TOKEN</code>).</p>
 
 <h2>keyboard <span class="muted">— every button type</span></h2>
 <p>

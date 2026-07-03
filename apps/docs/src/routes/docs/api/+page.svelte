@@ -94,7 +94,7 @@ bot.on("message", (ctx) => ctx.send("hello!"));`;
 		color: var(--secondary);
 	}
 
-	h2, a {
+	h2 {
 		text-transform: lowercase;
 	}
 

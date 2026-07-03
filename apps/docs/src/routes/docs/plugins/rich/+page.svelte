@@ -8,7 +8,7 @@
 const title = "release notes";
 const body = [
   heading(1, title),
-  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaeb.al", "the docs"), "."),
+  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), "."),
 ];
 
 await sendRichMessage(ctx.api, ctx.chat.id, html(body)); // <h1>…</h1><p>…</p>
@@ -17,7 +17,7 @@ await sendRichMessage(ctx.api, ctx.chat.id, md(body));   // # …\\n\\n…`;
 	const template = `const doc = html\`
   \${heading(1, title)}
 
-  \${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaeb.al", "the docs"), ".")}
+  \${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), ".")}
 \`;
 
 await sendRichMessage(ctx.api, ctx.chat.id, doc);`;

@@ -10,15 +10,16 @@ bot.api.before((method, params) => {
 });`;
 
 	const after = `// after — inspect or rewrite the result; return a value to replace it
-bot.api.after((method, result) => {
+bot.api.after((method, params, result) => {
   console.log(method, "ok");
   // return undefined → result unchanged
 });`;
 
 	const onError = `// onError — runs when a request throws; ask for a retry by returning an action
-bot.api.onError((method, error, attempt) => {
+bot.api.onError((method, error, attempt, params) => {
   if (error instanceof TelegramError && error.code === 429 && attempt < 5) {
-    return { retry: true, delayMs: 1000 };
+    const retryAfterMs = (error.parameters?.retry_after ?? 1) * 1000;
+    return { retry: true, delayMs: retryAfterMs };
   }
   // return undefined (or { retry: false }) → the error is rethrown
 });`;
@@ -45,6 +46,8 @@ try {
   if (e instanceof TelegramError) {
     e.method;      // "sendMessage"
     e.code;        // error_code from Telegram
+    e.description; // raw Telegram description
+    e.parameters;  // response_parameters, e.g. { retry_after: 7 }
     e.message;     // "[sendMessage] 400: message text is empty"
   }
 }`;
@@ -77,7 +80,8 @@ const url = bot.api.fileUrl(file.file_path);
 <p>
 	a <code>before</code> hook receives the method name and params and may return replacement params.
 	returning <code>undefined</code> leaves them as-is. hooks run in registration order, each seeing
-	the previous one's output.
+	the previous one's output. they run for every actual request attempt, including retries requested
+	by <code>onError</code> hooks.
 </p>
 <Code code={before} title="before.ts" />
 
@@ -90,10 +94,10 @@ const url = bot.api.fileUrl(file.file_path);
 
 <h2>onError and the retry loop</h2>
 <p>
-	when a request throws, each <code>onError</code> hook is called with the method, the error, and
-	the 1-based <code>attempt</code> that just failed. the first hook to return <code>&#123; retry: true
-	&#125;</code> triggers a re-run; an optional <code>delayMs</code> waits before retrying. if no hook
-	requests a retry, the error is rethrown.
+	when a request throws, each <code>onError</code> hook is called with the method, the error, the
+	1-based <code>attempt</code> that just failed, and the request params after <code>before</code> hooks.
+	the first hook to return <code>&#123; retry: true &#125;</code> triggers a re-run; an optional
+	<code>delayMs</code> waits before retrying. if no hook requests a retry, the error is rethrown.
 </p>
 <Code code={onError} title="onError.ts" />
 <div class="note">
@@ -105,7 +109,8 @@ const url = bot.api.fileUrl(file.file_path);
 <h2>errors</h2>
 <p>
 	when Telegram replies with <code>ok: false</code>, the call throws a <code>TelegramError</code>
-	carrying the <code>method</code> and numeric <code>code</code>.
+	carrying the <code>method</code>, numeric <code>code</code>, raw <code>description</code>, and structured
+	<code>response_parameters</code> as <code>parameters</code>.
 </p>
 <Code code={error} title="error.ts" />
 

@@ -7,17 +7,16 @@
 import { autoRetry } from "@yaebal/again";
 
 const bot = new Bot(process.env.BOT_TOKEN!)
-  .install(autoRetry())
+  .install(autoRetry({
+    maxRetries: 5,
+    retryAfterPaddingMs: 250,
+    onRetry: (event) => {
+      console.log(event.method, event.reason, event.delayMs);
+    },
+  }))
   .on("message:text", (ctx) => ctx.reply("hello!"));
 
-// all API calls made through bot.api will now be retried automatically
-bot.start();`;
-
-	const customOptions = `bot.install(autoRetry({
-  maxRetries: 5,      // retry up to 5 times (default: 3)
-  maxDelayMs: 10_000, // cap each wait at 10 s (default: 30 000)
-  retryOnInternal: false, // skip 5xx, only handle 429 (default: true)
-}));`;
+await bot.start();`;
 
 	const directApi = `// lower-level form, useful when you only have an Api instance
 autoRetry(bot.api, { maxRetries: 5 });`;
@@ -26,34 +25,57 @@ autoRetry(bot.api, { maxRetries: 5 });`;
 import { TelegramError } from "@yaebal/core";
 
 const opts: AutoRetryOptions = { maxRetries: 3, maxDelayMs: 30_000 };
-const action = decideRetry(new TelegramError("sendMessage", 429, "retry after 7"), 1, opts);
-// => { retry: true, delayMs: 7000 }`;
+const error = new TelegramError("sendMessage", 429, "Too Many Requests", { retry_after: 7 });
+
+const action = decideRetry(error, 1, opts);
+// => { retry: true, delayMs: 7000, reason: "retry_after", retryAfterMs: 7000 }`;
+
+	const testPack = `import { againTestPack } from "@yaebal/again/test-pack";
+import { apiError, createTestEnv } from "@yaebal/test";
+
+const env = createTestEnv(bot, { packs: [againTestPack({ maxRetries: 2 })] });
+env.onApi("sendMessage", apiError(429, "Too Many Requests", { retry_after: 0 }), { times: 1 });`;
 </script>
 
 <svelte:head>
-	<title>@yaebal/again — yaebal</title>
+	<title>@yaebal/again - yaebal</title>
 </svelte:head>
 
 <h1>@yaebal/again</h1>
-<p class="lead">auto-retry on 429 / flood-wait and transient 5xx errors.</p>
+<p class="lead">awaited auto-retry for 429 <code>retry_after</code> and transient 5xx errors.</p>
 
 <h2>install</h2>
 <Code code={install} title="terminal" lang="sh" />
 
 <h2>usage</h2>
 <p>
-	install <code>autoRetry()</code> on the bot. it attaches an error hook to the API layer — every
-	failed call is inspected and, if retryable, waited on and re-issued automatically.
+	install <code>autoRetry()</code> on the bot. it attaches an <code>api.onError</code> hook; core
+	keeps the original promise alive, waits, and re-runs the same API call.
 </p>
 <Code code={usage} title="bot.ts" />
 
-<h2>options</h2>
-<Code code={customOptions} title="bot.ts" />
 <p>
 	the direct API-hook form remains available when you are wiring a standalone
 	<code>Api</code> instance instead of a bot:
 </p>
 <Code code={directApi} title="api.ts" />
+
+<h2>why this is cleaner</h2>
+<p>
+	Telegram sends flood-wait data as <code>response_parameters.retry_after</code>. <code>@yaebal/core</code>
+	now copies that object into <code>TelegramError.parameters</code>, so <code>again</code> no longer parses
+	<code>"retry after N"</code> from the human-readable error text.
+</p>
+
+<h2>retry logic</h2>
+<ul>
+	<li><code>429</code> with <code>error.parameters.retry_after</code> waits exactly that value, plus optional padding.</li>
+	<li><code>429</code> without structured <code>retry_after</code> falls back to exponential backoff.</li>
+	<li><code>5xx</code> uses exponential backoff when <code>retryOnInternal</code> is true.</li>
+	<li><code>4xx</code> client errors are not retried.</li>
+	<li><code>onRetry</code> observes every scheduled retry for logs and metrics.</li>
+</ul>
+<Code code={decideRetryUsage} title="policy.ts" />
 
 <h2>api</h2>
 <table>
@@ -68,13 +90,13 @@ const action = decideRetry(new TelegramError("sendMessage", 429, "retry after 7"
 		</tr>
 		<tr>
 			<td><code>decideRetry</code></td>
-			<td><code>(error: unknown, attempt: number, options?: AutoRetryOptions) =&gt; ErrorAction | undefined</code></td>
-			<td>pure retry-policy function — exported for unit testing</td>
+			<td><code>(error, attempt, options?) =&gt; RetryDecision | undefined</code></td>
+			<td>pure retry-policy function for unit tests and custom policy checks</td>
 		</tr>
 		<tr>
-			<td><code>AutoRetryOptions</code></td>
-			<td>interface</td>
-			<td>options bag passed to both functions</td>
+			<td><code>againTestPack</code></td>
+			<td><code>(options?) =&gt; TestPack</code></td>
+			<td>wires auto-retry into <code>@yaebal/test</code>'s mock API</td>
 		</tr>
 	</tbody>
 </table>
@@ -85,46 +107,25 @@ const action = decideRetry(new TelegramError("sendMessage", 429, "retry after 7"
 		<tr><th>field</th><th>type</th><th>default</th><th>description</th></tr>
 	</thead>
 	<tbody>
-		<tr>
-			<td><code>maxRetries</code></td>
-			<td><code>number</code></td>
-			<td><code>3</code></td>
-			<td>max retries after the first attempt</td>
-		</tr>
-		<tr>
-			<td><code>maxDelayMs</code></td>
-			<td><code>number</code></td>
-			<td><code>30000</code></td>
-			<td>cap on a single wait in milliseconds</td>
-		</tr>
-		<tr>
-			<td><code>retryOnInternal</code></td>
-			<td><code>boolean</code></td>
-			<td><code>true</code></td>
-			<td>also retry transient 5xx server errors</td>
-		</tr>
+		<tr><td><code>maxRetries</code></td><td><code>number</code></td><td><code>3</code></td><td>max retries after the first attempt</td></tr>
+		<tr><td><code>maxDelayMs</code></td><td><code>number</code></td><td><code>30000</code></td><td>cap on one wait in milliseconds</td></tr>
+		<tr><td><code>baseDelayMs</code></td><td><code>number</code></td><td><code>1000</code></td><td>base for exponential backoff</td></tr>
+		<tr><td><code>retryAfterPaddingMs</code></td><td><code>number</code></td><td><code>0</code></td><td>extra safety delay added to Telegram-provided waits</td></tr>
+		<tr><td><code>jitter</code></td><td><code>number | function</code></td><td><code>0</code></td><td>randomize delays or provide a custom delay transform</td></tr>
+		<tr><td><code>retryOnInternal</code></td><td><code>boolean</code></td><td><code>true</code></td><td>also retry transient 5xx server errors</td></tr>
+		<tr><td><code>onRetry</code></td><td><code>(event) =&gt; unknown</code></td><td>-</td><td>observe scheduled retries with method, params, reason and delay</td></tr>
 	</tbody>
 </table>
 
-<h2>retry logic</h2>
+<h2>testing</h2>
 <p>
-	<code>decideRetry</code> inspects errors in this order:
+	<code>@yaebal/again/test-pack</code> installs the plugin on a <code>TestEnv</code> mock API, so tests
+	can simulate real Telegram errors with structured <code>retry_after</code> data.
 </p>
-<ul>
-	<li>attempt exceeds <code>maxRetries</code> → no retry</li>
-	<li>not a <code>TelegramError</code> → no retry</li>
-	<li>code 429 → reads <code>retry after N</code> from the message; falls back to exponential
-		backoff (<code>2^attempt</code> seconds); capped at <code>maxDelayMs</code></li>
-	<li>code ≥ 500 and <code>retryOnInternal</code> is true → exponential backoff; capped at
-		<code>maxDelayMs</code></li>
-	<li>anything else (4xx client errors, unknown errors) → no retry</li>
-</ul>
-<Code code={decideRetryUsage} title="policy.ts" />
+<Code code={testPack} title="again.test.ts" />
 
 <div class="note">
-	<strong>4xx errors are never retried.</strong> a 400 Bad Request means the call itself is wrong
-	— retrying it would loop forever. only 429 and 5xx are candidates.
-	<br /><br />
-	<strong><code>decideRetry</code> is a pure function with no I/O</strong> — it is exported
-	specifically so you can unit-test a custom policy without mocking network calls.
+	<strong>pairs with throttle.</strong> core runs every error hook before it decides whether to
+	retry, so <code>@yaebal/throttle</code> can learn <code>retry_after</code> freezes even when
+	<code>again</code> is the hook that requests the retry.
 </div>

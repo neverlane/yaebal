@@ -18,12 +18,15 @@ export { deleteWebhook, serve, setWebhook, webhook } from "@yaebal/web";
 import { type ContextByType, contextFor } from "@yaebal/contexts";
 import {
 	type BotOptions,
+	type CallbackQuery,
+	type Composer,
 	Context,
 	Bot as CoreBot,
 	type FileReader,
 	type Filtered,
 	type FilterQuery,
 	type Middleware,
+	type UpdateName,
 } from "@yaebal/core";
 
 type ContextFactory = NonNullable<BotOptions["contextFactory"]>;
@@ -118,11 +121,61 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 		super(token, { readFile: autoReadFile, ...options });
 	}
 
+	override derive<D extends object>(fn: (ctx: C) => D | Promise<D>): Bot<C & D>;
+	override derive<D extends object>(
+		updates: UpdateName | UpdateName[],
+		fn: (ctx: C) => D | Promise<D>,
+	): Bot<C & Partial<D>>;
+	// biome-ignore lint/suspicious/noExplicitAny: overload implementation mirrors core Bot
+	override derive(a: any, b?: any): any {
+		// biome-ignore lint/suspicious/noExplicitAny: forwarding to overloaded base
+		(super.derive as any)(a, b);
+		return this;
+	}
+
+	override decorate<D extends object>(value: D): Bot<C & D> {
+		super.decorate(value);
+		return this as unknown as Bot<C & D>;
+	}
+
+	override extend<C2 extends Context>(other: Composer<C2>): Bot<C & C2> {
+		super.extend(other);
+		return this as unknown as Bot<C & C2>;
+	}
+
+	override install<Add extends object>(
+		plugin: (composer: Composer<C>) => Composer<C & Add>,
+	): Bot<C & Add>;
+	override install<Add extends object>(plugin: (bot: CoreBot<C>) => CoreBot<C & Add>): Bot<C & Add>;
+	override install<Add extends object>(
+		plugin:
+			| ((composer: Composer<C>) => Composer<C & Add>)
+			| ((bot: CoreBot<C>) => CoreBot<C & Add>),
+	): Bot<C & Add> {
+		(plugin as (bot: CoreBot<C>) => CoreBot<C & Add>)(this);
+		return this as unknown as Bot<C & Add>;
+	}
+
 	override on<Q extends FilterQuery>(
 		query: Q,
 		...handlers: Middleware<Filtered<C, Q> & RichFor<Q>>[]
 	): this {
 		return super.on(query, ...(handlers as unknown as Middleware<Filtered<C, Q>>[]));
+	}
+
+	override callbackQuery(
+		trigger: string | RegExp,
+		...handlers: Middleware<
+			C & { match: string | RegExpMatchArray; callbackQuery: CallbackQuery } &
+				ContextByType["callback_query"]
+		>[]
+	): this {
+		return super.callbackQuery(
+			trigger,
+			...(handlers as unknown as Middleware<
+				C & { match: string | RegExpMatchArray; callbackQuery: CallbackQuery }
+			>[]),
+		);
 	}
 
 	override command(

@@ -52,7 +52,13 @@ const msgCtx = (api: never, text: string, chatId: number) =>
 		updateType: "message",
 	});
 
-const cbCtx = (api: never, data: string, chatId: number, messageId: number) =>
+const cbCtx = (
+	api: never,
+	data: string,
+	chatId: number,
+	messageId: number,
+	businessConnectionId?: string,
+) =>
 	new Context({
 		api,
 		update: {
@@ -60,11 +66,33 @@ const cbCtx = (api: never, data: string, chatId: number, messageId: number) =>
 			callback_query: {
 				id: "cb",
 				from: { id: chatId, is_bot: false, first_name: "u" },
-				message: { message_id: messageId, date: 0, chat: { id: chatId, type: "private" } },
+				message: {
+					message_id: messageId,
+					date: 0,
+					chat: { id: chatId, type: "private" },
+					...(businessConnectionId ? { business_connection_id: businessConnectionId } : {}),
+				},
 				data,
 			},
 		} as never,
 		updateType: "callback_query",
+	});
+
+const bizMsgCtx = (api: never, text: string, chatId: number, businessConnectionId: string) =>
+	new Context({
+		api,
+		update: {
+			update_id: 1,
+			business_message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: chatId, type: "private" },
+				from: { id: chatId, is_bot: false, first_name: "u" },
+				business_connection_id: businessConnectionId,
+				text,
+			},
+		} as never,
+		updateType: "business_message",
 	});
 
 const def: DialogDef = {
@@ -188,4 +216,52 @@ test("back() at the root closes the dialog", async () => {
 
 	assert.ok(calls.some((c) => c.method === "deleteMessage"));
 	assert.equal(await storage.get("2"), undefined);
+});
+
+test("in a business chat, start/push/back route through the connection", async () => {
+	const { api, calls } = fakeApi();
+
+	const storage = new MemoryStorage<DialogState>();
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(def, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(bizMsgCtx(api, "/go", 3, "bc1"), noop);
+
+	const sent = calls.find((c) => c.method === "sendMessage");
+	assert.equal(sent?.params.business_connection_id, "bc1"); // ctx.send() routing (core fix)
+
+	const state = await storage.get("3");
+	calls.length = 0;
+
+	// press "settings →" — the callback fires on the same business connection
+	await mw(cbCtx(api, dataAt(sent?.params, 0, 0), 3, state?.messageId ?? 0, "bc1"), noop);
+	const edit = calls.find((c) => c.method === "editMessageText");
+	assert.equal(edit?.params.business_connection_id, "bc1");
+});
+
+test("back() at the root in a business chat uses deleteBusinessMessages, not deleteMessage", async () => {
+	const { api, calls } = fakeApi();
+
+	const storage = new MemoryStorage<DialogState>();
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(def, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main"))
+			.command("close", (ctx) => ctx.dialog.back()),
+	);
+
+	await mw(bizMsgCtx(api, "/go", 4, "bc1"), noop);
+	calls.length = 0;
+	await mw(bizMsgCtx(api, "/close", 4, "bc1"), noop);
+
+	assert.equal(
+		calls.find((c) => c.method === "deleteMessage"),
+		undefined,
+	);
+	const del = calls.find((c) => c.method === "deleteBusinessMessages");
+	assert.equal(del?.params.business_connection_id, "bc1");
+	assert.equal(await storage.get("4"), undefined);
 });

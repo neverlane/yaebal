@@ -14,11 +14,15 @@ export const nav: NavSection[] = [
 		title: "guide",
 		items: [
 			{ label: "introduction", href: "/docs/introduction" },
-			{ label: "yaebal", href: "/docs/yaebal", badge: "meta" },
+			{ label: "yaebal meta", href: "/docs/yaebal" },
 			{ label: "getting started", href: "/docs/getting-started" },
 			{ label: "create a bot", href: "/docs/scaffolding" },
 			{ label: "core concepts", href: "/docs/core" },
-			{ label: "examples", href: "/docs/examples", badge: "new" },
+			{ label: "examples", href: "/docs/examples" },
+			{ label: "cheat sheet", href: "/docs/cheat-sheet", badge: "new" },
+			{ label: "typed examples", href: "/docs/typed-examples", badge: "new" },
+			{ label: "faq", href: "/docs/faq", badge: "new" },
+			{ label: "troubleshooting", href: "/docs/troubleshooting", badge: "new" },
 		],
 	},
 	{
@@ -29,6 +33,27 @@ export const nav: NavSection[] = [
 			{ label: "media & files", href: "/docs/media" },
 			{ label: "hooks & errors", href: "/docs/hooks" },
 			{ label: "webhooks & deploy", href: "/docs/webhooks" },
+		],
+	},
+	{
+		title: "telegram guides",
+		items: [
+			{ label: "payments & stars", href: "/docs/telegram/payments", badge: "new" },
+			{ label: "inline mode", href: "/docs/telegram/inline-mode", badge: "new" },
+			{ label: "chat admin", href: "/docs/telegram/chat-admin", badge: "new" },
+			{ label: "service events", href: "/docs/telegram/service-events", badge: "new" },
+			{ label: "message extras", href: "/docs/telegram/message-extras", badge: "new" },
+			{ label: "deep links", href: "/docs/telegram/deep-links", badge: "new" },
+			{ label: "mini apps", href: "/docs/telegram/mini-apps", badge: "new" },
+		],
+	},
+	{
+		title: "migration",
+		items: [
+			{ label: "from gramio", href: "/docs/migration/gramio", badge: "new" },
+			{ label: "from puregram", href: "/docs/migration/puregram", badge: "new" },
+			{ label: "from grammy", href: "/docs/migration/grammy", badge: "new" },
+			{ label: "from telegraf", href: "/docs/migration/telegraf", badge: "new" },
 		],
 	},
 	{
@@ -81,6 +106,7 @@ export const nav: NavSection[] = [
 		title: "scaling",
 		items: [
 			{ label: "web (edge)", href: "/docs/plugins/web" },
+			{ label: "production", href: "/docs/production", badge: "new" },
 			{ label: "runner", href: "/docs/runner" },
 			{ label: "workers", href: "/docs/workers" },
 			{ label: "runtimes", href: "/docs/runtimes" },
@@ -94,6 +120,7 @@ export const nav: NavSection[] = [
 		items: [
 			{ label: "bot api reference", href: "/docs/api", badge: "new" },
 			{ label: "@yaebal/types", href: "/docs/types" },
+			{ label: "llms", href: "/docs/llms", badge: "new" },
 			{ label: "packages map", href: "/docs/packages" },
 		],
 	},

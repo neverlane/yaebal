@@ -91,10 +91,6 @@ export class ChatJoinRequestContextBase {
 	sendPoll(params: Omit<t.SendPollParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPoll", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendChecklist(params: Omit<t.SendChecklistParams, "chat_id">) {
-		return this.api.call<t.Message>("sendChecklist", { chat_id: this.chat.id, ...params });
-	}
 	/** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendDice(params: Omit<t.SendDiceParams, "chat_id">) {
 		return this.api.call<t.Message>("sendDice", { chat_id: this.chat.id, ...params });
@@ -246,26 +242,6 @@ export class ChatJoinRequestContextBase {
 	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 	createForumTopic(params: Omit<t.CreateForumTopicParams, "chat_id">) {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	editForumTopic(params: Omit<t.EditForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("editForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to close an open topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	closeForumTopic(params: Omit<t.CloseForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("closeForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to reopen a closed topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	reopenForumTopic(params: Omit<t.ReopenForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("reopenForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to delete a forum topic along with all its messages in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_delete\_messages* administrator rights. Returns *True* on success. */
-	deleteForumTopic(params: Omit<t.DeleteForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("deleteForumTopic", { chat_id: this.chat.id, ...params });
-	}
-	/** Use this method to clear the list of pinned messages in a forum topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
-	unpinAllForumTopicMessages(params: Omit<t.UnpinAllForumTopicMessagesParams, "chat_id">) {
-		return this.api.call<boolean>("unpinAllForumTopicMessages", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit the name of the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights. Returns *True* on success. */
 	editGeneralForumTopic(params: Omit<t.EditGeneralForumTopicParams, "chat_id">) {

@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/again",
-	"version": "0.0.3",
-	"description": "yaebal auto-retry plugin — retries on 429/flood-wait and transient 5xx.",
+	"version": "0.1.0",
+	"description": "yaebal auto-retry plugin - retries 429 retry_after and transient 5xx errors.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -9,19 +9,24 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
+		},
+		"./test-pack": {
+			"types": "./lib/test-pack.d.ts",
+			"import": "./lib/test-pack.js"
 		}
 	},
 	"files": ["lib", "src"],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

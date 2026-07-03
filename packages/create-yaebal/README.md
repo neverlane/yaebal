@@ -1,6 +1,6 @@
 # create-yaebal
 
-scaffold a type-safe [yaebal](https://github.com/neverlane/yaebal) telegram bot — a beautiful
+scaffold a type-safe [yaebal](https://github.com/neverlane/yaebal) Telegram bot — a beautiful
 terminal ui when your terminal supports it, plain prompts when it doesn't, and a one-shot flags
 mode for ci.
 

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { Composer } from "@yaebal/core";
-import { callbackUpdate, createContext, messageUpdate, mockApi, runMiddleware } from "@yaebal/test";
+import { createTestEnv } from "@yaebal/test";
 import { installToml, parseTomlConfig, validateTomlConfig } from "./index.js";
 
 test("parse raw toml string", () => {
@@ -58,17 +58,18 @@ test("validate message with missing on should fail", () => {
 
 test("install registers command reply", async () => {
 	const composer = new Composer();
-	const { api, calls } = mockApi();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
 
 	installToml(composer, { commands: [{ name: "start", reply: "hi" }] });
-	await runMiddleware(composer, createContext(messageUpdate({ text: "/start" }), api));
+	const sent = await user.sendCommand("start");
 
-	assert.deepEqual(calls, [
-		{
-			method: "sendMessage",
-			params: { chat_id: 1, text: "hi", reply_parameters: { message_id: 1 } },
-		},
-	]);
+	assert.equal(env.apiCalls.length, 1);
+	assert.deepEqual(env.lastApiCall()?.params, {
+		chat_id: user.pmChat.id,
+		text: "hi",
+		reply_parameters: { message_id: sent.message_id },
+	});
 });
 
 test("install throws on missing named handler", () => {
@@ -80,37 +81,40 @@ test("install throws on missing named handler", () => {
 
 test("messages contains filter works", async () => {
 	const composer = new Composer();
-	const { api, calls } = mockApi();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
 
 	installToml(composer, {
 		messages: [{ on: "message:text", contains: "yaebal", reply: "match" }],
 	});
 
-	await runMiddleware(composer, createContext(messageUpdate({ text: "hello" }), api));
-	await runMiddleware(composer, createContext(messageUpdate({ text: "hello yaebal" }), api));
+	await user.sendMessage("hello");
+	await user.sendMessage("hello yaebal");
 
-	assert.equal(calls.length, 1);
-	assert.equal(calls[0]?.params?.text, "match");
+	assert.equal(env.callsTo("sendMessage").length, 1);
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "match");
 });
 
 test("messages equals filter works", async () => {
 	const composer = new Composer();
-	const { api, calls } = mockApi();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
 
 	installToml(composer, {
 		messages: [{ on: "message:text", equals: "secret", reply: "match" }],
 	});
 
-	await runMiddleware(composer, createContext(messageUpdate({ text: "secret!" }), api));
-	await runMiddleware(composer, createContext(messageUpdate({ text: "secret" }), api));
+	await user.sendMessage("secret!");
+	await user.sendMessage("secret");
 
-	assert.equal(calls.length, 1);
-	assert.equal(calls[0]?.params?.text, "match");
+	assert.equal(env.callsTo("sendMessage").length, 1);
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "match");
 });
 
 test("callbacks with handler works", async () => {
 	const composer = new Composer();
-	const { api, calls } = mockApi();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
 
 	installToml(
 		composer,
@@ -126,12 +130,9 @@ test("callbacks with handler works", async () => {
 		},
 	);
 
-	await runMiddleware(composer, createContext(callbackUpdate({ data: "profile" }), api));
+	await user.click("profile");
 
-	assert.deepEqual(calls, [
-		{
-			method: "sendMessage",
-			params: { chat_id: 1, text: "profile" },
-		},
-	]);
+	assert.equal(env.apiCalls.length, 1);
+	assert.equal(env.lastApiCall()?.method, "sendMessage");
+	assert.deepEqual(env.lastApiCall()?.params, { chat_id: user.pmChat.id, text: "profile" });
 });

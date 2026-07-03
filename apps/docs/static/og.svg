@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="yaebal — type-safe telegram bot api framework">
+  <rect width="1200" height="630" fill="#000000" />
+  <rect x="64" y="64" width="1072" height="502" rx="30" fill="none" stroke="#1f2937" stroke-width="2" />
+  <path d="M82 458h1036" stroke="#111827" stroke-width="2" />
+  <text x="82" y="224" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="112" font-weight="800" letter-spacing="-5">yaebal</text>
+  <text x="88" y="304" fill="#d1d5db" font-family="Inter, Arial, sans-serif" font-size="35" font-weight="500">type-safe telegram bot api framework</text>
+  <text x="88" y="374" fill="#93c5fd" font-family="Menlo, Consolas, monospace" font-size="28">context type flows through the chain</text>
+  <text x="88" y="512" fill="#ffffff" font-family="Menlo, Consolas, monospace" font-size="25">pnpm add yaebal</text>
+  <text x="380" y="512" fill="#9ca3af" font-family="Menlo, Consolas, monospace" font-size="25">derive · decorate · plugins · generated contexts</text>
+</svg>

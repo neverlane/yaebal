@@ -26,10 +26,43 @@ interface MessageFields {
 	chat: t.Chat;
 	message_id: number;
 	from?: t.User;
+	business_connection_id?: string;
+	message_thread_id?: number;
+	direct_messages_topic?: t.DirectMessagesTopic;
 }
 
 // biome-ignore lint/suspicious/noExplicitAny: mixin base constructor
 type Ctor<T> = abstract new (...args: any[]) => T;
+
+/**
+ * on a business message every action has to be routed through the connection, or
+ * Telegram performs it as the bot instead of the connected account. shared by every
+ * method below — editMessageText/editMessageCaption take business_connection_id too.
+ */
+function businessRouting(ctx: MessageFields): { business_connection_id?: string } {
+	return ctx.business_connection_id === undefined
+		? {}
+		: { business_connection_id: ctx.business_connection_id };
+}
+
+/**
+ * full outgoing routing for send/reply: the business connection plus the forum topic /
+ * direct-messages topic this message lives in, so a reply doesn't fall back to General.
+ * (undefined is dropped by `encodeRequest`, so plain messages are unaffected.)
+ */
+function routing(ctx: MessageFields): {
+	business_connection_id?: string;
+	message_thread_id?: number;
+	direct_messages_topic_id?: number;
+} {
+	return {
+		...businessRouting(ctx),
+		...(ctx.message_thread_id === undefined ? {} : { message_thread_id: ctx.message_thread_id }),
+		...(ctx.direct_messages_topic?.topic_id === undefined
+			? {}
+			: { direct_messages_topic_id: ctx.direct_messages_topic.topic_id }),
+	};
+}
 
 /**
  * Adds the ergonomic positional overloads + convenience getters shared by every
@@ -43,7 +76,11 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 		send(params: Omit<t.SendMessageParams, "chat_id">): Promise<t.Message>;
 		send(a: string | Omit<t.SendMessageParams, "chat_id">, b?: SendExtra): Promise<t.Message> {
 			const params = typeof a === "string" ? { text: a, ...b } : a;
-			return this.api.call<t.Message>("sendMessage", { chat_id: this.chat.id, ...params });
+			return this.api.call<t.Message>("sendMessage", {
+				chat_id: this.chat.id,
+				...routing(this),
+				...params,
+			});
 		}
 
 		/** Reply to this message. Pass a string for the common case. */
@@ -54,6 +91,7 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 			return this.api.call<t.Message>("sendMessage", {
 				chat_id: this.chat.id,
 				reply_parameters: { message_id: this.message_id },
+				...routing(this),
 				...params,
 			});
 		}
@@ -71,6 +109,7 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 			return this.api.call<t.Message | boolean>("editMessageText", {
 				chat_id: this.chat.id,
 				message_id: this.message_id,
+				...businessRouting(this),
 				...params,
 			});
 		}
@@ -88,6 +127,7 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 			return this.api.call<t.Message | boolean>("editMessageCaption", {
 				chat_id: this.chat.id,
 				message_id: this.message_id,
+				...businessRouting(this),
 				...params,
 			});
 		}

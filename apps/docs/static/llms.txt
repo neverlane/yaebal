@@ -1,0 +1,125 @@
+# yaebal
+
+> type-safe, chainable, plugin-first telegram bot api framework for typescript.
+
+yaebal is built around one invariant: the context type accumulates through the composer chain. use `createBot()` from `yaebal` for application code, and use `@yaebal/core` when you need the minimal engine.
+
+## complete coverage
+
+- full llm guide and complete route index: https://yaebal.pages.dev/llms-full.txt
+- complete sitemap generated from every page route: https://yaebal.pages.dev/sitemap.xml
+- robots policy: https://yaebal.pages.dev/robots.txt
+- covered page routes: 605
+- covered api method pages: 180
+- covered api type pages: 359
+
+## canonical docs
+
+- getting started: https://yaebal.pages.dev/docs/getting-started/
+- introduction: https://yaebal.pages.dev/docs/introduction/
+- yaebal meta package: https://yaebal.pages.dev/docs/yaebal/
+- core concepts: https://yaebal.pages.dev/docs/core/
+- context and filters: https://yaebal.pages.dev/docs/context/
+- generated contexts: https://yaebal.pages.dev/docs/contexts/
+- plugin catalog: https://yaebal.pages.dev/docs/plugins/
+- plugin authoring: https://yaebal.pages.dev/docs/plugins/authoring/
+- bot api reference: https://yaebal.pages.dev/docs/api/
+- packages map: https://yaebal.pages.dev/docs/packages/
+- production guide: https://yaebal.pages.dev/docs/production/
+- troubleshooting: https://yaebal.pages.dev/docs/troubleshooting/
+- cheat sheet: https://yaebal.pages.dev/docs/cheat-sheet/
+- typed examples: https://yaebal.pages.dev/docs/typed-examples/
+- playground: https://yaebal.pages.dev/playground/
+
+## generated api coverage
+
+- all generated api method pages are covered in https://yaebal.pages.dev/llms-full.txt#api-method-pages and https://yaebal.pages.dev/sitemap.xml.
+- all generated api type pages are covered in https://yaebal.pages.dev/llms-full.txt#api-type-pages and https://yaebal.pages.dev/sitemap.xml.
+- prefer the generated reference before inventing bot api method params.
+
+## rules for generated code
+
+- prefer `createBot()` from `yaebal` for app examples.
+- use `bot.install(plugin())` for yaebal plugins.
+- use `bot.on("message:text", handler)` when a handler needs text.
+- use `derive` for async per-update state and `decorate` for static services.
+- use `@yaebal/test` for tests; do not hit real telegram in ci.
+- use `media.path`, `media.url`, `media.buffer`, or raw `file_id` strings for media.
+- use `@yaebal/fmt` or core entity builders instead of unsafe raw `parse_mode` strings.
+- check the generated bot api reference before inventing method params.
+
+## packages
+
+- `yaebal`: meta package for app code, generated contexts, common plugins, and `createBot()`.
+- `@yaebal/core`: bot, composer, base context, api client, media, webhooks, formatting primitives.
+- `@yaebal/types`: generated telegram bot api types.
+- `@yaebal/contexts`: generated per-update contexts and shortcuts.
+- `@yaebal/test`: in-process bot testing with virtual users and intercepted api calls.
+
+## primary site routes
+
+- https://yaebal.pages.dev/
+- https://yaebal.pages.dev/docs/cheat-sheet/
+- https://yaebal.pages.dev/docs/context/
+- https://yaebal.pages.dev/docs/contexts/
+- https://yaebal.pages.dev/docs/core/
+- https://yaebal.pages.dev/docs/examples/
+- https://yaebal.pages.dev/docs/faq/
+- https://yaebal.pages.dev/docs/getting-started/
+- https://yaebal.pages.dev/docs/hooks/
+- https://yaebal.pages.dev/docs/introduction/
+- https://yaebal.pages.dev/docs/llms/
+- https://yaebal.pages.dev/docs/media/
+- https://yaebal.pages.dev/docs/migration/gramio/
+- https://yaebal.pages.dev/docs/migration/grammy/
+- https://yaebal.pages.dev/docs/migration/puregram/
+- https://yaebal.pages.dev/docs/migration/telegraf/
+- https://yaebal.pages.dev/docs/packages/
+- https://yaebal.pages.dev/docs/plugins/
+- https://yaebal.pages.dev/docs/plugins/again/
+- https://yaebal.pages.dev/docs/plugins/authoring/
+- https://yaebal.pages.dev/docs/plugins/broadcast/
+- https://yaebal.pages.dev/docs/plugins/callback-data/
+- https://yaebal.pages.dev/docs/plugins/commands/
+- https://yaebal.pages.dev/docs/plugins/conversation/
+- https://yaebal.pages.dev/docs/plugins/files/
+- https://yaebal.pages.dev/docs/plugins/filters/
+- https://yaebal.pages.dev/docs/plugins/fmt/
+- https://yaebal.pages.dev/docs/plugins/i18n/
+- https://yaebal.pages.dev/docs/plugins/keyboard/
+- https://yaebal.pages.dev/docs/plugins/media-cache/
+- https://yaebal.pages.dev/docs/plugins/media-group/
+- https://yaebal.pages.dev/docs/plugins/morda/
+- https://yaebal.pages.dev/docs/plugins/onboarding/
+- https://yaebal.pages.dev/docs/plugins/pagination/
+- https://yaebal.pages.dev/docs/plugins/panel/
+- https://yaebal.pages.dev/docs/plugins/preview/
+- https://yaebal.pages.dev/docs/plugins/prompt/
+- https://yaebal.pages.dev/docs/plugins/ratelimiter/
+- https://yaebal.pages.dev/docs/plugins/rich/
+- https://yaebal.pages.dev/docs/plugins/router/
+- https://yaebal.pages.dev/docs/plugins/scenes/
+- https://yaebal.pages.dev/docs/plugins/session/
+- https://yaebal.pages.dev/docs/plugins/split/
+- https://yaebal.pages.dev/docs/plugins/test/
+- https://yaebal.pages.dev/docs/plugins/throttle/
+- https://yaebal.pages.dev/docs/plugins/toml/
+- https://yaebal.pages.dev/docs/plugins/web/
+- https://yaebal.pages.dev/docs/production/
+- https://yaebal.pages.dev/docs/runner/
+- https://yaebal.pages.dev/docs/runtimes/
+- https://yaebal.pages.dev/docs/scaffolding/
+- https://yaebal.pages.dev/docs/telegram/chat-admin/
+- https://yaebal.pages.dev/docs/telegram/deep-links/
+- https://yaebal.pages.dev/docs/telegram/inline-mode/
+- https://yaebal.pages.dev/docs/telegram/message-extras/
+- https://yaebal.pages.dev/docs/telegram/mini-apps/
+- https://yaebal.pages.dev/docs/telegram/payments/
+- https://yaebal.pages.dev/docs/telegram/service-events/
+- https://yaebal.pages.dev/docs/troubleshooting/
+- https://yaebal.pages.dev/docs/typed-examples/
+- https://yaebal.pages.dev/docs/types/
+- https://yaebal.pages.dev/docs/webhooks/
+- https://yaebal.pages.dev/docs/workers/
+- https://yaebal.pages.dev/docs/yaebal/
+- https://yaebal.pages.dev/playground/

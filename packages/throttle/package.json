@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/throttle",
-	"version": "0.0.3",
-	"description": "yaebal throttle plugin — space out outgoing API calls to avoid 429s.",
+	"version": "0.1.0",
+	"description": "yaebal throttle plugin - priority outbound scheduler with Telegram buckets.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

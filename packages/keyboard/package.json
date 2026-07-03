@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/keyboard",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal keyboard builder — fluent inline & reply keyboard builders.",
 	"type": "module",
 	"main": "./lib/index.js",

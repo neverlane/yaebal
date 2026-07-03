@@ -4,20 +4,35 @@
 
 	import { GITHUB, NPMX } from "$lib/nav";
 
-	const sample = `import { Bot } from "@yaebal/core";
-import { session } from "@yaebal/session";
+	const sample = `import { InlineKeyboard, callbackData, createBot, html, session } from "yaebal";
 
-const bot = new Bot(process.env.BOT_TOKEN!)
-  .install(session()) // ctx.session is now typed
-  .derive((ctx) => ({ now: Date.now() }));
+const vibe = callbackData("vibe", { score: Number });
 
-bot.on("message:text", (ctx) => {
-  //                    ^ context is narrowed to text messages
-  ctx.reply("hi " + ctx.from.first_name);
-  ctx.react("🔥"); //   ^ auto-generated shortcut
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(session({ initial: () => ({ fire: 0 }) }))
+  .derive((ctx) => ({ who: ctx.from?.first_name ?? "friend" }));
+
+bot.command("start", (ctx) =>
+  ctx.reply(html\`<b>hey \${ctx.who}</b> — pick the vibe\`, {
+    reply_markup: new InlineKeyboard()
+      .text("🔥 ship it", vibe.pack({ score: 1 }))
+      .text("🚀 10x", vibe.pack({ score: 10 }))
+      .build(),
+  }),
+);
+
+bot.on("message:text", async (ctx) => {
+  await ctx.react("🔥"); // generated MessageContext shortcut
+  return ctx.reply(html\`<code>\${ctx.text}</code> landed in a typed handler\`);
 });
 
-bot.start();`;
+bot.callbackQuery(vibe.pattern, (ctx) => {
+  const data = vibe.unpack(ctx.callbackQuery.data ?? "");
+  ctx.session.fire += data?.score ?? 0;
+  return ctx.answer(\`vibe score: \${ctx.session.fire}\`);
+});
+
+await bot.start();`;
 
 	const features = [
 		{
@@ -83,7 +98,7 @@ bot.start();`;
 	</div>
 
 	<div class="install-code">
-		<Code code={"pnpm add @yaebal/core"} title="terminal" lang="sh" />
+		<Code code={"pnpm add yaebal"} title="terminal" lang="sh" />
 	</div>
 
 	<div class="sample">

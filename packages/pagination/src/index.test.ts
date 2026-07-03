@@ -43,7 +43,7 @@ const msgCtx = (api: never) =>
 		updateType: "message",
 	});
 
-const cbCtx = (api: never, data: string) =>
+const cbCtx = (api: never, data: string, businessConnectionId?: string) =>
 	new Context({
 		api,
 		update: {
@@ -51,7 +51,12 @@ const cbCtx = (api: never, data: string) =>
 			callback_query: {
 				id: "cb",
 				from: { id: 1, is_bot: false, first_name: "u" },
-				message: { message_id: 100, date: 0, chat: { id: 1, type: "private" } },
+				message: {
+					message_id: 100,
+					date: 0,
+					chat: { id: 1, type: "private" },
+					...(businessConnectionId ? { business_connection_id: businessConnectionId } : {}),
+				},
 				data,
 			},
 		} as never,
@@ -117,4 +122,19 @@ test("pressing next edits the message to the following page", async () => {
 		flat.map((b) => b.text),
 		["◀", "▶"],
 	);
+});
+
+test("pressing next in a business chat routes the edit through the connection", async () => {
+	const { api, calls } = fakeApi();
+	await list.send(msgCtx(api));
+
+	const sent = calls.find((c) => c.method === "sendMessage");
+	const data = nextData(sent?.params);
+
+	calls.length = 0;
+	const mw = entry(new Composer<Context>().install(list.plugin()));
+	await mw(cbCtx(api, data, "bc1"), noop);
+
+	const edit = calls.find((c) => c.method === "editMessageText");
+	assert.equal(edit?.params.business_connection_id, "bc1");
 });

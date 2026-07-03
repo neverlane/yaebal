@@ -4,9 +4,17 @@
  * release). core only keeps the API-response envelope and the `UpdateName`
  * helper, which aren't part of the object schema.
  */
-import type { Update } from "@yaebal/types";
+import type { ResponseParameters, Update } from "@yaebal/types";
 
-export type { CallbackQuery, Chat, Message, MessageEntity, Update, User } from "@yaebal/types";
+export type {
+	CallbackQuery,
+	Chat,
+	Message,
+	MessageEntity,
+	ResponseParameters,
+	Update,
+	User,
+} from "@yaebal/types";
 
 /** the keys of `Update` that carry a payload (everything except `update_id`). */
 export type UpdateName = Exclude<keyof Update, "update_id" | symbol | number>;
@@ -20,6 +28,7 @@ export interface ApiResponseError {
 	ok: false;
 	error_code: number;
 	description: string;
+	parameters?: ResponseParameters;
 }
 
 export type ApiResponse<T> = ApiResponseOk<T> | ApiResponseError;

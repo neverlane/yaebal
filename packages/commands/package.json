@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/commands",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal commands — one registry for command handlers + the telegram command menu.",
 	"type": "module",
 	"main": "./lib/index.js",

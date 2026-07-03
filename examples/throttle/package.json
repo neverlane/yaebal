@@ -1,0 +1,19 @@
+{
+	"name": "@yaebal/example-throttle",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types --env-file=.env src/index.ts",
+		"start": "node --experimental-strip-types --env-file=.env src/index.ts",
+		"typecheck": "tsc -p tsconfig.json --noEmit"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/again": "workspace:*",
+		"@yaebal/throttle": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

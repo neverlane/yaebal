@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/web",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal web — run your bot on edge/web runtimes (cloudflare workers, deno, bun) via webhooks.",
 	"type": "module",
 	"main": "./lib/index.js",

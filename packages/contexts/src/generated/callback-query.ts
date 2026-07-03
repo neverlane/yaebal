@@ -20,80 +20,80 @@ export class CallbackQueryContextBase {
 		return this.from.first_name;
 	}
 	/** Use this method to send text messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	send(params: Omit<t.SendMessageParams, "chat_id">) {
-		return this.api.call<t.Message>("sendMessage", { chat_id: this.message?.chat.id, ...params });
+	send(params: Omit<t.SendMessageParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendMessage", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendPhoto(params: Omit<t.SendPhotoParams, "chat_id">) {
-		return this.api.call<t.Message>("sendPhoto", { chat_id: this.message?.chat.id, ...params });
+	sendPhoto(params: Omit<t.SendPhotoParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendPhoto", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send live photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendLivePhoto(params: Omit<t.SendLivePhotoParams, "chat_id">) {
-		return this.api.call<t.Message>("sendLivePhoto", { chat_id: this.message?.chat.id, ...params });
+	sendLivePhoto(params: Omit<t.SendLivePhotoParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendLivePhoto", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send audio files, if you want Telegram clients to display them in the music player. Your audio must be in the .MP3 or .M4A format. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send audio files of up to 50 MB in size, this limit may be changed in the future.  For sending voice messages, use the [sendVoice](https://core.telegram.org/bots/api/#sendvoice) method instead. */
-	sendAudio(params: Omit<t.SendAudioParams, "chat_id">) {
-		return this.api.call<t.Message>("sendAudio", { chat_id: this.message?.chat.id, ...params });
+	sendAudio(params: Omit<t.SendAudioParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendAudio", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send general files. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send files of any type of up to 50 MB in size, this limit may be changed in the future. */
-	sendDocument(params: Omit<t.SendDocumentParams, "chat_id">) {
-		return this.api.call<t.Message>("sendDocument", { chat_id: this.message?.chat.id, ...params });
+	sendDocument(params: Omit<t.SendDocumentParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendDocument", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send video files, Telegram clients support MPEG4 videos (other formats may be sent as [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send video files of up to 50 MB in size, this limit may be changed in the future. */
-	sendVideo(params: Omit<t.SendVideoParams, "chat_id">) {
-		return this.api.call<t.Message>("sendVideo", { chat_id: this.message?.chat.id, ...params });
+	sendVideo(params: Omit<t.SendVideoParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendVideo", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without sound). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send animation files of up to 50 MB in size, this limit may be changed in the future. */
-	sendAnimation(params: Omit<t.SendAnimationParams, "chat_id">) {
-		return this.api.call<t.Message>("sendAnimation", { chat_id: this.message?.chat.id, ...params });
+	sendAnimation(params: Omit<t.SendAnimationParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendAnimation", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send audio files, if you want Telegram clients to display the file as a playable voice message. For this to work, your audio must be in an .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats may be sent as [Audio](https://core.telegram.org/bots/api/#audio) or [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send voice messages of up to 50 MB in size, this limit may be changed in the future. */
-	sendVoice(params: Omit<t.SendVoiceParams, "chat_id">) {
-		return this.api.call<t.Message>("sendVoice", { chat_id: this.message?.chat.id, ...params });
+	sendVoice(params: Omit<t.SendVoiceParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendVoice", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendVideoNote(params: Omit<t.SendVideoNoteParams, "chat_id">) {
-		return this.api.call<t.Message>("sendVideoNote", { chat_id: this.message?.chat.id, ...params });
+	sendVideoNote(params: Omit<t.SendVideoNoteParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendVideoNote", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "chat_id">) {
-		return this.api.call<t.Message>("sendPaidMedia", { chat_id: this.message?.chat.id, ...params });
+	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendPaidMedia", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send a group of photos, live photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects that were sent is returned. */
-	sendMediaGroup(params: Omit<t.SendMediaGroupParams, "chat_id">) {
-		return this.api.call<t.Message[]>("sendMediaGroup", { chat_id: this.message?.chat.id, ...params });
+	sendMediaGroup(params: Omit<t.SendMediaGroupParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message[]>("sendMediaGroup", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send point on the map. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendLocation(params: Omit<t.SendLocationParams, "chat_id">) {
-		return this.api.call<t.Message>("sendLocation", { chat_id: this.message?.chat.id, ...params });
+	sendLocation(params: Omit<t.SendLocationParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendLocation", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send information about a venue. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendVenue(params: Omit<t.SendVenueParams, "chat_id">) {
-		return this.api.call<t.Message>("sendVenue", { chat_id: this.message?.chat.id, ...params });
+	sendVenue(params: Omit<t.SendVenueParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendVenue", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send phone contacts. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendContact(params: Omit<t.SendContactParams, "chat_id">) {
-		return this.api.call<t.Message>("sendContact", { chat_id: this.message?.chat.id, ...params });
+	sendContact(params: Omit<t.SendContactParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendContact", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendPoll(params: Omit<t.SendPollParams, "chat_id">) {
-		return this.api.call<t.Message>("sendPoll", { chat_id: this.message?.chat.id, ...params });
+	sendPoll(params: Omit<t.SendPollParams, "business_connection_id" | "chat_id" | "message_thread_id">) {
+		return this.api.call<t.Message>("sendPoll", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendChecklist(params: Omit<t.SendChecklistParams, "chat_id">) {
-		return this.api.call<t.Message>("sendChecklist", { chat_id: this.message?.chat.id, ...params });
+	sendChecklist(params: Omit<t.SendChecklistParams, "business_connection_id" | "chat_id">) {
+		return this.api.call<t.Message>("sendChecklist", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...params });
 	}
 	/** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendDice(params: Omit<t.SendDiceParams, "chat_id">) {
-		return this.api.call<t.Message>("sendDice", { chat_id: this.message?.chat.id, ...params });
+	sendDice(params: Omit<t.SendDiceParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendDice", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to stream a partial message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendMessage](https://core.telegram.org/bots/api/#sendmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
-	sendMessageDraft(params: Omit<t.SendMessageDraftParams, "chat_id">) {
-		return this.api.call<boolean>("sendMessageDraft", { chat_id: this.message?.chat.id, ...params });
+	sendMessageDraft(params: Omit<t.SendMessageDraftParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("sendMessageDraft", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method when you need to tell the user that something is happening on the bot's side. The status is set for 5 seconds or less (when a message arrives from your bot, Telegram clients clear its typing status). Returns *True* on success.  Example: The [ImageBot](https://t.me/imagebot) needs some time to process a request and upload the image. Instead of sending a text message along the lines of “Retrieving image, please wait…”, the bot may use [sendChatAction](https://core.telegram.org/bots/api/#sendchataction) with *action* = *upload\_photo*. The user will see a “sending photo” status for the bot.  We only recommend using this method when a response from the bot will take a **noticeable** amount of time to arrive. */
-	sendChatAction(params: Omit<t.SendChatActionParams, "chat_id">) {
-		return this.api.call<boolean>("sendChatAction", { chat_id: this.message?.chat.id, ...params });
+	sendChatAction(params: Omit<t.SendChatActionParams, "business_connection_id" | "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("sendChatAction", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to change the chosen reactions on a message. Service messages of some types can't be reacted to. Automatically forwarded messages from a channel to its discussion group have the same available reactions as messages in the channel. Bots can't use paid reactions. Returns *True* on success. */
 	react(params: Omit<t.SetMessageReactionParams, "chat_id" | "message_id">) {
@@ -196,12 +196,12 @@ export class CallbackQueryContextBase {
 		return this.api.call<boolean>("setChatDescription", { chat_id: this.message?.chat.id, ...params });
 	}
 	/** Use this method to add a message to the list of pinned messages in a chat. In private chats and channel direct messages chats, all non-service messages can be pinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to pin messages in groups and channels respectively. Returns *True* on success. */
-	pin(params: Omit<t.PinChatMessageParams, "chat_id" | "message_id">) {
-		return this.api.call<boolean>("pinChatMessage", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	pin(params: Omit<t.PinChatMessageParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<boolean>("pinChatMessage", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns *True* on success. */
-	unpin(params: Omit<t.UnpinChatMessageParams, "chat_id" | "message_id">) {
-		return this.api.call<boolean>("unpinChatMessage", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	unpin(params?: Omit<t.UnpinChatMessageParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<boolean>("unpinChatMessage", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns *True* on success. */
 	unpinAllChatMessages(params?: Omit<t.UnpinAllChatMessagesParams, "chat_id">) {
@@ -244,24 +244,24 @@ export class CallbackQueryContextBase {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.message?.chat.id, ...params });
 	}
 	/** Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	editForumTopic(params: Omit<t.EditForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("editForumTopic", { chat_id: this.message?.chat.id, ...params });
+	editForumTopic(params: Omit<t.EditForumTopicParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("editForumTopic", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to close an open topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	closeForumTopic(params: Omit<t.CloseForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("closeForumTopic", { chat_id: this.message?.chat.id, ...params });
+	closeForumTopic(params?: Omit<t.CloseForumTopicParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("closeForumTopic", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to reopen a closed topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
-	reopenForumTopic(params: Omit<t.ReopenForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("reopenForumTopic", { chat_id: this.message?.chat.id, ...params });
+	reopenForumTopic(params?: Omit<t.ReopenForumTopicParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("reopenForumTopic", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to delete a forum topic along with all its messages in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_delete\_messages* administrator rights. Returns *True* on success. */
-	deleteForumTopic(params: Omit<t.DeleteForumTopicParams, "chat_id">) {
-		return this.api.call<boolean>("deleteForumTopic", { chat_id: this.message?.chat.id, ...params });
+	deleteForumTopic(params?: Omit<t.DeleteForumTopicParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("deleteForumTopic", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to clear the list of pinned messages in a forum topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_pin\_messages* administrator right in the supergroup. Returns *True* on success. */
-	unpinAllForumTopicMessages(params: Omit<t.UnpinAllForumTopicMessagesParams, "chat_id">) {
-		return this.api.call<boolean>("unpinAllForumTopicMessages", { chat_id: this.message?.chat.id, ...params });
+	unpinAllForumTopicMessages(params?: Omit<t.UnpinAllForumTopicMessagesParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("unpinAllForumTopicMessages", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to edit the name of the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights. Returns *True* on success. */
 	editGeneralForumTopic(params: Omit<t.EditGeneralForumTopicParams, "chat_id">) {
@@ -344,8 +344,8 @@ export class CallbackQueryContextBase {
 		return this.api.call<boolean>("removeChatVerification", { chat_id: this.message?.chat.id, ...params });
 	}
 	/** Marks incoming message as read on behalf of a business account. Requires the *can\_read\_messages* business bot right. Returns *True* on success. */
-	readBusinessMessage(params: Omit<t.ReadBusinessMessageParams, "chat_id" | "message_id">) {
-		return this.api.call<boolean>("readBusinessMessage", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	readBusinessMessage(params?: Omit<t.ReadBusinessMessageParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<boolean>("readBusinessMessage", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Returns the gifts owned and hosted by a user. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
 	getUserGifts(params: Omit<t.GetUserGiftsParams, "user_id">) {
@@ -364,36 +364,36 @@ export class CallbackQueryContextBase {
 		return this.api.call<t.PreparedKeyboardButton>("savePreparedKeyboardButton", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editText(params: Omit<t.EditMessageTextParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("editMessageText", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editText(params: Omit<t.EditMessageTextParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("editMessageText", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to edit captions of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editCaption(params: Omit<t.EditMessageCaptionParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("editMessageCaption", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editCaption(params: Omit<t.EditMessageCaptionParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("editMessageCaption", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to edit animation, audio, document, live photo, photo, or video messages, or to replace a text or a rich message with a media. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editMedia(params: Omit<t.EditMessageMediaParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("editMessageMedia", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editMedia(params: Omit<t.EditMessageMediaParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("editMessageMedia", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to edit live location messages. A location can be edited until its *live\_period* expires or editing is explicitly disabled by a call to [stopMessageLiveLocation](https://core.telegram.org/bots/api/#stopmessagelivelocation). On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. */
-	editLiveLocation(params: Omit<t.EditMessageLiveLocationParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("editMessageLiveLocation", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editLiveLocation(params: Omit<t.EditMessageLiveLocationParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("editMessageLiveLocation", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to stop updating a live location message before *live\_period* expires. On success, if the message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. */
-	stopMessageLiveLocation(params: Omit<t.StopMessageLiveLocationParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	stopMessageLiveLocation(params: Omit<t.StopMessageLiveLocationParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to edit a checklist on behalf of a connected business account. On success, the edited [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	editMessageChecklist(params: Omit<t.EditMessageChecklistParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message>("editMessageChecklist", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editMessageChecklist(params: Omit<t.EditMessageChecklistParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message>("editMessageChecklist", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editReplyMarkup(params: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Message | boolean>("editMessageReplyMarkup", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	editReplyMarkup(params: Omit<t.EditMessageReplyMarkupParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Message | boolean>("editMessageReplyMarkup", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to stop a poll which was sent by the bot. On success, the stopped [Poll](https://core.telegram.org/bots/api/#poll) is returned. */
-	stopPoll(params: Omit<t.StopPollParams, "chat_id" | "message_id">) {
-		return this.api.call<t.Poll>("stopPoll", { chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
+	stopPoll(params: Omit<t.StopPollParams, "business_connection_id" | "chat_id" | "message_id">) {
+		return this.api.call<t.Poll>("stopPoll", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, message_id: this.message?.message_id, ...params });
 	}
 	/** Use this method to approve a suggested post in a direct messages chat. The bot must have the 'can_post_messages' administrator right in the corresponding channel chat. Returns *True* on success. */
 	approveSuggestedPost(params: Omit<t.ApproveSuggestedPostParams, "chat_id" | "message_id">) {
@@ -420,8 +420,8 @@ export class CallbackQueryContextBase {
 		return this.api.call<boolean>("deleteAllMessageReactions", { chat_id: this.message?.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendSticker(params: Omit<t.SendStickerParams, "chat_id">) {
-		return this.api.call<t.Message>("sendSticker", { chat_id: this.message?.chat.id, ...params });
+	sendSticker(params: Omit<t.SendStickerParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendSticker", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to upload a file with a sticker for later use in the [createNewStickerSet](https://core.telegram.org/bots/api/#createnewstickerset), [addStickerToSet](https://core.telegram.org/bots/api/#addstickertoset), or [replaceStickerInSet](https://core.telegram.org/bots/api/#replacestickerinset) methods (the file can be used multiple times). Returns the uploaded [File](https://core.telegram.org/bots/api/#file) on success. */
 	uploadStickerFile(params: Omit<t.UploadStickerFileParams, "user_id">) {
@@ -444,16 +444,16 @@ export class CallbackQueryContextBase {
 		return this.api.call<boolean>("setStickerSetThumbnail", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to send rich messages. If the message contains a block with a media element, then the bot must have the right to send the media to the chat. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendRichMessage(params: Omit<t.SendRichMessageParams, "chat_id">) {
-		return this.api.call<t.Message>("sendRichMessage", { chat_id: this.message?.chat.id, ...params });
+	sendRichMessage(params: Omit<t.SendRichMessageParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendRichMessage", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Use this method to stream a partial rich message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendRichMessage](https://core.telegram.org/bots/api/#sendrichmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
-	sendRichMessageDraft(params: Omit<t.SendRichMessageDraftParams, "chat_id">) {
-		return this.api.call<boolean>("sendRichMessageDraft", { chat_id: this.message?.chat.id, ...params });
+	sendRichMessageDraft(params: Omit<t.SendRichMessageDraftParams, "chat_id" | "message_thread_id">) {
+		return this.api.call<boolean>("sendRichMessageDraft", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to send invoices. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendInvoice(params: Omit<t.SendInvoiceParams, "chat_id">) {
-		return this.api.call<t.Message>("sendInvoice", { chat_id: this.message?.chat.id, ...params });
+	sendInvoice(params: Omit<t.SendInvoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+		return this.api.call<t.Message>("sendInvoice", { chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
 	/** Refunds a successful payment in [Telegram Stars](https://t.me/BotNews/90). Returns *True* on success. */
 	refundStarPayment(params: Omit<t.RefundStarPaymentParams, "user_id">) {
@@ -468,8 +468,8 @@ export class CallbackQueryContextBase {
 		return this.api.call<boolean>("setPassportDataErrors", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to send a game. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendGame(params: Omit<t.SendGameParams, "chat_id">) {
-		return this.api.call<t.Message>("sendGame", { chat_id: this.message?.chat.id, ...params });
+	sendGame(params: Omit<t.SendGameParams, "business_connection_id" | "chat_id" | "message_thread_id">) {
+		return this.api.call<t.Message>("sendGame", { ...((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), chat_id: this.message?.chat.id, ...((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...params });
 	}
 	/** Use this method to set the score of the specified user in a game message. On success, if the message is not an inline message, the [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Returns an error, if the new score is not greater than the user's current score in the chat and *force* is *False*. */
 	setGameScore(params: Omit<t.SetGameScoreParams, "user_id" | "chat_id" | "message_id">) {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { encodeRequest } from "./api.js";
+import { createApi, encodeRequest, TelegramError } from "./api.js";
 import { Bot, type BotPlugin } from "./bot.js";
 import type { Context } from "./context.js";
 import { isMediaSource, media } from "./media.js";
@@ -55,6 +55,36 @@ test("encodeRequest rejects nested media (fails loud, no garbage)", async () => 
 
 test("encodeRequest throws a helpful error for media.path() without a readFile (edge)", async () => {
 	await assert.rejects(() => encodeRequest({ photo: media.path("./a.jpg") }), /needs a filesystem/);
+});
+
+test("createApi exposes Telegram response parameters on TelegramError", async () => {
+	const previousFetch = globalThis.fetch;
+
+	globalThis.fetch = async () =>
+		new Response(
+			JSON.stringify({
+				ok: false,
+				error_code: 429,
+				description: "Too Many Requests",
+				parameters: { retry_after: 7 },
+			}),
+			{ headers: { "content-type": "application/json" } },
+		);
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+
+		await assert.rejects(api.call("sendMessage", { chat_id: 1 }), (error: unknown) => {
+			assert.ok(error instanceof TelegramError);
+			assert.equal(error.method, "sendMessage");
+			assert.equal(error.code, 429);
+			assert.equal(error.description, "Too Many Requests");
+			assert.deepEqual(error.parameters, { retry_after: 7 });
+			return true;
+		});
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
 });
 
 test("encodeRequest uses an injected readFile for media.path() (runtime-agnostic)", async () => {
@@ -114,6 +144,64 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	assert.equal(seen, "hi");
 });
 
+test("Context routes business updates through the connection", async () => {
+	const calls: { m: string; p: unknown }[] = [];
+	const api = {
+		call: (m: string, p: unknown) => {
+			calls.push({ m, p });
+			return Promise.resolve({});
+		},
+		sendMessage: (p: unknown) => {
+			calls.push({ m: "sendMessage", p });
+			return Promise.resolve({});
+		},
+	} as never;
+
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api,
+		updateType: "business_message",
+		update: {
+			update_id: 1,
+			business_message: {
+				message_id: 5,
+				date: 0,
+				chat: { id: 42, type: "private" },
+				business_connection_id: "bc1",
+				text: "hi",
+			},
+		} as never,
+	});
+
+	// business_message is visible through the message getter (chat/text/reply work)
+	assert.equal(ctx.text, "hi");
+	assert.equal(ctx.businessConnectionId, "bc1");
+
+	await ctx.reply("yo");
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: {
+			chat_id: 42,
+			business_connection_id: "bc1",
+			reply_parameters: { message_id: 5 },
+			text: "yo",
+		},
+	});
+
+	// plain messages keep the exact same params shape as before (no undefined keys)
+	calls.length = 0;
+	const plain = new Context({
+		api,
+		updateType: "message",
+		update: {
+			update_id: 2,
+			message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },
+		} as never,
+	});
+	await plain.send("hello");
+	assert.deepEqual(calls[0], { m: "sendMessage", p: { chat_id: 1, text: "hello" } });
+});
+
 test("Bot.install accepts bot plugins and keeps enriched context", async () => {
 	let seen = "";
 	const stamp: BotPlugin<Context, { stamp: string }> = (bot) => bot.decorate({ stamp: "ok" });
@@ -140,4 +228,35 @@ test("Bot.onStop handlers run once per stop cycle", async () => {
 	await bot.stop();
 
 	assert.equal(stopped, 1);
+});
+
+test("Api before hooks run for every retry attempt", async () => {
+	const previousFetch = globalThis.fetch;
+	let attempts = 0;
+
+	globalThis.fetch = async () => {
+		attempts++;
+		if (attempts === 1) {
+			return new Response(JSON.stringify({ ok: false, error_code: 502, description: "Bad Gateway" }), {
+				headers: { "content-type": "application/json" },
+			});
+		}
+
+		return new Response(JSON.stringify({ ok: true, result: true }), {
+			headers: { "content-type": "application/json" },
+		});
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+		let beforeRuns = 0;
+
+		api.before((method, params) => ({ ...params, marker: ++beforeRuns, method }));
+		api.onError((_method, _error, attempt) => (attempt === 1 ? { retry: true } : undefined));
+
+		assert.equal(await api.call("sendMessage", { chat_id: 1 }), true);
+		assert.equal(beforeRuns, 2);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
 });

@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/test",
-	"version": "0.1.0",
-	"description": "yaebal test — testing utilities for yaebal bots: mock api, update factories, and context builders.",
+	"version": "0.2.1",
+	"description": "yaebal test — an actor-driven test framework for yaebal bots: users/chats that send real updates, a virtual clock, apiError stubs, and satellite-plugin test packs.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"
@@ -26,7 +26,7 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "test", "testing", "mock"],
+	"keywords": ["telegram", "telegram-bot", "yaebal", "test", "testing", "mock", "actor", "e2e"],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

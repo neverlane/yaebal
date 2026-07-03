@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/session",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal session plugin — per-chat state with pluggable storage adapters.",
 	"type": "module",
 	"main": "./lib/index.js",

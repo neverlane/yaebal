@@ -68,11 +68,14 @@ export function pagination<T>(options: PaginationOptions<T>): Pagination {
 
 					const v = await view(ctx, payload.page);
 
+					// a list opened in a business chat needs the edit routed through the same
+					// connection, or Telegram rejects it.
 					await ctx.api.call("editMessageText", {
 						chat_id: chatId,
 						message_id: message.message_id,
 						text: v.text,
 						reply_markup: v.markup,
+						...ctx.businessRouting(),
 					});
 				});
 		},

@@ -17,7 +17,7 @@ const bot = new Bot(token)
   );`;
 
 	const plugins = [
-		["@yaebal/again", "/docs/plugins/again/", "auto-retry on 429 / flood-wait / transient 5xx"],
+		["@yaebal/again", "/docs/plugins/again/", "awaited retry on structured retry_after / transient 5xx"],
 		["@yaebal/session", "/docs/plugins/session/", "per-chat session with pluggable storage"],
 		["@yaebal/keyboard", "/docs/plugins/keyboard/", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
@@ -32,10 +32,10 @@ const bot = new Bot(token)
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, handle the next message"],
 		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
 		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a handler registry"],
-		["@yaebal/throttle", "/docs/plugins/throttle/", "rate-limit outgoing api calls"],
+		["@yaebal/throttle", "/docs/plugins/throttle/", "priority outbound scheduler with Telegram buckets"],
 		["@yaebal/files", "/docs/plugins/files/", "resolve and download telegram files"],
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who spam"],
-		["@yaebal/broadcast", "/docs/plugins/broadcast/", "send a message to many chats"],
+		["@yaebal/broadcast", "/docs/plugins/broadcast/", "typed broadcast jobs with storage, retry, progress and controls"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes via webhooks"],
 		["@yaebal/runner", "/docs/runner/", "concurrent long-polling for scale"],

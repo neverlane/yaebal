@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/media-cache",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "yaebal media-cache — reuse a file_id instead of re-uploading the same file.",
 	"type": "module",
 	"main": "./lib/index.js",

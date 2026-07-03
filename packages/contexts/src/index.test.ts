@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+	BusinessConnectionContext,
+	BusinessMessageContext,
 	CallbackQueryContext,
 	ChannelPostContext,
 	contextFor,
@@ -257,6 +259,197 @@ test("guest message answer fills guest_query_id and accepts a bare result", () =
 				input_message_content: { message_text: "hi" },
 			},
 		},
+	});
+});
+
+test("business message: send/reply/edit thread business_connection_id", () => {
+	const { api, calls } = recorder();
+	const ctx = new BusinessMessageContext(api, {
+		update_id: 1,
+		business_message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "private" },
+			business_connection_id: "bc1",
+		},
+	} as never);
+	assert.equal(ctx.businessConnectionId, "bc1");
+
+	ctx.reply("yo"); // sugar path
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: {
+			chat_id: 42,
+			reply_parameters: { message_id: 5 },
+			business_connection_id: "bc1",
+			text: "yo",
+		},
+	});
+
+	calls.length = 0;
+	ctx.editText("edited"); // sugar path
+	assert.deepEqual(calls[0], {
+		m: "editMessageText",
+		p: { chat_id: 42, message_id: 5, business_connection_id: "bc1", text: "edited" },
+	});
+
+	calls.length = 0;
+	ctx.delete(); // deleteMessage can't touch business chats → routed via deleteBusinessMessages
+	assert.deepEqual(calls[0], {
+		m: "deleteBusinessMessages",
+		p: { business_connection_id: "bc1", message_ids: [5] },
+	});
+
+	calls.length = 0;
+	ctx.readBusinessMessage(); // generated path, all three ids filled
+	assert.deepEqual(calls[0], {
+		m: "readBusinessMessage",
+		p: { business_connection_id: "bc1", chat_id: 42, message_id: 5 },
+	});
+});
+
+test("business connection context gets account-level shortcuts", () => {
+	const { api, calls } = recorder();
+	const ctx = new BusinessConnectionContext(api, {
+		update_id: 1,
+		business_connection: {
+			id: "bc1",
+			user: { id: 7, is_bot: false, first_name: "u" },
+			user_chat_id: 7,
+			date: 0,
+			is_enabled: true,
+		},
+	} as never);
+
+	ctx.setBusinessAccountName({ first_name: "Shop" });
+	assert.deepEqual(calls[0], {
+		m: "setBusinessAccountName",
+		p: { business_connection_id: "bc1", first_name: "Shop" },
+	});
+
+	calls.length = 0;
+	ctx.getBusinessConnection();
+	assert.deepEqual(calls[0], {
+		m: "getBusinessConnection",
+		p: { business_connection_id: "bc1" },
+	});
+});
+
+test("callback query on a business message threads business_connection_id", () => {
+	const { api, calls } = recorder();
+	const ctx = new CallbackQueryContext(api, {
+		update_id: 1,
+		callback_query: {
+			id: "q1",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			message: {
+				message_id: 5,
+				date: 0,
+				chat: { id: 42, type: "private" },
+				business_connection_id: "bc1",
+			},
+			data: "x",
+		},
+	} as never);
+
+	ctx.editText("edited");
+	assert.deepEqual(calls[0], {
+		m: "editMessageText",
+		p: { business_connection_id: "bc1", chat_id: 42, message_id: 5, text: "edited" },
+	});
+});
+
+test("message in a forum topic: send/reply stay in it, editText/react don't carry it", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "supergroup" },
+			is_topic_message: true,
+			message_thread_id: 9,
+		},
+	} as never);
+	assert.equal(ctx.messageThreadId, 9);
+
+	ctx.reply("yo"); // sugar path
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: { chat_id: 42, reply_parameters: { message_id: 5 }, message_thread_id: 9, text: "yo" },
+	});
+
+	calls.length = 0;
+	ctx.send("hi"); // sugar path
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: { chat_id: 42, message_thread_id: 9, text: "hi" },
+	});
+
+	// editMessageText/setMessageReaction don't accept message_thread_id — must stay clean.
+	calls.length = 0;
+	ctx.editText("edited");
+	assert.deepEqual(calls[0], {
+		m: "editMessageText",
+		p: { chat_id: 42, message_id: 5, text: "edited" },
+	});
+
+	calls.length = 0;
+	ctx.react("🔥");
+	assert.deepEqual(calls[0], {
+		m: "setMessageReaction",
+		p: { chat_id: 42, message_id: 5, reaction: [{ type: "emoji", emoji: "🔥" }] },
+	});
+
+	// closeForumTopic targets the topic this message is in — generated (non-sugar) path.
+	calls.length = 0;
+	ctx.closeForumTopic();
+	assert.deepEqual(calls[0], {
+		m: "closeForumTopic",
+		p: { chat_id: 42, message_thread_id: 9 },
+	});
+});
+
+test("message in a channel direct-messages topic: send/reply fill direct_messages_topic_id", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "private" },
+			direct_messages_topic: { topic_id: 3, user: { id: 7, is_bot: false, first_name: "u" } },
+		},
+	} as never);
+
+	ctx.send("hi");
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: { chat_id: 42, direct_messages_topic_id: 3, text: "hi" },
+	});
+});
+
+test("callback query on a forum-topic message threads message_thread_id into send", () => {
+	const { api, calls } = recorder();
+	const ctx = new CallbackQueryContext(api, {
+		update_id: 1,
+		callback_query: {
+			id: "q1",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			message: {
+				message_id: 5,
+				date: 0,
+				chat: { id: 42, type: "supergroup" },
+				message_thread_id: 9,
+			},
+			data: "x",
+		},
+	} as never);
+
+	ctx.send({ text: "hi" });
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: { chat_id: 42, message_thread_id: 9, text: "hi" },
 	});
 });
 

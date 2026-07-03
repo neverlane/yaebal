@@ -1,0 +1,735 @@
+# yaebal full llm guide
+
+yaebal is a typescript telegram bot api framework. it is esm-only, fetch-first, and designed for node, bun, deno, and edge runtimes where possible.
+
+## site coverage
+
+- covered page routes: 605
+- non-api pages: 65
+- api method pages: 180
+- api type pages: 359
+- sitemap: https://yaebal.pages.dev/sitemap.xml
+- robots: https://yaebal.pages.dev/robots.txt
+
+the complete route index below is generated from every `+page.svelte` route in `apps/docs/src/routes`. use it when you need exhaustive coverage of the public site.
+
+## core idea
+
+`Bot` extends `Composer`. there is one middleware engine. methods that enrich the context return a composer with an augmented context type. handlers downstream see what was added before them.
+
+```ts
+import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .decorate({ version: "1.0.0" })
+  .derive(async (ctx) => ({ user: await loadUser(ctx.from?.id) }))
+  .on("message:text", (ctx) => {
+    ctx.version;
+    ctx.user;
+    ctx.text;
+  });
+
+await bot.start();
+```
+
+## derive vs decorate
+
+- `derive`: async, per-update, use for current user, permissions, request ids, tenant state.
+- `decorate`: static, no per-update computation, use for db clients, config, services, constants.
+
+## filters
+
+filter queries route and narrow context.
+
+```ts
+bot.on("message:text", (ctx) => ctx.text);
+bot.on("callback_query:data", (ctx) => ctx.callbackQuery.data);
+bot.on(":photo", (ctx) => ctx.message?.photo);
+```
+
+## plugins
+
+plugins are installed with `bot.install(plugin())`. plugin dependencies are explicit in their input context type.
+
+```ts
+import { session } from "yaebal";
+
+const bot = createBot(token)
+  .install(session({ initial: () => ({ count: 0 }) }))
+  .command("count", (ctx) => ctx.reply(String(++ctx.session.count)));
+```
+
+## media
+
+```ts
+import { media } from "yaebal";
+
+await ctx.sendPhoto(media.url("https://example.com/cat.jpg"));
+await ctx.sendDocument(media.path("./report.pdf"));
+await ctx.sendPhoto("AgACAgIAAx...");
+```
+
+## formatting
+
+```ts
+import { html, format, bold, link } from "yaebal";
+
+await ctx.send(html`<b>hello</b> ${user.name}`);
+await ctx.send(format`${bold("docs")} ${link("yaebal", "https://yaebal.pages.dev")}`);
+```
+
+## webhooks
+
+```ts
+import { createBot, webhook } from "yaebal";
+
+const bot = createBot(env.BOT_TOKEN);
+
+export default {
+  fetch: webhook(bot, { secretToken: env.WEBHOOK_SECRET }),
+};
+```
+
+## testing
+
+```ts
+import { createTestEnv } from "@yaebal/test";
+
+const env = createTestEnv(bot);
+const user = env.createUser({ firstName: "linia" });
+
+await user.sendCommand("start");
+env.lastApiCall("sendMessage")?.params?.text;
+```
+
+## important urls
+
+- home: https://yaebal.pages.dev/
+- docs: https://yaebal.pages.dev/docs/getting-started/
+- api reference: https://yaebal.pages.dev/docs/api/
+- playground: https://yaebal.pages.dev/playground/
+- github: https://github.com/neverlane/yaebal
+- packages: https://yaebal.pages.dev/docs/packages/
+- llms compact index: https://yaebal.pages.dev/llms.txt
+- complete sitemap: https://yaebal.pages.dev/sitemap.xml
+
+## do not hallucinate
+
+- do not use telegraf-style `ctx.telegram`.
+- do not use raw `use(plugin())` for yaebal plugins; use `install`.
+- do not add `declare module` for context fields; use `derive`, `decorate`, or a typed plugin.
+- do not use real telegram in tests unless the user explicitly asks for live integration.
+- do not assume every bot api method has a direct `bot.api.method` shortcut; use `bot.api.call` when needed.
+
+## primary page routes
+
+- https://yaebal.pages.dev/
+- https://yaebal.pages.dev/docs/cheat-sheet/
+- https://yaebal.pages.dev/docs/context/
+- https://yaebal.pages.dev/docs/contexts/
+- https://yaebal.pages.dev/docs/core/
+- https://yaebal.pages.dev/docs/examples/
+- https://yaebal.pages.dev/docs/faq/
+- https://yaebal.pages.dev/docs/getting-started/
+- https://yaebal.pages.dev/docs/hooks/
+- https://yaebal.pages.dev/docs/introduction/
+- https://yaebal.pages.dev/docs/llms/
+- https://yaebal.pages.dev/docs/media/
+- https://yaebal.pages.dev/docs/migration/gramio/
+- https://yaebal.pages.dev/docs/migration/grammy/
+- https://yaebal.pages.dev/docs/migration/puregram/
+- https://yaebal.pages.dev/docs/migration/telegraf/
+- https://yaebal.pages.dev/docs/packages/
+- https://yaebal.pages.dev/docs/plugins/
+- https://yaebal.pages.dev/docs/plugins/again/
+- https://yaebal.pages.dev/docs/plugins/authoring/
+- https://yaebal.pages.dev/docs/plugins/broadcast/
+- https://yaebal.pages.dev/docs/plugins/callback-data/
+- https://yaebal.pages.dev/docs/plugins/commands/
+- https://yaebal.pages.dev/docs/plugins/conversation/
+- https://yaebal.pages.dev/docs/plugins/files/
+- https://yaebal.pages.dev/docs/plugins/filters/
+- https://yaebal.pages.dev/docs/plugins/fmt/
+- https://yaebal.pages.dev/docs/plugins/i18n/
+- https://yaebal.pages.dev/docs/plugins/keyboard/
+- https://yaebal.pages.dev/docs/plugins/media-cache/
+- https://yaebal.pages.dev/docs/plugins/media-group/
+- https://yaebal.pages.dev/docs/plugins/morda/
+- https://yaebal.pages.dev/docs/plugins/onboarding/
+- https://yaebal.pages.dev/docs/plugins/pagination/
+- https://yaebal.pages.dev/docs/plugins/panel/
+- https://yaebal.pages.dev/docs/plugins/preview/
+- https://yaebal.pages.dev/docs/plugins/prompt/
+- https://yaebal.pages.dev/docs/plugins/ratelimiter/
+- https://yaebal.pages.dev/docs/plugins/rich/
+- https://yaebal.pages.dev/docs/plugins/router/
+- https://yaebal.pages.dev/docs/plugins/scenes/
+- https://yaebal.pages.dev/docs/plugins/session/
+- https://yaebal.pages.dev/docs/plugins/split/
+- https://yaebal.pages.dev/docs/plugins/test/
+- https://yaebal.pages.dev/docs/plugins/throttle/
+- https://yaebal.pages.dev/docs/plugins/toml/
+- https://yaebal.pages.dev/docs/plugins/web/
+- https://yaebal.pages.dev/docs/production/
+- https://yaebal.pages.dev/docs/runner/
+- https://yaebal.pages.dev/docs/runtimes/
+- https://yaebal.pages.dev/docs/scaffolding/
+- https://yaebal.pages.dev/docs/telegram/chat-admin/
+- https://yaebal.pages.dev/docs/telegram/deep-links/
+- https://yaebal.pages.dev/docs/telegram/inline-mode/
+- https://yaebal.pages.dev/docs/telegram/message-extras/
+- https://yaebal.pages.dev/docs/telegram/mini-apps/
+- https://yaebal.pages.dev/docs/telegram/payments/
+- https://yaebal.pages.dev/docs/telegram/service-events/
+- https://yaebal.pages.dev/docs/troubleshooting/
+- https://yaebal.pages.dev/docs/typed-examples/
+- https://yaebal.pages.dev/docs/types/
+- https://yaebal.pages.dev/docs/webhooks/
+- https://yaebal.pages.dev/docs/workers/
+- https://yaebal.pages.dev/docs/yaebal/
+- https://yaebal.pages.dev/playground/
+
+## api method pages
+
+- https://yaebal.pages.dev/docs/api/methods/addStickerToSet/
+- https://yaebal.pages.dev/docs/api/methods/answerCallbackQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerChatJoinRequestQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerGuestQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerInlineQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerPreCheckoutQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerShippingQuery/
+- https://yaebal.pages.dev/docs/api/methods/answerWebAppQuery/
+- https://yaebal.pages.dev/docs/api/methods/approveChatJoinRequest/
+- https://yaebal.pages.dev/docs/api/methods/approveSuggestedPost/
+- https://yaebal.pages.dev/docs/api/methods/banChatMember/
+- https://yaebal.pages.dev/docs/api/methods/banChatSenderChat/
+- https://yaebal.pages.dev/docs/api/methods/close/
+- https://yaebal.pages.dev/docs/api/methods/closeForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/closeGeneralForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/convertGiftToStars/
+- https://yaebal.pages.dev/docs/api/methods/copyMessage/
+- https://yaebal.pages.dev/docs/api/methods/copyMessages/
+- https://yaebal.pages.dev/docs/api/methods/createChatInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/createChatSubscriptionInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/createForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/createInvoiceLink/
+- https://yaebal.pages.dev/docs/api/methods/createNewStickerSet/
+- https://yaebal.pages.dev/docs/api/methods/declineChatJoinRequest/
+- https://yaebal.pages.dev/docs/api/methods/declineSuggestedPost/
+- https://yaebal.pages.dev/docs/api/methods/deleteAllMessageReactions/
+- https://yaebal.pages.dev/docs/api/methods/deleteBusinessMessages/
+- https://yaebal.pages.dev/docs/api/methods/deleteChatPhoto/
+- https://yaebal.pages.dev/docs/api/methods/deleteChatStickerSet/
+- https://yaebal.pages.dev/docs/api/methods/deleteForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/deleteMessage/
+- https://yaebal.pages.dev/docs/api/methods/deleteMessageReaction/
+- https://yaebal.pages.dev/docs/api/methods/deleteMessages/
+- https://yaebal.pages.dev/docs/api/methods/deleteMyCommands/
+- https://yaebal.pages.dev/docs/api/methods/deleteStickerFromSet/
+- https://yaebal.pages.dev/docs/api/methods/deleteStickerSet/
+- https://yaebal.pages.dev/docs/api/methods/deleteStory/
+- https://yaebal.pages.dev/docs/api/methods/deleteWebhook/
+- https://yaebal.pages.dev/docs/api/methods/editChatInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/editChatSubscriptionInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/editForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/editGeneralForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/editMessageCaption/
+- https://yaebal.pages.dev/docs/api/methods/editMessageChecklist/
+- https://yaebal.pages.dev/docs/api/methods/editMessageLiveLocation/
+- https://yaebal.pages.dev/docs/api/methods/editMessageMedia/
+- https://yaebal.pages.dev/docs/api/methods/editMessageReplyMarkup/
+- https://yaebal.pages.dev/docs/api/methods/editMessageText/
+- https://yaebal.pages.dev/docs/api/methods/editStory/
+- https://yaebal.pages.dev/docs/api/methods/editUserStarSubscription/
+- https://yaebal.pages.dev/docs/api/methods/exportChatInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/forwardMessage/
+- https://yaebal.pages.dev/docs/api/methods/forwardMessages/
+- https://yaebal.pages.dev/docs/api/methods/getAvailableGifts/
+- https://yaebal.pages.dev/docs/api/methods/getBusinessAccountGifts/
+- https://yaebal.pages.dev/docs/api/methods/getBusinessAccountStarBalance/
+- https://yaebal.pages.dev/docs/api/methods/getBusinessConnection/
+- https://yaebal.pages.dev/docs/api/methods/getChat/
+- https://yaebal.pages.dev/docs/api/methods/getChatAdministrators/
+- https://yaebal.pages.dev/docs/api/methods/getChatGifts/
+- https://yaebal.pages.dev/docs/api/methods/getChatMember/
+- https://yaebal.pages.dev/docs/api/methods/getChatMemberCount/
+- https://yaebal.pages.dev/docs/api/methods/getChatMenuButton/
+- https://yaebal.pages.dev/docs/api/methods/getCustomEmojiStickers/
+- https://yaebal.pages.dev/docs/api/methods/getFile/
+- https://yaebal.pages.dev/docs/api/methods/getForumTopicIconStickers/
+- https://yaebal.pages.dev/docs/api/methods/getGameHighScores/
+- https://yaebal.pages.dev/docs/api/methods/getManagedBotAccessSettings/
+- https://yaebal.pages.dev/docs/api/methods/getManagedBotToken/
+- https://yaebal.pages.dev/docs/api/methods/getMe/
+- https://yaebal.pages.dev/docs/api/methods/getMyCommands/
+- https://yaebal.pages.dev/docs/api/methods/getMyDefaultAdministratorRights/
+- https://yaebal.pages.dev/docs/api/methods/getMyDescription/
+- https://yaebal.pages.dev/docs/api/methods/getMyName/
+- https://yaebal.pages.dev/docs/api/methods/getMyShortDescription/
+- https://yaebal.pages.dev/docs/api/methods/getMyStarBalance/
+- https://yaebal.pages.dev/docs/api/methods/getStarTransactions/
+- https://yaebal.pages.dev/docs/api/methods/getStickerSet/
+- https://yaebal.pages.dev/docs/api/methods/getUpdates/
+- https://yaebal.pages.dev/docs/api/methods/getUserChatBoosts/
+- https://yaebal.pages.dev/docs/api/methods/getUserGifts/
+- https://yaebal.pages.dev/docs/api/methods/getUserPersonalChatMessages/
+- https://yaebal.pages.dev/docs/api/methods/getUserProfileAudios/
+- https://yaebal.pages.dev/docs/api/methods/getUserProfilePhotos/
+- https://yaebal.pages.dev/docs/api/methods/getWebhookInfo/
+- https://yaebal.pages.dev/docs/api/methods/giftPremiumSubscription/
+- https://yaebal.pages.dev/docs/api/methods/hideGeneralForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/leaveChat/
+- https://yaebal.pages.dev/docs/api/methods/logOut/
+- https://yaebal.pages.dev/docs/api/methods/pinChatMessage/
+- https://yaebal.pages.dev/docs/api/methods/postStory/
+- https://yaebal.pages.dev/docs/api/methods/promoteChatMember/
+- https://yaebal.pages.dev/docs/api/methods/readBusinessMessage/
+- https://yaebal.pages.dev/docs/api/methods/refundStarPayment/
+- https://yaebal.pages.dev/docs/api/methods/removeBusinessAccountProfilePhoto/
+- https://yaebal.pages.dev/docs/api/methods/removeChatVerification/
+- https://yaebal.pages.dev/docs/api/methods/removeMyProfilePhoto/
+- https://yaebal.pages.dev/docs/api/methods/removeUserVerification/
+- https://yaebal.pages.dev/docs/api/methods/reopenForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/reopenGeneralForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/replaceManagedBotToken/
+- https://yaebal.pages.dev/docs/api/methods/replaceStickerInSet/
+- https://yaebal.pages.dev/docs/api/methods/repostStory/
+- https://yaebal.pages.dev/docs/api/methods/restrictChatMember/
+- https://yaebal.pages.dev/docs/api/methods/revokeChatInviteLink/
+- https://yaebal.pages.dev/docs/api/methods/savePreparedInlineMessage/
+- https://yaebal.pages.dev/docs/api/methods/savePreparedKeyboardButton/
+- https://yaebal.pages.dev/docs/api/methods/sendAnimation/
+- https://yaebal.pages.dev/docs/api/methods/sendAudio/
+- https://yaebal.pages.dev/docs/api/methods/sendChatAction/
+- https://yaebal.pages.dev/docs/api/methods/sendChatJoinRequestWebApp/
+- https://yaebal.pages.dev/docs/api/methods/sendChecklist/
+- https://yaebal.pages.dev/docs/api/methods/sendContact/
+- https://yaebal.pages.dev/docs/api/methods/sendDice/
+- https://yaebal.pages.dev/docs/api/methods/sendDocument/
+- https://yaebal.pages.dev/docs/api/methods/sendGame/
+- https://yaebal.pages.dev/docs/api/methods/sendGift/
+- https://yaebal.pages.dev/docs/api/methods/sendInvoice/
+- https://yaebal.pages.dev/docs/api/methods/sendLivePhoto/
+- https://yaebal.pages.dev/docs/api/methods/sendLocation/
+- https://yaebal.pages.dev/docs/api/methods/sendMediaGroup/
+- https://yaebal.pages.dev/docs/api/methods/sendMessage/
+- https://yaebal.pages.dev/docs/api/methods/sendMessageDraft/
+- https://yaebal.pages.dev/docs/api/methods/sendPaidMedia/
+- https://yaebal.pages.dev/docs/api/methods/sendPhoto/
+- https://yaebal.pages.dev/docs/api/methods/sendPoll/
+- https://yaebal.pages.dev/docs/api/methods/sendRichMessage/
+- https://yaebal.pages.dev/docs/api/methods/sendRichMessageDraft/
+- https://yaebal.pages.dev/docs/api/methods/sendSticker/
+- https://yaebal.pages.dev/docs/api/methods/sendVenue/
+- https://yaebal.pages.dev/docs/api/methods/sendVideo/
+- https://yaebal.pages.dev/docs/api/methods/sendVideoNote/
+- https://yaebal.pages.dev/docs/api/methods/sendVoice/
+- https://yaebal.pages.dev/docs/api/methods/setBusinessAccountBio/
+- https://yaebal.pages.dev/docs/api/methods/setBusinessAccountGiftSettings/
+- https://yaebal.pages.dev/docs/api/methods/setBusinessAccountName/
+- https://yaebal.pages.dev/docs/api/methods/setBusinessAccountProfilePhoto/
+- https://yaebal.pages.dev/docs/api/methods/setBusinessAccountUsername/
+- https://yaebal.pages.dev/docs/api/methods/setChatAdministratorCustomTitle/
+- https://yaebal.pages.dev/docs/api/methods/setChatDescription/
+- https://yaebal.pages.dev/docs/api/methods/setChatMemberTag/
+- https://yaebal.pages.dev/docs/api/methods/setChatMenuButton/
+- https://yaebal.pages.dev/docs/api/methods/setChatPermissions/
+- https://yaebal.pages.dev/docs/api/methods/setChatPhoto/
+- https://yaebal.pages.dev/docs/api/methods/setChatStickerSet/
+- https://yaebal.pages.dev/docs/api/methods/setChatTitle/
+- https://yaebal.pages.dev/docs/api/methods/setCustomEmojiStickerSetThumbnail/
+- https://yaebal.pages.dev/docs/api/methods/setGameScore/
+- https://yaebal.pages.dev/docs/api/methods/setManagedBotAccessSettings/
+- https://yaebal.pages.dev/docs/api/methods/setMessageReaction/
+- https://yaebal.pages.dev/docs/api/methods/setMyCommands/
+- https://yaebal.pages.dev/docs/api/methods/setMyDefaultAdministratorRights/
+- https://yaebal.pages.dev/docs/api/methods/setMyDescription/
+- https://yaebal.pages.dev/docs/api/methods/setMyName/
+- https://yaebal.pages.dev/docs/api/methods/setMyProfilePhoto/
+- https://yaebal.pages.dev/docs/api/methods/setMyShortDescription/
+- https://yaebal.pages.dev/docs/api/methods/setPassportDataErrors/
+- https://yaebal.pages.dev/docs/api/methods/setStickerEmojiList/
+- https://yaebal.pages.dev/docs/api/methods/setStickerKeywords/
+- https://yaebal.pages.dev/docs/api/methods/setStickerMaskPosition/
+- https://yaebal.pages.dev/docs/api/methods/setStickerPositionInSet/
+- https://yaebal.pages.dev/docs/api/methods/setStickerSetThumbnail/
+- https://yaebal.pages.dev/docs/api/methods/setStickerSetTitle/
+- https://yaebal.pages.dev/docs/api/methods/setUserEmojiStatus/
+- https://yaebal.pages.dev/docs/api/methods/setWebhook/
+- https://yaebal.pages.dev/docs/api/methods/stopMessageLiveLocation/
+- https://yaebal.pages.dev/docs/api/methods/stopPoll/
+- https://yaebal.pages.dev/docs/api/methods/transferBusinessAccountStars/
+- https://yaebal.pages.dev/docs/api/methods/transferGift/
+- https://yaebal.pages.dev/docs/api/methods/unbanChatMember/
+- https://yaebal.pages.dev/docs/api/methods/unbanChatSenderChat/
+- https://yaebal.pages.dev/docs/api/methods/unhideGeneralForumTopic/
+- https://yaebal.pages.dev/docs/api/methods/unpinAllChatMessages/
+- https://yaebal.pages.dev/docs/api/methods/unpinAllForumTopicMessages/
+- https://yaebal.pages.dev/docs/api/methods/unpinAllGeneralForumTopicMessages/
+- https://yaebal.pages.dev/docs/api/methods/unpinChatMessage/
+- https://yaebal.pages.dev/docs/api/methods/upgradeGift/
+- https://yaebal.pages.dev/docs/api/methods/uploadStickerFile/
+- https://yaebal.pages.dev/docs/api/methods/verifyChat/
+- https://yaebal.pages.dev/docs/api/methods/verifyUser/
+
+## api type pages
+
+- https://yaebal.pages.dev/docs/api/types/AcceptedGiftTypes/
+- https://yaebal.pages.dev/docs/api/types/AffiliateInfo/
+- https://yaebal.pages.dev/docs/api/types/Animation/
+- https://yaebal.pages.dev/docs/api/types/Audio/
+- https://yaebal.pages.dev/docs/api/types/BackgroundFill/
+- https://yaebal.pages.dev/docs/api/types/BackgroundFillFreeformGradient/
+- https://yaebal.pages.dev/docs/api/types/BackgroundFillGradient/
+- https://yaebal.pages.dev/docs/api/types/BackgroundFillSolid/
+- https://yaebal.pages.dev/docs/api/types/BackgroundType/
+- https://yaebal.pages.dev/docs/api/types/BackgroundTypeChatTheme/
+- https://yaebal.pages.dev/docs/api/types/BackgroundTypeFill/
+- https://yaebal.pages.dev/docs/api/types/BackgroundTypePattern/
+- https://yaebal.pages.dev/docs/api/types/BackgroundTypeWallpaper/
+- https://yaebal.pages.dev/docs/api/types/Birthdate/
+- https://yaebal.pages.dev/docs/api/types/BotAccessSettings/
+- https://yaebal.pages.dev/docs/api/types/BotCommand/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScope/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeAllChatAdministrators/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeAllGroupChats/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeAllPrivateChats/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeChat/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeChatAdministrators/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeChatMember/
+- https://yaebal.pages.dev/docs/api/types/BotCommandScopeDefault/
+- https://yaebal.pages.dev/docs/api/types/BotDescription/
+- https://yaebal.pages.dev/docs/api/types/BotName/
+- https://yaebal.pages.dev/docs/api/types/BotShortDescription/
+- https://yaebal.pages.dev/docs/api/types/BusinessBotRights/
+- https://yaebal.pages.dev/docs/api/types/BusinessConnection/
+- https://yaebal.pages.dev/docs/api/types/BusinessIntro/
+- https://yaebal.pages.dev/docs/api/types/BusinessLocation/
+- https://yaebal.pages.dev/docs/api/types/BusinessMessagesDeleted/
+- https://yaebal.pages.dev/docs/api/types/BusinessOpeningHours/
+- https://yaebal.pages.dev/docs/api/types/BusinessOpeningHoursInterval/
+- https://yaebal.pages.dev/docs/api/types/CallbackGame/
+- https://yaebal.pages.dev/docs/api/types/CallbackQuery/
+- https://yaebal.pages.dev/docs/api/types/Chat/
+- https://yaebal.pages.dev/docs/api/types/ChatAdministratorRights/
+- https://yaebal.pages.dev/docs/api/types/ChatBackground/
+- https://yaebal.pages.dev/docs/api/types/ChatBoost/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostAdded/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostRemoved/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostSource/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostSourceGiftCode/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostSourceGiveaway/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostSourcePremium/
+- https://yaebal.pages.dev/docs/api/types/ChatBoostUpdated/
+- https://yaebal.pages.dev/docs/api/types/ChatFullInfo/
+- https://yaebal.pages.dev/docs/api/types/ChatInviteLink/
+- https://yaebal.pages.dev/docs/api/types/ChatJoinRequest/
+- https://yaebal.pages.dev/docs/api/types/ChatLocation/
+- https://yaebal.pages.dev/docs/api/types/ChatMember/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberAdministrator/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberBanned/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberLeft/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberMember/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberOwner/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberRestricted/
+- https://yaebal.pages.dev/docs/api/types/ChatMemberUpdated/
+- https://yaebal.pages.dev/docs/api/types/ChatOwnerChanged/
+- https://yaebal.pages.dev/docs/api/types/ChatOwnerLeft/
+- https://yaebal.pages.dev/docs/api/types/ChatPermissions/
+- https://yaebal.pages.dev/docs/api/types/ChatPhoto/
+- https://yaebal.pages.dev/docs/api/types/ChatShared/
+- https://yaebal.pages.dev/docs/api/types/Checklist/
+- https://yaebal.pages.dev/docs/api/types/ChecklistTask/
+- https://yaebal.pages.dev/docs/api/types/ChecklistTasksAdded/
+- https://yaebal.pages.dev/docs/api/types/ChecklistTasksDone/
+- https://yaebal.pages.dev/docs/api/types/ChosenInlineResult/
+- https://yaebal.pages.dev/docs/api/types/Contact/
+- https://yaebal.pages.dev/docs/api/types/CopyTextButton/
+- https://yaebal.pages.dev/docs/api/types/Dice/
+- https://yaebal.pages.dev/docs/api/types/DirectMessagePriceChanged/
+- https://yaebal.pages.dev/docs/api/types/DirectMessagesTopic/
+- https://yaebal.pages.dev/docs/api/types/Document/
+- https://yaebal.pages.dev/docs/api/types/EncryptedCredentials/
+- https://yaebal.pages.dev/docs/api/types/EncryptedPassportElement/
+- https://yaebal.pages.dev/docs/api/types/ExternalReplyInfo/
+- https://yaebal.pages.dev/docs/api/types/File/
+- https://yaebal.pages.dev/docs/api/types/ForceReply/
+- https://yaebal.pages.dev/docs/api/types/ForumTopic/
+- https://yaebal.pages.dev/docs/api/types/ForumTopicClosed/
+- https://yaebal.pages.dev/docs/api/types/ForumTopicCreated/
+- https://yaebal.pages.dev/docs/api/types/ForumTopicEdited/
+- https://yaebal.pages.dev/docs/api/types/ForumTopicReopened/
+- https://yaebal.pages.dev/docs/api/types/Game/
+- https://yaebal.pages.dev/docs/api/types/GameHighScore/
+- https://yaebal.pages.dev/docs/api/types/GeneralForumTopicHidden/
+- https://yaebal.pages.dev/docs/api/types/GeneralForumTopicUnhidden/
+- https://yaebal.pages.dev/docs/api/types/Gift/
+- https://yaebal.pages.dev/docs/api/types/GiftBackground/
+- https://yaebal.pages.dev/docs/api/types/GiftInfo/
+- https://yaebal.pages.dev/docs/api/types/Gifts/
+- https://yaebal.pages.dev/docs/api/types/Giveaway/
+- https://yaebal.pages.dev/docs/api/types/GiveawayCompleted/
+- https://yaebal.pages.dev/docs/api/types/GiveawayCreated/
+- https://yaebal.pages.dev/docs/api/types/GiveawayWinners/
+- https://yaebal.pages.dev/docs/api/types/InaccessibleMessage/
+- https://yaebal.pages.dev/docs/api/types/InlineKeyboardButton/
+- https://yaebal.pages.dev/docs/api/types/InlineKeyboardMarkup/
+- https://yaebal.pages.dev/docs/api/types/InlineQuery/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResult/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultArticle/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultAudio/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedAudio/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedDocument/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedGif/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedMpeg4Gif/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedPhoto/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedSticker/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedVideo/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultCachedVoice/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultContact/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultDocument/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultGame/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultGif/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultLocation/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultMpeg4Gif/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultPhoto/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultsButton/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultVenue/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultVideo/
+- https://yaebal.pages.dev/docs/api/types/InlineQueryResultVoice/
+- https://yaebal.pages.dev/docs/api/types/InputChecklist/
+- https://yaebal.pages.dev/docs/api/types/InputChecklistTask/
+- https://yaebal.pages.dev/docs/api/types/InputContactMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputFile/
+- https://yaebal.pages.dev/docs/api/types/InputInvoiceMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputLocationMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputMedia/
+- https://yaebal.pages.dev/docs/api/types/InputMediaAnimation/
+- https://yaebal.pages.dev/docs/api/types/InputMediaAudio/
+- https://yaebal.pages.dev/docs/api/types/InputMediaDocument/
+- https://yaebal.pages.dev/docs/api/types/InputMediaLink/
+- https://yaebal.pages.dev/docs/api/types/InputMediaLivePhoto/
+- https://yaebal.pages.dev/docs/api/types/InputMediaLocation/
+- https://yaebal.pages.dev/docs/api/types/InputMediaPhoto/
+- https://yaebal.pages.dev/docs/api/types/InputMediaSticker/
+- https://yaebal.pages.dev/docs/api/types/InputMediaVenue/
+- https://yaebal.pages.dev/docs/api/types/InputMediaVideo/
+- https://yaebal.pages.dev/docs/api/types/InputMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputPaidMedia/
+- https://yaebal.pages.dev/docs/api/types/InputPaidMediaLivePhoto/
+- https://yaebal.pages.dev/docs/api/types/InputPaidMediaPhoto/
+- https://yaebal.pages.dev/docs/api/types/InputPaidMediaVideo/
+- https://yaebal.pages.dev/docs/api/types/InputPollMedia/
+- https://yaebal.pages.dev/docs/api/types/InputPollOption/
+- https://yaebal.pages.dev/docs/api/types/InputPollOptionMedia/
+- https://yaebal.pages.dev/docs/api/types/InputProfilePhoto/
+- https://yaebal.pages.dev/docs/api/types/InputProfilePhotoAnimated/
+- https://yaebal.pages.dev/docs/api/types/InputProfilePhotoStatic/
+- https://yaebal.pages.dev/docs/api/types/InputRichMessage/
+- https://yaebal.pages.dev/docs/api/types/InputRichMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputSticker/
+- https://yaebal.pages.dev/docs/api/types/InputStoryContent/
+- https://yaebal.pages.dev/docs/api/types/InputStoryContentPhoto/
+- https://yaebal.pages.dev/docs/api/types/InputStoryContentVideo/
+- https://yaebal.pages.dev/docs/api/types/InputTextMessageContent/
+- https://yaebal.pages.dev/docs/api/types/InputVenueMessageContent/
+- https://yaebal.pages.dev/docs/api/types/Invoice/
+- https://yaebal.pages.dev/docs/api/types/KeyboardButton/
+- https://yaebal.pages.dev/docs/api/types/KeyboardButtonPollType/
+- https://yaebal.pages.dev/docs/api/types/KeyboardButtonRequestChat/
+- https://yaebal.pages.dev/docs/api/types/KeyboardButtonRequestManagedBot/
+- https://yaebal.pages.dev/docs/api/types/KeyboardButtonRequestUsers/
+- https://yaebal.pages.dev/docs/api/types/LabeledPrice/
+- https://yaebal.pages.dev/docs/api/types/Link/
+- https://yaebal.pages.dev/docs/api/types/LinkPreviewOptions/
+- https://yaebal.pages.dev/docs/api/types/LivePhoto/
+- https://yaebal.pages.dev/docs/api/types/Location/
+- https://yaebal.pages.dev/docs/api/types/LocationAddress/
+- https://yaebal.pages.dev/docs/api/types/LoginUrl/
+- https://yaebal.pages.dev/docs/api/types/ManagedBotCreated/
+- https://yaebal.pages.dev/docs/api/types/ManagedBotUpdated/
+- https://yaebal.pages.dev/docs/api/types/MaskPosition/
+- https://yaebal.pages.dev/docs/api/types/MaybeInaccessibleMessage/
+- https://yaebal.pages.dev/docs/api/types/MenuButton/
+- https://yaebal.pages.dev/docs/api/types/MenuButtonCommands/
+- https://yaebal.pages.dev/docs/api/types/MenuButtonDefault/
+- https://yaebal.pages.dev/docs/api/types/MenuButtonWebApp/
+- https://yaebal.pages.dev/docs/api/types/Message/
+- https://yaebal.pages.dev/docs/api/types/MessageAutoDeleteTimerChanged/
+- https://yaebal.pages.dev/docs/api/types/MessageEntity/
+- https://yaebal.pages.dev/docs/api/types/MessageId/
+- https://yaebal.pages.dev/docs/api/types/MessageOrigin/
+- https://yaebal.pages.dev/docs/api/types/MessageOriginChannel/
+- https://yaebal.pages.dev/docs/api/types/MessageOriginChat/
+- https://yaebal.pages.dev/docs/api/types/MessageOriginHiddenUser/
+- https://yaebal.pages.dev/docs/api/types/MessageOriginUser/
+- https://yaebal.pages.dev/docs/api/types/MessageReactionCountUpdated/
+- https://yaebal.pages.dev/docs/api/types/MessageReactionUpdated/
+- https://yaebal.pages.dev/docs/api/types/OrderInfo/
+- https://yaebal.pages.dev/docs/api/types/OwnedGift/
+- https://yaebal.pages.dev/docs/api/types/OwnedGiftRegular/
+- https://yaebal.pages.dev/docs/api/types/OwnedGifts/
+- https://yaebal.pages.dev/docs/api/types/OwnedGiftUnique/
+- https://yaebal.pages.dev/docs/api/types/PaidMedia/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaInfo/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaLivePhoto/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaPhoto/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaPreview/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaPurchased/
+- https://yaebal.pages.dev/docs/api/types/PaidMediaVideo/
+- https://yaebal.pages.dev/docs/api/types/PaidMessagePriceChanged/
+- https://yaebal.pages.dev/docs/api/types/PassportData/
+- https://yaebal.pages.dev/docs/api/types/PassportElementError/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorDataField/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorFile/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorFiles/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorFrontSide/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorReverseSide/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorSelfie/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorTranslationFile/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorTranslationFiles/
+- https://yaebal.pages.dev/docs/api/types/PassportElementErrorUnspecified/
+- https://yaebal.pages.dev/docs/api/types/PassportFile/
+- https://yaebal.pages.dev/docs/api/types/PhotoSize/
+- https://yaebal.pages.dev/docs/api/types/Poll/
+- https://yaebal.pages.dev/docs/api/types/PollAnswer/
+- https://yaebal.pages.dev/docs/api/types/PollMedia/
+- https://yaebal.pages.dev/docs/api/types/PollOption/
+- https://yaebal.pages.dev/docs/api/types/PollOptionAdded/
+- https://yaebal.pages.dev/docs/api/types/PollOptionDeleted/
+- https://yaebal.pages.dev/docs/api/types/PreCheckoutQuery/
+- https://yaebal.pages.dev/docs/api/types/PreparedInlineMessage/
+- https://yaebal.pages.dev/docs/api/types/PreparedKeyboardButton/
+- https://yaebal.pages.dev/docs/api/types/ProximityAlertTriggered/
+- https://yaebal.pages.dev/docs/api/types/ReactionCount/
+- https://yaebal.pages.dev/docs/api/types/ReactionType/
+- https://yaebal.pages.dev/docs/api/types/ReactionTypeCustomEmoji/
+- https://yaebal.pages.dev/docs/api/types/ReactionTypeEmoji/
+- https://yaebal.pages.dev/docs/api/types/ReactionTypePaid/
+- https://yaebal.pages.dev/docs/api/types/RefundedPayment/
+- https://yaebal.pages.dev/docs/api/types/ReplyKeyboardMarkup/
+- https://yaebal.pages.dev/docs/api/types/ReplyKeyboardRemove/
+- https://yaebal.pages.dev/docs/api/types/ReplyParameters/
+- https://yaebal.pages.dev/docs/api/types/ResponseParameters/
+- https://yaebal.pages.dev/docs/api/types/RevenueWithdrawalState/
+- https://yaebal.pages.dev/docs/api/types/RevenueWithdrawalStateFailed/
+- https://yaebal.pages.dev/docs/api/types/RevenueWithdrawalStatePending/
+- https://yaebal.pages.dev/docs/api/types/RevenueWithdrawalStateSucceeded/
+- https://yaebal.pages.dev/docs/api/types/RichBlock/
+- https://yaebal.pages.dev/docs/api/types/RichBlockAnchor/
+- https://yaebal.pages.dev/docs/api/types/RichBlockAnimation/
+- https://yaebal.pages.dev/docs/api/types/RichBlockAudio/
+- https://yaebal.pages.dev/docs/api/types/RichBlockBlockQuotation/
+- https://yaebal.pages.dev/docs/api/types/RichBlockCaption/
+- https://yaebal.pages.dev/docs/api/types/RichBlockCollage/
+- https://yaebal.pages.dev/docs/api/types/RichBlockDetails/
+- https://yaebal.pages.dev/docs/api/types/RichBlockDivider/
+- https://yaebal.pages.dev/docs/api/types/RichBlockFooter/
+- https://yaebal.pages.dev/docs/api/types/RichBlockList/
+- https://yaebal.pages.dev/docs/api/types/RichBlockListItem/
+- https://yaebal.pages.dev/docs/api/types/RichBlockMap/
+- https://yaebal.pages.dev/docs/api/types/RichBlockMathematicalExpression/
+- https://yaebal.pages.dev/docs/api/types/RichBlockParagraph/
+- https://yaebal.pages.dev/docs/api/types/RichBlockPhoto/
+- https://yaebal.pages.dev/docs/api/types/RichBlockPreformatted/
+- https://yaebal.pages.dev/docs/api/types/RichBlockPullQuotation/
+- https://yaebal.pages.dev/docs/api/types/RichBlockSectionHeading/
+- https://yaebal.pages.dev/docs/api/types/RichBlockSlideshow/
+- https://yaebal.pages.dev/docs/api/types/RichBlockTable/
+- https://yaebal.pages.dev/docs/api/types/RichBlockTableCell/
+- https://yaebal.pages.dev/docs/api/types/RichBlockThinking/
+- https://yaebal.pages.dev/docs/api/types/RichBlockVideo/
+- https://yaebal.pages.dev/docs/api/types/RichBlockVoiceNote/
+- https://yaebal.pages.dev/docs/api/types/RichMessage/
+- https://yaebal.pages.dev/docs/api/types/RichText/
+- https://yaebal.pages.dev/docs/api/types/RichTextAnchor/
+- https://yaebal.pages.dev/docs/api/types/RichTextAnchorLink/
+- https://yaebal.pages.dev/docs/api/types/RichTextBankCardNumber/
+- https://yaebal.pages.dev/docs/api/types/RichTextBold/
+- https://yaebal.pages.dev/docs/api/types/RichTextBotCommand/
+- https://yaebal.pages.dev/docs/api/types/RichTextCashtag/
+- https://yaebal.pages.dev/docs/api/types/RichTextCode/
+- https://yaebal.pages.dev/docs/api/types/RichTextCustomEmoji/
+- https://yaebal.pages.dev/docs/api/types/RichTextDateTime/
+- https://yaebal.pages.dev/docs/api/types/RichTextEmailAddress/
+- https://yaebal.pages.dev/docs/api/types/RichTextHashtag/
+- https://yaebal.pages.dev/docs/api/types/RichTextItalic/
+- https://yaebal.pages.dev/docs/api/types/RichTextMarked/
+- https://yaebal.pages.dev/docs/api/types/RichTextMathematicalExpression/
+- https://yaebal.pages.dev/docs/api/types/RichTextMention/
+- https://yaebal.pages.dev/docs/api/types/RichTextPhoneNumber/
+- https://yaebal.pages.dev/docs/api/types/RichTextReference/
+- https://yaebal.pages.dev/docs/api/types/RichTextReferenceLink/
+- https://yaebal.pages.dev/docs/api/types/RichTextSpoiler/
+- https://yaebal.pages.dev/docs/api/types/RichTextStrikethrough/
+- https://yaebal.pages.dev/docs/api/types/RichTextSubscript/
+- https://yaebal.pages.dev/docs/api/types/RichTextSuperscript/
+- https://yaebal.pages.dev/docs/api/types/RichTextTextMention/
+- https://yaebal.pages.dev/docs/api/types/RichTextUnderline/
+- https://yaebal.pages.dev/docs/api/types/RichTextUrl/
+- https://yaebal.pages.dev/docs/api/types/SentGuestMessage/
+- https://yaebal.pages.dev/docs/api/types/SentWebAppMessage/
+- https://yaebal.pages.dev/docs/api/types/SharedUser/
+- https://yaebal.pages.dev/docs/api/types/ShippingAddress/
+- https://yaebal.pages.dev/docs/api/types/ShippingOption/
+- https://yaebal.pages.dev/docs/api/types/ShippingQuery/
+- https://yaebal.pages.dev/docs/api/types/StarAmount/
+- https://yaebal.pages.dev/docs/api/types/StarTransaction/
+- https://yaebal.pages.dev/docs/api/types/StarTransactions/
+- https://yaebal.pages.dev/docs/api/types/Sticker/
+- https://yaebal.pages.dev/docs/api/types/StickerSet/
+- https://yaebal.pages.dev/docs/api/types/Story/
+- https://yaebal.pages.dev/docs/api/types/StoryArea/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaPosition/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaType/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaTypeLink/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaTypeLocation/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaTypeSuggestedReaction/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaTypeUniqueGift/
+- https://yaebal.pages.dev/docs/api/types/StoryAreaTypeWeather/
+- https://yaebal.pages.dev/docs/api/types/SuccessfulPayment/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostApprovalFailed/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostApproved/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostDeclined/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostInfo/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostPaid/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostParameters/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostPrice/
+- https://yaebal.pages.dev/docs/api/types/SuggestedPostRefunded/
+- https://yaebal.pages.dev/docs/api/types/SwitchInlineQueryChosenChat/
+- https://yaebal.pages.dev/docs/api/types/TextQuote/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartner/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerAffiliateProgram/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerChat/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerFragment/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerOther/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerTelegramAds/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerTelegramApi/
+- https://yaebal.pages.dev/docs/api/types/TransactionPartnerUser/
+- https://yaebal.pages.dev/docs/api/types/UniqueGift/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftBackdrop/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftBackdropColors/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftColors/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftInfo/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftModel/
+- https://yaebal.pages.dev/docs/api/types/UniqueGiftSymbol/
+- https://yaebal.pages.dev/docs/api/types/Update/
+- https://yaebal.pages.dev/docs/api/types/User/
+- https://yaebal.pages.dev/docs/api/types/UserChatBoosts/
+- https://yaebal.pages.dev/docs/api/types/UserProfileAudios/
+- https://yaebal.pages.dev/docs/api/types/UserProfilePhotos/
+- https://yaebal.pages.dev/docs/api/types/UserRating/
+- https://yaebal.pages.dev/docs/api/types/UsersShared/
+- https://yaebal.pages.dev/docs/api/types/Venue/
+- https://yaebal.pages.dev/docs/api/types/Video/
+- https://yaebal.pages.dev/docs/api/types/VideoChatEnded/
+- https://yaebal.pages.dev/docs/api/types/VideoChatParticipantsInvited/
+- https://yaebal.pages.dev/docs/api/types/VideoChatScheduled/
+- https://yaebal.pages.dev/docs/api/types/VideoChatStarted/
+- https://yaebal.pages.dev/docs/api/types/VideoNote/
+- https://yaebal.pages.dev/docs/api/types/VideoQuality/
+- https://yaebal.pages.dev/docs/api/types/Voice/
+- https://yaebal.pages.dev/docs/api/types/WebAppData/
+- https://yaebal.pages.dev/docs/api/types/WebAppInfo/
+- https://yaebal.pages.dev/docs/api/types/WebhookInfo/
+- https://yaebal.pages.dev/docs/api/types/WriteAccessAllowed/

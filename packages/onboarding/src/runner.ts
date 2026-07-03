@@ -535,6 +535,7 @@ async function renderStep(
 				message_id: message.message_id,
 				...textParams(text),
 				...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+				...ctx.businessRouting(),
 			});
 			return { messageId: message.message_id, pending: false };
 		} catch {
@@ -601,6 +602,7 @@ async function sendMedia(
 		...(text ? { caption: text.text } : {}),
 		...(text?.entities ? { caption_entities: text.entities } : {}),
 		...(replyMarkup ? { reply_markup: replyMarkup } : {}),
+		...ctx.routing(),
 		...media.extra,
 	});
 

@@ -109,7 +109,20 @@ test("renderFiles: rich-message template wires ctx.sendRichMessage/richMessageDr
 	assert.match(src, /\.install\(rich\(\)\)/);
 	assert.match(src, /ctx\.sendRichMessage\(/);
 	assert.match(src, /ctx\.richMessageDraft\(1\)/);
-	assert.match(src, /draft\.commit\(/);
+	assert.match(src, /draft\.send\(/);
+});
+
+test("renderFiles: broadcast template wires typed broadcast jobs", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [], template: "broadcast" });
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+	const src = f["src/index.ts"] ?? "";
+
+	assert.ok(pkg.dependencies["@yaebal/broadcast"]);
+	assert.match(src, /import \{ Broadcast \} from "@yaebal\/broadcast";/);
+	assert.match(src, /new Broadcast\(bot\.api/);
+	assert.match(src, /\.type\("digest"/);
+	assert.match(src, /broadcaster\.start\(/);
+	assert.match(src, /"digest"/);
 });
 
 test("renderFiles: a template plugin is never wired twice", () => {

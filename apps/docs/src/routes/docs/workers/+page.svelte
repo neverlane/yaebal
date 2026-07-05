@@ -6,7 +6,12 @@
 	const tasks = `// tasks.ts — runs in a worker thread
 import { register } from "@yaebal/workers";
 
-register({
+export type Tasks = {
+  resize: (buf: Uint8Array) => Promise<Uint8Array>;
+  hash: (s: string) => string;
+};
+
+register<Tasks>({
   resize: (buf) => sharp(buf).resize(100).toBuffer(),
   hash:   (s)   => crypto.createHash("sha256").update(s).digest("hex"),
 });`;
@@ -15,22 +20,22 @@ register({
 import { media } from "@yaebal/core";
 import { files } from "@yaebal/files";
 import { createPool } from "@yaebal/workers";
+import type { Tasks } from "./tasks.js";
 
-const pool = createPool(new URL("./tasks.js", import.meta.url), { size: 4 });
+const pool = createPool<Tasks>(new URL("./tasks.js", import.meta.url), { size: 4 });
 
 bot.install(files()).on("message:photo", async (ctx) => {
   const largest = ctx.message.photo.at(-1)!;
   const bytes = await ctx.files.download(largest.file_id);
-  const thumb = await pool.run<Uint8Array>("resize", bytes); // → thread → back
+  const thumb = await pool.run("resize", bytes); // typed: Uint8Array — → thread → back
   await ctx.sendPhoto(media.buffer(thumb));
 });
 
 // on shutdown
 await pool.destroy();`;
 
-	const transfer = `// pass a buffer as a transferable — no copy, the bytes move to the worker
-const ab = bytes.buffer;
-const out = await pool.run("resize", ab, [ab]);`;
+	const transfer = `// pass the underlying buffer as a transferable — no copy, the bytes move to the worker
+const out = await pool.run("resize", bytes, [bytes.buffer]);`;
 </script>
 
 <svelte:head>
@@ -52,8 +57,10 @@ const out = await pool.run("resize", ab, [ab]);`;
 
 <h2>usage</h2>
 <p>
-	<code>register(handlers)</code> inside a worker file declares the named tasks the pool can call.
-	<code>createPool(file, options?)</code> spawns the workers; <code>pool.run(name, arg?)</code> sends
+	<code>register&lt;Tasks&gt;(handlers)</code> inside a worker file declares the named tasks the pool
+	can call. <code>createPool&lt;Tasks&gt;(file, options?)</code> spawns the workers; share the
+	<code>Tasks</code> type between the two and <code>pool.run(name, arg?)</code> fully infers the
+	argument and result types per task. it sends
 	<code>arg</code> to the next worker (round-robin) and resolves with the result.
 </p>
 <Code code={tasks} title="tasks.ts" />
@@ -78,11 +85,12 @@ const out = await pool.run("resize", ab, [ab]);`;
 <table>
 	<thead><tr><th>export</th><th>signature</th><th>description</th></tr></thead>
 	<tbody>
-		<tr><td><code>createPool</code></td><td><code>(workerFile: string | URL, options?: PoolOptions) =&gt; Pool</code></td><td>spawn a pool of workers</td></tr>
-		<tr><td><code>register</code></td><td><code>(handlers: TaskHandlers) =&gt; void</code></td><td>called inside the worker file to expose tasks</td></tr>
-		<tr><td><code>Pool</code></td><td>interface</td><td><code>run</code> / <code>destroy</code> / <code>size</code></td></tr>
+		<tr><td><code>createPool</code></td><td><code>&lt;Tasks&gt;(workerFile: string | URL, options?: PoolOptions) =&gt; Pool&lt;Tasks&gt;</code></td><td>spawn a pool of workers</td></tr>
+		<tr><td><code>register</code></td><td><code>&lt;Tasks&gt;(handlers: TaskHandlers&lt;Tasks&gt;) =&gt; void</code></td><td>called inside the worker file to expose tasks</td></tr>
+		<tr><td><code>Pool&lt;Tasks&gt;</code></td><td>interface</td><td><code>run</code> / <code>destroy</code> / <code>size</code></td></tr>
 		<tr><td><code>PoolOptions</code></td><td><code>&#123; size?: number &#125;</code></td><td>number of worker threads (default <code>1</code>)</td></tr>
-		<tr><td><code>TaskHandlers</code></td><td><code>Record&lt;string, (arg) =&gt; unknown | Promise&lt;unknown&gt;&gt;</code></td><td>the task map passed to <code>register</code></td></tr>
+		<tr><td><code>TaskDefinitions</code></td><td><code>Record&lt;string, (...args) =&gt; unknown&gt;</code></td><td>the task map shape shared between pool and worker</td></tr>
+		<tr><td><code>TaskHandlers&lt;Tasks&gt;</code></td><td>mapped type</td><td>per-task <code>(arg) =&gt; result | Promise&lt;result&gt;</code> implementations for <code>register</code></td></tr>
 	</tbody>
 </table>
 
@@ -90,7 +98,7 @@ const out = await pool.run("resize", ab, [ab]);`;
 <table>
 	<thead><tr><th>member</th><th>signature</th><th>description</th></tr></thead>
 	<tbody>
-		<tr><td><code>run</code></td><td><code>&lt;R&gt;(name: string, arg?: unknown, transfer?: readonly Transferable[]) =&gt; Promise&lt;R&gt;</code></td><td>run a registered task on the next worker (round-robin)</td></tr>
+		<tr><td><code>run</code></td><td><code>&lt;Name extends keyof Tasks&gt;(name: Name, arg, transfer?: readonly Transferable[]) =&gt; Promise&lt;result&gt;</code></td><td>run a registered task on the next worker (round-robin); <code>arg</code> and the result are inferred from <code>Tasks[Name]</code></td></tr>
 		<tr><td><code>destroy</code></td><td><code>() =&gt; Promise&lt;void&gt;</code></td><td>terminate all workers; reject anything in flight</td></tr>
 		<tr><td><code>size</code></td><td><code>number</code></td><td>number of worker threads (readonly)</td></tr>
 	</tbody>

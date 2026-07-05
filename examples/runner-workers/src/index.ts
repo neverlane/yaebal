@@ -1,6 +1,7 @@
 import { Bot } from "@yaebal/core";
 import { run } from "@yaebal/runner";
 import { createPool } from "@yaebal/workers";
+import type { Tasks } from "./tasks.js";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -8,12 +9,7 @@ if (!token) {
 	process.exit(1);
 }
 
-interface ScoreResult {
-	score: number;
-	length: number;
-}
-
-const pool = createPool(new URL("./tasks.ts", import.meta.url), {
+const pool = createPool<Tasks>(new URL("./tasks.ts", import.meta.url), {
 	size: Number(process.env.WORKER_POOL_SIZE ?? 2),
 });
 
@@ -30,12 +26,12 @@ const bot = new Bot(token)
 	)
 	.command("hash", async (ctx) => {
 		const input = ctx.args.join(" ").trim() || "yaebal";
-		const digest = await pool.run<string>("digest", input);
+		const digest = await pool.run("digest", input);
 		return ctx.reply(`sha256(${input})\n${digest}`);
 	})
 	.command("score", async (ctx) => {
 		const text = ctx.args.join(" ").trim() || "ship the bot";
-		const result = await pool.run<ScoreResult>("score", { text, rounds: 90_000 });
+		const result = await pool.run("score", { text, rounds: 90_000 });
 		return ctx.reply(`score=${result.score}, length=${result.length}`);
 	})
 	.command("fanout", async (ctx) => {

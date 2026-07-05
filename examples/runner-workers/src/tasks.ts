@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
 import { register } from "@yaebal/workers";
 
-const handlers = {
+/** the task map shared with createPool<Tasks>() in index.ts — names, args and results stay typed on both sides. */
+export type Tasks = {
+	digest: (input: string) => string;
+	score: (input: { text: string; rounds: number }) => { score: number; length: number };
+};
+
+register<Tasks>({
 	digest: (input) => createHash("sha256").update(input).digest("hex"),
 	score: ({ text, rounds }) => {
 		let score = 0;
@@ -12,9 +18,4 @@ const handlers = {
 
 		return { score, length: text.length };
 	},
-} satisfies {
-	digest: (input: string) => string;
-	score: (input: { text: string; rounds: number }) => { score: number; length: number };
-};
-
-register(handlers);
+});

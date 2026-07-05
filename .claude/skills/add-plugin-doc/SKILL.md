@@ -14,7 +14,11 @@ use this skill when documenting a first-party `@yaebal/*` plugin.
 - show install, minimal setup, context fields added by the plugin, api surface, production notes, testing notes, and a runnable playground example when possible.
 - mention plugin dependencies explicitly when the plugin requires context from another plugin.
 - keep examples type-flow oriented: show what appears on `ctx` after `.install(...)`.
-- add seo metadata in `apps/docs/src/lib/SEO.svelte` for new plugin routes.
+- add seo metadata in `apps/docs/src/lib/SEO.svelte` (`PLUGIN_META`) for new plugin routes.
+- for a brand-new plugin page, also add the plugin to the catalog arrays in
+  `apps/docs/src/routes/docs/plugins/+page.svelte` and
+  `apps/docs/src/routes/docs/packages/+page.svelte`, to `apps/docs/src/lib/nav.ts`
+  (the right plugins section), and to the plugins table in the root `README.md`.
 - run `pnpm docs:check` before finishing.
 
 ## page shape
@@ -30,6 +34,8 @@ use this skill when documenting a first-party `@yaebal/*` plugin.
 ## references
 
 - plugin routes: `apps/docs/src/routes/docs/plugins/`
+- plugin catalog page: `apps/docs/src/routes/docs/plugins/+page.svelte`
+- packages catalog page: `apps/docs/src/routes/docs/packages/+page.svelte`
 - packages: `packages/*/src/index.ts`
 - playground registry: `apps/docs/src/lib/examples.ts`
 - nav: `apps/docs/src/lib/nav.ts`

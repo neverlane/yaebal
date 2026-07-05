@@ -19,6 +19,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # typecheck (tsc --noEmit) does not build project references, and workspace packages
+      # resolve each other through lib/*.d.ts — so build first on a fresh checkout, or any
+      # package importing @yaebal/types (keyboard, runner, …) fails with TS2307.
+      - run: pnpm build
+
       - run: pnpm docs:check
 
       - run: pnpm typecheck

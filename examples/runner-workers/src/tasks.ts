@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { register } from "@yaebal/workers";
 
+/** the task map shared with createPool<Tasks>() in index.ts — names, args and results stay typed on both sides. */
 export type Tasks = {
 	digest: (input: string) => string;
 	score: (input: { text: string; rounds: number }) => { score: number; length: number };

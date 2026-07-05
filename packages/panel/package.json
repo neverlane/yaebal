@@ -23,7 +23,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib"
+		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

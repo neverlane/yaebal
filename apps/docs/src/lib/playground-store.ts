@@ -1,8 +1,10 @@
+import type { Step } from "./playground";
+
 export interface Project {
 	id: string;
 	name: string;
 	code: string;
-	steps?: ({ user: string } | { click: string; label?: string } | { system: string })[];
+	steps?: Step[];
 }
 
 export interface Token {

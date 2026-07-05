@@ -81,7 +81,7 @@
 		"/docs/examples": {
 			title: "yaebal examples — runnable telegram bot recipes",
 			description:
-				"browse runnable yaebal examples for broadcasts, keyboards, sessions, rich messages, onboarding, panel workflows, toml routes, and plugin-heavy bots.",
+				"browse runnable yaebal examples for commerce bots, dialogs, media, webhooks, runner workers, tests, inline mode, payments, broadcasts, panels, keyboards, and plugin-heavy bots.",
 		},
 		"/docs/api": {
 			title: "telegram bot api reference for yaebal",
@@ -104,6 +104,46 @@
 			description:
 				"production guide for yaebal bots: retries, throttling, inbound rate limiting, concurrent runner, per-chat ordering, webhooks, graceful shutdown, observability, and broadcasts.",
 			keywords: `${DEFAULT_KEYWORDS}, telegram bot production, telegram bot rate limits, telegram bot webhooks, telegram bot scaling`,
+		},
+		"/docs/production/local-bot-api": {
+			title: "local telegram bot api server with yaebal",
+			description:
+				"self-host telegram's bot api server for yaebal bots, configure api roots, migrate tokens safely, and operate local file storage.",
+		},
+		"/docs/production/rate-limits": {
+			title: "telegram bot rate limits with yaebal",
+			description:
+				"avoid telegram 429 errors with yaebal inbound rate limiting, outbound throttling, retry-after handling, paid broadcasts, and delivery failure policy.",
+		},
+		"/docs/production/deploy-targets": {
+			title: "deploy yaebal bots to docker, systemd, serverless, and edge",
+			description:
+				"choose the right yaebal deployment target: polling on servers, webhooks on edge runtimes, docker, systemd, fly, railway, vercel, and cloudflare.",
+		},
+		"/docs/production/observability": {
+			title: "yaebal bot observability and safe logging",
+			description:
+				"log yaebal telegram bot api calls, handler failures, queues, webhooks, and business events without leaking bot tokens, uploads, or private user data.",
+		},
+		"/docs/production/queues-broadcasts": {
+			title: "telegram broadcast queues with yaebal",
+			description:
+				"design durable yaebal broadcast jobs with retry, rate limits, recipient accounting, pause, resume, cancel, leases, and operator visibility.",
+		},
+		"/docs/recipes": {
+			title: "yaebal telegram bot recipes",
+			description:
+				"copy runnable yaebal recipes for commerce bots, dialog wizards, media studios, webhooks, runner workers, tests, broadcasts, inline mode, payments and stars, mini apps, and rich message flows.",
+		},
+		"/docs/comparison": {
+			title: "yaebal comparison with gramio, puregram, grammy, and telegraf",
+			description:
+				"neutral comparison of telegram bot libraries and why yaebal is the best fit for type flow, generated contexts, first-party plugins, tests, and production tooling.",
+		},
+		"/docs/reference": {
+			title: "yaebal public api reference",
+			description:
+				"human entry point for yaebal public api types: bot, composer, context, api client, plugins, filters, storage interfaces, and package exports.",
 		},
 		"/docs/cheat-sheet": {
 			title: "yaebal cheat sheet — quick reference for telegram bot development",

@@ -19,9 +19,9 @@ telegram, so the commands below show up in the `/` picker.
 
 ## environment variables
 
-| name         | example              | description                                                                               |
-|:-------------|:---------------------|:------------------------------------------------------------------------------------------|
-| `BOT_TOKEN`  | `123456:AA-bc...`    | bot token from [@BotFather](https://t.me/BotFather). required — the bot exits without it. |
+| name         | example           | description                                                                               |
+|:-------------|:------------------|:------------------------------------------------------------------------------------------|
+| `BOT_TOKEN`  | `123456:AA-bc...` | bot token from [@BotFather](https://t.me/BotFather). required — the bot exits without it. |
 
 ## commands the example bot answers
 

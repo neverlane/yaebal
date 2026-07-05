@@ -75,6 +75,27 @@ test("tui: navigation, toggles and a plugin selection stick", async () => {
 	assert.ok(["node", "bun", "deno"].includes(result?.runtime ?? ""));
 });
 
+test("tui: plugin template skips bot plugin selection", async () => {
+	const h = harness();
+	const pending = runTui(parseArgs(["--template", "plugin"]), {
+		input: h.input,
+		output: h.output,
+		rows: 30,
+		cols: 80,
+	});
+
+	await h.type("plugbot");
+	await h.press(ENTER); // name -> runtime
+	await h.press(ENTER); // runtime -> package manager
+	await h.press(ENTER); // package manager -> review (template/plugins are skipped)
+	await h.press(ENTER); // create
+
+	const result = await pending;
+	assert.ok(result);
+	assert.equal(result?.template, "plugin");
+	assert.deepEqual(result?.plugins, []);
+});
+
 test("tui: renders a centred card with the current step", async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 24, cols: 80 });

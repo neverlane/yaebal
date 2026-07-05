@@ -14,7 +14,14 @@ import process from "node:process";
 import { HELP, parseArgs } from "./args.js";
 import { defaults, type Selections, sanitizePlugins } from "./config.js";
 import { runPrompts } from "./prompts.js";
-import { installCommand, renderFiles, runCommand, writeProject } from "./scaffold.js";
+import {
+	installCommand,
+	nodePackageManager,
+	renderFiles,
+	runCommand,
+	scriptCommand,
+	writeProject,
+} from "./scaffold.js";
 import { gitInit, installDeps, isInteractive, supportsTui, validateProjectName } from "./util.js";
 
 export type { ParsedArgs } from "./args.js";
@@ -130,19 +137,31 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 		);
 	}
 
-	if (selections.install) {
-		console.log(c.dim(`  • installing dependencies with ${selections.packageManager}…`));
+	const installPackageManager =
+		selections.template === "plugin"
+			? nodePackageManager(selections.packageManager)
+			: selections.packageManager;
 
-		const ok = await installDeps(selections.packageManager, target);
+	if (selections.install) {
+		console.log(c.dim(`  • installing dependencies with ${installPackageManager}…`));
+
+		const ok = await installDeps(installPackageManager, target);
 		if (!ok) console.log(c.red("  • install failed — run it manually"));
 	}
 
 	// next steps -----------------------------------------------------------------
 	const steps: string[] = [`cd ${selections.name}`];
-	if (!selections.install) steps.push(installCommand(selections.packageManager));
+	if (!selections.install) steps.push(installCommand(installPackageManager));
 
-	steps.push(c.dim("# add your BOT_TOKEN to .env"));
-	steps.push(runCommand(selections.packageManager, "dev"));
+	if (selections.template === "plugin") {
+		steps.push(scriptCommand(installPackageManager, "typecheck"));
+		steps.push(scriptCommand(installPackageManager, "test"));
+		steps.push(c.dim("# optional: export BOT_TOKEN to run examples/basic.mjs"));
+		steps.push(scriptCommand(installPackageManager, "example"));
+	} else {
+		steps.push(c.dim("# add your BOT_TOKEN to .env"));
+		steps.push(runCommand(selections.packageManager, "dev"));
+	}
 
 	console.log(`\n${c.bold("next steps:")}`);
 

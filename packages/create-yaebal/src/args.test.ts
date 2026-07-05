@@ -12,6 +12,13 @@ test("parseArgs: positional name + short flags", () => {
 	assert.deepEqual(a.plugins, ["session", "again"]);
 });
 
+test("parseArgs: plugin template", () => {
+	const a = parseArgs(["my-plugin", "-t", "plugin"]);
+
+	assert.equal(a.name, "my-plugin");
+	assert.equal(a.template, "plugin");
+});
+
 test("parseArgs: --flag=value form and pm alias", () => {
 	const a = parseArgs(["bot", "--runtime=deno", "--pm=npm"]);
 

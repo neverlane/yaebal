@@ -1,0 +1,19 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ES2023", "DOM"],
+		"types": ["node"]
+	},
+	"references": [
+		{ "path": "../../packages/core" },
+		{ "path": "../../packages/files" },
+		{ "path": "../../packages/media-cache" },
+		{ "path": "../../packages/media-group" },
+		{ "path": "../../packages/preview" },
+		{ "path": "../../packages/split" }
+	],
+	"include": ["src/**/*.ts"]
+}

@@ -1,8 +1,20 @@
 import { type ChatMessage, renderChat } from "@yaebal/preview";
-import { type RecordedCall, callbackUpdate, messageUpdate, mockApi } from "@yaebal/test";
+import {
+	type RecordedCall,
+	callbackUpdate,
+	inlineQueryUpdate,
+	messageUpdate,
+	mockApi,
+	preCheckoutQueryUpdate,
+} from "@yaebal/test";
 import { type Bot, createBot, richContext } from "yaebal";
 
-export type Step = { user: string } | { click: string; label?: string } | { system: string };
+export type Step =
+	| { user: string }
+	| { click: string; label?: string }
+	| { inline: string }
+	| { preCheckout: string }
+	| { system: string };
 
 interface InlineBtn {
 	text: string;
@@ -72,6 +84,17 @@ const fileId = (v: unknown, fallback: string): string => String(v ?? fallback);
 
 const mediaMeta = (v: unknown): Record<string, unknown> =>
 	typeof v === "object" && v !== null ? (v as Record<string, unknown>) : {};
+
+function invoiceAmount(prices: unknown): string {
+	if (!Array.isArray(prices)) return "";
+
+	const total = prices.reduce((sum, price) => {
+		const amount = typeof price === "object" && price !== null ? (price as { amount?: unknown }).amount : 0;
+		return sum + Number(amount ?? 0);
+	}, 0);
+
+	return total > 0 ? `\namount: ${total}` : "";
+}
 
 export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 	const p = (c.params ?? {}) as Record<string, unknown>;
@@ -193,7 +216,15 @@ export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 				} as ChatMessage["poll"],
 				buttons,
 			};
+		case "sendInvoice":
+			return {
+				text: `invoice: ${asText(p.title, "invoice")}\n${asText(p.description)}${invoiceAmount(p.prices)}`,
+				buttons,
+			};
 		case "answerCallbackQuery":
+			return null;
+		case "answerInlineQuery":
+		case "answerPreCheckoutQuery":
 			return null;
 		default:
 			return { text: `· ${c.method}` };
@@ -255,6 +286,12 @@ export async function feedSteps(
 				debug: `incoming message, ts: ${ts}, id: ${messageId}`,
 			});
 			await bot.handleUpdate(update);
+		} else if ("inline" in step) {
+			convo.push({ from: "system", text: `inline query: ${quote(step.inline)}` });
+			await bot.handleUpdate(inlineQueryUpdate({ query: step.inline }));
+		} else if ("preCheckout" in step) {
+			convo.push({ from: "system", text: `pre-checkout query: ${quote(step.preCheckout)}` });
+			await bot.handleUpdate(preCheckoutQueryUpdate({ invoicePayload: step.preCheckout }));
 		} else {
 			const label = callbackLabels.get(step.click) ?? step.click;
 			const targetId = lastBotMessageId ?? 1;
@@ -277,6 +314,19 @@ export async function feedSteps(
 					from: "system",
 					text: text ? `callback answered: ${quote(text)}` : "callback answered",
 				});
+				continue;
+			}
+
+			if (c.method === "answerInlineQuery") {
+				const results = Array.isArray(c.params?.results) ? c.params.results.length : 0;
+				convo.push({ from: "system", text: `inline answered: ${results} result(s)` });
+				continue;
+			}
+
+			if (c.method === "answerPreCheckoutQuery") {
+				const ok = c.params?.ok === true;
+				const error = typeof c.params?.error_message === "string" ? `: ${c.params.error_message}` : "";
+				convo.push({ from: "system", text: ok ? "pre-checkout approved" : `pre-checkout rejected${error}` });
 				continue;
 			}
 

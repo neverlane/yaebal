@@ -83,7 +83,9 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 			args.template ?? (await pickOne(rl, "template", TEMPLATES, d.template));
 
 		let plugins = args.plugins;
-		if (plugins === undefined) {
+		if (template === "plugin") {
+			plugins = [];
+		} else if (plugins === undefined) {
 			console.log(`\n${c.bold("plugins")} ${c.dim("(space/comma separated ids, or 'all')")}`);
 
 			PLUGINS.forEach((p) => {

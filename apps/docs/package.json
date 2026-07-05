@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/docs",
-	"version": "0.1.4",
+	"version": "0.2.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -8,6 +8,8 @@
 		"build": "vite build && pagefind --site build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"health": "node scripts/check-docs-health.mjs",
+		"check:all": "pnpm run health && pnpm run check",
 		"generate:api": "node scripts/generate-api-reference.mjs"
 	},
 	"dependencies": {

@@ -19,7 +19,8 @@ export type TemplateId =
 	| "webhook"
 	| "runner"
 	| "rich-message"
-	| "broadcast";
+	| "broadcast"
+	| "plugin";
 
 export interface Choice<T extends string> {
 	value: T;
@@ -60,6 +61,11 @@ export const TEMPLATES: Choice<TemplateId>[] = [
 		value: "broadcast",
 		label: "broadcast",
 		hint: "subscriber list + typed broadcast jobs via @yaebal/broadcast",
+	},
+	{
+		value: "plugin",
+		label: "plugin",
+		hint: "author a reusable yaebal plugin package",
 	},
 ];
 

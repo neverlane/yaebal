@@ -18,7 +18,8 @@ pnpm create yaebal my-bot --plugins all --no-install`;
 -m, --pm <npm|pnpm|yarn|bun|deno>     package manager         (default: detected)
 -t, --template <name>                 minimal · echo · commands · buttons ·
                                       conversation · i18n · session-counter ·
-                                      webhook · runner · rich-message · broadcast
+                                      webhook · runner · rich-message · broadcast ·
+									  plugin
 -p, --plugins <a,b | all | none>      comma list of @yaebal plugins
     --git / --no-git                  initialise a git repo (+ first commit)
     --install / --no-install          install dependencies after scaffolding

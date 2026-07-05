@@ -57,12 +57,16 @@
   }
 
   function updateActive() {
+    const threshold = Math.min(window.innerHeight * 0.38, 360);
+    const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 24;
     let next = "";
 
     for (const el of headingElements) {
-      if (el.getBoundingClientRect().top > 48) break;
+      if (el.getBoundingClientRect().top > threshold) break;
       next = el.id;
     }
+
+    if (nearBottom) next = headingElements.at(-1)?.id ?? next;
 
     activeId = next;
   }
@@ -132,7 +136,6 @@
   .title {
     margin: 0 0 10px;
     font-size: 11px;
-    text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--gray);
   }
@@ -143,6 +146,7 @@
     margin: 7px 0;
     font-size: 13px;
     line-height: 1.35;
+    text-transform: lowercase;
     color: var(--gray);
     transition: color 0.18s ease;
   }

@@ -1,0 +1,27 @@
+{
+	"name": "@yaebal/example-commerce-suite",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types --env-file=.env src/index.ts",
+		"start": "node --experimental-strip-types --env-file=.env src/index.ts",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "pnpm typecheck"
+	},
+	"dependencies": {
+		"@yaebal/callback-data": "workspace:*",
+		"@yaebal/commands": "workspace:*",
+		"@yaebal/core": "workspace:*",
+		"@yaebal/filters": "workspace:*",
+		"@yaebal/fmt": "workspace:*",
+		"@yaebal/i18n": "workspace:*",
+		"@yaebal/keyboard": "workspace:*",
+		"@yaebal/pagination": "workspace:*",
+		"@yaebal/ratelimiter": "workspace:*",
+		"@yaebal/session": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

@@ -158,7 +158,6 @@ export default {
 		margin-left: 10px;
 		font-size: 11px;
 		font-weight: 600;
-		text-transform: uppercase;
 		letter-spacing: 0.6px;
 		padding: 4px 9px;
 		border-radius: 8px;

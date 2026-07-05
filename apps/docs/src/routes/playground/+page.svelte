@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { afterNavigate } from "$app/navigation";
 	import { onMount } from "svelte";
 
 	import { type ChatMessage, renderChat } from "@yaebal/preview";
@@ -28,6 +29,7 @@
 	let projects = $state<Project[]>([]);
 	let activeId = $state("");
 	let code = $state("");
+	let importedExampleUrl = "";
 	let editingProjectId = $state("");
 	let editingProjectName = $state("");
 
@@ -635,6 +637,8 @@
 	function formatStep(step: Step): string {
 		if ("user" in step) return step.user;
 		if ("system" in step) return `system:${step.system}`;
+		if ("inline" in step) return `inline:${step.inline}`;
+		if ("preCheckout" in step) return `pre_checkout:${step.preCheckout}`;
 
 		return `click:${step.click}`;
 	}
@@ -650,6 +654,10 @@
 			.filter(Boolean)
 			.map((line) => {
 				if (line.startsWith("system:")) return { system: line.slice("system:".length).trim() };
+				if (line.startsWith("inline:")) return { inline: line.slice("inline:".length).trim() };
+				if (line.startsWith("pre_checkout:")) {
+					return { preCheckout: line.slice("pre_checkout:".length).trim() };
+				}
 				if (!line.startsWith("click:")) return { user: line };
 
 				const [click = ""] = line.slice("click:".length).split("|", 1);
@@ -696,6 +704,30 @@ bot.command("start", (ctx) => ctx.reply("hi"));
 
 bot.start();`;
 
+	function importExampleFromUrl(runAfterImport = false): boolean {
+		const exId = $page.url.searchParams.get("ex");
+		if (!exId) return false;
+
+		const key = $page.url.href;
+		if (importedExampleUrl === key) return false;
+
+		const ex = EXAMPLES[exId];
+		if (!ex) return false;
+
+		importedExampleUrl = key;
+
+		const project = newProject(ex.title, ex.code, ex.steps);
+		projects = [...projects, project];
+		saveProjects(projects);
+
+		activeId = project.id;
+		code = project.code;
+		setMockSteps(project.steps ?? []);
+
+		if (runAfterImport && mode === "mock") runMock();
+		return true;
+	}
+
 	onMount(() => {
 		projects = loadProjects();
 		tokens = loadTokens();
@@ -704,15 +736,15 @@ bot.start();`;
 		layoutTree = loadLayoutTree();
 		layoutReady = true;
 
-		const exId = $page.url.searchParams.get("ex");
-		const ex = (exId && EXAMPLES[exId]) || EXAMPLES["getting-started"];
+		const imported = importExampleFromUrl();
+		const ex = EXAMPLES["getting-started"];
 
-		if (!projects.length && ex) {
+		if (!imported && !projects.length && ex) {
 			projects = [newProject(ex.title, ex.code, ex.steps)];
 			saveProjects(projects);
 		}
 
-		const first = projects[0];
+		const first = projects.find((project) => project.id === activeId) ?? projects[0];
 		activeId = first?.id ?? "";
 		code = first?.code ?? ex?.code ?? "";
 
@@ -735,6 +767,11 @@ bot.start();`;
 		window.addEventListener("resize", onViewportResize);
 
 		return () => window.removeEventListener("resize", onViewportResize);
+	});
+
+	afterNavigate(() => {
+		if (!layoutReady) return;
+		importExampleFromUrl(true);
 	});
 
 	$effect(() => {
@@ -1163,6 +1200,8 @@ bot.start();`;
 							<div><b>mock state</b> is replayed top to bottom on every run.</div>
 							<div><span>/start</span> sends a user message.</div>
 							<div><span>click:buy</span> presses an inline button by callback data.</div>
+							<div><span>inline:docs</span> sends an inline query.</div>
+							<div><span>pre_checkout:coffee</span> sends a pre-checkout query.</div>
 							<div><span>system: note</span> adds a visual note only.</div>
 						</div>
 					</div>
@@ -1176,13 +1215,13 @@ bot.start();`;
 					rows="6"
 					spellcheck="false"
 					aria-label="mock messages already sent"
-					placeholder={'/start\nsystem: user opened pricing\nclick:buy'}
+					placeholder={'/start\nsystem: user opened pricing\nclick:buy\ninline:docs\npre_checkout:coffee'}
 				></textarea>
 				<div class="state-actions">
 					<button class="add" onclick={applyMockState}>apply state</button>
 					<button class="add ghosty" onclick={() => setMockSteps([...steps, { system: "checkpoint" }])}>+ system</button>
 				</div>
-				<p class="note">message line = incoming update · <span class="mono">click:buy</span> presses callback button · <span class="mono">system:...</span> adds a note</p>
+				<p class="note">message line = incoming update · <span class="mono">click:buy</span> presses callback button · <span class="mono">inline:...</span> sends inline query · <span class="mono">pre_checkout:...</span> sends pre-checkout query</p>
 			</div>
 			{#each resizeDirs("state") as dir}
 				<div class="resize-handle resize-{dir}" role="separator" aria-label={`resize state ${dir}`}></div>

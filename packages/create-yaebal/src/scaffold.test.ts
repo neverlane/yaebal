@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { PLUGIN_IDS } from "./catalog.js";
-import { defaultPackageManager, installCommand, renderFiles, runCommand } from "./scaffold.js";
+import {
+	defaultPackageManager,
+	installCommand,
+	nodePackageManager,
+	renderFiles,
+	runCommand,
+	scriptCommand,
+} from "./scaffold.js";
 
 test("renderFiles: bare project has core only", () => {
 	const f = renderFiles({ name: "bot", runtime: "node", plugins: [] });
@@ -125,6 +132,31 @@ test("renderFiles: broadcast template wires typed broadcast jobs", () => {
 	assert.match(src, /"digest"/);
 });
 
+test("renderFiles: plugin template emits a package authoring scaffold", () => {
+	const f = renderFiles({
+		name: "my-plugin",
+		runtime: "node",
+		packageManager: "pnpm",
+		plugins: ["session", "again"],
+		template: "plugin",
+	});
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+	const src = f["src/index.ts"] ?? "";
+	const testSrc = f["src/index.test.ts"] ?? "";
+	const readme = f["README.md"] ?? "";
+
+	assert.equal(pkg.private, undefined);
+	assert.equal(pkg.dependencies, undefined);
+	assert.ok(pkg.peerDependencies["@yaebal/core"]);
+	assert.ok(pkg.devDependencies["@yaebal/core"]);
+	assert.equal(pkg.scripts.example, "tsc -p tsconfig.json && node examples/basic.mjs");
+	assert.ok(f["examples/basic.mjs"]);
+	assert.match(src, /export function myPlugin/);
+	assert.match(src, /ctx\.myPlugin/);
+	assert.match(testSrc, /ctx\.myPlugin\.format/);
+	assert.match(readme, /src\/index\.ts/);
+});
+
 test("renderFiles: a template plugin is never wired twice", () => {
 	// user explicitly picks session AND the session-counter template
 	const f = renderFiles({
@@ -156,6 +188,9 @@ test("commands map to package managers", () => {
 	assert.equal(installCommand("pnpm"), "pnpm install");
 	assert.equal(installCommand("deno"), "deno cache src/index.ts");
 	assert.equal(runCommand("npm", "dev"), "npm run dev");
+	assert.equal(scriptCommand("bun", "test"), "bun run test");
+	assert.equal(scriptCommand("deno", "test"), "pnpm test");
+	assert.equal(nodePackageManager("deno"), "pnpm");
 	assert.equal(defaultPackageManager("bun"), "bun");
 	assert.equal(defaultPackageManager("node"), "pnpm");
 });

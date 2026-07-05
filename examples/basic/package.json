@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "node --watch --experimental-strip-types --env-file=.env src/index.ts",
 		"start": "node --experimental-strip-types --env-file=.env src/index.ts",
-		"typecheck": "tsc -p tsconfig.json --noEmit"
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "pnpm typecheck"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*",

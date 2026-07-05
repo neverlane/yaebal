@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --test lib/*.test.js"
+		"test": "node --test lib/api.test.js lib/clock.test.js lib/env.test.js lib/keyboard.test.js lib/updates.test.js lib/webhook.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*"

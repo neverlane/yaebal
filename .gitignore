@@ -48,3 +48,6 @@ Desktop.ini
 *.orig
 *.pid
 *.seed
+
+# local scratch
+dev/

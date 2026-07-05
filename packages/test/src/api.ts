@@ -58,11 +58,7 @@ export function isApiErrorSentinel(value: unknown): value is ApiErrorSentinel {
 }
 
 /** a {@link TelegramError} carrying the optional `parameters` bag (e.g. `retry_after`) real errors ship. */
-export class TestApiError extends TelegramError {
-	constructor(method: string, code: number, description: string, parameters?: ResponseParameters) {
-		super(method, code, description, parameters);
-	}
-}
+export class TestApiError extends TelegramError {}
 
 /** options accepted by `{ times }` overrides: one-shot (or N-shot) replies. */
 export interface OnApiOptions {

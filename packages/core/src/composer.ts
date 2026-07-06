@@ -32,6 +32,16 @@ export interface Filter<C = Context, Add extends object = Record<never, never>> 
 }
 
 /**
+ * the structural shape of a `@yaebal/callback-data` namespace that `callbackQuery`
+ * can route on — matched by value and decoded to `T`, exposed to handlers as
+ * `ctx.queryData`. kept structural so core takes no dependency on the plugin.
+ */
+export interface CallbackDataMatcher<T> {
+	readonly pattern: RegExp;
+	unpack(raw: string): T | undefined;
+}
+
+/**
  * filter query mini-language (the grammY idea), e.g.
  * `"message:text"`, `"callback_query:data"`, `":photo"`.
  */
@@ -190,14 +200,44 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
+	/**
+	 * route callback-query data. pass a `@yaebal/callback-data` namespace to validate +
+	 * decode the payload and expose it, typed, as `ctx.queryData` — handlers run only on a
+	 * clean unpack, so there's no `filter`-then-`unpack` gap.
+	 */
+	callbackQuery<T>(
+		data: CallbackDataMatcher<T>,
+		...handlers: Middleware<C & { queryData: T; callbackQuery: CallbackQuery }>[]
+	): this;
 	/** match callback-query data against a string or regex; exposes `ctx.match`. */
 	callbackQuery(
 		trigger: string | RegExp,
 		...handlers: Middleware<
 			C & { match: string | RegExpMatchArray; callbackQuery: CallbackQuery }
 		>[]
+	): this;
+	callbackQuery(
+		trigger: string | RegExp | CallbackDataMatcher<unknown>,
+		// biome-ignore lint/suspicious/noExplicitAny: overload implementation
+		...handlers: Middleware<any>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+
+		// a callback-data namespace — run the handler only when its own unpack succeeds
+		if (typeof trigger !== "string" && !(trigger instanceof RegExp)) {
+			this.middlewares.push((ctx, next) => {
+				const data = ctx.update.callback_query?.data;
+				if (data === undefined) return next();
+
+				const queryData = trigger.unpack(data);
+				if (queryData === undefined) return next();
+
+				Object.assign(ctx as object, { queryData });
+				return handler(ctx, next);
+			});
+
+			return this;
+		}
 
 		this.middlewares.push((ctx, next) => {
 			const data = ctx.update.callback_query?.data;

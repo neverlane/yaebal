@@ -106,9 +106,9 @@ console.log("✓ bot is running — press ctrl-c to stop");`,
 		plugins: ["keyboard", "callback-data"],
 		imports: [
 			'import { InlineKeyboard } from "@yaebal/keyboard";',
-			'import { callbackData } from "@yaebal/callback-data";',
+			'import { callbackData, field } from "@yaebal/callback-data";',
 		],
-		pre: 'const vote = callbackData("vote", { choice: String });',
+		pre: 'const vote = callbackData("vote", { choice: field.enum(["up", "down"]) });',
 		body: `bot.command("start", (ctx) =>
 \tctx.reply("tap a button 👇", {
 \t\treply_markup: new InlineKeyboard()
@@ -119,9 +119,12 @@ console.log("✓ bot is running — press ctrl-c to stop");`,
 \t}),
 );
 
-bot.callbackQuery(vote.pattern, async (ctx) => {
-\tconst choice = vote.unpack(ctx.callbackQuery.data ?? "")?.choice;
-\tawait ctx.answerCallbackQuery({ text: choice === "up" ? "liked 👍" : "disliked 👎" });
+// pass the namespace itself — ctx.queryData is typed ("up" | "down") and this
+// handler runs only when the payload cleanly unpacks
+bot.callbackQuery(vote, async (ctx) => {
+\tawait ctx.answerCallbackQuery({
+\t\ttext: ctx.queryData.choice === "up" ? "liked 👍" : "disliked 👎",
+\t});
 });`,
 	},
 	conversation: {
@@ -141,10 +144,12 @@ bot.command("greet", (ctx) => ctx.conversation.enter("greet"));`,
 	i18n: {
 		plugins: ["i18n"],
 		imports: ['import { i18n } from "@yaebal/i18n";'],
-		pre: `const locales = {
+		pre: `// \`as const\` gives ctx.t typed keys and typed params; the first locale a
+// user sees is auto-detected from telegram's language_code.
+const locales = {
 \ten: { hi: "hi there! 🇬🇧", switched: "language set to english" },
 \tru: { hi: "привет! 🇷🇺", switched: "язык переключён на русский" },
-};`,
+} as const;`,
 		install: ['i18n({ defaultLocale: "en", locales })'],
 		body: `bot.command("start", (ctx) => ctx.reply(ctx.t("hi")));
 bot.command("lang", async (ctx) => {

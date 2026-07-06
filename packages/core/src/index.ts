@@ -21,6 +21,7 @@ export {
 } from "./api.js";
 export { Bot, type BotOptions, type BotPlugin } from "./bot.js";
 export {
+	type CallbackDataMatcher,
 	Composer,
 	compose,
 	type Filter,

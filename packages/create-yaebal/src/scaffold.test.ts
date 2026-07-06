@@ -80,7 +80,9 @@ test("renderFiles: rich templates pull in plugins, imports and wiring", () => {
 	assert.ok(bpkg.dependencies["@yaebal/keyboard"]);
 	assert.ok(bpkg.dependencies["@yaebal/callback-data"]);
 	assert.match(bsrc, /import \{ InlineKeyboard \} from "@yaebal\/keyboard";/);
-	assert.match(bsrc, /bot\.callbackQuery\(vote\.pattern/);
+	assert.match(bsrc, /import \{ callbackData, field \} from "@yaebal\/callback-data";/);
+	assert.match(bsrc, /bot\.callbackQuery\(vote,/);
+	assert.match(bsrc, /ctx\.queryData\.choice/);
 
 	// webhook & runner replace the default bootstrap
 	const wh =

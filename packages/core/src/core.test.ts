@@ -147,6 +147,43 @@ test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	assert.equal(seen, "hi");
 });
 
+test("callbackQuery(callbackData) exposes typed queryData and skips on a failed unpack", async () => {
+	// structural matcher — core routes on `unpack` without importing the plugin
+	const matcher = {
+		pattern: /^x(?::|$)/,
+		unpack: (raw: string) => (raw === "x:ok" ? { v: 42 } : undefined),
+	};
+
+	const seen: { v: number }[] = [];
+	let fellThrough = false;
+	const bot = new Bot("123:abc")
+		.callbackQuery(matcher, (ctx) => {
+			seen.push(ctx.queryData);
+		})
+		.on("callback_query", () => {
+			fellThrough = true;
+		});
+
+	const cbUpdate = (id: number, data: string) =>
+		bot.handleUpdate({
+			update_id: id,
+			callback_query: {
+				id: String(id),
+				from: { id: 1, is_bot: false, first_name: "a" },
+				data,
+				chat_instance: "c",
+			},
+		} as never);
+
+	await cbUpdate(1, "x:ok");
+	assert.deepEqual(seen, [{ v: 42 }]);
+	assert.equal(fellThrough, false); // handled — no fall-through
+
+	await cbUpdate(2, "nope"); // unpack → undefined
+	assert.deepEqual(seen, [{ v: 42 }]); // handler was skipped
+	assert.equal(fellThrough, true); // fell through to on("callback_query")
+});
+
 test("Context routes business updates through the connection", async () => {
 	const calls: { m: string; p: unknown }[] = [];
 	const api = {

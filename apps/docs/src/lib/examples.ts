@@ -178,6 +178,8 @@ bot.start();`,
 const bot = createBot(process.env.BOT_TOKEN!)
   .install(i18n({
     defaultLocale: "en",
+    // inline dicts keep their literal types, so ctx.t gets typed keys;
+    // the first locale a user sees is detected from language_code
     locales: {
       en: { hello: "hello", switched: "language: english" },
       es: { hello: "hola", switched: "language: spanish" },

@@ -61,15 +61,17 @@ const locales = {
 };
 
 const cartAction = callbackData("cart", { op: String, id: Number });
+// menu-only entries: the handlers live on the bot chain below, the / menu (with
+// per-locale descriptions) comes from this registry
 const menu = commands()
-	.add("start", "open the shop")
-	.add("catalog", "browse products")
-	.add("deal", "show the featured deal")
-	.add("cart", "show cart")
-	.add("checkout", "fake checkout")
-	.add("lang", "toggle language")
-	.add("clear", "empty cart")
-	.add("help", "show commands");
+	.add("start", { default: "open the shop", ru: "открыть магазин" })
+	.add("catalog", { default: "browse products", ru: "каталог товаров" })
+	.add("deal", { default: "show the featured deal", ru: "предложение дня" })
+	.add("cart", { default: "show cart", ru: "показать корзину" })
+	.add("checkout", { default: "fake checkout", ru: "оформить заказ" })
+	.add("lang", { default: "toggle language", ru: "переключить язык" })
+	.add("clear", { default: "empty cart", ru: "очистить корзину" })
+	.add("help", { default: "show commands", ru: "список команд" });
 
 const catalog = pagination<Product>({
 	id: "shop",
@@ -122,7 +124,7 @@ const bot = new Bot(token)
 	.filter(and(isPrivate, command("help")), (ctx) =>
 		ctx.send(
 			html`<b>commerce suite commands</b>\n${menu
-				.list()
+				.list({ languageCode: ctx.locale })
 				.map((c) => `/${c.command} - ${c.description}`)
 				.join("\n")}`,
 		),
@@ -167,7 +169,8 @@ const bot = new Bot(token)
 	})
 	.on("message:text", (ctx) => ctx.reply("send /catalog or a product id like 3."))
 	.onStart(async (info) => {
-		await menu.register(bot.api).catch(() => {});
+		// diff-aware: pushes the default + ru menus only when they changed
+		await menu.sync(bot.api).catch(() => {});
 		console.log(`@${info.username} commerce suite is live`);
 	});
 

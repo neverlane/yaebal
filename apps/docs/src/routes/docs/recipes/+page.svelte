@@ -11,22 +11,27 @@ pnpm --filter @yaebal/example-webhook-edge dev
 # run the no-network test recipe
 pnpm --filter @yaebal/example-testing-lab test`;
 
-	const mini = `new InlineKeyboard().webApp("open app", "https://example.com/app");
+	const mini = `bot.command("app", (ctx) =>
+  ctx.reply("open the app", {
+    reply_markup: new InlineKeyboard()
+      .webApp("open app", "https://example.com/app")
+      .build(),
+  }));
 // validate init data on your backend before trusting the user id.`;
 
 	const recipes = [
 		["shop bot", "commerce-suite", "session cart, i18n, pagination, typed callbacks, command menu, inbound ratelimit"],
-		["dialog bot", "dialog-quest", "morda cockpit, scenes wizard, prompt and await-style conversation"],
-		["media bot", "media-studio", "album batching, file links, media cache, svg previews, long reports"],
+		["wizard and support bot", "dialog-quest", "morda cockpit, scenes wizard, prompt and await-style conversation"],
+		["media studio bot", "media-studio", "album batching, file links, media cache, svg previews, long reports"],
 		["file-routed bot", "modular-router", "commands and update handlers loaded from a routes directory"],
 		["webhook bot", "webhook-edge", "fetch handler, secret token, local node adapter and optional setWebhook"],
 		["scale bot", "runner-workers", "concurrent polling with per-chat ordering and worker thread offload"],
 		["testable bot", "testing-lab", "composer factory plus actor tests for buttons, sessions and api calls"],
-		["inline bot", "inline-search", "inline query answers, offsets and chosen-result analytics"],
-		["stars bot", "payments-stars", "telegram stars invoice, pre-checkout, successful payment and refund"],
-		["operator bot", "panel", "live support dashboard with media viewer and outgoing replies"],
+		["inline search bot", "inline-search", "inline query answers, offsets and chosen-result analytics"],
+		["payments and stars bot", "payments-stars", "telegram stars invoice, pre-checkout, successful payment and refund"],
+		["admin panel bot", "panel", "live support dashboard with media viewer and outgoing replies"],
 		["broadcast bot", "broadcast", "typed jobs, pause, resume, cancel, retry and progress"],
-		["rich bot", "rich-messages", "rich document blocks and draft streaming"],
+		["ai rich streaming bot", "rich-messages", "rich document blocks and draft streaming"],
 	];
 </script>
 
@@ -73,19 +78,12 @@ pnpm --filter @yaebal/example-testing-lab test`;
 	generated svg previews and reports that exceed one telegram message.
 </p>
 
-<h2>inline search bot</h2>
+<h2>file-routed bot</h2>
 <p>
-	use <a href={`${GH}/inline-search`}>inline-search</a> for inline mode. it answers generated article
-	results, pages with <code>next_offset</code>, and logs chosen results.
+	use <a href={`${GH}/modular-router`}>modular-router</a> when one index file stops scaling. route files
+	under <code>src/routes/commands</code> and <code>src/routes/on</code> are loaded at startup and
+	registered on the bot, and the command menu is synced with telegram.
 </p>
-<Try id="inline-mode" title="inline-search.ts" />
-
-<h2>payments and stars bot</h2>
-<p>
-	use <a href={`${GH}/payments-stars`}>payments-stars</a> for telegram stars: invoice creation,
-	pre-checkout approval, successful payment handling and refunds.
-</p>
-<Try id="payments-stars" title="payments.ts" />
 
 <h2>webhook and scale bot</h2>
 <p>
@@ -100,10 +98,19 @@ pnpm --filter @yaebal/example-testing-lab test`;
 	factory, drives it with user actors and asserts outgoing api calls without touching telegram.
 </p>
 
-<h2>mini app bot</h2>
-<p>web app buttons, init-data validation, backend handoff and callback confirmation.</p>
-<Code code={mini} title="mini-app.ts" />
-<p>see <a href="/docs/telegram/mini-apps/">mini apps</a>.</p>
+<h2>inline search bot</h2>
+<p>
+	use <a href={`${GH}/inline-search`}>inline-search</a> for inline mode. it answers generated article
+	results, pages with <code>next_offset</code>, and logs chosen results.
+</p>
+<Try id="inline-mode" title="inline-search.ts" />
+
+<h2>payments and stars bot</h2>
+<p>
+	use <a href={`${GH}/payments-stars`}>payments-stars</a> for telegram stars: invoice creation,
+	pre-checkout approval, successful payment handling and refunds.
+</p>
+<Try id="payments-stars" title="payments.ts" />
 
 <h2>admin panel bot</h2>
 <p>
@@ -111,7 +118,25 @@ pnpm --filter @yaebal/example-testing-lab test`;
 	callbacks, outgoing replies, uploads and audit events.
 </p>
 
+<h2>broadcast bot</h2>
+<p>
+	use <a href={`${GH}/broadcast`}>broadcast</a> when one bot messages many chats: users subscribe, an
+	admin queues a typed job, then pauses, resumes, cancels or retries it while watching progress.
+	production notes live on <a href="/docs/production/queues-broadcasts/">queues and broadcasts</a>.
+</p>
+<Try id="broadcast-queue" title="broadcast.ts" />
+
 <h2>ai rich streaming bot</h2>
-<p>stream model output into telegram rich messages while keeping the grammar constrained.</p>
+<p>
+	use <a href={`${GH}/rich-messages`}>rich-messages</a> to stream model output into telegram rich
+	messages while keeping the grammar constrained.
+</p>
 <Try id="rich-ai" title="ai-rich.ts" />
 <p>pair <a href="/docs/plugins/rich/">@yaebal/rich</a> with <a href="/docs/llms/">llm guidance</a>.</p>
+
+<h2>mini app bot</h2>
+<p>web app buttons, init-data validation, backend handoff and callback confirmation.</p>
+<Code code={mini} title="mini-app.ts" />
+<p>see <a href="/docs/telegram/mini-apps/">mini apps</a>.</p>
+
+<p>the full runnable example list lives on <a href="/docs/examples/">examples</a>.</p>

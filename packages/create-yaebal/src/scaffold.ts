@@ -82,10 +82,23 @@ bot.on("message:photo", (ctx) => ctx.reply("nice photo! 📸"));
 bot.on("message:sticker", (ctx) => ctx.reply("cool sticker 🎨"));`,
 	},
 	commands: {
-		body: `bot.command("start", (ctx) => ctx.reply("hello! i'm a yaebal bot 🤖"));
-bot.command("help", (ctx) => ctx.reply("commands: /start /help /ping"));
-bot.command("ping", (ctx) => ctx.reply("pong 🏓"));
-bot.on("message:text", (ctx) => ctx.reply(\`you said: \${ctx.text}\`));`,
+		plugins: ["commands"],
+		imports: ['import { commands } from "@yaebal/commands";'],
+		pre: `// one registry for the handlers and the telegram / menu
+const cmd = commands()
+\t.add("start", "say hello", (ctx) => ctx.reply("hello! i'm a yaebal bot 🤖"))
+\t.add("ping", "check the bot is alive", (ctx) => ctx.reply("pong 🏓"));
+
+// added separately so the handler can reference \`cmd\` itself
+cmd.add("help", "list all commands", (ctx) =>
+\tctx.reply(cmd.list().map((c) => \`/\${c.command} — \${c.description}\`).join("\\n")),
+);`,
+		install: ["cmd.plugin()"],
+		body: `bot.on("message:text", (ctx) => ctx.reply(\`you said: \${ctx.text}\`));`,
+		bootstrap: `await cmd.sync(bot.api); // push the / menu — only the menus that changed
+
+await bot.start();
+console.log("✓ bot is running — press ctrl-c to stop");`,
 	},
 	buttons: {
 		plugins: ["keyboard", "callback-data"],

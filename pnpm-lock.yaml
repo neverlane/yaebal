@@ -145,6 +145,22 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/commands:
+    dependencies:
+      '@yaebal/commands':
+        specifier: workspace:*
+        version: link:../../packages/commands
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@yaebal/session':
+        specifier: workspace:*
+        version: link:../../packages/session
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/commerce-suite:
     dependencies:
       '@yaebal/callback-data':
@@ -452,10 +468,16 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/contexts:
     dependencies:
@@ -495,6 +517,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
   packages/files:
     dependencies:

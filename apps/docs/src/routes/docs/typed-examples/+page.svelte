@@ -16,7 +16,7 @@ bot.on("callback_query:data", (ctx) => {
   .derive(async (ctx) => ({ user: await loadUser(ctx.from?.id) }))
   .on("message:text", (ctx) => {
     ctx.appName;
-    // ^ "shop"
+    // ^ string
     ctx.user;
     // ^ Awaited<ReturnType<typeof loadUser>>
     ctx.text;
@@ -36,19 +36,21 @@ const bot = createBot(token)
 
 	const dependency = `type NeedsSession = Context & { session: { userId?: number } };
 
-function currentUser(loadUser: (id: number) => Promise<User>): Plugin<NeedsSession, { user: User | null }> {
+function currentUser(
+  loadUser: (id: number) => Promise<User>,
+): Plugin<NeedsSession, { user: User | null }> {
   return (composer) => composer.derive(async (ctx) => ({
     user: ctx.session.userId ? await loadUser(ctx.session.userId) : null,
   }));
 }
 
-new Bot(token).install(currentUser(loadUser));
+createBot(token).install(currentUser(loadUser));
 // TypeScript error: session is not installed yet.
 
-new Bot(token)
+createBot(token)
   .install(session({ initial: () => ({}) }))
   .install(currentUser(loadUser));
-	// ok.`;
+// ok.`;
 
 	const generated = `const bot = createBot(token);
 
@@ -73,7 +75,8 @@ const feature = new Composer()
     ctx.feature;
   });
 
-createBot(token).extend(shared).extend(feature);`;
+createBot(token).extend(feature);
+// feature already carries shared's middleware — extend it once.`;
 </script>
 
 <svelte:head>
@@ -102,28 +105,32 @@ createBot(token).extend(shared).extend(feature);`;
 <h2>plugin-added context stays typed</h2>
 <p>
 	the session shape comes from the generic you pass to <code>session()</code> and flows into later
-	handlers.
+	handlers. see the <a href="/docs/plugins/session/">session plugin</a> for storage options.
 </p>
 <Code code={sessionType} title="session.ts" />
 
 <h2>plugin dependencies are explicit</h2>
 <p>
 	a plugin can say which context fields it requires. installing it too early becomes a compile-time
-	error instead of a hidden middleware-order bug.
+	error instead of a hidden middleware-order bug. see
+	<a href="/docs/plugins/authoring/">plugin authoring</a> for the full <code>Plugin</code> contract.
 </p>
 <Code code={dependency} title="dependency.ts" />
 
 <h2>generated contexts are runtime shortcuts</h2>
 <p>
 	use <code>createBot()</code> from the meta package when you want generated per-update shortcuts at
-	runtime.
+	runtime. the full shortcut list and positional overloads live on
+	<a href="/docs/contexts/">generated contexts</a>.
 </p>
 <Code code={generated} title="generated-contexts.ts" />
 
 <h2>feature composers inherit types</h2>
 <p>
 	build features as plain composers, extend shared plugin setup, then attach them to the bot. the
-	context type follows the chain.
+	context type follows the chain. note that <code>extend</code> copies middleware — attach a
+	feature that already extends <code>shared</code> without extending <code>shared</code> again, or
+	its plugins run twice per update.
 </p>
 <Code code={composer} title="feature-composer.ts" />
 

@@ -51,6 +51,12 @@ pnpm --filter @yaebal/example-testing-lab test`;
 			run: "pnpm --filter @yaebal/example-keyboard dev",
 		},
 		{
+			name: "commands",
+			focus: "typed command registry: localized menus, scopes, hidden commands, diff sync",
+			plugins: "commands, session",
+			run: "pnpm --filter @yaebal/example-commands dev",
+		},
+		{
 			name: "simple",
 			focus: "toml routes plus handler registry",
 			plugins: "toml",
@@ -134,7 +140,7 @@ pnpm --filter @yaebal/example-testing-lab test`;
 		["state and ui", "basic, commerce-suite, dialog-quest, testing-lab"],
 		["media", "media-studio, rich-messages, keyboard"],
 		["ops", "again, throttle, broadcast, panel, runner-workers, webhook-edge"],
-		["telegram surface", "inline-search, payments-stars, onboarding"],
+		["telegram surface", "inline-search, payments-stars, onboarding, commands"],
 		["large project layout", "modular-router, simple"],
 	];
 </script>

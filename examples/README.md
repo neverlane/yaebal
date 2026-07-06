@@ -30,6 +30,7 @@ all examples have a `test` script. most run `tsc` as a no-network smoke test; `t
 | [throttle](./throttle/) | `@yaebal/example-throttle` | outbound buckets, priorities, cancellation, scheduler metrics | `pnpm --filter @yaebal/example-throttle dev` |
 | [broadcast](./broadcast/) | `@yaebal/example-broadcast` | typed broadcast jobs, pause, resume, cancel, retry, progress | `pnpm --filter @yaebal/example-broadcast dev` |
 | [keyboard](./keyboard/) | `@yaebal/example-keyboard` | inline and reply keyboard builders, every button type, request user/chat/managed bot | `pnpm --filter @yaebal/example-keyboard dev` |
+| [commands](./commands/) | `@yaebal/example-commands` | typed command registry: localized menus, scopes, aliases, hidden commands, diff-based sync | `pnpm --filter @yaebal/example-commands dev` |
 | [simple](./simple/) | `@yaebal/example-simple` | toml route config plus typescript handlers | `pnpm --filter @yaebal/example-simple dev` |
 | [onboarding](./onboarding/) | `@yaebal/example-onboarding` | first-run product tour, force restart, dismiss, opt-out | `pnpm --filter @yaebal/example-onboarding dev` |
 | [rich-messages](./rich-messages/) | `@yaebal/example-rich-messages` | rich blocks, markdown/html builders, fake streaming draft, rich message readback | `pnpm --filter @yaebal/example-rich-messages dev` |
@@ -46,52 +47,52 @@ all examples have a `test` script. most run `tsc` as a no-network smoke test; `t
 
 ## plugin coverage
 
-| package | examples | test signal |
-|:--|:--|:--|
-| `@yaebal/core` | every example | all example `test` scripts |
-| `yaebal` | docs playground examples | docs health and package typecheck |
-| `@yaebal/again` | `basic`, `again`, `throttle`, `panel` | package tests plus example smoke |
-| `@yaebal/broadcast` | `broadcast` | package tests plus example smoke |
-| `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars` | package tests plus actor test in `testing-lab` |
-| `@yaebal/commands` | `commerce-suite` | package tests plus example smoke |
-| `@yaebal/conversation` | `dialog-quest` | package tests plus example smoke |
-| `@yaebal/files` | `media-studio` | package tests plus example smoke |
-| `@yaebal/filters` | `basic`, `commerce-suite` | package tests plus example smoke |
-| `@yaebal/fmt` | `basic`, `commerce-suite`, `inline-search` | package tests plus example smoke |
-| `@yaebal/i18n` | `basic`, `commerce-suite` | package tests plus example smoke |
-| `@yaebal/keyboard` | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions |
-| `@yaebal/media-cache` | `media-studio` | package tests plus example smoke |
-| `@yaebal/media-group` | `media-studio` | package tests plus example smoke |
-| `@yaebal/morda` | `basic`, `dialog-quest` | package tests plus example smoke |
-| `@yaebal/onboarding` | `onboarding` | package tests plus example smoke |
-| `@yaebal/pagination` | `commerce-suite` | package tests plus example smoke |
-| `@yaebal/panel` | `panel` | package tests plus example smoke |
-| `@yaebal/preview` | `media-studio` | package tests plus example smoke |
-| `@yaebal/prompt` | `basic`, `dialog-quest` | package tests plus example smoke |
-| `@yaebal/ratelimiter` | `commerce-suite` | package tests plus example smoke |
-| `@yaebal/rich` | `rich-messages` | package tests plus example smoke |
-| `@yaebal/router` | `modular-router` | package tests plus example smoke |
-| `@yaebal/runner` | `runner-workers` | package tests plus example smoke |
-| `@yaebal/scenes` | `basic`, `dialog-quest` | package tests plus example smoke |
-| `@yaebal/session` | `basic`, `commerce-suite`, `dialog-quest`, `testing-lab` | package tests plus actor session assertions |
-| `@yaebal/split` | `media-studio` | package tests plus example smoke |
-| `@yaebal/test` | `testing-lab` | real `node:test` suite |
-| `@yaebal/throttle` | `basic`, `throttle` | package tests plus example smoke |
-| `@yaebal/toml` | `simple` | package tests plus example smoke |
-| `@yaebal/web` | `webhook-edge` | package tests plus example smoke |
-| `@yaebal/workers` | `runner-workers` | package tests plus example smoke |
-| `@yaebal/types` | generated public types used by packages | package typecheck |
-| `@yaebal/contexts` | `yaebal` meta and docs snippets | package typecheck |
-| `@yaebal/create-yaebal` | scaffolding docs | package typecheck |
+| package                 | examples                                                                               | test signal                                    |
+|:------------------------|:---------------------------------------------------------------------------------------|:-----------------------------------------------|
+| `@yaebal/core`          | every example                                                                          | all example `test` scripts                     |
+| `yaebal`                | docs playground examples                                                               | docs health and package typecheck              |
+| `@yaebal/again`         | `basic`, `again`, `throttle`, `panel`                                                  | package tests plus example smoke               |
+| `@yaebal/broadcast`     | `broadcast`                                                                            | package tests plus example smoke               |
+| `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
+| `@yaebal/commands`      | `commands`, `commerce-suite`                                                           | package tests plus example smoke               |
+| `@yaebal/conversation`  | `dialog-quest`                                                                         | package tests plus example smoke               |
+| `@yaebal/files`         | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/filters`       | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
+| `@yaebal/fmt`           | `basic`, `commerce-suite`, `inline-search`                                             | package tests plus example smoke               |
+| `@yaebal/i18n`          | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
+| `@yaebal/keyboard`      | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions   |
+| `@yaebal/media-cache`   | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/media-group`   | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/morda`         | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
+| `@yaebal/onboarding`    | `onboarding`                                                                           | package tests plus example smoke               |
+| `@yaebal/pagination`    | `commerce-suite`                                                                       | package tests plus example smoke               |
+| `@yaebal/panel`         | `panel`                                                                                | package tests plus example smoke               |
+| `@yaebal/preview`       | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/prompt`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
+| `@yaebal/ratelimiter`   | `commerce-suite`                                                                       | package tests plus example smoke               |
+| `@yaebal/rich`          | `rich-messages`                                                                        | package tests plus example smoke               |
+| `@yaebal/router`        | `modular-router`                                                                       | package tests plus example smoke               |
+| `@yaebal/runner`        | `runner-workers`                                                                       | package tests plus example smoke               |
+| `@yaebal/scenes`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
+| `@yaebal/session`       | `basic`, `commands`, `commerce-suite`, `dialog-quest`, `testing-lab`                   | package tests plus actor session assertions    |
+| `@yaebal/split`         | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/test`          | `testing-lab`                                                                          | real `node:test` suite                         |
+| `@yaebal/throttle`      | `basic`, `throttle`                                                                    | package tests plus example smoke               |
+| `@yaebal/toml`          | `simple`                                                                               | package tests plus example smoke               |
+| `@yaebal/web`           | `webhook-edge`                                                                         | package tests plus example smoke               |
+| `@yaebal/workers`       | `runner-workers`                                                                       | package tests plus example smoke               |
+| `@yaebal/types`         | generated public types used by packages                                                | package typecheck                              |
+| `@yaebal/contexts`      | `yaebal` meta and docs snippets                                                        | package typecheck                              |
+| `@yaebal/create-yaebal` | scaffolding docs                                                                       | package typecheck                              |
 
 ## patterns to copy
 
-| pattern | copy from |
-|:--|:--|
-| single-file product demo | `basic` |
-| plugin in isolation | `again`, `throttle`, `keyboard`, `onboarding`, `rich-messages` |
-| production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers` |
-| business workflow | `commerce-suite`, `payments-stars`, `inline-search` |
-| multi-step ux | `dialog-quest`, `testing-lab` |
-| media-heavy workflow | `media-studio` |
-| large codebase routing | `modular-router`, `simple` |
+| pattern                     | copy from                                                                  |
+|:----------------------------|:---------------------------------------------------------------------------|
+| single-file product demo    | `basic`                                                                    |
+| plugin in isolation         | `again`, `throttle`, `keyboard`, `commands`, `onboarding`, `rich-messages` |
+| production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers`                     |
+| business workflow           | `commerce-suite`, `payments-stars`, `inline-search`                        |
+| multi-step ux               | `dialog-quest`, `testing-lab`                                              |
+| media-heavy workflow        | `media-studio`                                                             |
+| large codebase routing      | `modular-router`, `simple`                                                 |

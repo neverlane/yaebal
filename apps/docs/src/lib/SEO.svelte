@@ -216,7 +216,7 @@
 		"/docs/plugins/commands": {
 			title: "@yaebal/commands — telegram command registry and menu",
 			description:
-				"define yaebal command handlers and telegram bot command menus from one registry with typed handlers and deployable command metadata.",
+				"define yaebal command handlers and telegram bot command menus from one registry — typed context, localized descriptions, menu scopes, aliases, hidden commands, and diff-based sync.",
 		},
 		"/docs/plugins/conversation": {
 			title: "@yaebal/conversation — await-style telegram bot dialogs",
@@ -509,7 +509,7 @@
 </script>
 
 <svelte:head>
-	<title>{fullTitle}</title>
+	<!-- <title>{fullTitle}</title> -->
 	<meta name="description" content={effectiveDescription} />
 	<meta name="keywords" content={effectiveKeywords} />
 	<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />

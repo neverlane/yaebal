@@ -1,4 +1,6 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -66,10 +68,102 @@ for (const file of lowercaseSensitiveFiles) {
 	}
 }
 
+// pages whose <Code> snippets are self-contained typescript modules, typechecked below.
+const typecheckedSnippetPages = ["docs/reference"];
+
+function extractSnippets(source) {
+	const snippets = new Map();
+
+	for (const match of source.matchAll(/const\s+(\w+)\s*=\s*`/g)) {
+		const start = match.index + match[0].length;
+		let end = start;
+
+		while (end < source.length && source[end] !== "`") {
+			if (source[end] === "\\") end += 1;
+			end += 1;
+		}
+		if (end >= source.length) continue;
+
+		const raw = source.slice(start, end);
+		if (/(?<!\\)\$\{/.test(raw)) continue; // interpolated — not a static snippet
+
+		snippets.set(match[1], raw.replace(/\\([\\`$])/g, "$1"));
+	}
+
+	return snippets;
+}
+
+const snippetFiles = [];
+for (const route of typecheckedSnippetPages) {
+	const page = join(srcRoot, "routes", route, "+page.svelte");
+	const source = read(page);
+	const snippets = extractSnippets(source);
+
+	for (const match of source.matchAll(/<Code\s+[^>]*\bcode=\{(\w+)\}/g)) {
+		const code = snippets.get(match[1]);
+
+		if (code === undefined) {
+			errors.push(`${relative(repoRoot, page)} <Code code={${match[1]}}> has no static snippet`);
+			continue;
+		}
+
+		snippetFiles.push({ name: `${route.replaceAll("/", "-")}-${match[1]}.ts`, code });
+	}
+}
+
+if (snippetFiles.length > 0) {
+	const dir = mkdtempSync(join(tmpdir(), "yaebal-docs-snippets-"));
+
+	try {
+		for (const { name, code } of snippetFiles) writeFileSync(join(dir, name), `${code}\n`);
+
+		writeFileSync(join(dir, "package.json"), `${JSON.stringify({ type: "module" }, null, "\t")}\n`);
+		writeFileSync(
+			join(dir, "tsconfig.json"),
+			`${JSON.stringify(
+				{
+					compilerOptions: {
+						strict: true,
+						noUncheckedIndexedAccess: true,
+						module: "nodenext",
+						moduleResolution: "nodenext",
+						target: "esnext",
+						lib: ["esnext", "dom"],
+						types: ["node"],
+						typeRoots: [join(repoRoot, "node_modules", "@types")],
+						// resolve workspace packages straight to source — no build required.
+						paths: {
+							yaebal: [join(repoRoot, "packages", "yaebal", "src", "index.ts")],
+							"@yaebal/*": [join(repoRoot, "packages", "*", "src", "index.ts")],
+						},
+						noEmit: true,
+						skipLibCheck: true,
+					},
+					include: ["*.ts"],
+				},
+				null,
+				"\t",
+			)}\n`,
+		);
+
+		const tsc = join(repoRoot, "node_modules", "typescript", "bin", "tsc");
+		const result = spawnSync(process.execPath, [tsc, "-p", dir], { encoding: "utf8" });
+
+		if (result.status !== 0) {
+			const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
+			errors.push(`snippet typecheck failed (file names map to page + snippet const):\n${output}`);
+		}
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
+	}
+}
+
 if (errors.length > 0) {
 	console.error("docs health failed:");
 	for (const error of errors) console.error(`- ${error}`);
 	process.exit(1);
 }
 
-console.log(`docs health ok: ${exampleIds.size} examples, ${docsPages.length} docs pages`);
+console.log(
+	`docs health ok: ${exampleIds.size} examples, ${docsPages.length} docs pages, ${snippetFiles.length} typechecked snippets`,
+);

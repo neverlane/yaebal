@@ -38,7 +38,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect album updates into one handler"],
 		["@yaebal/split", "/docs/plugins/split/", "break long messages into Telegram-sized chunks"],
-		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu"],
+		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu — localized, scoped, diff-synced"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next buttons"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "reuse a file_id instead of re-uploading the same file"],
 		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to a standalone SVG string (experimental)"],

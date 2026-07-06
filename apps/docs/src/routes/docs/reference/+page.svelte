@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
-	const bot = `import { Bot, webhookCallback } from "@yaebal/core";
+	const bot = `import { Bot } from "@yaebal/core";
 
 const bot = new Bot(process.env.BOT_TOKEN!, {
   allowedUpdates: ["message", "callback_query"],
@@ -10,10 +10,19 @@ const bot = new Bot(process.env.BOT_TOKEN!, {
 bot.onStart((me) => console.log("started @" + me.username));
 bot.onError((error, ctx) => console.error(ctx.update.update_id, error));
 
-await bot.start();
-export const fetch = webhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET });`;
+// long polling — resolves only when bot.stop() is called
+await bot.start();`;
 
-	const composer = `import { Composer, type Plugin } from "@yaebal/core";
+	const webhook = `import { Bot, webhookCallback } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+
+// fetch-style handler — the webhook alternative to bot.start()
+export default {
+  fetch: webhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET }),
+};`;
+
+	const composer = `import { Composer, type Context, type Plugin } from "@yaebal/core";
 
 const shared = new Composer()
   .decorate({ app: "shop" as const })
@@ -27,7 +36,11 @@ type NeedsApp = Context & { app: string };
 const plugin: Plugin<NeedsApp, { ready: true }> = (composer) =>
   composer.decorate({ ready: true as const });`;
 
-	const api = `bot.api.before((method, params) => {
+	const api = `import { Bot } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+
+bot.api.before((method, params) => {
   console.log("telegram ->", method);
   return params;
 });
@@ -40,13 +53,16 @@ bot.api.onError((method, error, attempt) => {
 
 await bot.api.call("sendMessage", { chat_id: 123, text: "hello" });`;
 
-	const storage = `import { session, type StorageAdapter } from "@yaebal/session";
+	const storage = `import { Bot } from "@yaebal/core";
+import { session, type StorageAdapter } from "@yaebal/session";
 
 class RedisStorage<T> implements StorageAdapter<T> {
   get(key: string): Promise<T | undefined> { /* load */ throw new Error("todo"); }
   set(key: string, value: T): Promise<void> { /* save */ throw new Error("todo"); }
   delete(key: string): Promise<void> { /* delete */ throw new Error("todo"); }
 }
+
+const bot = new Bot(process.env.BOT_TOKEN!);
 
 bot.install(session({
   initial: () => ({ count: 0 }),
@@ -65,9 +81,9 @@ bot.install(session({
 </p>
 
 <div class="note">
-	<strong>typedoc target.</strong> the stable source of truth is the exported types from each package.
-	this page is the human entry point; the docs health workflow typechecks snippets against source so
-	these examples cannot drift silently.
+	<strong>checked against source.</strong> the stable source of truth is the exported types from
+	each package. this page is the human entry point; <code>pnpm docs:check</code> typechecks every
+	snippet on this page against the workspace packages, so the examples cannot drift silently.
 </div>
 
 <h2>core package</h2>
@@ -84,6 +100,10 @@ bot.install(session({
 		<tr><td><code>Filter</code></td><td>interface</td><td>type-guard predicate consumed by <code>composer.filter()</code></td></tr>
 		<tr><td><code>FilterQuery</code></td><td>type</td><td>grammy-style query strings such as <code>message:text</code></td></tr>
 		<tr><td><code>MediaSource</code></td><td>type</td><td>file id, url, buffer or path input for media sends</td></tr>
+		<tr><td><code>media</code></td><td>helper</td><td>builds a <code>MediaSource</code>: <code>media.path()</code>, <code>media.url()</code>, <code>media.buffer()</code>, <code>media.fileId()</code></td></tr>
+		<tr><td><code>format</code></td><td>helper</td><td>entity-based formatting: tagged template plus <code>bold</code>, <code>italic</code>, <code>link</code>, …</td></tr>
+		<tr><td><code>webhookCallback</code></td><td>function</td><td>fetch-style <code>(Request) =&gt; Promise&lt;Response&gt;</code> webhook handler</td></tr>
+		<tr><td><code>TelegramError</code></td><td>class</td><td>thrown on failed api calls; carries <code>method</code>, <code>code</code>, <code>description</code>, <code>parameters</code></td></tr>
 	</tbody>
 </table>
 
@@ -94,6 +114,12 @@ bot.install(session({
 	<code>decorate()</code>, <code>install()</code> and <code>extend()</code>.
 </p>
 <Code code={bot} title="bot.ts" />
+<p>
+	long polling and webhooks are alternatives: call <code>start()</code> for polling, or skip it and
+	export the <code>webhookCallback()</code> handler instead — see <a href="/docs/webhooks/">webhooks</a>
+	for per-runtime setups.
+</p>
+<Code code={webhook} title="webhook.ts" />
 <table>
 	<thead><tr><th>api</th><th>description</th></tr></thead>
 	<tbody>
@@ -170,7 +196,7 @@ bot.install(session({
 		<tr><td><code>@yaebal/types</code></td><td>generated telegram bot api types and method params</td></tr>
 		<tr><td><code>@yaebal/contexts</code></td><td>generated per-update context classes and shortcut methods</td></tr>
 		<tr><td><code>@yaebal/session</code></td><td><code>session</code>, <code>StorageAdapter</code>, <code>MemoryStorage</code></td></tr>
-		<tr><td><code>@yaebal/broadcast</code></td><td><code>BroadcastClient</code>, <code>BroadcastStorage</code>, job/delivery/event types</td></tr>
+		<tr><td><code>@yaebal/broadcast</code></td><td><code>Broadcast</code>, <code>createBroadcast</code>, <code>BroadcastStorage</code>, <code>MemoryBroadcastStorage</code></td></tr>
 	</tbody>
 </table>
 

@@ -42,7 +42,7 @@ const bot = new Bot(token)
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect album updates into one handler"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "reuse a file_id instead of re-uploading"],
 		["@yaebal/split", "/docs/plugins/split/", "break long messages into telegram-sized chunks"],
-		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu"],
+		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu — localized, scoped, diff-synced"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next"],
 		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to SVG"],
 		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy work"],

@@ -45,7 +45,7 @@ const bot = createBot(process.env.BOT_TOKEN!, {
 
 <h2>credentials</h2>
 <p>
-	you need <code>BOT_TOKEN</code> from <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@botfather</a>
+	you need <code>BOT_TOKEN</code> from <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a>
 	and <code>TELEGRAM_API_ID</code>/<code>TELEGRAM_API_HASH</code> from
 	<a href="https://my.telegram.org" target="_blank" rel="noreferrer">my.telegram.org</a>.
 </p>

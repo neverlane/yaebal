@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/commands",
-	"version": "0.0.3",
-	"description": "yaebal commands — one registry for command handlers + the telegram command menu.",
+	"version": "0.1.0",
+	"description": "yaebal commands — one registry for command handlers + the telegram command menu: localized descriptions, scopes, aliases, hidden commands, diff-based sync.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -18,10 +18,12 @@
 		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*"
+		"@yaebal/core": "workspace:*",
+		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

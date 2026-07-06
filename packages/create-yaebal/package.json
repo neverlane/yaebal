@@ -1,6 +1,6 @@
 {
 	"name": "create-yaebal",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"description": "scaffold a new yaebal Telegram bot or plugin.",
 	"type": "module",
 	"bin": {
@@ -18,7 +18,8 @@
 		"test": "node --test lib/*.test.js lib/tui/*.test.js"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"typescript": "^6.0.3"
 	},
 	"engines": {
 		"node": ">=20"

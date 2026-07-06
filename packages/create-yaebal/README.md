@@ -52,22 +52,24 @@ pnpm create yaebal my-bot --plugins all --yes --no-install
 ## templates
 
 a template pulls in the plugins it needs, adds the real imports + wiring, and (for `webhook` /
-`runner`) swaps the bootstrap. everything it generates type-checks against the real `@yaebal/*` apis.
+`runner`) swaps the bootstrap. everything it generates type-checks against the real `@yaebal/*`
+apis — enforced by a compile smoke test that renders every template (and the full plugin catalog)
+and type-checks the output against the workspace packages.
 
-| template          | what you get                                                      |
-|:------------------|:------------------------------------------------------------------|
-| `minimal`         | just `/start` + a text echo                                       |
-| `echo`            | echo text, photos and stickers back                               |
-| `commands`        | `/start /help /ping` with a command menu                          |
-| `buttons`         | inline keyboard + typed `callback_data` (keyboard, callback-data) |
-| `conversation`    | await-style multi-step dialog (conversation)                      |
-| `i18n`            | multi-language bot with a `/lang` toggle (i18n)                   |
-| `session-counter` | per-chat counter on `ctx.session` (session)                       |
-| `webhook`         | edge/serverless deploy via `serve()` (web)                        |
-| `runner`          | concurrent long-polling via `run()` (runner)                      |
-| `rich-message`    | `sendRichMessage` block builder + a streaming draft demo (rich)   |
-| `broadcast`       | subscriber list + typed broadcast jobs (broadcast)                |
-| `plugin`          | reusable plugin package with `src`, tests and examples            |
+| template          | what you get                                                           |
+|:------------------|:-----------------------------------------------------------------------|
+| `minimal`         | just `/start` + a text echo                                            |
+| `echo`            | echo text, photos and stickers back                                    |
+| `commands`        | `/start /help /ping` via a typed registry + synced `/` menu (commands) |
+| `buttons`         | inline keyboard + typed `callback_data` (keyboard, callback-data)      |
+| `conversation`    | await-style multi-step dialog (conversation)                           |
+| `i18n`            | multi-language bot with a `/lang` toggle (i18n)                        |
+| `session-counter` | per-chat counter on `ctx.session` (session)                            |
+| `webhook`         | edge/serverless deploy via `serve()` (web)                             |
+| `runner`          | concurrent long-polling via `run()` (runner)                           |
+| `rich-message`    | `sendRichMessage` block builder + a streaming draft demo (rich)        |
+| `broadcast`       | subscriber list + typed broadcast jobs (broadcast)                     |
+| `plugin`          | reusable plugin package with `src`, tests and examples                 |
 
 bracketed plugins are added & wired automatically, on top of anything you pick yourself.
 

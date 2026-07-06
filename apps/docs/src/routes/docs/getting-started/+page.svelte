@@ -76,7 +76,7 @@ export default {
 
 <h2>1. create a bot token</h2>
 <p>
-	open <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@botfather</a>, send
+	open <a href="https://t.me/BotFather" target="_blank" rel="noreferrer">@BotFather</a>, send
 	<code>/newbot</code>, pick a name and username, then copy the token. keep it out of git.
 </p>
 

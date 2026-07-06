@@ -58,12 +58,13 @@ test("renderFiles: every catalog plugin generates valid, importable code", () =>
 });
 
 test("renderFiles: template changes the bot body", () => {
-	const cmd =
-		renderFiles({ name: "b", runtime: "node", plugins: [], template: "commands" })[
-			"src/index.ts"
-		] ?? "";
+	const cmdFiles = renderFiles({ name: "b", runtime: "node", plugins: [], template: "commands" });
+	const cmd = cmdFiles["src/index.ts"] ?? "";
 
-	assert.match(cmd, /bot\.command\("ping"/);
+	assert.match(cmd, /\.add\("ping"/);
+	assert.match(cmd, /\.install\(cmd\.plugin\(\)\)/);
+	assert.match(cmd, /cmd\.sync\(bot\.api\)/);
+	assert.ok(JSON.parse(cmdFiles["package.json"] ?? "{}").dependencies["@yaebal/commands"]);
 
 	const echo =
 		renderFiles({ name: "b", runtime: "node", plugins: [], template: "echo" })["src/index.ts"] ??

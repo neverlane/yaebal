@@ -130,7 +130,7 @@ pnpm dev`;
 	<tbody>
 		<tr><td><code>minimal</code></td><td>just <code>/start</code> + a text echo</td></tr>
 		<tr><td><code>echo</code></td><td>echo text, photos and stickers back</td></tr>
-		<tr><td><code>commands</code></td><td><code>/start /help /ping</code> with a command menu</td></tr>
+		<tr><td><code>commands</code></td><td><code>/start /help /ping</code> via a typed registry + synced <code>/</code> menu (commands)</td></tr>
 		<tr><td><code>buttons</code></td><td>inline keyboard + typed <code>callback_data</code> (keyboard, callback-data)</td></tr>
 		<tr><td><code>conversation</code></td><td>await-style multi-step dialog (conversation)</td></tr>
 		<tr><td><code>i18n</code></td><td>multi-language bot with a <code>/lang</code> toggle (i18n)</td></tr>

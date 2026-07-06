@@ -91,6 +91,8 @@
 
 <style>
 	.code {
+		position: relative;
+		z-index: 1;
 		border: 1px solid var(--code-stroke);
 		background: var(--code-bg);
 		border-radius: 14px;

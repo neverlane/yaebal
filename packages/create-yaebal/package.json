@@ -1,6 +1,6 @@
 {
 	"name": "create-yaebal",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"description": "scaffold a new yaebal Telegram bot or plugin.",
 	"type": "module",
 	"bin": {

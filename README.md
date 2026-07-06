@@ -121,7 +121,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/fmt](/packages/fmt/)                     | `html` / `md` tagged templates with auto-escaping                              |
 | [@yaebal/rich](/packages/rich/)                   | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts |
 | [@yaebal/morda](/packages/morda/)                 | dialogs engine and jsx/hooks for telegram ui                                   |
-| [@yaebal/i18n](/packages/i18n/)                   | per-chat locale, `ctx.t` / `ctx.changeLanguage`                                |
+| [@yaebal/i18n](/packages/i18n/)                   | typed `ctx.t` (keys + params), Intl plurals, `language_code` detection         |
 | [@yaebal/scenes](/packages/scenes/)               | step-by-step wizards over multiple messages                                    |
 | [@yaebal/onboarding](/packages/onboarding/)       | declarative first-run tutorials with inline controls                           |
 | [@yaebal/conversation](/packages/conversation/)   | await-style multi-step dialogs                                                 |

@@ -6,6 +6,6 @@
 		"composite": true,
 		"types": ["node"]
 	},
-	"references": [{ "path": "../core" }, { "path": "../session" }],
+	"references": [{ "path": "../core" }, { "path": "../session" }, { "path": "../test" }],
 	"include": ["src/**/*.ts"]
 }

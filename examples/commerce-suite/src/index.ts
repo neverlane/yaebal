@@ -6,11 +6,15 @@ import {
 	type Context,
 	callbackData,
 	createBot,
+	type Dict,
+	field,
 	filters,
 	html,
 	InlineKeyboard,
 	i18n,
+	type LocaleLike,
 	session,
+	type TFn,
 } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
@@ -41,30 +45,34 @@ const products: Product[] = [
 	{ id: 8, name: "session vault", price: 49, tag: "state" },
 ];
 
-const locales = {
-	en: {
-		welcome: "welcome to the yaebal shop. use /catalog, /deal, /cart, /checkout.",
-		cart_empty: "your cart is empty.",
-		cart_title: "cart",
-		added: "added {name}.",
-		removed: "removed {name}.",
-		locale: "language switched to english.",
-		limited: "slow down a bit. the shop is rate-limited per user.",
-		items: { one: "{n} item", other: "{n} items" },
-	},
-	ru: {
-		welcome: "добро пожаловать в yaebal shop. используй /catalog, /deal, /cart, /checkout.",
-		cart_empty: "корзина пустая.",
-		cart_title: "корзина",
-		added: "добавлено: {name}.",
-		removed: "удалено: {name}.",
-		locale: "язык переключен на русский.",
-		limited: "помедленнее. магазин ограничивает частоту на пользователя.",
-		items: { one: "{n} товар", few: "{n} товара", many: "{n} товаров", other: "{n} товара" },
-	},
-};
+// `as const` keeps the templates as literal types, so ctx.t gets typed keys and
+// typed params; LocaleLike keeps ru structurally in sync with en at compile time
+const en = {
+	welcome: "welcome to the yaebal shop. use /catalog, /deal, /cart, /checkout.",
+	cart_empty: "your cart is empty.",
+	cart_title: "cart",
+	added: "added {name}.",
+	removed: "removed {name}.",
+	locale: "language switched to english.",
+	limited: "slow down a bit. the shop is rate-limited per user.",
+	items: { one: "{n} item", other: "{n} items" },
+} as const satisfies Dict;
 
-const cartAction = callbackData("cart", { op: String, id: Number });
+const ru = {
+	welcome: "добро пожаловать в yaebal shop. используй /catalog, /deal, /cart, /checkout.",
+	cart_empty: "корзина пустая.",
+	cart_title: "корзина",
+	added: "добавлено: {name}.",
+	removed: "удалено: {name}.",
+	locale: "язык переключен на русский.",
+	limited: "помедленнее. магазин ограничивает частоту на пользователя.",
+	items: { one: "{n} товар", few: "{n} товара", many: "{n} товаров", other: "{n} товара" },
+} as const satisfies LocaleLike<typeof en>;
+
+const locales = { en, ru };
+
+// enum `op` costs one char on the wire and narrows to "add" | "remove"
+const cartAction = callbackData("cart", { op: field.enum(["add", "remove"]), id: Number });
 // menu-only entries: the handlers live on the bot chain below, the / menu (with
 // per-locale descriptions) comes from this registry
 const menu = commands()
@@ -145,14 +153,13 @@ const bot = createBot(token)
 			return ctx.send(ctx.t("locale"));
 		}
 	})
-	.callbackQuery(cartAction.pattern, async (ctx) => {
-		const payload = cartAction.unpack(ctx.callbackQuery.data ?? "");
-		if (!payload) return;
-
-		const product = products.find((item) => item.id === payload.id);
+	// pass the namespace itself: the payload is validated + decoded to `ctx.queryData`,
+	// and this handler only runs on a clean unpack
+	.callbackQuery(cartAction, async (ctx) => {
+		const product = products.find((item) => item.id === ctx.queryData.id);
 		if (!product) return ctx.answer("unknown product");
 
-		if (payload.op === "add") {
+		if (ctx.queryData.op === "add") {
 			ctx.session.items[product.id] = (ctx.session.items[product.id] ?? 0) + 1;
 			await ctx.answer(ctx.t("added", { name: product.name }));
 		} else {
@@ -178,10 +185,7 @@ const bot = createBot(token)
 		console.log(`@${info.username} commerce suite is live`);
 	});
 
-function renderCart(
-	session: CartSession,
-	t: (key: string, params?: Record<string, unknown>) => string,
-): string {
+function renderCart(session: CartSession, t: TFn<typeof en>): string {
 	const rows = Object.entries(session.items)
 		.map(([id, qty]) => ({ product: products.find((item) => item.id === Number(id)), qty }))
 		.filter(

@@ -122,7 +122,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "i18n",
 		dep: "@yaebal/i18n",
-		hint: "per-chat locale + ctx.t",
+		hint: "typed ctx.t + per-chat locale",
 		wire: "install",
 		import: 'import { i18n } from "@yaebal/i18n";',
 		install: 'i18n({ defaultLocale: "en", locales: { en: { hi: "hi there!" } } })',
@@ -205,7 +205,7 @@ export const PLUGINS: PluginDef[] = [
 		dep: "@yaebal/callback-data",
 		hint: "typed callback_data pack/unpack",
 		wire: "dep",
-		import: 'import { callbackData } from "@yaebal/callback-data";',
+		import: 'import { callbackData, field } from "@yaebal/callback-data";',
 	},
 	{
 		id: "commands",

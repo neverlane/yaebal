@@ -1,6 +1,6 @@
 {
 	"name": "yaebal",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal — batteries-included Telegram Bot API framework: core + auto-generated contexts + the common plugins, one import.",
 	"type": "module",
 	"sideEffects": false,

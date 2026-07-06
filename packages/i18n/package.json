@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/i18n",
-	"version": "0.0.4",
-	"description": "yaebal i18n plugin — per-chat locale, ctx.t / ctx.changeLanguage (powers useTranslation).",
+	"version": "0.1.0",
+	"description": "yaebal i18n plugin — typed keys & params, nested dicts, Intl plurals, language_code detection, per-chat locale persistence, ctx.t / ctx.changeLanguage (powers useTranslation).",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -22,7 +22,8 @@
 		"@yaebal/session": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

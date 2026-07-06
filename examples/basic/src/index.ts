@@ -42,11 +42,13 @@ const COMMANDS = [
 	{ command: "help", description: "list every command" },
 ];
 
-// i18n tables; ctx.t / ctx.changeLanguage become available after install
+// i18n tables; ctx.t / ctx.changeLanguage become available after install.
+// `as const` turns on typed keys + typed params for ctx.t; the first locale a
+// user sees is auto-detected from telegram's language_code.
 const locales = {
 	en: { hello: "hi {who}! switched to english." },
 	ru: { hello: "привет {who}! язык переключён на русский." },
-};
+} as const;
 
 // a step-by-step wizard (scenes): name → age
 const wizard: SceneDef = {

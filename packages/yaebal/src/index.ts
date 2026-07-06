@@ -5,12 +5,14 @@
  * auto-generated shortcut methods) onto every update via the core context factory.
  */
 
-export { callbackData } from "@yaebal/callback-data";
+export type { CallbackData, Codec, InferInput, InferOutput, Schema } from "@yaebal/callback-data";
+export { callbackData, field } from "@yaebal/callback-data";
 export * from "@yaebal/contexts";
 export * from "@yaebal/core";
 export { and, filters, not, or } from "@yaebal/filters";
 export { html, htmlToEntities, md, mdToEntities } from "@yaebal/fmt";
-export { i18n } from "@yaebal/i18n";
+export type { Dict, I18n, I18nControls, LocaleLike, TFn } from "@yaebal/i18n";
+export { createI18n, i18n } from "@yaebal/i18n";
 export { InlineKeyboard, Keyboard } from "@yaebal/keyboard";
 export { session } from "@yaebal/session";
 export { deleteWebhook, serve, setWebhook, webhook } from "@yaebal/web";
@@ -18,6 +20,7 @@ export { deleteWebhook, serve, setWebhook, webhook } from "@yaebal/web";
 import { type ContextByType, contextFor } from "@yaebal/contexts";
 import {
 	type BotOptions,
+	type CallbackDataMatcher,
 	type CallbackQuery,
 	type Composer,
 	Context,
@@ -180,6 +183,12 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 		return super.on(query, ...(handlers as unknown as Middleware<Filtered<C, Q>>[]));
 	}
 
+	override callbackQuery<T>(
+		data: CallbackDataMatcher<T>,
+		...handlers: Middleware<
+			C & { queryData: T; callbackQuery: CallbackQuery } & ContextByType["callback_query"]
+		>[]
+	): this;
 	override callbackQuery(
 		trigger: string | RegExp,
 		...handlers: Middleware<
@@ -188,9 +197,15 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 				callbackQuery: CallbackQuery;
 			} & ContextByType["callback_query"]
 		>[]
+	): this;
+	override callbackQuery(
+		trigger: string | RegExp | CallbackDataMatcher<unknown>,
+		// biome-ignore lint/suspicious/noExplicitAny: overload implementation mirrors core Bot
+		...handlers: Middleware<any>[]
 	): this {
 		return super.callbackQuery(
-			trigger,
+			// biome-ignore lint/suspicious/noExplicitAny: forwarding to the overloaded base
+			trigger as any,
 			...(handlers as unknown as Middleware<
 				C & { match: string | RegExpMatchArray; callbackQuery: CallbackQuery }
 			>[]),

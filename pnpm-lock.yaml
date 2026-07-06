@@ -516,6 +516,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/keyboard:
     dependencies:

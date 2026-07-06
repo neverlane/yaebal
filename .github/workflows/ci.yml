@@ -73,5 +73,8 @@ jobs:
 
       - run: pnpm build
 
-      # deno smoke: type-check the compiled core entry point
-      - run: deno check --node-modules-dir packages/core/lib/index.js
+      # deno smoke: type-check the compiled core entry point. --node-modules-dir=manual
+      # (byonm) resolves bare specifiers through the pnpm-installed node_modules like node
+      # does — the bare flag (= auto) makes deno manage node_modules itself, and it can't
+      # map the `workspace:*` dependency on @yaebal/types (runtime import since format-hook).
+      - run: deno check --node-modules-dir=manual packages/core/lib/index.js

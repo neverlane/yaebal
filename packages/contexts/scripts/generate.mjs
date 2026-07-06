@@ -64,6 +64,46 @@ const SHORT = {
 	answerGuestQuery: "answer",
 };
 
+// methods that additionally accept their "main" param positionally —
+// ctx.sendPhoto(media.path("a.jpg"), { caption }) as well as ctx.sendPhoto({ photo, caption }).
+// kind picks the runtime discriminator + positional type; location/poll are two-arg specials.
+const POSITIONAL = {
+	sendPhoto: { param: "photo", kind: "media" },
+	sendVideo: { param: "video", kind: "media" },
+	sendAnimation: { param: "animation", kind: "media" },
+	sendAudio: { param: "audio", kind: "media" },
+	sendVoice: { param: "voice", kind: "media" },
+	sendVideoNote: { param: "video_note", kind: "media" },
+	sendDocument: { param: "document", kind: "media" },
+	sendSticker: { param: "sticker", kind: "media" },
+	forwardMessage: { param: "chat_id", kind: "chatId" },
+	copyMessage: { param: "chat_id", kind: "chatId" },
+	sendDice: { param: "emoji", kind: "string" },
+	editMessageReplyMarkup: { param: "reply_markup", kind: "markup" },
+	sendLocation: { kind: "location" },
+	sendPoll: { kind: "poll" },
+};
+
+const POSITIONAL_KINDS = {
+	media: {
+		type: "t.InputFile | string",
+		test: 'typeof a === "string" || isMediaSource(a)',
+	},
+	chatId: {
+		type: "number | string",
+		test: 'typeof a === "number" || typeof a === "string"',
+	},
+	string: {
+		type: "string",
+		test: 'typeof a === "string"',
+	},
+	// accepts a raw markup or anything toJSON-able (e.g. an @yaebal/keyboard builder)
+	markup: {
+		type: "t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup }",
+		test: 'typeof a === "object" && a !== null && ("inline_keyboard" in a || "toJSON" in a)',
+	},
+};
+
 // update prop -> public class comes from src/sugar/<kebab>.ts (extends the generated *Base)
 const SUGARED = {
 	message: true,
@@ -174,6 +214,7 @@ const fillPiece = (f, providers) =>
 function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 	const lines = [];
 	const used = new Set();
+	let usesMedia = false;
 
 	if (isMessage && providers.chat_id && providers.message_id) {
 		// same extra routing ids as send() below (business connection / thread / dm topic),
@@ -206,7 +247,11 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 			.filter((n) => !fills.includes(n) && !(hasFromChat && n === "chat_id"));
 		
 		if (unfilledRequired.length) continue;
-		if (!fills.some((n) => targetIds.has(n))) continue;
+		// forward/copy target another chat (positional) but still act on "this message" —
+		// from_chat_id + message_id filled is enough of an anchor for them.
+		const anchoredElsewhere =
+			POSITIONAL[m.name]?.kind === "chatId" && fills.includes("from_chat_id") && fills.includes("message_id");
+		if (!fills.some((n) => targetIds.has(n)) && !anchoredElsewhere) continue;
 
 		const name = SHORT[m.name] ?? m.name;
 
@@ -221,13 +266,76 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 		const sig = otherArgs ? `params: Omit<${paramsType}, ${omit}>` : `params?: Omit<${paramsType}, ${omit}>`;
 		const desc = (m.description || "").replace(/\r?\n/g, " ").replace(/\*\//g, "*\\/").trim();
 
+		const positional = positionalFor(m, { name, paramsType, omit, fillObj, ret, desc, args, fills });
+		if (positional) {
+			if (POSITIONAL[m.name].kind === "media") usesMedia = true;
+			lines.push(positional);
+			continue;
+		}
+
 		lines.push(`	/** ${desc} */
 	${name}(${sig}) {
 		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
 	}`);
 	}
 
-	return lines;
+	return { lines, usesMedia };
+}
+
+// overloaded emission for POSITIONAL methods: the params-object form stays, plus a
+// positional form for the method's "main" argument(s). returns null when not applicable
+// (method not in the table, or its main param is already auto-filled on this context).
+function positionalFor(m, { name, paramsType, omit, fillObj, ret, desc, args, fills }) {
+	const spec = POSITIONAL[m.name];
+	if (!spec) return null;
+
+	const objForm = `Omit<${paramsType}, ${omit}>`;
+	const objRequired = args.some((a) => a.required && !fills.includes(a.name));
+	const objSig = `params${objRequired ? "" : "?"}: ${objForm}`;
+
+	if (spec.kind === "location") {
+		const posOmit = `${omit} | "latitude" | "longitude"`;
+
+		return `	/** ${desc} */
+	${name}(latitude: number, longitude: number, params?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(${objSig}): Promise<${ret}>;
+	${name}(a: number | ${objForm}, b?: number, c?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+		const params = typeof a === "number" ? ({ latitude: a, longitude: b as number, ...c } as unknown as ${objForm}) : a;
+		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
+	}`;
+	}
+
+	if (spec.kind === "poll") {
+		const posOmit = `${omit} | "question" | "options"`;
+
+		return `	/** ${desc} */
+	${name}(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(${objSig}): Promise<${ret}>;
+	${name}(a: string | ${objForm}, b?: readonly (string | t.InputPollOption)[], c?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+		const params = typeof a === "string"
+			? ({ question: a, options: (b ?? []).map((o) => (typeof o === "string" ? { text: o } : o)), ...c } as unknown as ${objForm})
+			: a;
+		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
+	}`;
+	}
+
+	const arg = args.find((x) => x.name === spec.param);
+	if (!arg || fills.includes(spec.param)) return null;
+
+	const kind = POSITIONAL_KINDS[spec.kind];
+	const posOmit = `${omit} | ${JSON.stringify(spec.param)}`;
+	const restRequired = args.some((x) => x.required && !fills.includes(x.name) && x.name !== spec.param);
+	const implOpt = arg.required && objRequired ? "" : "?";
+
+	return `	/** ${desc} */
+	${name}(${spec.param.replace(/_(.)/g, (_, c) => c.toUpperCase())}: ${kind.type}, params${restRequired ? "" : "?"}: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(${objSig}): Promise<${ret}>;
+	${name}(a${implOpt}: ${kind.type} | ${objForm}, b?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+		const params = a !== undefined && (${kind.test})
+			? ({ ${spec.param}: a, ...b } as unknown as ${objForm})
+			: ((a ?? {}) as ${objForm});
+		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
+	}`;
 }
 
 // ergonomic camel-case getters (the gramio/puregram idea), derived from the
@@ -302,9 +410,9 @@ const payloadProps = update.properties.filter((p) => p.name !== "update_id");
 const genDir = new URL("src/generated/", root);
 mkdirSync(genDir, { recursive: true });
 
-const header = `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
+const header = (usesMedia) => `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
-import type * as t from "@yaebal/types";
+${usesMedia ? 'import { isMediaSource } from "@yaebal/core";\n' : ""}import type * as t from "@yaebal/types";
 
 `;
 
@@ -325,10 +433,14 @@ for (const prop of payloadProps) {
 	const targetIds = prop.name.includes("business")
 		? new Set([...TARGET_IDS, "business_connection_id"])
 		: TARGET_IDS;
-	const methods = methodsFor(providersFor(payload, prop.name), payloadName === "Message", targetIds);
+	const { lines: methods, usesMedia } = methodsFor(
+		providersFor(payload, prop.name),
+		payloadName === "Message",
+		targetIds,
+	);
 	const getters = gettersFor(payload);
 
-	const file = `${header}export interface ${className} extends t.${payloadName} {}
+	const file = `${header(usesMedia)}export interface ${className} extends t.${payloadName} {}
 export class ${className} {
 	readonly api: Api;
 	readonly update: t.Update;

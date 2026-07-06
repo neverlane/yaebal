@@ -1,5 +1,6 @@
 // AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
+import { isMediaSource } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 
 export interface EditedChannelPostContextBase extends t.Message {}
@@ -51,8 +52,31 @@ export class EditedChannelPostContextBase {
 	send(params: Omit<t.SendMessageParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
 		return this.api.call<t.Message>("sendMessage", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
+	/** Use this method to forward messages of any kind. Service messages and messages with protected content can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	forward(chatId: number | string, params?: Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.Message>;
+	forward(params: Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">): Promise<t.Message>;
+	forward(a: number | string | Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">, b?: Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "number" || typeof a === "string")
+			? ({ chat_id: a, ...b } as unknown as Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">)
+			: ((a ?? {}) as Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">);
+		return this.api.call<t.Message>("forwardMessage", { ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), from_chat_id: this.chat.id, message_id: this.message_id, ...params });
+	}
+	/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+	copy(chatId: number | string, params?: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.MessageId>;
+	copy(params: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">): Promise<t.MessageId>;
+	copy(a: number | string | Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">, b?: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.MessageId> {
+		const params = a !== undefined && (typeof a === "number" || typeof a === "string")
+			? ({ chat_id: a, ...b } as unknown as Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">)
+			: ((a ?? {}) as Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">);
+		return this.api.call<t.MessageId>("copyMessage", { ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), from_chat_id: this.chat.id, message_id: this.message_id, ...params });
+	}
 	/** Use this method to send photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendPhoto(params: Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendPhoto(photo: t.InputFile | string, params?: Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "photo">): Promise<t.Message>;
+	sendPhoto(params: Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendPhoto(a: t.InputFile | string | Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "photo">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ photo: a, ...b } as unknown as Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendPhotoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendPhoto", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send live photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -60,27 +84,57 @@ export class EditedChannelPostContextBase {
 		return this.api.call<t.Message>("sendLivePhoto", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send audio files, if you want Telegram clients to display them in the music player. Your audio must be in the .MP3 or .M4A format. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send audio files of up to 50 MB in size, this limit may be changed in the future.  For sending voice messages, use the [sendVoice](https://core.telegram.org/bots/api/#sendvoice) method instead. */
-	sendAudio(params: Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendAudio(audio: t.InputFile | string, params?: Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "audio">): Promise<t.Message>;
+	sendAudio(params: Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendAudio(a: t.InputFile | string | Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "audio">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ audio: a, ...b } as unknown as Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendAudioParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendAudio", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send general files. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send files of any type of up to 50 MB in size, this limit may be changed in the future. */
-	sendDocument(params: Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendDocument(document: t.InputFile | string, params?: Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "document">): Promise<t.Message>;
+	sendDocument(params: Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendDocument(a: t.InputFile | string | Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "document">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ document: a, ...b } as unknown as Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendDocumentParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendDocument", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send video files, Telegram clients support MPEG4 videos (other formats may be sent as [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send video files of up to 50 MB in size, this limit may be changed in the future. */
-	sendVideo(params: Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendVideo(video: t.InputFile | string, params?: Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video">): Promise<t.Message>;
+	sendVideo(params: Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendVideo(a: t.InputFile | string | Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ video: a, ...b } as unknown as Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendVideoParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendVideo", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without sound). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send animation files of up to 50 MB in size, this limit may be changed in the future. */
-	sendAnimation(params: Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendAnimation(animation: t.InputFile | string, params?: Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "animation">): Promise<t.Message>;
+	sendAnimation(params: Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendAnimation(a: t.InputFile | string | Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "animation">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ animation: a, ...b } as unknown as Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendAnimationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendAnimation", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send audio files, if you want Telegram clients to display the file as a playable voice message. For this to work, your audio must be in an .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats may be sent as [Audio](https://core.telegram.org/bots/api/#audio) or [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send voice messages of up to 50 MB in size, this limit may be changed in the future. */
-	sendVoice(params: Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendVoice(voice: t.InputFile | string, params?: Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "voice">): Promise<t.Message>;
+	sendVoice(params: Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendVoice(a: t.InputFile | string | Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "voice">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ voice: a, ...b } as unknown as Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendVoice", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendVideoNote(params: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendVideoNote(videoNote: t.InputFile | string, params?: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video_note">): Promise<t.Message>;
+	sendVideoNote(params: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendVideoNote(a: t.InputFile | string | Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video_note">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ video_note: a, ...b } as unknown as Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendVideoNote", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -92,7 +146,10 @@ export class EditedChannelPostContextBase {
 		return this.api.call<t.Message[]>("sendMediaGroup", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send point on the map. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendLocation(params: Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendLocation(latitude: number, longitude: number, params?: Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "latitude" | "longitude">): Promise<t.Message>;
+	sendLocation(params: Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendLocation(a: number | Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: number, c?: Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "latitude" | "longitude">): Promise<t.Message> {
+		const params = typeof a === "number" ? ({ latitude: a, longitude: b as number, ...c } as unknown as Omit<t.SendLocationParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) : a;
 		return this.api.call<t.Message>("sendLocation", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send information about a venue. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -104,11 +161,21 @@ export class EditedChannelPostContextBase {
 		return this.api.call<t.Message>("sendContact", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendPoll(params: Omit<t.SendPollParams, "chat_id" | "message_thread_id">) {
+	sendPoll(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<t.SendPollParams, "chat_id" | "message_thread_id" | "question" | "options">): Promise<t.Message>;
+	sendPoll(params: Omit<t.SendPollParams, "chat_id" | "message_thread_id">): Promise<t.Message>;
+	sendPoll(a: string | Omit<t.SendPollParams, "chat_id" | "message_thread_id">, b?: readonly (string | t.InputPollOption)[], c?: Omit<t.SendPollParams, "chat_id" | "message_thread_id" | "question" | "options">): Promise<t.Message> {
+		const params = typeof a === "string"
+			? ({ question: a, options: (b ?? []).map((o) => (typeof o === "string" ? { text: o } : o)), ...c } as unknown as Omit<t.SendPollParams, "chat_id" | "message_thread_id">)
+			: a;
 		return this.api.call<t.Message>("sendPoll", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...params });
 	}
 	/** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendDice(params: Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendDice(emoji: string, params?: Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "emoji">): Promise<t.Message>;
+	sendDice(params?: Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendDice(a?: string | Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "emoji">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string")
+			? ({ emoji: a, ...b } as unknown as Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendDiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendDice", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to stream a partial message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendMessage](https://core.telegram.org/bots/api/#sendmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
@@ -400,7 +467,12 @@ export class EditedChannelPostContextBase {
 		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { chat_id: this.chat.id, message_id: this.message_id, ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editReplyMarkup(params: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">) {
+	editReplyMarkup(replyMarkup: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup }, params?: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id" | "reply_markup">): Promise<t.Message | boolean>;
+	editReplyMarkup(params?: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">): Promise<t.Message | boolean>;
+	editReplyMarkup(a?: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup } | Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">, b?: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id" | "reply_markup">): Promise<t.Message | boolean> {
+		const params = a !== undefined && (typeof a === "object" && a !== null && ("inline_keyboard" in a || "toJSON" in a))
+			? ({ reply_markup: a, ...b } as unknown as Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">)
+			: ((a ?? {}) as Omit<t.EditMessageReplyMarkupParams, "chat_id" | "message_id">);
 		return this.api.call<t.Message | boolean>("editMessageReplyMarkup", { chat_id: this.chat.id, message_id: this.message_id, ...params });
 	}
 	/** Use this method to stop a poll which was sent by the bot. On success, the stopped [Poll](https://core.telegram.org/bots/api/#poll) is returned. */
@@ -432,7 +504,12 @@ export class EditedChannelPostContextBase {
 		return this.api.call<boolean>("deleteAllMessageReactions", { chat_id: this.chat.id, user_id: this.from?.id, ...params });
 	}
 	/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
-	sendSticker(params: Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {
+	sendSticker(sticker: t.InputFile | string, params?: Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "sticker">): Promise<t.Message>;
+	sendSticker(params: Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
+	sendSticker(a: t.InputFile | string | Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "sticker">): Promise<t.Message> {
+		const params = a !== undefined && (typeof a === "string" || isMediaSource(a))
+			? ({ sticker: a, ...b } as unknown as Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">)
+			: ((a ?? {}) as Omit<t.SendStickerParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendSticker", { chat_id: this.chat.id, ...((this.message_thread_id) === undefined ? {} : { message_thread_id: this.message_thread_id }), ...((this.direct_messages_topic?.topic_id) === undefined ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to upload a file with a sticker for later use in the [createNewStickerSet](https://core.telegram.org/bots/api/#createnewstickerset), [addStickerToSet](https://core.telegram.org/bots/api/#addstickertoset), or [replaceStickerInSet](https://core.telegram.org/bots/api/#replacestickerinset) methods (the file can be used multiple times). Returns the uploaded [File](https://core.telegram.org/bots/api/#file) on success. */

@@ -19,6 +19,13 @@ type SendExtra = Omit<t.SendMessageParams, "chat_id" | "text">;
 type EditExtra = Omit<t.EditMessageTextParams, "chat_id" | "message_id" | "text">;
 type CaptionExtra = Omit<t.EditMessageCaptionParams, "chat_id" | "message_id" | "caption">;
 type ReactExtra = Omit<t.SetMessageReactionParams, "chat_id" | "message_id" | "reaction">;
+type QuoteExtra = Omit<t.SendMessageParams, "chat_id" | "text" | "reply_parameters">;
+type BanExtra = Omit<t.BanChatMemberParams, "chat_id" | "user_id">;
+type UnbanExtra = Omit<t.UnbanChatMemberParams, "chat_id" | "user_id">;
+type RestrictExtra = Omit<t.RestrictChatMemberParams, "chat_id" | "user_id" | "permissions"> & {
+	/** target user — defaults to the sender of this message. */
+	user_id?: number;
+};
 
 /** Fields every Message-based context carries (merged from the payload). */
 interface MessageFields {
@@ -62,6 +69,17 @@ function routing(ctx: MessageFields): {
 			? {}
 			: { direct_messages_topic_id: ctx.direct_messages_topic.topic_id }),
 	};
+}
+
+/** moderation target: the explicit user id, or the sender of this message. */
+function targetUser(ctx: MessageFields, userId: number | undefined, method: string): number {
+	const id = userId ?? ctx.from?.id;
+	if (id === undefined) {
+		throw new TypeError(
+			`${method}(): no target — update has no \`from\` and no user id was passed`,
+		);
+	}
+	return id;
 }
 
 /**
@@ -171,6 +189,69 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 				message_id: this.message_id,
 				...params,
 			});
+		}
+
+		/** Send a chat action — the "bot is typing…" indicator. Defaults to `"typing"`. */
+		typing(action: t.SendChatActionParams["action"] = "typing"): Promise<boolean> {
+			return this.api.call<boolean>("sendChatAction", {
+				chat_id: this.chat.id,
+				action,
+				...routing(this),
+			});
+		}
+
+		/** Reply quoting a piece of this message's text (`reply_parameters.quote`). */
+		quote(quoteText: string, text: string, params?: QuoteExtra): Promise<t.Message> {
+			return this.api.call<t.Message>("sendMessage", {
+				chat_id: this.chat.id,
+				text,
+				reply_parameters: { message_id: this.message_id, quote: quoteText },
+				...routing(this),
+				...params,
+			});
+		}
+
+		/** Ban a user from this chat. Defaults to the sender of this message. */
+		ban(userId?: number, params?: BanExtra): Promise<boolean> {
+			return this.api.call<boolean>("banChatMember", {
+				chat_id: this.chat.id,
+				user_id: targetUser(this, userId, "ban"),
+				...params,
+			});
+		}
+
+		/** Unban a user from this chat. Defaults to the sender of this message. */
+		unban(userId?: number, params?: UnbanExtra): Promise<boolean> {
+			return this.api.call<boolean>("unbanChatMember", {
+				chat_id: this.chat.id,
+				user_id: targetUser(this, userId, "unban"),
+				...params,
+			});
+		}
+
+		/** Restrict a user in this chat. The target defaults to the sender of this message. */
+		restrict(permissions: t.ChatPermissions, params?: RestrictExtra): Promise<boolean> {
+			const { user_id, ...rest } = params ?? {};
+			return this.api.call<boolean>("restrictChatMember", {
+				chat_id: this.chat.id,
+				user_id: targetUser(this, user_id, "restrict"),
+				permissions,
+				...rest,
+			});
+		}
+
+		/**
+		 * Mute a user (all send permissions off), optionally for `seconds` from now.
+		 * The target defaults to the sender of this message.
+		 */
+		mute(seconds?: number, params?: RestrictExtra): Promise<boolean> {
+			return this.restrict(
+				{ can_send_messages: false },
+				{
+					...(seconds === undefined ? {} : { until_date: Math.floor(Date.now() / 1000) + seconds }),
+					...params,
+				},
+			);
 		}
 	}
 	return Sugared;

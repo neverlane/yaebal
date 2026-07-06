@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { media } from "@yaebal/core";
 import {
 	BusinessConnectionContext,
 	BusinessMessageContext,
@@ -465,4 +466,205 @@ test("contextFor builds the right class per update type", () => {
 		callback_query: { id: "q", from: { id: 1, is_bot: false, first_name: "u" } },
 	} as never);
 	assert.ok(c instanceof CallbackQueryContext);
+});
+
+test("positional media: sendPhoto accepts a MediaSource, url string and the params object", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+	} as never);
+
+	const src = media.path("./cat.jpg");
+	ctx.sendPhoto(src, { caption: "мяу" });
+	assert.deepEqual(calls[0], { m: "sendPhoto", p: { chat_id: 42, photo: src, caption: "мяу" } });
+
+	calls.length = 0;
+	ctx.sendPhoto("https://cataas.com/cat");
+	assert.deepEqual(calls[0], {
+		m: "sendPhoto",
+		p: { chat_id: 42, photo: "https://cataas.com/cat" },
+	});
+
+	calls.length = 0;
+	ctx.sendDocument({ document: "file_id", caption: "raw form" });
+	assert.deepEqual(calls[0], {
+		m: "sendDocument",
+		p: { chat_id: 42, document: "file_id", caption: "raw form" },
+	});
+});
+
+test("positional forward/copy take the target chat id", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+	} as never);
+
+	ctx.forward(-100123);
+	assert.deepEqual(calls[0], {
+		m: "forwardMessage",
+		p: { from_chat_id: 42, message_id: 5, chat_id: -100123 },
+	});
+
+	calls.length = 0;
+	ctx.copy("@archive", { disable_notification: true });
+	assert.deepEqual(calls[0], {
+		m: "copyMessage",
+		p: { from_chat_id: 42, message_id: 5, chat_id: "@archive", disable_notification: true },
+	});
+});
+
+test("positional sendPoll maps string options, sendLocation takes lat/lon, sendDice takes emoji", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+	} as never);
+
+	ctx.sendPoll("tabs or spaces?", ["tabs", { text: "spaces" }], { is_anonymous: false });
+	assert.deepEqual(calls[0], {
+		m: "sendPoll",
+		p: {
+			chat_id: 42,
+			question: "tabs or spaces?",
+			options: [{ text: "tabs" }, { text: "spaces" }],
+			is_anonymous: false,
+		},
+	});
+
+	calls.length = 0;
+	ctx.sendLocation(55.7558, 37.6173, { horizontal_accuracy: 50 });
+	assert.deepEqual(calls[0], {
+		m: "sendLocation",
+		p: { chat_id: 42, latitude: 55.7558, longitude: 37.6173, horizontal_accuracy: 50 },
+	});
+
+	calls.length = 0;
+	ctx.sendDice("🎰");
+	assert.deepEqual(calls[0], { m: "sendDice", p: { chat_id: 42, emoji: "🎰" } });
+
+	calls.length = 0;
+	ctx.sendDice();
+	assert.deepEqual(calls[0], { m: "sendDice", p: { chat_id: 42 } });
+});
+
+test("editReplyMarkup accepts a markup, a toJSON-able builder, or nothing (clears)", () => {
+	const { api, calls } = recorder();
+	const ctx = new CallbackQueryContext(api, {
+		update_id: 1,
+		callback_query: {
+			id: "q",
+			from: { id: 1, is_bot: false, first_name: "u" },
+			message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+		},
+	} as never);
+
+	const markup = { inline_keyboard: [[{ text: "a", callback_data: "a" }]] };
+	ctx.editReplyMarkup(markup);
+	assert.deepEqual(calls[0], {
+		m: "editMessageReplyMarkup",
+		p: { chat_id: 42, message_id: 5, reply_markup: markup },
+	});
+
+	calls.length = 0;
+	const builder = { toJSON: () => markup }; // duck-typed @yaebal/keyboard builder
+	ctx.editReplyMarkup(builder);
+	assert.deepEqual(calls[0], {
+		m: "editMessageReplyMarkup",
+		p: { chat_id: 42, message_id: 5, reply_markup: builder },
+	});
+
+	calls.length = 0;
+	ctx.editReplyMarkup();
+	assert.deepEqual(calls[0], { m: "editMessageReplyMarkup", p: { chat_id: 42, message_id: 5 } });
+});
+
+test("sugar: typing sends a chat action with routing", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: 42, type: "private" }, message_thread_id: 9 },
+	} as never);
+
+	ctx.typing();
+	assert.deepEqual(calls[0], {
+		m: "sendChatAction",
+		p: { chat_id: 42, action: "typing", message_thread_id: 9 },
+	});
+
+	calls.length = 0;
+	ctx.typing("upload_photo");
+	assert.equal((calls[0]?.p as { action: string }).action, "upload_photo");
+});
+
+test("sugar: quote replies with reply_parameters.quote", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+	} as never);
+
+	ctx.quote("договорились", "зафиксировал 🤝");
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: {
+			chat_id: 42,
+			text: "зафиксировал 🤝",
+			reply_parameters: { message_id: 5, quote: "договорились" },
+		},
+	});
+});
+
+test("sugar: moderation defaults the target to the sender", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: -100500, type: "supergroup" },
+			from: { id: 7, is_bot: false, first_name: "spammer" },
+		},
+	} as never);
+
+	ctx.ban();
+	assert.deepEqual(calls[0], { m: "banChatMember", p: { chat_id: -100500, user_id: 7 } });
+
+	calls.length = 0;
+	ctx.ban(99, { revoke_messages: true });
+	assert.deepEqual(calls[0], {
+		m: "banChatMember",
+		p: { chat_id: -100500, user_id: 99, revoke_messages: true },
+	});
+
+	calls.length = 0;
+	ctx.unban();
+	assert.deepEqual(calls[0], { m: "unbanChatMember", p: { chat_id: -100500, user_id: 7 } });
+
+	calls.length = 0;
+	ctx.restrict({ can_send_messages: false }, { user_id: 99 });
+	assert.deepEqual(calls[0], {
+		m: "restrictChatMember",
+		p: { chat_id: -100500, user_id: 99, permissions: { can_send_messages: false } },
+	});
+
+	calls.length = 0;
+	ctx.mute(60);
+	const p = calls[0]?.p as unknown as {
+		until_date: number;
+		user_id: number;
+		permissions: unknown;
+	};
+	assert.equal(p.user_id, 7);
+	assert.deepEqual(p.permissions, { can_send_messages: false });
+	assert.ok(p.until_date > Date.now() / 1000);
+
+	// no `from` and no explicit id -> throw, not a silent bad api call
+	const { api: api2 } = recorder();
+	const noFrom = new MessageContext(api2, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: -1, type: "supergroup" } },
+	} as never);
+	assert.throws(() => noFrom.ban(), /no target/);
 });

@@ -108,7 +108,12 @@ export class BusinessConnectionContext {
 		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { ...((this.id) === undefined ? {} : { business_connection_id: this.id }), ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editReplyMarkup(params: Omit<t.EditMessageReplyMarkupParams, "business_connection_id">) {
+	editReplyMarkup(replyMarkup: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup }, params?: Omit<t.EditMessageReplyMarkupParams, "business_connection_id" | "reply_markup">): Promise<t.Message | boolean>;
+	editReplyMarkup(params?: Omit<t.EditMessageReplyMarkupParams, "business_connection_id">): Promise<t.Message | boolean>;
+	editReplyMarkup(a?: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup } | Omit<t.EditMessageReplyMarkupParams, "business_connection_id">, b?: Omit<t.EditMessageReplyMarkupParams, "business_connection_id" | "reply_markup">): Promise<t.Message | boolean> {
+		const params = a !== undefined && (typeof a === "object" && a !== null && ("inline_keyboard" in a || "toJSON" in a))
+			? ({ reply_markup: a, ...b } as unknown as Omit<t.EditMessageReplyMarkupParams, "business_connection_id">)
+			: ((a ?? {}) as Omit<t.EditMessageReplyMarkupParams, "business_connection_id">);
 		return this.api.call<t.Message | boolean>("editMessageReplyMarkup", { ...((this.id) === undefined ? {} : { business_connection_id: this.id }), ...params });
 	}
 	/** Use this method to create a link for an invoice. Returns the created invoice link as *String* on success. */

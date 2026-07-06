@@ -59,6 +59,38 @@ export class MessageContext extends MessageContextBase {
   ctx.editText("edited");
 });`;
 
+	const positional = `// generated positional overloads — the params-object form always still works
+bot.on("message", async (ctx) => {
+  await ctx.sendPhoto(media.path("cat.jpg"), { caption: "мяу" });
+  await ctx.sendPhoto("https://cataas.com/cat");        // url / file_id string
+  await ctx.sendDocument(media.buffer(buf, "report.pdf"));
+
+  await ctx.forward(ADMIN_CHAT_ID);                     // target chat, positional
+  await ctx.copy("@archive", { disable_notification: true });
+
+  await ctx.sendPoll("tabs or spaces?", ["tabs", "spaces"], { is_anonymous: false });
+  await ctx.sendLocation(55.7558, 37.6173);
+  await ctx.sendDice("🎰");
+});
+
+bot.on("callback_query", async (ctx) => {
+  await ctx.answer("saved");
+  await ctx.editReplyMarkup(new InlineKeyboard().text("back", "back"));  // builder ok
+  await ctx.editReplyMarkup();                          // no arg = remove keyboard
+});`;
+
+	const mixinExtra = `// hand-written mixin sugar (MessageSugar) — logic a schema can't express
+bot.on("message", async (ctx) => {
+  await ctx.typing();               // sendChatAction "typing" (any action: ctx.typing("upload_photo"))
+  await ctx.quote("deal", "noted"); // reply quoting a piece of this message
+
+  // moderation — target defaults to the sender of this message
+  await ctx.ban();                  // banChatMember(ctx.from.id)
+  await ctx.unban(userId);
+  await ctx.mute(3600);             // restrict all sending for an hour
+  await ctx.restrict({ can_send_messages: false }, { user_id });
+});`;
+
 	const getters = `// camel-case getters generated on EVERY context that has the field
 bot.on("message:text", (ctx) => {
   ctx.senderId;   // number | undefined
@@ -121,14 +153,50 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 	context — with the right <code>Omit</code> signature. zero hand-written code.
 </div>
 
-<h2>the sugar layer</h2>
+<h2>positional overloads (generated too)</h2>
 <p>
-	autogen gives breadth; a thin hand-written layer gives ergonomics. a shared
-	<code>MessageSugar</code> mixin adds positional-string overloads on top of the generated base —
-	the best of both:
+	for methods with an obvious "main" argument, the generator emits a positional overload next to
+	the params-object form: the media senders (<code>sendPhoto</code>, <code>sendVideo</code>,
+	<code>sendDocument</code>, <code>sendAudio</code>, <code>sendVoice</code>,
+	<code>sendAnimation</code>, <code>sendSticker</code>, <code>sendVideoNote</code>) take the file
+	first, <code>forward</code> / <code>copy</code> take the target chat,
+	<code>sendPoll(question, options)</code> maps plain strings to options,
+	<code>sendLocation(lat, lon)</code>, <code>sendDice(emoji?)</code>, and
+	<code>editReplyMarkup</code> accepts a raw markup or an <code>@yaebal/keyboard</code> builder
+	directly (no argument removes the keyboard). all of it derived from the schema — a
+	<code>POSITIONAL</code> table in the generator, not hand-written methods.
 </p>
+<Code code={positional} title="positional.ts" />
+
+<h2>the sugar layer (mixins)</h2>
+<p>
+	autogen gives breadth; a thin hand-written layer gives ergonomics where the schema can't. the
+	shared <code>MessageSugar</code> mixin (<code>src/sugar/message-mixin.ts</code>) is applied to
+	every message-based context — <code>message</code>, <code>channel_post</code>, the
+	<code>edited_*</code>, <code>business_*</code> and <code>guest_message</code> ones — because a
+	TS class can't inherit from two bases: the generated <code>*Base</code> class provides the api
+	surface, the mixin function wraps it with overloads. it adds:
+</p>
+<ul>
+	<li>
+		positional-string <code>send</code> / <code>reply</code> / <code>editText</code> /
+		<code>editCaption</code>, and <code>react</code> with five call shapes (emoji, custom emoji,
+		shorthand objects, arrays, raw params);
+	</li>
+	<li><code>typing(action?)</code> — <code>sendChatAction</code>, defaults to <code>"typing"</code>;</li>
+	<li><code>quote(quoteText, text)</code> — reply quoting a piece of this message;</li>
+	<li>
+		moderation with the sender as the default target: <code>ban(userId?)</code>,
+		<code>unban(userId?)</code>, <code>restrict(permissions)</code>, <code>mute(seconds?)</code>;
+	</li>
+	<li>
+		business/topic routing on every one of them — <code>business_connection_id</code>,
+		<code>message_thread_id</code> and the direct-messages topic are carried automatically.
+	</li>
+</ul>
 <Code code={sugar} title="sugar/message.ts" />
 <Code code={usage} title="handler.ts" />
+<Code code={mixinExtra} title="mixin-extra.ts" />
 
 <h2>convenience getters</h2>
 <p>
@@ -143,7 +211,8 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 <p>
 	one <code>MessageSugar</code> mixin gives every message-based context (<code>message</code>,
 	<code>channel_post</code>, the <code>edited_*</code> and <code>business_*</code> ones) the positional
-	<code>send</code> / <code>reply</code> / <code>react</code> / <code>editText</code>; query contexts
+	<code>send</code> / <code>reply</code> / <code>react</code> / <code>editText</code> plus
+	<code>typing</code> / <code>quote</code> / <code>ban</code> / <code>mute</code>; query contexts
 	get a positional <code>answer</code>; join requests get <code>approve</code> / <code>decline</code>.
 </p>
 <Code code={shortcuts} title="shortcuts.ts" />

@@ -20,7 +20,7 @@ import { html, md, heading, paragraph, bold, link, sendRichMessage } from "@yaeb
 const title = "release notes";
 const body = [
   heading(1, title),
-  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), "."),
+  paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.mom", "the docs"), "."),
 ];
 
 await sendRichMessage(ctx.api, ctx.chat.id, html(body)); // <h1>…</h1><p>…</p>
@@ -33,7 +33,7 @@ there is no `md.bold`/`md.paragraph` shadow api to learn, nothing to keep in syn
 const doc = html`
   ${heading(1, title)}
 
-  ${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.pages.dev", "the docs"), ".")}
+  ${paragraph("yaebal ", bold("0.1"), " is out — see ", link("https://yaebal.mom", "the docs"), ".")}
 `;
 
 await sendRichMessage(ctx.api, ctx.chat.id, doc);

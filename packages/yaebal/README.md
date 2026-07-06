@@ -6,7 +6,7 @@
 *the batteries-included telegram bot framework*  
 **one import** · **type-safe** · **runtime-agnostic**
 
-[🔗 docs](https://yaebal.pages.dev) · [⭐ github](https://github.com/neverlane/yaebal) · [📦 npmx](https://npmx.dev/org/yaebal)
+[🔗 docs](https://yaebal.mom) · [⭐ github](https://github.com/neverlane/yaebal) · [📦 npmx](https://npmx.dev/org/yaebal)
 
 </div>
 

@@ -2,7 +2,7 @@ user-agent: *
 allow: /
 
 # complete page coverage is exposed through the sitemap.
-sitemap: https://yaebal.pages.dev/sitemap.xml
+sitemap: https://yaebal.mom/sitemap.xml
 
 # llm entrypoints.
 allow: /llms.txt

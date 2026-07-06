@@ -39,7 +39,7 @@ bot.command("enable", (ctx) => ctx.onboarding.enableAll());`;
   buttons: [
     "next",
     { text: "skip setup", goto: "done" },
-    { text: "docs", url: "https://yaebal.pages.dev" },
+    { text: "docs", url: "https://yaebal.mom" },
   ],
 })`;
 

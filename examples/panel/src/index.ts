@@ -37,7 +37,7 @@ const demoKeyboard = {
 	inline_keyboard: [
 		[
 			{ text: "open media demo", callback_data: "panel:media" },
-			{ text: "panel docs", url: "https://yaebal.pages.dev/docs/plugins/panel" },
+			{ text: "panel docs", url: "https://yaebal.mom/docs/plugins/panel" },
 		],
 		[{ text: "record callback event", callback_data: "panel:callback" }],
 	],

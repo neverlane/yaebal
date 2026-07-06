@@ -76,7 +76,7 @@ const bot = new Bot(token)
 					"the docs",
 				)}
 
-				${paragraph("see ", link("https://yaebal.pages.dev/docs/plugins/rich", "the plugin docs"), " for the full api.")}
+				${paragraph("see ", link("https://yaebal.mom/docs/plugins/rich", "the plugin docs"), " for the full api.")}
 			`,
 		),
 	)

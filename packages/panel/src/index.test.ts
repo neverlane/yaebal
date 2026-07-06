@@ -218,7 +218,7 @@ test("recorder captures inline keyboards for timeline previews", async () => {
 				inline_keyboard: [
 					[
 						{ text: "Open", callback_data: "open" },
-						{ text: "Docs", url: "https://yaeb.al" },
+						{ text: "Docs", url: "https://yaebal.mom" },
 					],
 				],
 			},
@@ -230,7 +230,7 @@ test("recorder captures inline keyboards for timeline previews", async () => {
 		rows: [
 			[
 				{ text: "Open", kind: "callback", callbackData: "open" },
-				{ text: "Docs", kind: "url", url: "https://yaeb.al" },
+				{ text: "Docs", kind: "url", url: "https://yaebal.mom" },
 			],
 		],
 	});

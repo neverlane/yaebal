@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from "$app/stores";
 
-	const SITE = "https://yaebal.pages.dev";
+	const SITE = "https://yaebal.mom";
 	const DEFAULT_TITLE = "yaebal — type-safe telegram bot api framework for typescript";
 	const DEFAULT_DESCRIPTION =
 		"yaebal is a type-safe, chainable, plugin-first telegram bot api framework for typescript with generated contexts, first-party plugins, webhooks, testing, and edge runtime support.";

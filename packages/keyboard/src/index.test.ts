@@ -7,7 +7,7 @@ test("inline keyboard builds rows", () => {
 		.text("A", "a")
 		.text("B", "b")
 		.row()
-		.url("site", "https://yaeb.al")
+		.url("site", "https://yaebal.mom")
 		.build();
 
 	assert.deepEqual(kb, {
@@ -16,7 +16,7 @@ test("inline keyboard builds rows", () => {
 				{ text: "A", callback_data: "a" },
 				{ text: "B", callback_data: "b" },
 			],
-			[{ text: "site", url: "https://yaeb.al" }],
+			[{ text: "site", url: "https://yaebal.mom" }],
 		],
 	});
 });
@@ -29,14 +29,14 @@ test("trailing row() does not emit an empty row", () => {
 
 test("webApp and switchInline buttons", () => {
 	const kb = new InlineKeyboard()
-		.webApp("open", "https://yaeb.al")
+		.webApp("open", "https://yaebal.mom")
 		.switchInline("share", "q")
 		.build();
 
 	assert.deepEqual(kb, {
 		inline_keyboard: [
 			[
-				{ text: "open", web_app: { url: "https://yaeb.al" } },
+				{ text: "open", web_app: { url: "https://yaebal.mom" } },
 				{ text: "share", switch_inline_query: "q" },
 			],
 		],
@@ -126,13 +126,13 @@ test("add() appends raw button objects, including static-built ones", () => {
 
 test("InlineKeyboard static text/url/webApp build raw buttons", () => {
 	assert.deepEqual(InlineKeyboard.text("a", "b"), { text: "a", callback_data: "b" });
-	assert.deepEqual(InlineKeyboard.url("a", "https://yaeb.al"), {
+	assert.deepEqual(InlineKeyboard.url("a", "https://yaebal.mom"), {
 		text: "a",
-		url: "https://yaeb.al",
+		url: "https://yaebal.mom",
 	});
-	assert.deepEqual(InlineKeyboard.webApp("a", "https://yaeb.al"), {
+	assert.deepEqual(InlineKeyboard.webApp("a", "https://yaebal.mom"), {
 		text: "a",
-		web_app: { url: "https://yaeb.al" },
+		web_app: { url: "https://yaebal.mom" },
 	});
 });
 

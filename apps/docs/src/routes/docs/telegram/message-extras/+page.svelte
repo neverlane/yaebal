@@ -7,7 +7,7 @@ await ctx.send("manual reply", {
   reply_parameters: { message_id: ctx.message!.message_id },
 });`;
 
-	const preview = `await ctx.send("https://yaebal.pages.dev", {
+	const preview = `await ctx.send("https://yaebal.mom", {
   link_preview_options: {
     is_disabled: false,
     prefer_large_media: true,

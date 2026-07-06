@@ -8,7 +8,7 @@ import { webhookCallback } from "./webhook.js";
 
 test("media helpers are branded and discriminated", () => {
 	assert.ok(isMediaSource(media.fileId("AgAC")));
-	assert.ok(isMediaSource(media.url("https://yaeb.al/y.png")));
+	assert.ok(isMediaSource(media.url("https://yaebal.mom/y.png")));
 	assert.equal(isMediaSource({ kind: "fileId", fileId: "x" }), false); // unbranded
 });
 
@@ -20,9 +20,9 @@ test("encodeRequest sends JSON when there is no upload", async () => {
 });
 
 test("encodeRequest inlines a url media to its string", async () => {
-	const r = await encodeRequest({ photo: media.url("https://yaeb.al/p.png") });
+	const r = await encodeRequest({ photo: media.url("https://yaebal.mom/p.png") });
 
-	assert.deepEqual(JSON.parse(r.body as string), { photo: "https://yaeb.al/p.png" });
+	assert.deepEqual(JSON.parse(r.body as string), { photo: "https://yaebal.mom/p.png" });
 });
 
 test("encodeRequest builds multipart for a buffer upload", async () => {

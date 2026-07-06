@@ -5,7 +5,7 @@
   **yet another telegram bot api library**  
   *type-safe · chainable · plugin-first · batteries included*
 
-  [docs](https://yaebal.pages.dev/docs/getting-started/) · [playground](https://yaebal.pages.dev/playground/) · [npmx](https://npmx.dev/org/yaebal)
+  [docs](https://yaebal.mom/docs/getting-started/) · [playground](https://yaebal.mom/playground/) · [npmx](https://npmx.dev/org/yaebal)
 
   [![npmx version](https://img.shields.io/npm/v/yaebal?style=flat-square)](https://www.npmjs.com/package/yaebal)
   [![github stars](https://img.shields.io/github/stars/neverlane/yaebal?style=flat-square)](https://github.com/neverlane/yaebal/stargazers)
@@ -70,15 +70,15 @@ pnpm create yaebal
 
 | need                                     | start here                                                          |
 |:-----------------------------------------|:--------------------------------------------------------------------|
-| build your first bot                     | [getting started](https://yaebal.pages.dev/docs/getting-started/)   |
-| remember the api fast                    | [cheat sheet](https://yaebal.pages.dev/docs/cheat-sheet/)           |
-| understand context type flow             | [typed examples](https://yaebal.pages.dev/docs/typed-examples/)     |
-| ship webhooks or edge bots               | [webhooks & deploy](https://yaebal.pages.dev/docs/webhooks/)        |
-| harden a production bot                  | [production guide](https://yaebal.pages.dev/docs/production/)       |
-| debug common bot issues                  | [troubleshooting](https://yaebal.pages.dev/docs/troubleshooting/)   |
-| move from another framework              | [migration guides](https://yaebal.pages.dev/docs/migration/grammy/) |
-| build payments, inline mode or mini apps | [telegram guides](https://yaebal.pages.dev/docs/telegram/payments/) |
-| ask an ai assistant to write yaebal code | [llms.txt](https://yaebal.pages.dev/llms.txt)                       |
+| build your first bot                     | [getting started](https://yaebal.mom/docs/getting-started/)   |
+| remember the api fast                    | [cheat sheet](https://yaebal.mom/docs/cheat-sheet/)           |
+| understand context type flow             | [typed examples](https://yaebal.mom/docs/typed-examples/)     |
+| ship webhooks or edge bots               | [webhooks & deploy](https://yaebal.mom/docs/webhooks/)        |
+| harden a production bot                  | [production guide](https://yaebal.mom/docs/production/)       |
+| debug common bot issues                  | [troubleshooting](https://yaebal.mom/docs/troubleshooting/)   |
+| move from another framework              | [migration guides](https://yaebal.mom/docs/migration/grammy/) |
+| build payments, inline mode or mini apps | [telegram guides](https://yaebal.mom/docs/telegram/payments/) |
+| ask an ai assistant to write yaebal code | [llms.txt](https://yaebal.mom/llms.txt)                       |
 
 if yaebal saves you time, star the repo. it helps people find a young project.
 
@@ -150,5 +150,5 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 - [@yaebal/types](/packages/types/) contains generated telegram bot api types.
 - [@yaebal/contexts](/packages/contexts/) contains generated per-update context classes.
 - [@yaebal/test](/packages/test/) tests bots without calling telegram.
-- [docs app](/apps/docs/) powers [yaebal.pages.dev](https://yaebal.pages.dev/).
+- [docs app](/apps/docs/) powers [yaebal.mom](https://yaebal.mom/).
 - [architecture notes](/docs/ARCHITECTURE.md) explain the design, plugin catalog and roadmap.

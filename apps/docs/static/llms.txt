@@ -6,35 +6,35 @@ yaebal is built around one invariant: the context type accumulates through the c
 
 ## complete coverage
 
-- full llm guide and complete route index: https://yaebal.pages.dev/llms-full.txt
-- complete sitemap generated from every page route: https://yaebal.pages.dev/sitemap.xml
-- robots policy: https://yaebal.pages.dev/robots.txt
+- full llm guide and complete route index: https://yaebal.mom/llms-full.txt
+- complete sitemap generated from every page route: https://yaebal.mom/sitemap.xml
+- robots policy: https://yaebal.mom/robots.txt
 - covered page routes: 605
 - covered api method pages: 180
 - covered api type pages: 359
 
 ## canonical docs
 
-- getting started: https://yaebal.pages.dev/docs/getting-started/
-- introduction: https://yaebal.pages.dev/docs/introduction/
-- yaebal meta package: https://yaebal.pages.dev/docs/yaebal/
-- core concepts: https://yaebal.pages.dev/docs/core/
-- context and filters: https://yaebal.pages.dev/docs/context/
-- generated contexts: https://yaebal.pages.dev/docs/contexts/
-- plugin catalog: https://yaebal.pages.dev/docs/plugins/
-- plugin authoring: https://yaebal.pages.dev/docs/plugins/authoring/
-- bot api reference: https://yaebal.pages.dev/docs/api/
-- packages map: https://yaebal.pages.dev/docs/packages/
-- production guide: https://yaebal.pages.dev/docs/production/
-- troubleshooting: https://yaebal.pages.dev/docs/troubleshooting/
-- cheat sheet: https://yaebal.pages.dev/docs/cheat-sheet/
-- typed examples: https://yaebal.pages.dev/docs/typed-examples/
-- playground: https://yaebal.pages.dev/playground/
+- getting started: https://yaebal.mom/docs/getting-started/
+- introduction: https://yaebal.mom/docs/introduction/
+- yaebal meta package: https://yaebal.mom/docs/yaebal/
+- core concepts: https://yaebal.mom/docs/core/
+- context and filters: https://yaebal.mom/docs/context/
+- generated contexts: https://yaebal.mom/docs/contexts/
+- plugin catalog: https://yaebal.mom/docs/plugins/
+- plugin authoring: https://yaebal.mom/docs/plugins/authoring/
+- bot api reference: https://yaebal.mom/docs/api/
+- packages map: https://yaebal.mom/docs/packages/
+- production guide: https://yaebal.mom/docs/production/
+- troubleshooting: https://yaebal.mom/docs/troubleshooting/
+- cheat sheet: https://yaebal.mom/docs/cheat-sheet/
+- typed examples: https://yaebal.mom/docs/typed-examples/
+- playground: https://yaebal.mom/playground/
 
 ## generated api coverage
 
-- all generated api method pages are covered in https://yaebal.pages.dev/llms-full.txt#api-method-pages and https://yaebal.pages.dev/sitemap.xml.
-- all generated api type pages are covered in https://yaebal.pages.dev/llms-full.txt#api-type-pages and https://yaebal.pages.dev/sitemap.xml.
+- all generated api method pages are covered in https://yaebal.mom/llms-full.txt#api-method-pages and https://yaebal.mom/sitemap.xml.
+- all generated api type pages are covered in https://yaebal.mom/llms-full.txt#api-type-pages and https://yaebal.mom/sitemap.xml.
 - prefer the generated reference before inventing bot api method params.
 
 ## rules for generated code
@@ -58,68 +58,68 @@ yaebal is built around one invariant: the context type accumulates through the c
 
 ## primary site routes
 
-- https://yaebal.pages.dev/
-- https://yaebal.pages.dev/docs/cheat-sheet/
-- https://yaebal.pages.dev/docs/context/
-- https://yaebal.pages.dev/docs/contexts/
-- https://yaebal.pages.dev/docs/core/
-- https://yaebal.pages.dev/docs/examples/
-- https://yaebal.pages.dev/docs/faq/
-- https://yaebal.pages.dev/docs/getting-started/
-- https://yaebal.pages.dev/docs/hooks/
-- https://yaebal.pages.dev/docs/introduction/
-- https://yaebal.pages.dev/docs/llms/
-- https://yaebal.pages.dev/docs/media/
-- https://yaebal.pages.dev/docs/migration/gramio/
-- https://yaebal.pages.dev/docs/migration/grammy/
-- https://yaebal.pages.dev/docs/migration/puregram/
-- https://yaebal.pages.dev/docs/migration/telegraf/
-- https://yaebal.pages.dev/docs/packages/
-- https://yaebal.pages.dev/docs/plugins/
-- https://yaebal.pages.dev/docs/plugins/again/
-- https://yaebal.pages.dev/docs/plugins/authoring/
-- https://yaebal.pages.dev/docs/plugins/broadcast/
-- https://yaebal.pages.dev/docs/plugins/callback-data/
-- https://yaebal.pages.dev/docs/plugins/commands/
-- https://yaebal.pages.dev/docs/plugins/conversation/
-- https://yaebal.pages.dev/docs/plugins/files/
-- https://yaebal.pages.dev/docs/plugins/filters/
-- https://yaebal.pages.dev/docs/plugins/fmt/
-- https://yaebal.pages.dev/docs/plugins/i18n/
-- https://yaebal.pages.dev/docs/plugins/keyboard/
-- https://yaebal.pages.dev/docs/plugins/media-cache/
-- https://yaebal.pages.dev/docs/plugins/media-group/
-- https://yaebal.pages.dev/docs/plugins/morda/
-- https://yaebal.pages.dev/docs/plugins/onboarding/
-- https://yaebal.pages.dev/docs/plugins/pagination/
-- https://yaebal.pages.dev/docs/plugins/panel/
-- https://yaebal.pages.dev/docs/plugins/preview/
-- https://yaebal.pages.dev/docs/plugins/prompt/
-- https://yaebal.pages.dev/docs/plugins/ratelimiter/
-- https://yaebal.pages.dev/docs/plugins/rich/
-- https://yaebal.pages.dev/docs/plugins/router/
-- https://yaebal.pages.dev/docs/plugins/scenes/
-- https://yaebal.pages.dev/docs/plugins/session/
-- https://yaebal.pages.dev/docs/plugins/split/
-- https://yaebal.pages.dev/docs/plugins/test/
-- https://yaebal.pages.dev/docs/plugins/throttle/
-- https://yaebal.pages.dev/docs/plugins/toml/
-- https://yaebal.pages.dev/docs/plugins/web/
-- https://yaebal.pages.dev/docs/production/
-- https://yaebal.pages.dev/docs/runner/
-- https://yaebal.pages.dev/docs/runtimes/
-- https://yaebal.pages.dev/docs/scaffolding/
-- https://yaebal.pages.dev/docs/telegram/chat-admin/
-- https://yaebal.pages.dev/docs/telegram/deep-links/
-- https://yaebal.pages.dev/docs/telegram/inline-mode/
-- https://yaebal.pages.dev/docs/telegram/message-extras/
-- https://yaebal.pages.dev/docs/telegram/mini-apps/
-- https://yaebal.pages.dev/docs/telegram/payments/
-- https://yaebal.pages.dev/docs/telegram/service-events/
-- https://yaebal.pages.dev/docs/troubleshooting/
-- https://yaebal.pages.dev/docs/typed-examples/
-- https://yaebal.pages.dev/docs/types/
-- https://yaebal.pages.dev/docs/webhooks/
-- https://yaebal.pages.dev/docs/workers/
-- https://yaebal.pages.dev/docs/yaebal/
-- https://yaebal.pages.dev/playground/
+- https://yaebal.mom/
+- https://yaebal.mom/docs/cheat-sheet/
+- https://yaebal.mom/docs/context/
+- https://yaebal.mom/docs/contexts/
+- https://yaebal.mom/docs/core/
+- https://yaebal.mom/docs/examples/
+- https://yaebal.mom/docs/faq/
+- https://yaebal.mom/docs/getting-started/
+- https://yaebal.mom/docs/hooks/
+- https://yaebal.mom/docs/introduction/
+- https://yaebal.mom/docs/llms/
+- https://yaebal.mom/docs/media/
+- https://yaebal.mom/docs/migration/gramio/
+- https://yaebal.mom/docs/migration/grammy/
+- https://yaebal.mom/docs/migration/puregram/
+- https://yaebal.mom/docs/migration/telegraf/
+- https://yaebal.mom/docs/packages/
+- https://yaebal.mom/docs/plugins/
+- https://yaebal.mom/docs/plugins/again/
+- https://yaebal.mom/docs/plugins/authoring/
+- https://yaebal.mom/docs/plugins/broadcast/
+- https://yaebal.mom/docs/plugins/callback-data/
+- https://yaebal.mom/docs/plugins/commands/
+- https://yaebal.mom/docs/plugins/conversation/
+- https://yaebal.mom/docs/plugins/files/
+- https://yaebal.mom/docs/plugins/filters/
+- https://yaebal.mom/docs/plugins/fmt/
+- https://yaebal.mom/docs/plugins/i18n/
+- https://yaebal.mom/docs/plugins/keyboard/
+- https://yaebal.mom/docs/plugins/media-cache/
+- https://yaebal.mom/docs/plugins/media-group/
+- https://yaebal.mom/docs/plugins/morda/
+- https://yaebal.mom/docs/plugins/onboarding/
+- https://yaebal.mom/docs/plugins/pagination/
+- https://yaebal.mom/docs/plugins/panel/
+- https://yaebal.mom/docs/plugins/preview/
+- https://yaebal.mom/docs/plugins/prompt/
+- https://yaebal.mom/docs/plugins/ratelimiter/
+- https://yaebal.mom/docs/plugins/rich/
+- https://yaebal.mom/docs/plugins/router/
+- https://yaebal.mom/docs/plugins/scenes/
+- https://yaebal.mom/docs/plugins/session/
+- https://yaebal.mom/docs/plugins/split/
+- https://yaebal.mom/docs/plugins/test/
+- https://yaebal.mom/docs/plugins/throttle/
+- https://yaebal.mom/docs/plugins/toml/
+- https://yaebal.mom/docs/plugins/web/
+- https://yaebal.mom/docs/production/
+- https://yaebal.mom/docs/runner/
+- https://yaebal.mom/docs/runtimes/
+- https://yaebal.mom/docs/scaffolding/
+- https://yaebal.mom/docs/telegram/chat-admin/
+- https://yaebal.mom/docs/telegram/deep-links/
+- https://yaebal.mom/docs/telegram/inline-mode/
+- https://yaebal.mom/docs/telegram/message-extras/
+- https://yaebal.mom/docs/telegram/mini-apps/
+- https://yaebal.mom/docs/telegram/payments/
+- https://yaebal.mom/docs/telegram/service-events/
+- https://yaebal.mom/docs/troubleshooting/
+- https://yaebal.mom/docs/typed-examples/
+- https://yaebal.mom/docs/types/
+- https://yaebal.mom/docs/webhooks/
+- https://yaebal.mom/docs/workers/
+- https://yaebal.mom/docs/yaebal/
+- https://yaebal.mom/playground/

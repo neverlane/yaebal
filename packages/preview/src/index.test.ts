@@ -63,7 +63,7 @@ test("applies entity styling (bold / link / strike)", () => {
 			text: "bold link gone",
 			entities: [
 				{ type: "bold", offset: 0, length: 4 },
-				{ type: "text_link", offset: 5, length: 4, url: "https://yaeb.al" },
+				{ type: "text_link", offset: 5, length: 4, url: "https://yaebal.mom" },
 				{ type: "strikethrough", offset: 10, length: 4 },
 			],
 		},

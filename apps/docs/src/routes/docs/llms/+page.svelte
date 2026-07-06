@@ -1,8 +1,8 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
-	const files = `https://yaebal.pages.dev/llms.txt
-https://yaebal.pages.dev/llms-full.txt`;
+	const files = `https://yaebal.mom/llms.txt
+https://yaebal.mom/llms-full.txt`;
 
 	const prompt = `use yaebal as an esm typescript telegram bot api framework.
 prefer createBot() from "yaebal" for app code.

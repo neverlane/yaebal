@@ -35,7 +35,7 @@ await ctx.reply("pick", {
 		'import { html, format, bold, link } from "yaebal";',
 		"",
 		"await ctx.send(html`<b>hello</b> ${user.name}`);",
-		'await ctx.send(format`${bold("safe entities")} ${link("docs", "https://yaebal.pages.dev")}`);',
+		'await ctx.send(format`${bold("safe entities")} ${link("docs", "https://yaebal.mom")}`);',
 	].join("\n");
 
 	const media = `import { media } from "yaebal";

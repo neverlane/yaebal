@@ -16,9 +16,9 @@ test("html: basic tags map to entities", () => {
 });
 
 test("html: link carries href, spoiler variants", () => {
-	assert.deepEqual(html`<a href="https://yaeb.al">go</a>`, {
+	assert.deepEqual(html`<a href="https://yaebal.mom">go</a>`, {
 		text: "go",
-		entities: [{ type: "text_link", offset: 0, length: 2, url: "https://yaeb.al" }],
+		entities: [{ type: "text_link", offset: 0, length: 2, url: "https://yaebal.mom" }],
 	});
 
 	assert.deepEqual(htmlToEntities("<tg-spoiler>s</tg-spoiler>"), {
@@ -77,9 +77,9 @@ test("md: inline code and fenced pre with language", () => {
 });
 
 test("md: link", () => {
-	assert.deepEqual(md`see [docs](https://yaeb.al)`, {
+	assert.deepEqual(md`see [docs](https://yaebal.mom)`, {
 		text: "see docs",
-		entities: [{ type: "text_link", offset: 4, length: 4, url: "https://yaeb.al" }],
+		entities: [{ type: "text_link", offset: 4, length: 4, url: "https://yaebal.mom" }],
 	});
 });
 
@@ -95,7 +95,7 @@ test("md: backslash escapes a delimiter", () => {
 });
 
 test("md: nested formatting keeps correct offsets", () => {
-	const r = md`**bold ${"and"} [more](https://yaeb.al)**`;
+	const r = md`**bold ${"and"} [more](https://yaebal.mom)**`;
 
 	assert.equal(r.text, "bold and more");
 
@@ -103,5 +103,5 @@ test("md: nested formatting keeps correct offsets", () => {
 	const link = r.entities.find((e) => e.type === "text_link");
 
 	assert.deepEqual(boldE, { type: "bold", offset: 0, length: 13 });
-	assert.deepEqual(link, { type: "text_link", offset: 9, length: 4, url: "https://yaeb.al" });
+	assert.deepEqual(link, { type: "text_link", offset: 9, length: 4, url: "https://yaebal.mom" });
 });

@@ -1,26 +1,30 @@
 <script lang="ts">
-	import { onMount } from "svelte";
-
 	import { goto } from "$app/navigation";
 	import { base } from "$app/paths";
-	
+
 	import Code from "./Code.svelte";
 	import { EXAMPLES } from "./examples";
 	import { runUserCode } from "./playground-run";
+	import { theme } from "./theme.svelte";
 
 	let { id, title = "bot.ts" }: { id: string; title?: string } = $props();
 
 	const ex = $derived(EXAMPLES[id]);
 	let svg = $state("");
 	let wrap = $state<HTMLDivElement>();
+	let run = 0;
 
-	onMount(async () => {
+	// re-render the chat preview whenever the site theme flips
+	$effect(() => {
 		if (!ex) return;
 
+		const t = theme.value;
+		const token = ++run;
 		const w = Math.round(wrap?.clientWidth || 360);
-		const res = await runUserCode(ex.code, ex.steps, w);
 
-		svg = res.svg;
+		void runUserCode(ex.code, ex.steps, w, t).then((res) => {
+			if (token === run) svg = res.svg;
+		});
 	});
 
 	function open() {

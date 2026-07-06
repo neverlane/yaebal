@@ -125,10 +125,10 @@ export const nav: NavSection[] = [
 	{
 		title: "reference",
 		items: [
-			{ label: "public api reference", href: "/docs/reference", badge: "new" },
+			{ label: "public api reference", href: "/docs/reference" },
 			{ label: "bot api reference", href: "/docs/api" },
 			{ label: "@yaebal/types", href: "/docs/types" },
-			{ label: "llms", href: "/docs/llms", badge: "new" },
+			{ label: "llms", href: "/docs/llms" },
 			{ label: "packages map", href: "/docs/packages" },
 		],
 	},

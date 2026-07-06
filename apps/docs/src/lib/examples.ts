@@ -50,6 +50,26 @@ bot.callbackQuery(choice.pattern, async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/start" }, { click: "choice:ship", label: "ship it" }],
 	},
+	"callback-spinner": {
+		title: "answer callback queries first",
+		code: `import { InlineKeyboard, createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.command("start", (ctx) =>
+  ctx.reply("deploy to production?", {
+    reply_markup: new InlineKeyboard().text("confirm", "confirm:deploy").build(),
+  }),
+);
+
+bot.callbackQuery(/^confirm:/, async (ctx) => {
+  await ctx.answerCallbackQuery(); // answer first so the client spinner stops
+  await ctx.reply("confirmed");
+});
+
+bot.start();`,
+		steps: [{ user: "/start" }, { click: "confirm:deploy", label: "confirm" }],
+	},
 	"session-counter": {
 		title: "typed session state",
 		code: `import { createBot, session } from "yaebal";

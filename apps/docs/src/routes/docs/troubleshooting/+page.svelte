@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
 
 	const envCheck = `const token = process.env.BOT_TOKEN;
 
@@ -25,18 +26,15 @@ await bot.start();`;
   ],
 });`;
 
-	const callbackAnswer = `bot.callbackQuery(/^confirm:/, async (ctx) => {
-  await ctx.answerCallbackQuery(); // answer first so the client spinner stops
-  await ctx.reply("confirmed");
-});`;
-
 	const mediaUpload = `import { media } from "@yaebal/core";
 
 await ctx.sendPhoto(media.url("https://example.com/cat.jpg"));
 await ctx.sendDocument(media.path("./report.pdf"));
 await ctx.sendPhoto("AgACAgIAAx..."); // existing file_id also works`;
 
-	const webhookCheck = `const info = await bot.api.call("getWebhookInfo", {});
+	const webhookCheck = `import type { WebhookInfo } from "@yaebal/types";
+
+const info = await bot.api.call<WebhookInfo>("getWebhookInfo");
 console.log(info.url, info.last_error_message);`;
 </script>
 
@@ -55,7 +53,7 @@ console.log(info.url, info.last_error_message);`;
 	<tbody>
 		<tr><td><code>401 unauthorized</code></td><td>missing, empty, or wrong token</td><td>validate <code>BOT_TOKEN</code> before constructing the bot</td></tr>
 		<tr><td><code>404 not found</code> on every method</td><td>wrong <code>apiRoot</code> or token copied with whitespace</td><td>trim the token and check custom bot api server url</td></tr>
-		<tr><td>process exits immediately</td><td><code>bot.start()</code> was not awaited, or the runtime finished before async work</td><td>use top-level <code>await bot.start()</code> in esm</td></tr>
+		<tr><td>process exits immediately</td><td><code>bot.start()</code> rejected during startup (bad token, no network) and nothing caught it</td><td>use top-level <code>await bot.start()</code> in esm so the startup error surfaces with a stack trace</td></tr>
 	</tbody>
 </table>
 <Code code={envCheck} title="env.ts" />
@@ -100,7 +98,7 @@ console.log(info.url, info.last_error_message);`;
 	telegram clients show a loading spinner until the bot answers the callback query. answer it at
 	the top of the handler, then edit or send messages.
 </p>
-<Code code={callbackAnswer} title="callback.ts" />
+<Try id="callback-spinner" title="callback.ts" />
 
 <h2>formatting is broken</h2>
 <table>

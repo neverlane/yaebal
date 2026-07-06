@@ -22,7 +22,7 @@ const bot = new Bot(token).install(
 		retryAfterPaddingMs: 250,
 		jitter: 0.1,
 		onRetry: (event) => {
-		retryCounts[event.reason] = (retryCounts[event.reason] ?? 0) + 1;
+			retryCounts[event.reason] = (retryCounts[event.reason] ?? 0) + 1;
 			totalRetryDelayMs += event.delayMs;
 			console.log(
 				`retry ${event.method}: reason=${event.reason} attempt=${event.attempt} delay=${event.delayMs}ms`,

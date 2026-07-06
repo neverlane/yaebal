@@ -59,7 +59,10 @@ export function decideRetry(
 	if (error.code === 429) {
 		const retryAfterMs = getRetryAfterMs(error);
 		const delayMs = retryAfterMs ?? 2 ** attempt * baseDelayMs;
-		const capped = Math.min(delayMs + (retryAfterMs === undefined ? 0 : retryAfterPaddingMs), maxDelayMs);
+		const capped = Math.min(
+			delayMs + (retryAfterMs === undefined ? 0 : retryAfterPaddingMs),
+			maxDelayMs,
+		);
 
 		return {
 			retry: true,

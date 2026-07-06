@@ -1,12 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { TelegramError, type Api } from "@yaebal/core";
-import {
-	broadcast,
-	Broadcast,
-	MemoryBroadcastStorage,
-	type BroadcastEvent,
-} from "./index.js";
+import { type Api, TelegramError } from "@yaebal/core";
+import { Broadcast, type BroadcastEvent, broadcast, MemoryBroadcastStorage } from "./index.js";
 
 function fakeApi(failOn: Array<number | string> = []) {
 	const sentTo: Array<number | string> = [];
@@ -14,7 +9,8 @@ function fakeApi(failOn: Array<number | string> = []) {
 	const api = {
 		sendMessage: (params: Record<string, unknown>) => {
 			seen.push(params);
-			if (failOn.includes(params.chat_id as number | string)) return Promise.reject(new Error("blocked"));
+			if (failOn.includes(params.chat_id as number | string))
+				return Promise.reject(new Error("blocked"));
 			sentTo.push(params.chat_id as number | string);
 			return Promise.resolve({ message_id: 1 });
 		},
@@ -104,10 +100,12 @@ test("broadcast class supports typed definitions and shared storage", async () =
 	const storage = new MemoryBroadcastStorage();
 	const calls: string[] = [];
 	const api = fakeApi().api;
-	const client = new Broadcast(api, { storage, rateLimit: false })
-		.type("digest", (chatId: number, title: string) => {
+	const client = new Broadcast(api, { storage, rateLimit: false }).type(
+		"digest",
+		(chatId: number, title: string) => {
 			calls.push(`${chatId}:${title}`);
-		});
+		},
+	);
 
 	const job = await client.start("digest", [
 		[1, "one"],

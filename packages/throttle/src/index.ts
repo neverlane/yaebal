@@ -8,7 +8,13 @@ export const DEFAULT_GLOBAL_PER_SEC = 30;
 export const DEFAULT_PRIVATE_PER_SEC = 1;
 export const DEFAULT_GROUP_PER_MIN = 20;
 
-export const DEFAULT_EXCLUDED_METHODS = ["getMe", "getUpdates", "getWebhookInfo", "logOut", "close"];
+export const DEFAULT_EXCLUDED_METHODS = [
+	"getMe",
+	"getUpdates",
+	"getWebhookInfo",
+	"logOut",
+	"close",
+];
 
 export const THROTTLE_CONTROL = Symbol.for("@yaebal/throttle/control");
 
@@ -102,7 +108,10 @@ export interface ThrottleOptions {
 	/** alias for puregram users. */
 	excludeMethods?: readonly string[];
 	/** derive the target chat id. default reads numeric `params.chat_id`. */
-	extractChatId?: (method: string, params: Record<string, unknown> | undefined) => number | undefined;
+	extractChatId?: (
+		method: string,
+		params: Record<string, unknown> | undefined,
+	) => number | undefined;
 	/** group detector. default treats negative chat ids as groups/supergroups. */
 	extractIsGroup?: (chatId: number) => boolean;
 	/** default priority when no method/request priority is provided. */
@@ -164,25 +173,25 @@ export type ThrottleEvent =
 	| {
 			type: "queued";
 			request: ThrottleQueuedRequest;
-		}
+	  }
 	| {
 			type: "acquired";
 			request: ThrottleQueuedRequest;
 			waitMs: number;
 			remaining?: Record<string, number>;
-		}
+	  }
 	| {
 			type: "rejected" | "cancelled";
 			request: ThrottleQueuedRequest;
 			reason: unknown;
-		}
+	  }
 	| {
 			type: "retry_after";
 			method: string;
 			buckets: readonly string[];
 			retryAfterMs: number;
 			until: number;
-		};
+	  };
 
 export interface ThrottleHandle {
 	readonly pending: number;
@@ -216,7 +225,10 @@ interface NormalizedOptions {
 	group: BucketLimit | false;
 	perMethod: Record<string, ThrottleMethodLimits>;
 	excluded: Set<string>;
-	extractChatId: (method: string, params: Record<string, unknown> | undefined) => number | undefined;
+	extractChatId: (
+		method: string,
+		params: Record<string, unknown> | undefined,
+	) => number | undefined;
 	extractIsGroup: (chatId: number) => boolean;
 	defaultPriority: number;
 	priority?: (method: string, params: Record<string, unknown> | undefined) => number;
@@ -410,9 +422,14 @@ class ThrottleController implements ThrottleHandle {
 
 		if (options.signal) {
 			if (options.signal.aborted) this.cancel(undefined, options.signal.reason);
-			else options.signal.addEventListener("abort", () => this.cancel(undefined, options.signal?.reason), {
-				once: true,
-			});
+			else
+				options.signal.addEventListener(
+					"abort",
+					() => this.cancel(undefined, options.signal?.reason),
+					{
+						once: true,
+					},
+				);
 		}
 	}
 
@@ -481,20 +498,25 @@ class ThrottleController implements ThrottleHandle {
 			};
 
 			if (signal) {
-				job.onAbort = () => this.#cancelJob(job, signal.reason ?? new ThrottleAbortError(method, id));
+				job.onAbort = () =>
+					this.#cancelJob(job, signal.reason ?? new ThrottleAbortError(method, id));
 				signal.addEventListener("abort", job.onAbort, { once: true });
 			}
 
 			this.#jobs.push(job);
 			this.#counts.queued++;
 			this.#counts.maxPending = Math.max(this.#counts.maxPending, this.#jobs.length);
-			for (const key of bucketKeys) this.#queuedByBucket.set(key, (this.#queuedByBucket.get(key) ?? 0) + 1);
+			for (const key of bucketKeys)
+				this.#queuedByBucket.set(key, (this.#queuedByBucket.get(key) ?? 0) + 1);
 			this.#emit({ type: "queued", request: this.#snapshot(job) });
 			this.#requestPump(0);
 		});
 	}
 
-	cancel(filter: ThrottleCancelFilter = {}, reason: unknown = new Error("throttle cancelled")): number {
+	cancel(
+		filter: ThrottleCancelFilter = {},
+		reason: unknown = new Error("throttle cancelled"),
+	): number {
 		let cancelled = 0;
 
 		for (const job of [...this.#jobs]) {
@@ -576,7 +598,9 @@ class ThrottleController implements ThrottleHandle {
 
 	#overflowFor(bucketKeys: readonly string[]): boolean {
 		if (this.#jobs.length >= this.#options.maxQueueSize) return true;
-		return bucketKeys.some((key) => (this.#queuedByBucket.get(key) ?? 0) >= this.#options.maxQueueDepth);
+		return bucketKeys.some(
+			(key) => (this.#queuedByBucket.get(key) ?? 0) >= this.#options.maxQueueDepth,
+		);
 	}
 
 	#dropOldest(reason: unknown): void {
@@ -721,7 +745,11 @@ class ThrottleController implements ThrottleHandle {
 	}
 }
 
-function installThrottle(api: Api, options: ThrottleOptions = {}, handle = createThrottleHandle(options)) {
+function installThrottle(
+	api: Api,
+	options: ThrottleOptions = {},
+	handle = createThrottleHandle(options),
+) {
 	api.before(async (method, params): Promise<undefined> => {
 		await handle.acquire(method, params);
 		return undefined;
@@ -773,9 +801,14 @@ function normalizeOptions(options: ThrottleOptions): NormalizedOptions {
 	return {
 		global: normalizeGlobal(options),
 		privateChat: options.privateChat ?? perSecond(options.perChatPerSec ?? DEFAULT_PRIVATE_PER_SEC),
-		group: options.group ?? { limit: options.perGroupPerMin ?? DEFAULT_GROUP_PER_MIN, windowMs: GROUP_WINDOW_MS },
+		group: options.group ?? {
+			limit: options.perGroupPerMin ?? DEFAULT_GROUP_PER_MIN,
+			windowMs: GROUP_WINDOW_MS,
+		},
 		perMethod: options.perMethod ?? {},
-		excluded: new Set(options.excludedMethods ?? options.excludeMethods ?? DEFAULT_EXCLUDED_METHODS),
+		excluded: new Set(
+			options.excludedMethods ?? options.excludeMethods ?? DEFAULT_EXCLUDED_METHODS,
+		),
 		extractChatId: options.extractChatId ?? defaultExtractChatId,
 		extractIsGroup: options.extractIsGroup ?? ((chatId) => chatId < 0),
 		defaultPriority: options.defaultPriority ?? 0,

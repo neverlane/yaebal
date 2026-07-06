@@ -120,7 +120,12 @@ const bot = new Bot(token)
 		return ctx.reply("cart cleared.");
 	})
 	.filter(and(isPrivate, command("help")), (ctx) =>
-		ctx.send(html`<b>commerce suite commands</b>\n${menu.list().map((c) => `/${c.command} - ${c.description}`).join("\n")}`),
+		ctx.send(
+			html`<b>commerce suite commands</b>\n${menu
+				.list()
+				.map((c) => `/${c.command} - ${c.description}`)
+				.join("\n")}`,
+		),
 	)
 	.callbackQuery(/^open:/, async (ctx) => {
 		const action = ctx.callbackQuery.data?.slice("open:".length);
@@ -155,7 +160,10 @@ const bot = new Bot(token)
 	})
 	.hears(/^#?(\d+)$/, (ctx) => {
 		const id = Number(ctx.match[1]);
-		return sendDeal(ctx, products.find((item) => item.id === id));
+		return sendDeal(
+			ctx,
+			products.find((item) => item.id === id),
+		);
 	})
 	.on("message:text", (ctx) => ctx.reply("send /catalog or a product id like 3."))
 	.onStart(async (info) => {
@@ -163,10 +171,15 @@ const bot = new Bot(token)
 		console.log(`@${info.username} commerce suite is live`);
 	});
 
-function renderCart(session: CartSession, t: (key: string, params?: Record<string, unknown>) => string): string {
+function renderCart(
+	session: CartSession,
+	t: (key: string, params?: Record<string, unknown>) => string,
+): string {
 	const rows = Object.entries(session.items)
 		.map(([id, qty]) => ({ product: products.find((item) => item.id === Number(id)), qty }))
-		.filter((row): row is { product: Product; qty: number } => row.product !== undefined && row.qty > 0);
+		.filter(
+			(row): row is { product: Product; qty: number } => row.product !== undefined && row.qty > 0,
+		);
 
 	if (rows.length === 0) return t("cart_empty");
 

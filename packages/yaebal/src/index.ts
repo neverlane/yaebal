@@ -166,8 +166,10 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 	override callbackQuery(
 		trigger: string | RegExp,
 		...handlers: Middleware<
-			C & { match: string | RegExpMatchArray; callbackQuery: CallbackQuery } &
-				ContextByType["callback_query"]
+			C & {
+				match: string | RegExpMatchArray;
+				callbackQuery: CallbackQuery;
+			} & ContextByType["callback_query"]
 		>[]
 	): this {
 		return super.callbackQuery(

@@ -58,9 +58,7 @@ test("spreads many concurrent tasks across the pool", async () => {
 	const pool = createPool<TestTasks>(workerFile, { size: 4 });
 
 	try {
-		const out = await Promise.all(
-			Array.from({ length: 20 }, (_, i) => pool.run("add", [i, 1])),
-		);
+		const out = await Promise.all(Array.from({ length: 20 }, (_, i) => pool.run("add", [i, 1])));
 
 		assert.deepEqual(
 			out,

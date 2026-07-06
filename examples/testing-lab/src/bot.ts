@@ -26,7 +26,9 @@ export function createTestingLabBot() {
 			if (!payload) return ctx.answerCallbackQuery({ text: "bad vote" });
 
 			ctx.session.votes[payload.choice] = (ctx.session.votes[payload.choice] ?? 0) + 1;
-			await ctx.answerCallbackQuery({ text: `${payload.choice}: ${ctx.session.votes[payload.choice]}` });
+			await ctx.answerCallbackQuery({
+				text: `${payload.choice}: ${ctx.session.votes[payload.choice]}`,
+			});
 			await ctx.send(renderVotes(ctx.session));
 		})
 		.on("message:text", (ctx) => ctx.reply(`echo: ${ctx.text}`));

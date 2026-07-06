@@ -41,9 +41,10 @@ type TaskArg<Fn> = Fn extends (...args: infer Args) => unknown
 		: Args[0]
 	: never;
 type TaskResult<Fn> = Fn extends (...args: never[]) => infer Result ? Awaited<Result> : never;
-type RunArgs<Fn> = undefined extends TaskArg<Fn>
-	? [arg?: TaskArg<Fn>, transfer?: readonly Transferable[]]
-	: [arg: TaskArg<Fn>, transfer?: readonly Transferable[]];
+type RunArgs<Fn> =
+	undefined extends TaskArg<Fn>
+		? [arg?: TaskArg<Fn>, transfer?: readonly Transferable[]]
+		: [arg: TaskArg<Fn>, transfer?: readonly Transferable[]];
 
 export type TaskDefinitions = Record<string, TaskFn>;
 export type TaskHandlers<Tasks extends TaskDefinitions = AnyTasks> = {
@@ -51,7 +52,9 @@ export type TaskHandlers<Tasks extends TaskDefinitions = AnyTasks> = {
 };
 
 /** call inside a worker file: handle each task the pool sends and reply with the result. */
-export function register<Tasks extends TaskDefinitions = AnyTasks>(handlers: TaskHandlers<Tasks>): void {
+export function register<Tasks extends TaskDefinitions = AnyTasks>(
+	handlers: TaskHandlers<Tasks>,
+): void {
 	if (!parentPort) throw new Error("register() must be called inside a worker thread");
 
 	const port = parentPort;
@@ -78,7 +81,10 @@ export interface PoolOptions {
 
 export interface Pool<Tasks extends TaskDefinitions = AnyTasks> {
 	/** run a registered task on the next worker (round-robin). */
-	run<Name extends TaskName<Tasks>>(name: Name, ...args: RunArgs<Tasks[Name]>): Promise<TaskResult<Tasks[Name]>>;
+	run<Name extends TaskName<Tasks>>(
+		name: Name,
+		...args: RunArgs<Tasks[Name]>
+	): Promise<TaskResult<Tasks[Name]>>;
 	/** terminate all workers and reject anything still in flight. */
 	destroy(): Promise<void>;
 	/** number of worker threads. */
@@ -92,7 +98,10 @@ interface Pending {
 }
 
 /** create a pool of `size` workers from `workerFile` (a built .js path or file URL). */
-export function createPool<Tasks extends TaskDefinitions = AnyTasks>(workerFile: string | URL, options: PoolOptions = {}): Pool<Tasks> {
+export function createPool<Tasks extends TaskDefinitions = AnyTasks>(
+	workerFile: string | URL,
+	options: PoolOptions = {},
+): Pool<Tasks> {
 	const size = Math.max(1, options.size ?? 1);
 	const workers: Worker[] = [];
 	const inflight = new Map<number, Pending>();
@@ -142,7 +151,10 @@ export function createPool<Tasks extends TaskDefinitions = AnyTasks>(workerFile:
 
 	return {
 		size,
-		run<Name extends TaskName<Tasks>>(name: Name, ...args: RunArgs<Tasks[Name]>): Promise<TaskResult<Tasks[Name]>> {
+		run<Name extends TaskName<Tasks>>(
+			name: Name,
+			...args: RunArgs<Tasks[Name]>
+		): Promise<TaskResult<Tasks[Name]>> {
 			if (destroyed) return Promise.reject(new Error("pool is destroyed"));
 
 			const [arg, transfer] = args;

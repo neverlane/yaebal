@@ -34,20 +34,24 @@ const support = createConversation("support", async (cv, ctx) => {
 		return;
 	}
 
-	await urgency.send(`ticket queued: ${topic.text ?? "no topic"} / urgency ${urgency.text ?? "normal"}`);
+	await urgency.send(
+		`ticket queued: ${topic.text ?? "no topic"} / urgency ${urgency.text ?? "normal"}`,
+	);
 });
 
 const questScene: SceneDef = {
 	enter: (ctx) => ctx.reply("quest wizard: what is your name? send /cancel to leave."),
 	steps: [
 		(ctx) => {
-			if (ctx.text === "/cancel") return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
+			if (ctx.text === "/cancel")
+				return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
 			getProfile(ctx.chat?.id).name = ctx.text;
 			ctx.scene.next();
 			return ctx.reply(`nice, ${ctx.text}. choose a class: builder, mage, runner.`);
 		},
 		(ctx) => {
-			if (ctx.text === "/cancel") return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
+			if (ctx.text === "/cancel")
+				return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
 			getProfile(ctx.chat?.id).klass = ctx.text;
 			ctx.scene.next();
 			return ctx.reply(`class locked: ${ctx.text}. what is your launch goal?`);

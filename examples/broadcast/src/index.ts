@@ -41,14 +41,15 @@ const broadcaster = new Broadcast(bot.api, {
 	}),
 );
 
-bot.command("start", async (ctx) => {
-	if (ctx.chat?.id !== undefined) subscribers.add(ctx.chat.id);
+bot
+	.command("start", async (ctx) => {
+		if (ctx.chat?.id !== undefined) subscribers.add(ctx.chat.id);
 
-	await ctx.reply(`you are subscribed to the broadcast demo.
+		await ctx.reply(`you are subscribed to the broadcast demo.
 
 try /status to see worker metrics.
 admin commands: /broadcast text, /pause job_id, /resume job_id, /cancel job_id.`);
-})
+	})
 	.command("subscribe", async (ctx) => {
 		if (ctx.chat?.id === undefined) return ctx.reply("no chat id in this update.");
 		subscribers.add(ctx.chat.id);
@@ -66,7 +67,8 @@ admin commands: /broadcast text, /pause job_id, /resume job_id, /cancel job_id.`
 		if (!text) return ctx.reply("usage: /broadcast text to send");
 
 		const audience = [...subscribers];
-		if (audience.length === 0) return ctx.reply("no subscribers yet. ask users to send /start first.");
+		if (audience.length === 0)
+			return ctx.reply("no subscribers yet. ask users to send /start first.");
 
 		const job = await broadcaster.start(
 			"digest",
@@ -78,11 +80,13 @@ admin commands: /broadcast text, /pause job_id, /resume job_id, /cancel job_id.`
 		await ctx.reply(`queued ${audience.length} deliveries.
 job id: ${job.id}`);
 
-		void job.wait().then((result) =>
-			ctx.reply(
-				`job ${result.jobId} finished: ${result.sent} sent, ${result.skipped} skipped, ${result.failed} failed.`,
-			),
-		);
+		void job
+			.wait()
+			.then((result) =>
+				ctx.reply(
+					`job ${result.jobId} finished: ${result.sent} sent, ${result.skipped} skipped, ${result.failed} failed.`,
+				),
+			);
 	})
 	.command("status", async (ctx) => {
 		const latest = (await broadcaster.listJobs()).slice(-5).reverse();
@@ -99,7 +103,9 @@ events: ${recentEvents.join(", ") || "none"}
 recent jobs:
 ${lines.join("\n") || "none"}`);
 	})
-	.command("pause", async (ctx) => controlJob(ctx.args[0], "pause", (job) => job.pause(), ctx.reply.bind(ctx)))
+	.command("pause", async (ctx) =>
+		controlJob(ctx.args[0], "pause", (job) => job.pause(), ctx.reply.bind(ctx)),
+	)
 	.command("resume", async (ctx) =>
 		controlJob(ctx.args[0], "resume", (job) => job.resume(), ctx.reply.bind(ctx)),
 	)
@@ -108,16 +114,18 @@ ${lines.join("\n") || "none"}`);
 	)
 	.on("message:text", (ctx) => ctx.reply("send /start to subscribe or /status to inspect jobs."))
 	.onStart(async (info) => {
-		await bot.api.call("setMyCommands", {
-			commands: [
-				{ command: "start", description: "subscribe to the demo" },
-				{ command: "broadcast", description: "admin: queue a broadcast" },
-				{ command: "status", description: "show broadcast metrics" },
-				{ command: "pause", description: "admin: pause a job" },
-				{ command: "resume", description: "admin: resume a job" },
-				{ command: "cancel", description: "admin: cancel a job" },
-			],
-		}).catch(() => {});
+		await bot.api
+			.call("setMyCommands", {
+				commands: [
+					{ command: "start", description: "subscribe to the demo" },
+					{ command: "broadcast", description: "admin: queue a broadcast" },
+					{ command: "status", description: "show broadcast metrics" },
+					{ command: "pause", description: "admin: pause a job" },
+					{ command: "resume", description: "admin: resume a job" },
+					{ command: "cancel", description: "admin: cancel a job" },
+				],
+			})
+			.catch(() => {});
 
 		console.log(`@${info.username} is live. admin id: ${adminId ?? "not set"}`);
 	})

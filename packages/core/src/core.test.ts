@@ -237,9 +237,12 @@ test("Api before hooks run for every retry attempt", async () => {
 	globalThis.fetch = async () => {
 		attempts++;
 		if (attempts === 1) {
-			return new Response(JSON.stringify({ ok: false, error_code: 502, description: "Bad Gateway" }), {
-				headers: { "content-type": "application/json" },
-			});
+			return new Response(
+				JSON.stringify({ ok: false, error_code: 502, description: "Bad Gateway" }),
+				{
+					headers: { "content-type": "application/json" },
+				},
+			);
 		}
 
 		return new Response(JSON.stringify({ ok: true, result: true }), {

@@ -1,6 +1,6 @@
 import { autoRetry } from "@yaebal/again";
 import { Bot } from "@yaebal/core";
-import { throttle, ThrottleAbortError, withThrottle } from "@yaebal/throttle";
+import { ThrottleAbortError, throttle, withThrottle } from "@yaebal/throttle";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -27,14 +27,10 @@ const transport = throttle({
 	},
 });
 
-const bot = new Bot(token)
-	.install(transport)
-	.install(autoRetry({ retryAfterPaddingMs: 250 }));
+const bot = new Bot(token).install(transport).install(autoRetry({ retryAfterPaddingMs: 250 }));
 
 bot.command("start", (ctx) =>
-	ctx.reply(
-		"This bot uses @yaebal/throttle. Try /burst, /priority, /cancel and /metrics.",
-	),
+	ctx.reply("This bot uses @yaebal/throttle. Try /burst, /priority, /cancel and /metrics."),
 );
 
 bot.command("burst", async (ctx) => {
@@ -73,9 +69,12 @@ bot.command("cancel", async (ctx) => {
 
 	const controller = new AbortController();
 	const queued = ctx.api.sendMessage(
-		withThrottle({ chat_id: chatId, text: "this queued call should be aborted" }, {
-			signal: controller.signal,
-		}),
+		withThrottle(
+			{ chat_id: chatId, text: "this queued call should be aborted" },
+			{
+				signal: controller.signal,
+			},
+		),
 	);
 
 	controller.abort(new ThrottleAbortError("sendMessage", -1));

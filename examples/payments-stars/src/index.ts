@@ -24,18 +24,26 @@ const plans = [
 const bot = new Bot(token, { allowedUpdates: ["message", "callback_query", "pre_checkout_query"] })
 	.command("start", (ctx) =>
 		ctx.reply("choose a telegram stars plan:", {
-			reply_markup: plans.reduce(
-				(keyboard, plan) =>
-					keyboard.text(`${plan.title} - ${plan.stars} stars`, planData.pack({ id: plan.id, stars: plan.stars })).row(),
-				new InlineKeyboard(),
-			).build(),
+			reply_markup: plans
+				.reduce(
+					(keyboard, plan) =>
+						keyboard
+							.text(
+								`${plan.title} - ${plan.stars} stars`,
+								planData.pack({ id: plan.id, stars: plan.stars }),
+							)
+							.row(),
+					new InlineKeyboard(),
+				)
+				.build(),
 		}),
 	)
 	.command("buy", (ctx) => sendInvoice(ctx, plans[0]))
 	.command("refund", async (ctx) => {
 		const chargeId = ctx.args[0];
 		const userId = ctx.from?.id;
-		if (!chargeId || userId === undefined) return ctx.reply("usage: /refund telegram_payment_charge_id");
+		if (!chargeId || userId === undefined)
+			return ctx.reply("usage: /refund telegram_payment_charge_id");
 
 		await ctx.api.call("refundStarPayment", {
 			user_id: userId,

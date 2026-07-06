@@ -3,7 +3,13 @@ import type { CopyMessageParams, SendMessageParams } from "@yaebal/types";
 
 export type ChatId = number | string;
 export type Awaitable<T> = T | Promise<T>;
-export type BroadcastStatus = "creating" | "queued" | "running" | "paused" | "completed" | "cancelled";
+export type BroadcastStatus =
+	| "creating"
+	| "queued"
+	| "running"
+	| "paused"
+	| "completed"
+	| "cancelled";
 export type BroadcastDeliveryStatus = "queued" | "running" | "sent" | "failed" | "skipped";
 export type BroadcastRetryReason = "retry_after" | "rate_limit" | "server" | "network";
 
@@ -117,7 +123,11 @@ export interface BroadcastStorage {
 		jobId: string,
 		delta: Partial<Pick<BroadcastJobState, "total" | "sent" | "failed" | "skipped" | "retried">>,
 	): Awaitable<BroadcastJobState | undefined>;
-	claim(workerId: string, now: number, leaseMs: number): Awaitable<BroadcastDeliveryState | undefined>;
+	claim(
+		workerId: string,
+		now: number,
+		leaseMs: number,
+	): Awaitable<BroadcastDeliveryState | undefined>;
 	patchDelivery(
 		jobId: string,
 		deliveryId: string,
@@ -223,11 +233,17 @@ export interface BroadcastDeliveryEvent {
 export type BroadcastEvent =
 	| { type: "job_created"; job: BroadcastJobState }
 	| { type: "job_queued"; job: BroadcastJobState }
-	| { type: "job_paused" | "job_resumed" | "job_cancelled" | "job_completed"; job: BroadcastJobState }
-	| ({ type: "delivery_started" | "delivery_sent" | "delivery_skipped" | "delivery_failed" } &
-			BroadcastDeliveryEvent & { error?: unknown; result?: unknown })
-	| ({ type: "delivery_retry" } &
-			BroadcastDeliveryEvent & { error: unknown; decision: BroadcastRetryDecision })
+	| {
+			type: "job_paused" | "job_resumed" | "job_cancelled" | "job_completed";
+			job: BroadcastJobState;
+	  }
+	| ({
+			type: "delivery_started" | "delivery_sent" | "delivery_skipped" | "delivery_failed";
+	  } & BroadcastDeliveryEvent & { error?: unknown; result?: unknown })
+	| ({ type: "delivery_retry" } & BroadcastDeliveryEvent & {
+				error: unknown;
+				decision: BroadcastRetryDecision;
+			})
 	| { type: "rate_limited"; waitMs: number; delivery: BroadcastDeliveryState }
 	| { type: "storage_error"; error: unknown };
 
@@ -280,7 +296,9 @@ type NormalizedRetry = Required<Omit<BroadcastRetryOptions, "fixedDelayMs">> & {
 };
 
 const DEFAULT_RATE_LIMIT: BroadcastRateLimit = { limit: 25, windowMs: 1_000 };
-const DEFAULT_RETRY: Required<Pick<BroadcastRetryOptions, "attempts" | "baseDelayMs" | "maxDelayMs">> &
+const DEFAULT_RETRY: Required<
+	Pick<BroadcastRetryOptions, "attempts" | "baseDelayMs" | "maxDelayMs">
+> &
 	Omit<BroadcastRetryOptions, "attempts" | "baseDelayMs" | "maxDelayMs"> = {
 	attempts: 5,
 	baseDelayMs: 1_000,
@@ -440,7 +458,9 @@ export class MemoryBroadcastStorage implements BroadcastStorage {
 		const bucket = this.#deliveries.get(jobId);
 		if (!bucket) return [];
 
-		return [...bucket.values()].filter((delivery) => matchesDelivery(delivery, filter)).map(cloneDelivery);
+		return [...bucket.values()]
+			.filter((delivery) => matchesDelivery(delivery, filter))
+			.map(cloneDelivery);
 	}
 
 	nextDueAt(now: number): number | undefined {
@@ -494,7 +514,9 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		this.api = api;
 		this.#options = normalizeOptions(options);
 		this.storage = this.#options.storage;
-		this.#limiter = this.#options.rateLimit ? new LocalRateLimiter(this.#options.rateLimit, this.#options.now) : undefined;
+		this.#limiter = this.#options.rateLimit
+			? new LocalRateLimiter(this.#options.rateLimit, this.#options.now)
+			: undefined;
 
 		if (this.#options.autoRun) this.run();
 	}
@@ -534,7 +556,8 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 			run: (args) => action(...(args as unknown as Args)),
 			key: (args, index) => stringifyKey(options.key?.(args as unknown as Args, index)),
 			priority: (args, index) => {
-				if (typeof options.priority === "function") return options.priority(args as unknown as Args, index);
+				if (typeof options.priority === "function")
+					return options.priority(args as unknown as Args, index);
 				return options.priority;
 			},
 			shouldSkip: (error, args, attempt) =>
@@ -582,13 +605,17 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	): Promise<BroadcastJobHandle> {
 		const type = this.#inlineType("sendMessage");
 		const extra = options.extra ?? {};
-		this.#registerInline(type, async ([chatId]: readonly [ChatId, number]) => {
-			await this.api.sendMessage({ ...extra, chat_id: chatId, text });
-		}, {
-			onError: options.onError
-				? (error, args, delivery) => options.onError?.(args[0], error, delivery)
-				: undefined,
-		});
+		this.#registerInline(
+			type,
+			async ([chatId]: readonly [ChatId, number]) => {
+				await this.api.sendMessage({ ...extra, chat_id: chatId, text });
+			},
+			{
+				onError: options.onError
+					? (error, args, delivery) => options.onError?.(args[0], error, delivery)
+					: undefined,
+			},
+		);
 
 		return this.#enqueue(type, indexedTargets(chatIds), options);
 	}
@@ -701,7 +728,8 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 
 			const cleanup = () => {
 				if (waiter.timer) clearTimeout(waiter.timer);
-				if (waiter.signal && waiter.onAbort) waiter.signal.removeEventListener("abort", waiter.onAbort);
+				if (waiter.signal && waiter.onAbort)
+					waiter.signal.removeEventListener("abort", waiter.onAbort);
 				waiters?.delete(waiter);
 				if (waiters?.size === 0) this.#waiters.delete(jobId);
 			};
@@ -745,7 +773,9 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	#registerInline<const Args extends readonly [unknown, number]>(
 		type: string,
 		run: (args: Args) => Awaitable<unknown>,
-		options: { onError?: (error: unknown, args: Args, delivery: BroadcastDeliveryState) => unknown } = {},
+		options: {
+			onError?: (error: unknown, args: Args, delivery: BroadcastDeliveryState) => unknown;
+		} = {},
 	): void {
 		this.#types.set(type, {
 			run: (args) => run(args as unknown as Args),
@@ -795,7 +825,8 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		let index = 0;
 		const dueAt = now + Math.max(0, options.delayMs ?? 0);
 		const retry = options.retry ?? entry.retry ?? this.#options.retry;
-		const maxAttempts = retry === false ? 1 : Math.max(1, retry?.attempts ?? DEFAULT_RETRY.attempts);
+		const maxAttempts =
+			retry === false ? 1 : Math.max(1, retry?.attempts ?? DEFAULT_RETRY.attempts);
 
 		for await (const args of toAsyncIterable(items)) {
 			const deliveryPriority = entry.priority(args, index) ?? priority;
@@ -836,7 +867,9 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		};
 
 		await this.storage.patchJob(id, queued);
-		this.#emit(total === 0 ? { type: "job_completed", job: queued } : { type: "job_queued", job: queued });
+		this.#emit(
+			total === 0 ? { type: "job_completed", job: queued } : { type: "job_queued", job: queued },
+		);
 		if (total === 0) this.#resolveWaiters(id, resultFromJob(queued));
 		else this.#schedule(0);
 
@@ -1047,7 +1080,8 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		this.#waiters.delete(jobId);
 		for (const waiter of waiters) {
 			if (waiter.timer) clearTimeout(waiter.timer);
-			if (waiter.signal && waiter.onAbort) waiter.signal.removeEventListener("abort", waiter.onAbort);
+			if (waiter.signal && waiter.onAbort)
+				waiter.signal.removeEventListener("abort", waiter.onAbort);
 			waiter.resolve(result);
 		}
 	}
@@ -1187,7 +1221,10 @@ function normalizeRetry(options: BroadcastRetryOptions): NormalizedRetry {
 		baseDelayMs: Math.max(0, options.baseDelayMs ?? DEFAULT_RETRY.baseDelayMs),
 		maxDelayMs: Math.max(0, options.maxDelayMs ?? DEFAULT_RETRY.maxDelayMs),
 		fixedDelayMs: options.fixedDelayMs,
-		retryAfterPaddingMs: Math.max(0, options.retryAfterPaddingMs ?? DEFAULT_RETRY.retryAfterPaddingMs ?? 0),
+		retryAfterPaddingMs: Math.max(
+			0,
+			options.retryAfterPaddingMs ?? DEFAULT_RETRY.retryAfterPaddingMs ?? 0,
+		),
 		retryOnNetwork: options.retryOnNetwork ?? DEFAULT_RETRY.retryOnNetwork ?? true,
 		retryOnServerError: options.retryOnServerError ?? DEFAULT_RETRY.retryOnServerError ?? true,
 		jitter: options.jitter ?? DEFAULT_RETRY.jitter ?? 0,
@@ -1216,7 +1253,8 @@ function withJitter(
 
 function getRetryAfterMs(error: TelegramError): number | undefined {
 	const retryAfter = error.parameters?.retry_after;
-	if (typeof retryAfter !== "number" || !Number.isFinite(retryAfter) || retryAfter < 0) return undefined;
+	if (typeof retryAfter !== "number" || !Number.isFinite(retryAfter) || retryAfter < 0)
+		return undefined;
 	return retryAfter * 1000;
 }
 
@@ -1296,7 +1334,9 @@ async function* toAsyncIterable<T>(items: Iterable<T> | AsyncIterable<T>): Async
 	for (const item of items) yield item;
 }
 
-async function* indexedTargets<T>(targets: BroadcastTargets<T>): AsyncIterable<readonly [T, number]> {
+async function* indexedTargets<T>(
+	targets: BroadcastTargets<T>,
+): AsyncIterable<readonly [T, number]> {
 	let index = 0;
 	for await (const target of toAsyncIterable(targets)) yield [target, index++] as const;
 }

@@ -11,7 +11,10 @@ test("start sends a typed vote keyboard", async () => {
 
 	const message = env.lastBotMessage({ withReplyMarkup: true });
 	assert.equal(message?.text, "testing lab ready. press a button or send /stats.");
-	assert.equal(findButton(message?.reply_markup, "ship it")?.callback_data, voteData.pack({ choice: "ship" }));
+	assert.equal(
+		findButton(message?.reply_markup, "ship it")?.callback_data,
+		voteData.pack({ choice: "ship" }),
+	);
 });
 
 test("button click updates session and records answerCallbackQuery", async () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { callbackData, Context, createBot, richContext, session } from "./index.js";
+import { Context, callbackData, createBot, richContext, session } from "./index.js";
 
 const api = {} as never;
 

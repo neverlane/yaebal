@@ -10,12 +10,11 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
+		"yaebal": "workspace:*",
 		"@yaebal/conversation": "workspace:*",
-		"@yaebal/core": "workspace:*",
 		"@yaebal/morda": "workspace:*",
 		"@yaebal/prompt": "workspace:*",
-		"@yaebal/scenes": "workspace:*",
-		"@yaebal/session": "workspace:*"
+		"@yaebal/scenes": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

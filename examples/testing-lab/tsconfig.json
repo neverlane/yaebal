@@ -4,15 +4,23 @@
 		"noEmit": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"lib": ["ES2023", "DOM"],
-		"types": ["node"]
+		"lib": [
+			"ES2023",
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
 	},
 	"references": [
-		{ "path": "../../packages/core" },
-		{ "path": "../../packages/session" },
-		{ "path": "../../packages/callback-data" },
-		{ "path": "../../packages/keyboard" },
-		{ "path": "../../packages/test" }
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/test"
+		}
 	],
-	"include": ["src/**/*.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }

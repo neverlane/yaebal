@@ -10,8 +10,10 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
+		"@yaebal/contexts": "workspace:*",
 		"@yaebal/core": "workspace:*",
-		"@yaebal/fmt": "workspace:*"
+		"@yaebal/fmt": "workspace:*",
+		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

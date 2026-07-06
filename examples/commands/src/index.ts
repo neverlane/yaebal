@@ -1,6 +1,5 @@
 import { type Commands, commands } from "@yaebal/commands";
-import { Bot, type Context } from "@yaebal/core";
-import { session } from "@yaebal/session";
+import { type Context, createBot, session } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -76,7 +75,7 @@ cmd
 		ctx.reply("rules: be kind and use /help. (this menu entry is admin-only)"),
 	);
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(session<Stats>({ initial: () => ({ hits: 0 }) }))
 	.install(cmd.plugin())
 	// the handler for the menu-only /about entry — registry and handlers are decoupled

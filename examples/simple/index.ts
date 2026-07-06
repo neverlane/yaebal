@@ -1,10 +1,10 @@
-import { Bot } from "@yaebal/core";
 import { installToml } from "@yaebal/toml";
+import { createBot } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) throw new Error("BOT_TOKEN is required");
 
-const bot = new Bot(token);
+const bot = createBot(token);
 
 await installToml(bot, "./bot.toml", {
 	handlers: {

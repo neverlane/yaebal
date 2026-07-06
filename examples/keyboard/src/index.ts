@@ -1,5 +1,4 @@
-import { Bot } from "@yaebal/core";
-import { InlineKeyboard, Keyboard } from "@yaebal/keyboard";
+import { createBot, InlineKeyboard, Keyboard } from "yaebal";
 
 // a tour of every @yaebal/keyboard feature. each command builds one kind of markup.
 //
@@ -29,7 +28,7 @@ const FRUITS = ["apple", "banana", "cherry", "date", "fig", "grape"];
 // the exact prompt /ask sends — used to recognize the reply to it
 const ASK_PROMPT = "what's your name?";
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	// text, style(), url(), row() — the basics. reply_markup takes the builder
 	// itself here: InlineKeyboard implements toJSON(), and Api stringifies
 	// reply_markup, so the trailing .build() below is optional (both work).
@@ -45,7 +44,7 @@ const bot = new Bot(token)
 	)
 	.callbackQuery(/^vote:(up|down)$/, async (ctx) => {
 		const liked = ctx.callbackQuery.data === "vote:up";
-		await ctx.answerCallbackQuery({ text: liked ? "thanks! 👍" : "noted 👎" });
+		await ctx.answer(liked ? "thanks! 👍" : "noted 👎");
 	})
 
 	// every inline button type that's safe to send in a plain message.
@@ -100,7 +99,7 @@ const bot = new Bot(token)
 	)
 	.callbackQuery(/^pick:/, async (ctx) => {
 		const fruit = ctx.callbackQuery.data?.slice("pick:".length);
-		await ctx.answerCallbackQuery({ text: `you picked ${fruit} 🍽️` });
+		await ctx.answer(`you picked ${fruit} 🍽️`);
 	})
 
 	// reply keyboard: requestContact/requestLocation/requestPoll/webApp, resized + oneTime.
@@ -117,15 +116,11 @@ const bot = new Bot(token)
 				.build(),
 		}),
 	)
-	.on("message:contact", (ctx) =>
-		ctx.reply(`got your contact: ${ctx.message?.contact?.phone_number}`),
-	)
+	.on("message:contact", (ctx) => ctx.reply(`got your contact: ${ctx.contact?.phone_number}`))
 	.on("message:location", (ctx) =>
-		ctx.reply(
-			`got your location: ${ctx.message?.location?.latitude}, ${ctx.message?.location?.longitude}`,
-		),
+		ctx.reply(`got your location: ${ctx.location?.latitude}, ${ctx.location?.longitude}`),
 	)
-	.on("message:poll", (ctx) => ctx.reply(`got your poll: "${ctx.message?.poll?.question}"`))
+	.on("message:poll", (ctx) => ctx.reply(`got your poll: "${ctx.poll?.question}"`))
 
 	// reply keyboard: requestUsers/requestChat/requestManagedBot, persistent +
 	// placeholder + selective. requestId only needs to be unique within this keyboard.
@@ -146,15 +141,15 @@ const bot = new Bot(token)
 		}),
 	)
 	.on("message:users_shared", (ctx) => {
-		const shared = ctx.message?.users_shared;
+		const shared = ctx.users_shared;
 		return ctx.reply(`request #${shared?.request_id}: got ${shared?.users.length} user(s)`);
 	})
 	.on("message:chat_shared", (ctx) => {
-		const shared = ctx.message?.chat_shared;
+		const shared = ctx.chat_shared;
 		return ctx.reply(`request #${shared?.request_id}: got chat ${shared?.chat_id}`);
 	})
 	.on("message:managed_bot_created", (ctx) => {
-		const bot_ = ctx.message?.managed_bot_created?.bot;
+		const bot_ = ctx.managed_bot_created?.bot;
 		return ctx.reply(`created @${bot_?.username} — fetch its token with getManagedBotToken`);
 	})
 	// same event, delivered as its own update instead of a message field
@@ -173,7 +168,7 @@ const bot = new Bot(token)
 		}),
 	)
 	.on("message:text", (ctx, next) => {
-		if (ctx.message?.reply_to_message?.text !== ASK_PROMPT) return next();
+		if (ctx.reply_to_message?.text !== ASK_PROMPT) return next();
 		return ctx.reply(`nice to meet you, ${ctx.text}! 🎉`);
 	})
 

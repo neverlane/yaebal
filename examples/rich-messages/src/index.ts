@@ -1,4 +1,3 @@
-import { Bot } from "@yaebal/core";
 import {
 	audio,
 	blockquote,
@@ -23,6 +22,7 @@ import {
 	thinking,
 	video,
 } from "@yaebal/rich";
+import { createBot } from "yaebal";
 
 // a focused tour of @yaebal/rich: the dual-dialect builders (every builder works
 // in both the html and markdown template), sending a document, streaming a draft
@@ -50,7 +50,7 @@ async function* fakeAnswerStream(question: string): AsyncGenerator<string> {
 	}
 }
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(rich())
 	.command("start", (ctx) =>
 		ctx.sendRichMessage(
@@ -155,7 +155,7 @@ const bot = new Bot(token)
 		);
 	})
 	.on("message:rich_message", (ctx) => {
-		const richMessage = ctx.message?.rich_message;
+		const richMessage = ctx.rich_message;
 		if (!richMessage) return;
 
 		const tableCount = richMessage.blocks.filter(isTable).length;

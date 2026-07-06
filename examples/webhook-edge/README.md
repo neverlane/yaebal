@@ -1,7 +1,8 @@
 # @yaebal/example-webhook-edge (a runnable bot)
 
 a webhook-first bot that exports a fetch handler for edge runtimes and starts a tiny node
-http adapter for local development.
+http adapter for local development. deliberately built on bare `@yaebal/core` — one of the
+minimal-layer examples (see [core-echo](../core-echo/)).
 
 ## running
 

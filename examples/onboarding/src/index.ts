@@ -1,5 +1,5 @@
-import { Bot, bold, format } from "@yaebal/core";
 import { createOnboarding } from "@yaebal/onboarding";
+import { bold, createBot, format } from "yaebal";
 
 // a focused tour of @yaebal/onboarding.
 //
@@ -35,7 +35,7 @@ const welcome = createOnboarding({ id: "welcome", concurrency: "preempt" })
 	.onDismiss((ctx) => ctx.send("onboarding dismissed. run /enable if you want to allow it again."))
 	.build();
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(welcome)
 	.command("start", async (ctx) => {
 		const result = await ctx.onboarding.welcome.start();

@@ -1,6 +1,6 @@
 import { fileURLToPath } from "node:url";
-import { Bot } from "@yaebal/core";
 import { loadRoutes } from "@yaebal/router";
+import { createBot } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -8,7 +8,7 @@ if (!token) {
 	process.exit(1);
 }
 
-const bot = new Bot(token);
+const bot = createBot(token);
 const routesDir = fileURLToPath(new URL("./routes", import.meta.url));
 const registered = await loadRoutes(bot, routesDir);
 

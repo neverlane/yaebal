@@ -1,9 +1,8 @@
 import { conversation, createConversation } from "@yaebal/conversation";
-import { Bot } from "@yaebal/core";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
 import { type SceneDef, scenes } from "@yaebal/scenes";
-import { session } from "@yaebal/session";
+import { createBot, session } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -105,7 +104,7 @@ const cockpit: DialogDef = {
 	}),
 };
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(session<Profile>({ initial: () => ({ darkMode: false, tickets: [] }) }))
 	.derive((ctx) => {
 		if (ctx.chat?.id !== undefined) dialogsByChat.set(ctx.chat.id, ctx.session);

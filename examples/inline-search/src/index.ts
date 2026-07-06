@@ -1,5 +1,7 @@
+import { contextFor } from "@yaebal/contexts";
 import { Bot } from "@yaebal/core";
 import { html } from "@yaebal/fmt";
+import type { InlineQueryResult } from "@yaebal/types";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -12,12 +14,14 @@ const bot = new Bot(token, { allowedUpdates: ["message", "inline_query", "chosen
 		ctx.send(html`<b>inline search</b>\nopen any chat and type <code>@your_bot query</code>.`),
 	)
 	.on("inline_query", async (ctx) => {
-		const inline = ctx.update.inline_query;
-		if (!inline) return;
+		// bare core has no per-update contexts — @yaebal/contexts is a separate install on
+		// top of it. wrap the raw update once and the generated shortcuts appear:
+		// .answer() fills inline_query_id itself, payload fields are typed.
+		const inline = contextFor("inline_query", ctx.api, ctx.update);
 
 		const query = inline.query.trim() || "yaebal";
 		const offset = Number(inline.offset || 0);
-		const results = Array.from({ length: 5 }, (_, index) => {
+		const results = Array.from({ length: 5 }, (_, index): InlineQueryResult => {
 			const id = offset + index + 1;
 			const title = `${query} result ${id}`;
 
@@ -32,9 +36,7 @@ const bot = new Bot(token, { allowedUpdates: ["message", "inline_query", "chosen
 			};
 		});
 
-		await ctx.api.call("answerInlineQuery", {
-			inline_query_id: inline.id,
-			results,
+		await inline.answer(results, {
 			cache_time: 0,
 			is_personal: true,
 			next_offset: String(offset + results.length),
@@ -42,12 +44,11 @@ const bot = new Bot(token, { allowedUpdates: ["message", "inline_query", "chosen
 		});
 	})
 	.on("chosen_inline_result", (ctx) => {
-		const chosen = ctx.update.chosen_inline_result;
-		if (!chosen) return;
+		const chosen = contextFor("chosen_inline_result", ctx.api, ctx.update);
 
 		console.log("chosen inline result", {
 			resultId: chosen.result_id,
-			from: chosen.from.id,
+			from: chosen.senderId,
 			query: chosen.query,
 		});
 	})

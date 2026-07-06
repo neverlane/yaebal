@@ -4,9 +4,22 @@
 		"noEmit": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"lib": ["DOM"],
-		"types": ["node"]
+		"lib": [
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
 	},
-	"references": [{ "path": "../../packages/core" }, { "path": "../../packages/again" }],
-	"include": ["src/**/*.ts"]
+	"references": [
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/again"
+		}
+	],
+	"include": [
+		"src/**/*.ts"
+	]
 }

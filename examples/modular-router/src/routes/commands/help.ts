@@ -1,4 +1,4 @@
-import type { Context, Middleware } from "@yaebal/core";
+import type { Context, Middleware } from "yaebal";
 
 const handler: Middleware<Context> = (ctx) =>
 	ctx.reply(

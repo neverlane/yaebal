@@ -1,5 +1,5 @@
 import { Broadcast, type BroadcastEvent, type BroadcastJobHandle } from "@yaebal/broadcast";
-import { Bot } from "@yaebal/core";
+import { createBot } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -12,7 +12,7 @@ const subscribers = new Set<number>();
 const jobs = new Map<string, BroadcastJobHandle>();
 const recentEvents: string[] = [];
 
-const bot = new Bot(token);
+const bot = createBot(token);
 
 function remember(event: BroadcastEvent): void {
 	recentEvents.push(event.type);
@@ -43,7 +43,7 @@ const broadcaster = new Broadcast(bot.api, {
 
 bot
 	.command("start", async (ctx) => {
-		if (ctx.chat?.id !== undefined) subscribers.add(ctx.chat.id);
+		subscribers.add(ctx.chat.id);
 
 		await ctx.reply(`you are subscribed to the broadcast demo.
 
@@ -51,12 +51,11 @@ try /status to see worker metrics.
 admin commands: /broadcast text, /pause job_id, /resume job_id, /cancel job_id.`);
 	})
 	.command("subscribe", async (ctx) => {
-		if (ctx.chat?.id === undefined) return ctx.reply("no chat id in this update.");
 		subscribers.add(ctx.chat.id);
 		return ctx.reply(`subscribed. audience size: ${subscribers.size}.`);
 	})
 	.command("unsubscribe", async (ctx) => {
-		if (ctx.chat?.id !== undefined) subscribers.delete(ctx.chat.id);
+		subscribers.delete(ctx.chat.id);
 		return ctx.reply(`unsubscribed. audience size: ${subscribers.size}.`);
 	})
 	.command("broadcast", async (ctx) => {

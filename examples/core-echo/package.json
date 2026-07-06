@@ -1,5 +1,5 @@
 {
-	"name": "@yaebal/example-media-studio",
+	"name": "@yaebal/example-core-echo",
 	"version": "0.0.0",
 	"private": true,
 	"type": "module",
@@ -10,12 +10,7 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
-		"yaebal": "workspace:*",
-		"@yaebal/files": "workspace:*",
-		"@yaebal/media-cache": "workspace:*",
-		"@yaebal/media-group": "workspace:*",
-		"@yaebal/preview": "workspace:*",
-		"@yaebal/split": "workspace:*"
+		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

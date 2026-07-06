@@ -1,15 +1,24 @@
 import { autoRetry } from "@yaebal/again";
-import { callbackData } from "@yaebal/callback-data";
-import { Bot, bold, type Context, format, italic, media, type Plugin } from "@yaebal/core";
-import { and, command, isPrivate, regex } from "@yaebal/filters";
-import { html } from "@yaebal/fmt";
-import { i18n } from "@yaebal/i18n";
-import { InlineKeyboard } from "@yaebal/keyboard";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
 import { type SceneDef, scenes } from "@yaebal/scenes";
-import { session } from "@yaebal/session";
 import { throttle } from "@yaebal/throttle";
+import {
+	and,
+	bold,
+	type Context,
+	callbackData,
+	createBot,
+	filters,
+	format,
+	html,
+	InlineKeyboard,
+	i18n,
+	italic,
+	media,
+	type Plugin,
+	session,
+} from "yaebal";
 
 // a single-file tour of the yaebal stack. each command shows off one plugin.
 //
@@ -77,7 +86,7 @@ const stamp: Plugin<Context, { startedAt: Date }> = (c) => c.decorate({ startedA
 // typed callback_data: vote.pack({ choice }) → string, vote.unpack(data) → { choice } | undefined
 const vote = callbackData("vote", { choice: String });
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	// retry on 429/flood-wait and transient 5xx, and throttle outgoing calls
 	.install(autoRetry())
 	.install(throttle())
@@ -131,7 +140,7 @@ try /help, or tap a button below.`,
 	// prompt: ask once, handle the next message
 	.command("name", (ctx) => ctx.prompt("what's your name?", (c) => c.reply(`hi, ${c.text}!`)))
 	// @yaebal/filters: composed filter — /help only in private chats, with an fmt html reply
-	.filter(and(isPrivate, command("help")), (ctx) =>
+	.filter(and(filters.isPrivate, filters.command("help")), (ctx) =>
 		ctx.send(
 			html`<b>commands</b>
 ${COMMANDS.map((c) => `/${c.command} — ${c.description}`).join("\n")}`,
@@ -140,7 +149,7 @@ ${COMMANDS.map((c) => `/${c.command} — ${c.description}`).join("\n")}`,
 	// hears: regex match on text, exposes ctx.match
 	.hears(/^(ping|пинг)$/i, (ctx) => ctx.reply("pong"))
 	// @yaebal/filters: regex filter — exposes ctx.match, replies with html bold/italic via @yaebal/fmt
-	.filter(regex(/^(hello|привет)/i), (ctx) =>
+	.filter(filters.regex(/^(hello|привет)/i), (ctx) =>
 		ctx.send(html`<b>hello!</b> you wrote: <i>${ctx.match[0]}</i>`),
 	)
 	// filter query: only text messages; ctx.text is narrowed to string
@@ -148,7 +157,7 @@ ${COMMANDS.map((c) => `/${c.command} — ${c.description}`).join("\n")}`,
 	// typed callback buttons: only "vote:*" data, payload parsed via callback-data
 	.callbackQuery(vote.pattern, async (ctx) => {
 		const choice = vote.unpack(ctx.callbackQuery.data ?? "")?.choice;
-		await ctx.answerCallbackQuery({ text: choice === "up" ? "liked 👍" : "disliked 👎" });
+		await ctx.answer(choice === "up" ? "liked 👍" : "disliked 👎");
 	})
 	.onError((error, ctx) => {
 		console.error(`update ${ctx.update.update_id} failed:`, error);

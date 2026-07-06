@@ -4,13 +4,23 @@
 		"noEmit": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"lib": ["ES2023", "DOM"],
-		"types": ["node"]
+		"lib": [
+			"ES2023",
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
 	},
 	"references": [
-		{ "path": "../../packages/core" },
-		{ "path": "../../packages/keyboard" },
-		{ "path": "../../packages/router" }
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/router"
+		}
 	],
-	"include": ["src/**/*.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }

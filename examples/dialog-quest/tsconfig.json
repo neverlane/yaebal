@@ -4,16 +4,32 @@
 		"noEmit": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"lib": ["ES2023", "DOM"],
-		"types": ["node"]
+		"lib": [
+			"ES2023",
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
 	},
 	"references": [
-		{ "path": "../../packages/core" },
-		{ "path": "../../packages/session" },
-		{ "path": "../../packages/morda" },
-		{ "path": "../../packages/prompt" },
-		{ "path": "../../packages/scenes" },
-		{ "path": "../../packages/conversation" }
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/morda"
+		},
+		{
+			"path": "../../packages/prompt"
+		},
+		{
+			"path": "../../packages/scenes"
+		},
+		{
+			"path": "../../packages/conversation"
+		}
 	],
-	"include": ["src/**/*.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }

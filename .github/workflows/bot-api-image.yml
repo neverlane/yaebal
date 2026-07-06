@@ -1,0 +1,171 @@
+name: bot api image
+
+# builds docker/telegram-bot-api (the self-hosted telegram bot api server) and publishes
+# multi-arch images to ghcr — plus docker hub when DOCKERHUB_USERNAME/DOCKERHUB_TOKEN secrets
+# exist. tags: `latest` + `sha-<12>` of the upstream tdlib/telegram-bot-api commit.
+# bot-api-upstream-watch.yml dispatches this workflow when upstream moves; pushes that touch
+# the docker dir rebuild against upstream master.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "tdlib/telegram-bot-api git ref to build"
+        required: false
+        default: master
+  push:
+    branches: [master]
+    paths:
+      - "docker/telegram-bot-api/**"
+      - ".github/workflows/bot-api-image.yml"
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: bot-api-image
+  cancel-in-progress: false
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository_owner }}/telegram-bot-api
+  DOCKERHUB_IMAGE: neverlane/telegram-bot-api
+
+jobs:
+  # pin the build to a concrete upstream commit so both arch builds compile the same source
+  # and the sha tag is meaningful.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      short: ${{ steps.resolve.outputs.short }}
+    steps:
+      - id: resolve
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ref="${{ inputs.ref || 'master' }}"
+          sha="$(gh api "repos/tdlib/telegram-bot-api/commits/${ref}" --jq .sha)"
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+          echo "short=${sha:0:12}" >> "$GITHUB_OUTPUT"
+          echo "building tdlib/telegram-bot-api@${sha}"
+
+  # tdlib compiles from source — emulating arm64 under qemu takes hours, so each platform
+  # builds natively and pushes by digest; `merge` stitches the digests into one manifest list.
+  build:
+    needs: resolve
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            arch: amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            arch: arm64
+            runner: ubuntu-24.04-arm
+    name: build ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 180
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - id: params
+        run: |
+          images="${GHCR_IMAGE}"
+          if [ -n "${DOCKERHUB_USERNAME}" ]; then
+            images="${images},docker.io/${DOCKERHUB_IMAGE}"
+          fi
+          echo "outputs=type=image,\"name=${images}\",push-by-digest=true,name-canonical=true,push=true" >> "$GITHUB_OUTPUT"
+
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/telegram-bot-api
+          platforms: ${{ matrix.platform }}
+          build-args: |
+            TELEGRAM_BOT_API_REF=${{ needs.resolve.outputs.sha }}
+          outputs: ${{ steps.params.outputs.outputs }}
+          provenance: false
+
+      - name: export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - if: env.DOCKERHUB_USERNAME != ''
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # image digests are content-addressed, so the same digest list works for every
+      # registry the build pushed to.
+      - name: push manifest lists
+        working-directory: /tmp/digests
+        env:
+          SHORT: ${{ needs.resolve.outputs.short }}
+        run: |
+          digests=""
+          for d in *; do digests="${digests} ${GHCR_IMAGE}@sha256:${d}"; done
+
+          docker buildx imagetools create \
+            -t "${GHCR_IMAGE}:latest" \
+            -t "${GHCR_IMAGE}:sha-${SHORT}" \
+            ${digests}
+
+          if [ -n "${DOCKERHUB_USERNAME}" ]; then
+            digests=""
+            for d in *; do digests="${digests} docker.io/${DOCKERHUB_IMAGE}@sha256:${d}"; done
+
+            docker buildx imagetools create \
+              -t "docker.io/${DOCKERHUB_IMAGE}:latest" \
+              -t "docker.io/${DOCKERHUB_IMAGE}:sha-${SHORT}" \
+              ${digests}
+          fi
+
+      - name: verify
+        run: docker buildx imagetools inspect "${GHCR_IMAGE}:sha-${{ needs.resolve.outputs.short }}"

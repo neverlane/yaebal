@@ -1,0 +1,37 @@
+name: bot api upstream watch
+
+# checks tdlib/telegram-bot-api once a day (upstream ships every few weeks — same cadence
+# reasoning as update-bot-api-types.yml). the published image is tagged `sha-<12>` of the
+# upstream commit it was built from, so "is upstream master already built" is just a tag
+# existence check — no labels to inspect, and a half-failed build retries the next day.
+on:
+  schedule:
+    - cron: "43 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: read
+  actions: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: compare upstream with published image
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ghcr.io/${{ github.repository_owner }}/telegram-bot-api
+        run: |
+          sha="$(gh api repos/tdlib/telegram-bot-api/commits/master --jq .sha)"
+          short="${sha:0:12}"
+
+          echo "${GH_TOKEN}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+          if docker manifest inspect "${IMAGE}:sha-${short}" > /dev/null 2>&1; then
+            echo "image for tdlib/telegram-bot-api@${short} already published — nothing to do"
+          else
+            echo "upstream moved to ${sha} — dispatching bot-api-image.yml"
+            gh workflow run bot-api-image.yml --repo "${{ github.repository }}" -f "ref=${sha}"
+          fi

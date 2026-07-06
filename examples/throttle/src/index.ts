@@ -1,6 +1,6 @@
 import { autoRetry } from "@yaebal/again";
-import { Bot } from "@yaebal/core";
 import { ThrottleAbortError, throttle, withThrottle } from "@yaebal/throttle";
+import { createBot } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -27,29 +27,25 @@ const transport = throttle({
 	},
 });
 
-const bot = new Bot(token).install(transport).install(autoRetry({ retryAfterPaddingMs: 250 }));
+const bot = createBot(token)
+	.install(transport)
+	.install(autoRetry({ retryAfterPaddingMs: 250 }));
 
 bot.command("start", (ctx) =>
 	ctx.reply("This bot uses @yaebal/throttle. Try /burst, /priority, /cancel and /metrics."),
 );
 
 bot.command("burst", async (ctx) => {
-	const chatId = ctx.chat?.id;
-	if (chatId === undefined) return ctx.reply("no chat in this update");
-
 	await ctx.reply("queueing 8 messages behind the per-chat bucket");
 	await Promise.all(
-		Array.from({ length: 8 }, (_, index) =>
-			ctx.api.sendMessage({ chat_id: chatId, text: `throttled message ${index + 1}/8` }),
-		),
+		Array.from({ length: 8 }, (_, index) => ctx.send(`throttled message ${index + 1}/8`)),
 	);
 
 	return ctx.reply("burst drained");
 });
 
 bot.command("priority", async (ctx) => {
-	const chatId = ctx.chat?.id;
-	if (chatId === undefined) return ctx.reply("no chat in this update");
+	const chatId = ctx.chat.id;
 
 	await ctx.reply("queueing low-priority work and one urgent message");
 
@@ -64,8 +60,7 @@ bot.command("priority", async (ctx) => {
 });
 
 bot.command("cancel", async (ctx) => {
-	const chatId = ctx.chat?.id;
-	if (chatId === undefined) return ctx.reply("no chat in this update");
+	const chatId = ctx.chat.id;
 
 	const controller = new AbortController();
 	const queued = ctx.api.sendMessage(

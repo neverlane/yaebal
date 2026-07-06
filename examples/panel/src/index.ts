@@ -1,7 +1,7 @@
 import { autoRetry } from "@yaebal/again";
-import { Bot, type UpdateName } from "@yaebal/core";
 import { MemoryPanelStore, panelHandler, recorder, recordOutgoing } from "@yaebal/panel";
 import { serve } from "@yaebal/panel/serve";
+import { createBot, type UpdateName } from "yaebal";
 
 // a full tour of @yaebal/panel: live operator dashboard with media in both directions.
 //
@@ -17,7 +17,7 @@ const allowedUpdates: UpdateName[] = [
 	"chat_member",
 ];
 
-const bot = new Bot(process.env.BOT_TOKEN ?? "", { allowedUpdates });
+const bot = createBot(process.env.BOT_TOKEN ?? "", { allowedUpdates });
 
 // in-memory store (lost on restart). swap for the persistent sqlite one:
 //  import { SqlitePanelStore } from "@yaebal/panel/sqlite";
@@ -57,21 +57,17 @@ bot.command("start", (ctx) =>
 bot.command("demo", async (ctx) => {
 	await ctx.reply("Inline keyboard and callback preview", { reply_markup: demoKeyboard });
 
-	const chatId = ctx.chat?.id;
-	if (chatId === undefined) return;
-
-	await ctx.api.call("sendPoll", {
-		chat_id: chatId,
-		question: "which panel card should you inspect first?",
-		options: ["media viewer", "voice style", "callback event"],
-		is_anonymous: false,
-	});
-	await ctx.api.call("sendDice", { chat_id: chatId });
+	await ctx.sendPoll(
+		"which panel card should you inspect first?",
+		["media viewer", "voice style", "callback event"],
+		{ is_anonymous: false },
+	);
+	await ctx.sendDice();
 });
 
 bot.on("callback_query:data", async (ctx) => {
 	const data = ctx.callbackQuery?.data ?? "callback";
-	await ctx.answerCallbackQuery({ text: "recorded in the panel" });
+	await ctx.answer("recorded in the panel");
 
 	if (data === "panel:media") {
 		await ctx.send(
@@ -87,32 +83,18 @@ bot.on("message:text", (ctx) => ctx.reply(`echo: ${ctx.text}`));
 
 // echo a photo straight back by file_id; shows up both ways in the panel.
 bot.on("message:photo", (ctx) => {
-	const photos = ctx.message?.photo;
-	const fileId = photos?.[photos.length - 1]?.file_id;
-
+	const fileId = ctx.photo?.[ctx.photo.length - 1]?.file_id;
 	if (fileId) ctx.sendPhoto(fileId, { caption: "photo preview card" });
 });
 
 bot.on("message:video", (ctx) => {
-	const fileId = ctx.message?.video?.file_id;
-	if (fileId && ctx.chat?.id !== undefined) {
-		ctx.api.call("sendVideo", {
-			chat_id: ctx.chat.id,
-			video: fileId,
-			caption: "video preview card",
-		});
-	}
+	const fileId = ctx.video?.file_id;
+	if (fileId) ctx.sendVideo(fileId, { caption: "video preview card" });
 });
 
 bot.on("message:voice", (ctx) => {
-	const fileId = ctx.message?.voice?.file_id;
-	if (fileId && ctx.chat?.id !== undefined) {
-		ctx.api.call("sendVoice", {
-			chat_id: ctx.chat.id,
-			voice: fileId,
-			caption: "voice message style",
-		});
-	}
+	const fileId = ctx.voice?.file_id;
+	if (fileId) ctx.sendVoice(fileId, { caption: "voice message style" });
 });
 
 bot.on("message:document", (ctx) =>

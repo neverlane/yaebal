@@ -10,9 +10,7 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
-		"@yaebal/callback-data": "workspace:*",
-		"@yaebal/core": "workspace:*",
-		"@yaebal/keyboard": "workspace:*"
+		"yaebal": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

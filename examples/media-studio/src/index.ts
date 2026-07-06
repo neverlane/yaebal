@@ -1,9 +1,9 @@
-import { Bot, media } from "@yaebal/core";
 import { files } from "@yaebal/files";
 import { mediaCache } from "@yaebal/media-cache";
 import { mediaGroup } from "@yaebal/media-group";
 import { renderChat } from "@yaebal/preview";
 import { splitter } from "@yaebal/split";
+import { createBot, media } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -13,7 +13,7 @@ if (!token) {
 
 const cache = mediaCache();
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(files())
 	.install(splitter(900))
 	.install(
@@ -89,14 +89,14 @@ bot
 		return ctx.replyLong(report);
 	})
 	.on("message:document", async (ctx) => {
-		const fileId = ctx.message?.document?.file_id;
+		const fileId = ctx.document?.file_id;
 		if (!fileId) return;
 
 		const url = await ctx.files.fileLink(fileId);
 		return ctx.reply(`document link resolved. do not leak this url:\n${url}`);
 	})
 	.on("message:photo", async (ctx) => {
-		const fileId = ctx.message?.photo?.at(-1)?.file_id;
+		const fileId = ctx.photo?.at(-1)?.file_id;
 		if (!fileId) return;
 
 		const url = await ctx.files.fileLink(fileId);

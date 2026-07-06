@@ -10,18 +10,12 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
+		"yaebal": "workspace:*",
 		"@yaebal/again": "workspace:*",
-		"@yaebal/session": "workspace:*",
-		"@yaebal/keyboard": "workspace:*",
-		"@yaebal/callback-data": "workspace:*",
 		"@yaebal/morda": "workspace:*",
-		"@yaebal/i18n": "workspace:*",
-		"@yaebal/scenes": "workspace:*",
 		"@yaebal/prompt": "workspace:*",
-		"@yaebal/throttle": "workspace:*",
-		"@yaebal/filters": "workspace:*",
-		"@yaebal/fmt": "workspace:*"
+		"@yaebal/scenes": "workspace:*",
+		"@yaebal/throttle": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

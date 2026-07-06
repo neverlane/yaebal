@@ -1,5 +1,4 @@
-import type { Context, Middleware } from "@yaebal/core";
-import { InlineKeyboard } from "@yaebal/keyboard";
+import { type Context, InlineKeyboard, type Middleware } from "yaebal";
 
 const handler: Middleware<Context> = (ctx) =>
 	ctx.reply("modular router online. type anything or press a route button.", {

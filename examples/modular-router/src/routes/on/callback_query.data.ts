@@ -1,4 +1,4 @@
-import type { CallbackQuery, Context, Middleware } from "@yaebal/core";
+import type { CallbackQuery, Context, Middleware } from "yaebal";
 
 const handler: Middleware<Context & { callbackQuery: CallbackQuery }> = async (ctx) => {
 	const data = ctx.callbackQuery.data ?? "unknown";

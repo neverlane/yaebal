@@ -10,7 +10,7 @@
 		"test": "pnpm typecheck"
 	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
+		"yaebal": "workspace:*",
 		"@yaebal/broadcast": "workspace:*"
 	},
 	"devDependencies": {

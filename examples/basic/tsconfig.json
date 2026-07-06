@@ -4,22 +4,34 @@
 		"noEmit": true,
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"lib": ["DOM"],
-		"types": ["node"]
+		"lib": [
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
 	},
 	"references": [
-		{ "path": "../../packages/core" },
-		{ "path": "../../packages/again" },
-		{ "path": "../../packages/session" },
-		{ "path": "../../packages/keyboard" },
-		{ "path": "../../packages/callback-data" },
-		{ "path": "../../packages/morda" },
-		{ "path": "../../packages/i18n" },
-		{ "path": "../../packages/scenes" },
-		{ "path": "../../packages/prompt" },
-		{ "path": "../../packages/throttle" },
-		{ "path": "../../packages/filters" },
-		{ "path": "../../packages/fmt" }
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/again"
+		},
+		{
+			"path": "../../packages/morda"
+		},
+		{
+			"path": "../../packages/scenes"
+		},
+		{
+			"path": "../../packages/prompt"
+		},
+		{
+			"path": "../../packages/throttle"
+		}
 	],
-	"include": ["src/**/*.ts"]
+	"include": [
+		"src/**/*.ts"
+	]
 }

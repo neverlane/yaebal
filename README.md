@@ -88,7 +88,8 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 
 | example                                     | what it shows                                                                                                  | run                                                 |
 |:--------------------------------------------|:---------------------------------------------------------------------------------------------------------------|:----------------------------------------------------|
-| [basic](/examples/basic/)                   | whole-stack tour: keyboard, callback-data, session, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev`           |
+| [core-echo](/examples/core-echo/)           | bare `@yaebal/core`: middleware, filter narrowing, `format`, raw typed `api.call`                              | `pnpm --filter @yaebal/example-core-echo dev`       |
+| [basic](/examples/basic/)                   | whole-stack tour on `yaebal`: keyboard, callback-data, session, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev` |
 | [again](/examples/again/)                   | awaited retry on structured `retry_after` and transient 5xx                                                    | `pnpm --filter @yaebal/example-again dev`           |
 | [throttle](/examples/throttle/)             | outbound scheduler with buckets, priority, cancellation and metrics                                            | `pnpm --filter @yaebal/example-throttle dev`        |
 | [broadcast](/examples/broadcast/)           | typed broadcast jobs with progress, retry, pause, resume and cancel                                            | `pnpm --filter @yaebal/example-broadcast dev`       |
@@ -105,7 +106,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [webhook-edge](/examples/webhook-edge/)     | fetch webhook handler, local node adapter, secret token and `setWebhook`                                       | `pnpm --filter @yaebal/example-webhook-edge dev`    |
 | [runner-workers](/examples/runner-workers/) | concurrent polling plus worker thread offload                                                                  | `pnpm --filter @yaebal/example-runner-workers dev`  |
 | [testing-lab](/examples/testing-lab/)       | bot factory with real actor-driven `node:test` coverage                                                        | `pnpm --filter @yaebal/example-testing-lab test`    |
-| [inline-search](/examples/inline-search/)   | inline query results, offset pagination and chosen-result analytics                                            | `pnpm --filter @yaebal/example-inline-search dev`   |
+| [inline-search](/examples/inline-search/)   | core + `@yaebal/contexts` by hand: `contextFor`, `inline.answer()`, offset pagination, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev`   |
 | [payments-stars](/examples/payments-stars/) | telegram stars invoices, pre-checkout approval, successful payment and refund                                  | `pnpm --filter @yaebal/example-payments-stars dev`  |
 
 ### plugins

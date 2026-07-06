@@ -1,13 +1,17 @@
-import { callbackData } from "@yaebal/callback-data";
 import { commands } from "@yaebal/commands";
-import { Bot, type Context } from "@yaebal/core";
-import { and, command, isPrivate } from "@yaebal/filters";
-import { html } from "@yaebal/fmt";
-import { i18n } from "@yaebal/i18n";
-import { InlineKeyboard } from "@yaebal/keyboard";
 import { pagination } from "@yaebal/pagination";
 import { ratelimiter } from "@yaebal/ratelimiter";
-import { session } from "@yaebal/session";
+import {
+	and,
+	type Context,
+	callbackData,
+	createBot,
+	filters,
+	html,
+	InlineKeyboard,
+	i18n,
+	session,
+} from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -81,7 +85,7 @@ const catalog = pagination<Product>({
 	line: (item) => `#${item.id} ${item.name} - $${item.price} (${item.tag})`,
 });
 
-const bot = new Bot(token)
+const bot = createBot(token)
 	.install(
 		ratelimiter({
 			limit: 8,
@@ -121,7 +125,7 @@ const bot = new Bot(token)
 		ctx.session.items = {};
 		return ctx.reply("cart cleared.");
 	})
-	.filter(and(isPrivate, command("help")), (ctx) =>
+	.filter(and(filters.isPrivate, filters.command("help")), (ctx) =>
 		ctx.send(
 			html`<b>commerce suite commands</b>\n${menu
 				.list({ languageCode: ctx.locale })
@@ -131,7 +135,7 @@ const bot = new Bot(token)
 	)
 	.callbackQuery(/^open:/, async (ctx) => {
 		const action = ctx.callbackQuery.data?.slice("open:".length);
-		await ctx.answerCallbackQuery();
+		await ctx.answer();
 
 		if (action === "catalog") return catalog.send(ctx);
 		if (action === "deal") return sendDeal(ctx, products[0]);
@@ -146,16 +150,16 @@ const bot = new Bot(token)
 		if (!payload) return;
 
 		const product = products.find((item) => item.id === payload.id);
-		if (!product) return ctx.answerCallbackQuery({ text: "unknown product" });
+		if (!product) return ctx.answer("unknown product");
 
 		if (payload.op === "add") {
 			ctx.session.items[product.id] = (ctx.session.items[product.id] ?? 0) + 1;
-			await ctx.answerCallbackQuery({ text: ctx.t("added", { name: product.name }) });
+			await ctx.answer(ctx.t("added", { name: product.name }));
 		} else {
 			const next = Math.max(0, (ctx.session.items[product.id] ?? 0) - 1);
 			if (next === 0) delete ctx.session.items[product.id];
 			else ctx.session.items[product.id] = next;
-			await ctx.answerCallbackQuery({ text: ctx.t("removed", { name: product.name }) });
+			await ctx.answer(ctx.t("removed", { name: product.name }));
 		}
 
 		return ctx.send(renderCart(ctx.session, ctx.t));

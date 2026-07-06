@@ -1,5 +1,5 @@
 import { autoRetry, type RetryReason } from "@yaebal/again";
-import { Bot, TelegramError } from "@yaebal/core";
+import { createBot, TelegramError } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -15,7 +15,7 @@ const retryCounts: Record<RetryReason, number> = {
 
 let totalRetryDelayMs = 0;
 
-const bot = new Bot(token).install(
+const bot = createBot(token).install(
 	autoRetry({
 		maxRetries: 5,
 		maxDelayMs: 60_000,
@@ -38,13 +38,10 @@ bot.command("start", (ctx) =>
 );
 
 bot.command("burst", async (ctx) => {
-	const chatId = ctx.chat?.id;
-	if (chatId === undefined) return ctx.reply("no chat in this update");
-
 	await ctx.reply("sending 45 messages; any 429 retry_after will be awaited and retried");
 
 	for (let index = 1; index <= 45; index++) {
-		await ctx.api.sendMessage({ chat_id: chatId, text: `burst message ${index}/45` });
+		await ctx.send(`burst message ${index}/45`);
 	}
 
 	return ctx.reply("burst finished");

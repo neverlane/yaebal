@@ -23,9 +23,17 @@ all examples have a `test` script. most run `tsc` as a no-network smoke test; `t
 
 ## bots
 
+the examples deliberately mirror the framework's layering: [core-echo](./core-echo/),
+[runner-workers](./runner-workers/) and [webhook-edge](./webhook-edge/) run on bare
+`@yaebal/core` (no generated contexts — raw `ctx.api.call` is the honest style there),
+[inline-search](./inline-search/) adds `@yaebal/contexts` on top of core by hand, and every
+other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/) meta package
+(`createBot()` + rich generated contexts).
+
 | example | package | focus | run |
 |:--|:--|:--|:--|
-| [basic](./basic/) | `@yaebal/example-basic` | whole-stack tour: session, keyboard, callback-data, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev` |
+| [core-echo](./core-echo/) | `@yaebal/example-core-echo` | bare `@yaebal/core`: middleware, filter narrowing, `format`, raw typed `api.call` | `pnpm --filter @yaebal/example-core-echo dev` |
+| [basic](./basic/) | `@yaebal/example-basic` | whole-stack tour on `yaebal`: session, keyboard, callback-data, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev` |
 | [again](./again/) | `@yaebal/example-again` | awaited retry, `retry_after`, transient failures, retry metrics | `pnpm --filter @yaebal/example-again dev` |
 | [throttle](./throttle/) | `@yaebal/example-throttle` | outbound buckets, priorities, cancellation, scheduler metrics | `pnpm --filter @yaebal/example-throttle dev` |
 | [broadcast](./broadcast/) | `@yaebal/example-broadcast` | typed broadcast jobs, pause, resume, cancel, retry, progress | `pnpm --filter @yaebal/example-broadcast dev` |
@@ -42,15 +50,15 @@ all examples have a `test` script. most run `tsc` as a no-network smoke test; `t
 | [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | fetch webhook handler, local node adapter, `setWebhook`, secret token | `pnpm --filter @yaebal/example-webhook-edge dev` |
 | [runner-workers](./runner-workers/) | `@yaebal/example-runner-workers` | concurrent polling and worker thread offload | `pnpm --filter @yaebal/example-runner-workers dev` |
 | [testing-lab](./testing-lab/) | `@yaebal/example-testing-lab` | bot factory plus actor-driven tests | `pnpm --filter @yaebal/example-testing-lab test` |
-| [inline-search](./inline-search/) | `@yaebal/example-inline-search` | inline query answers, pagination offset, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |
+| [inline-search](./inline-search/) | `@yaebal/example-inline-search` | core + `@yaebal/contexts` layering: `contextFor`, `inline.answer()`, pagination offset, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |
 | [payments-stars](./payments-stars/) | `@yaebal/example-payments-stars` | telegram stars invoices, pre-checkout approval, successful payment, refund | `pnpm --filter @yaebal/example-payments-stars dev` |
 
 ## plugin coverage
 
 | package                 | examples                                                                               | test signal                                    |
 |:------------------------|:---------------------------------------------------------------------------------------|:-----------------------------------------------|
-| `@yaebal/core`          | every example                                                                          | all example `test` scripts                     |
-| `yaebal`                | docs playground examples                                                               | docs health and package typecheck              |
+| `@yaebal/core`          | directly: `core-echo`, `inline-search`, `runner-workers`, `webhook-edge`; via `yaebal` everywhere else | all example `test` scripts    |
+| `yaebal`                | every other example (`createBot` + re-exported plugins), docs playground examples     | all example `test` scripts, docs health        |
 | `@yaebal/again`         | `basic`, `again`, `throttle`, `panel`                                                  | package tests plus example smoke               |
 | `@yaebal/broadcast`     | `broadcast`                                                                            | package tests plus example smoke               |
 | `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
@@ -82,13 +90,15 @@ all examples have a `test` script. most run `tsc` as a no-network smoke test; `t
 | `@yaebal/web`           | `webhook-edge`                                                                         | package tests plus example smoke               |
 | `@yaebal/workers`       | `runner-workers`                                                                       | package tests plus example smoke               |
 | `@yaebal/types`         | generated public types used by packages                                                | package typecheck                              |
-| `@yaebal/contexts`      | `yaebal` meta and docs snippets                                                        | package typecheck                              |
+| `@yaebal/contexts`      | `inline-search` (directly on core), `yaebal` meta and docs snippets                    | example smoke plus package typecheck           |
 | `@yaebal/create-yaebal` | scaffolding docs                                                                       | package typecheck                              |
 
 ## patterns to copy
 
 | pattern                     | copy from                                                                  |
 |:----------------------------|:---------------------------------------------------------------------------|
+| bare core, no plugins       | `core-echo`                                                                |
+| core + contexts by hand     | `inline-search`                                                            |
 | single-file product demo    | `basic`                                                                    |
 | plugin in isolation         | `again`, `throttle`, `keyboard`, `commands`, `onboarding`, `rich-messages` |
 | production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers`                     |

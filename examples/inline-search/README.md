@@ -1,7 +1,8 @@
 # @yaebal/example-inline-search (a runnable bot)
 
 an inline-mode bot with generated article results, pagination by offset and chosen-result
-analytics.
+analytics. built on `@yaebal/core` plus `@yaebal/contexts` installed separately — the
+"core + contexts" layering example.
 
 ## running
 
@@ -30,8 +31,13 @@ both load `examples/inline-search/.env`. enable inline mode in botfather, then t
 | `inline_query`         | returns generated article results with next offset |
 | `chosen_inline_result` | logs chosen-result analytics                       |
 
-the bot uses `api.call("answerInlineQuery")` directly, so new inline-mode fields can be used
-without waiting for higher-level sugar.
+bare core has no per-update contexts — they live in `@yaebal/contexts`, a separate install on
+top of it. the handlers wrap the raw update with `contextFor("inline_query", ctx.api, ctx.update)`
+and get the generated shortcuts: `inline.answer(results, extra)` fills `inline_query_id` itself,
+and payload fields (`inline.query`, `chosen.result_id`, `chosen.senderId`) come typed. the
+[`yaebal`](https://yaebal.mom/docs/yaebal/) meta package does this wiring automatically via
+`createBot()`; a raw `ctx.api.call("answerInlineQuery", …)` always remains as the escape hatch
+(see [core-echo](../core-echo/)).
 
 ---
 

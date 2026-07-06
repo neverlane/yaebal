@@ -1,6 +1,4 @@
-import { callbackData } from "@yaebal/callback-data";
-import { Bot, type Context } from "@yaebal/core";
-import { InlineKeyboard } from "@yaebal/keyboard";
+import { type Context, callbackData, createBot, InlineKeyboard } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -21,7 +19,9 @@ const plans = [
 	{ id: "ship", title: "ship mode", stars: 100 },
 ] as const satisfies readonly Plan[];
 
-const bot = new Bot(token, { allowedUpdates: ["message", "callback_query", "pre_checkout_query"] })
+const bot = createBot(token, {
+	allowedUpdates: ["message", "callback_query", "pre_checkout_query"],
+})
 	.command("start", (ctx) =>
 		ctx.reply("choose a telegram stars plan:", {
 			reply_markup: plans
@@ -54,20 +54,12 @@ const bot = new Bot(token, { allowedUpdates: ["message", "callback_query", "pre_
 	.callbackQuery(planData.pattern, async (ctx) => {
 		const payload = planData.unpack(ctx.callbackQuery.data ?? "");
 		const plan = plans.find((item) => item.id === payload?.id) ?? plans[0];
-		await ctx.answerCallbackQuery({ text: `invoice: ${plan.title}` });
+		await ctx.answer(`invoice: ${plan.title}`);
 		return sendInvoice(ctx, plan);
 	})
-	.on("pre_checkout_query", async (ctx) => {
-		const query = ctx.update.pre_checkout_query;
-		if (!query) return;
-
-		await ctx.api.call("answerPreCheckoutQuery", {
-			pre_checkout_query_id: query.id,
-			ok: true,
-		});
-	})
+	.on("pre_checkout_query", (ctx) => ctx.answer(true))
 	.on("message:successful_payment", (ctx) => {
-		const payment = ctx.message?.successful_payment;
+		const payment = ctx.successful_payment;
 		return ctx.reply(
 			`payment ok: ${payment?.total_amount ?? 0} ${payment?.currency ?? "xtr"}\ncharge: ${payment?.telegram_payment_charge_id ?? "unknown"}`,
 		);

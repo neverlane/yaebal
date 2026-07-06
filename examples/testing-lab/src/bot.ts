@@ -1,7 +1,4 @@
-import { callbackData } from "@yaebal/callback-data";
-import { Composer, type Context } from "@yaebal/core";
-import { InlineKeyboard } from "@yaebal/keyboard";
-import { session } from "@yaebal/session";
+import { Composer, type Context, callbackData, InlineKeyboard, session } from "yaebal";
 
 interface VoteSession {
 	votes: Record<string, number>;

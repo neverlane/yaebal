@@ -1,7 +1,8 @@
 # @yaebal/example-runner-workers (a runnable bot)
 
 a high-throughput bot using `@yaebal/runner` for concurrent polling plus
-`@yaebal/workers` for cpu-heavy work in worker threads.
+`@yaebal/workers` for cpu-heavy work in worker threads. deliberately built on bare
+`@yaebal/core` — one of the minimal-layer examples (see [core-echo](../core-echo/)).
 
 ## running
 

@@ -7,11 +7,6 @@
 		"lib": ["ES2023", "DOM"],
 		"types": ["node"]
 	},
-	"references": [
-		{ "path": "../../packages/contexts" },
-		{ "path": "../../packages/core" },
-		{ "path": "../../packages/fmt" },
-		{ "path": "../../packages/types" }
-	],
+	"references": [{ "path": "../../packages/core" }],
 	"include": ["src/**/*.ts"]
 }

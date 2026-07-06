@@ -42,6 +42,8 @@ bot.install(session({ initial: () => ({}) }));`;
 		"// yaebal",
 		'ctx.send(format`${bold("hello")}`);',
 		"ctx.send(html`<b>hello</b>`);",
+		"// nesting, tagged helpers and join carry over 1:1:",
+		"// bold(italic(x)), bold`hi`, join(items, (x) => bold(x), \"\\n\")",
 	].join("\n");
 
 	const keyboard = `// gramio

@@ -345,8 +345,8 @@ export class ChatMemberContext {
 		return this.api.call<t.MenuButton>("getChatMenuButton", { chat_id: this.chat.id, ...params });
 	}
 	/** Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success. */
-	sendGift(params: Omit<t.SendGiftParams, "user_id" | "chat_id">) {
-		return this.api.call<boolean>("sendGift", { user_id: this.from.id, chat_id: this.chat.id, ...params });
+	sendGift(params: Omit<t.SendGiftParams, "user_id">) {
+		return this.api.call<boolean>("sendGift", { ...((params?.chat_id !== undefined || (this.from.id) === undefined) ? {} : { user_id: this.from.id }), ...params });
 	}
 	/** Gifts a Telegram Premium subscription to the given user. Returns *True* on success. */
 	giftPremiumSubscription(params: Omit<t.GiftPremiumSubscriptionParams, "user_id">) {

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/fmt",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"description": "yaebal fmt — html`` and md`` tagged templates that parse into telegram entities with auto-escaped interpolation.",
 	"type": "module",
 	"main": "./lib/index.js",

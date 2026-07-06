@@ -1,5 +1,7 @@
+import type { BotApiMethods } from "@yaebal/types";
+import { applyFormatFields } from "./format-hook.js";
 import { isMediaSource, type MediaSource } from "./media.js";
-import type { ApiResponse, Message, ResponseParameters, Update, User } from "./telegram-types.js";
+import type { ApiResponse, ResponseParameters } from "./telegram-types.js";
 
 /**
  * resolve a local `media.path()` into bytes. runtime-specific (node:fs, Bun.file,
@@ -8,6 +10,27 @@ import type { ApiResponse, Message, ResponseParameters, Update, User } from "./t
  * auto-detecting default; absent ⇒ `media.path()` throws (e.g. on Cloudflare Workers).
  */
 export type FileReader = (path: string) => Promise<Uint8Array>;
+
+/**
+ * thrown when the HTTP layer fails before a Bot API answer exists — the server
+ * (or a proxy in front of it) replied with something that isn't the JSON envelope
+ * (e.g. an HTML 502 page). carries the method and HTTP status for context;
+ * `TelegramError` stays reserved for real `ok: false` API answers.
+ */
+export class HttpError extends Error {
+	readonly method: string;
+	readonly status: number;
+	readonly statusText: string;
+
+	constructor(method: string, status: number, statusText: string) {
+		super(`[${method}] HTTP ${status} ${statusText}: non-JSON response from the API server`);
+
+		this.name = "HttpError";
+		this.method = method;
+		this.status = status;
+		this.statusText = statusText;
+	}
+}
 
 /** thrown when telegram replies with `ok: false`. */
 export class TelegramError extends Error {
@@ -56,17 +79,25 @@ export type ErrorHook = (
 	params: Record<string, unknown> | undefined,
 ) => ErrorAction | undefined | Promise<ErrorAction | undefined>;
 
+/** per-call options — currently just cancellation. */
+export interface CallOptions {
+	/** abort the underlying fetch (e.g. `Bot.stop()` cancels the long poll with this). */
+	signal?: AbortSignal;
+}
+
 /**
- * the API client. known methods are typed; everything else goes through `call`
- * (the puregram passthrough — a new Bot API method works before its types ship).
+ * the API client. every Bot API method is fully typed via the code-generated
+ * {@link BotApiMethods} (the proxy materialises them at runtime); `call` stays as
+ * the untyped passthrough (the puregram idea — a brand-new Bot API method, or
+ * params built dynamically as plain records, work before/without types).
  * `before` / `after` / `onError` are the extension points plugins hang off of.
  */
-export interface Api {
-	call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
-	getMe(): Promise<User>;
-	getUpdates(params?: Record<string, unknown>): Promise<Update[]>;
-	sendMessage(params: Record<string, unknown>): Promise<Message>;
-	answerCallbackQuery(params: Record<string, unknown>): Promise<boolean>;
+export interface Api extends BotApiMethods {
+	call<T = unknown>(
+		method: string,
+		params?: Record<string, unknown>,
+		options?: CallOptions,
+	): Promise<T>;
 	/** build the download URL for a `file_path` from `getFile`. contains the bot token — don't log it. */
 	fileUrl(filePath: string): string;
 	/** register a hook that runs before every request; may rewrite params. */
@@ -151,6 +182,8 @@ export async function encodeRequest(
 ): Promise<EncodedRequest> {
 	if (!params) return { body: undefined, contentType: "application/json" };
 
+	// shallow-copy so resolving thenables below never mutates the caller's object
+	params = { ...params };
 	await resolveThenables(params);
 
 	// ponytail: media is only handled at the top level. media nested inside arrays
@@ -213,16 +246,29 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	const afterHooks: AfterHook[] = [];
 	const errorHooks: ErrorHook[] = [];
 
-	const rawCall = async <T>(method: string, params?: Record<string, unknown>): Promise<T> => {
+	const rawCall = async <T>(
+		method: string,
+		params?: Record<string, unknown>,
+		callOptions?: CallOptions,
+	): Promise<T> => {
 		const { body, contentType } = await encodeRequest(params, options.readFile);
 		const res = await fetch(`${apiRoot}/bot${token}/${method}`, {
 			method: "POST",
 			// for multipart, let fetch set the content-type (with its boundary).
 			headers: contentType ? { "content-type": contentType } : undefined,
 			body,
+			signal: callOptions?.signal,
 		});
 
-		const data = (await res.json()) as ApiResponse<T>;
+		let data: ApiResponse<T>;
+		try {
+			data = (await res.json()) as ApiResponse<T>;
+		} catch {
+			// a proxy/self-hosted server answered with something that isn't the JSON
+			// envelope (e.g. an HTML 502) — surface the method + status, not a bare SyntaxError
+			throw new HttpError(method, res.status, res.statusText);
+		}
+
 		if (!data.ok)
 			throw new TelegramError(method, data.error_code, data.description, data.parameters);
 
@@ -232,7 +278,12 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	const call = async <T = unknown>(
 		method: string,
 		params?: Record<string, unknown>,
+		callOptions?: CallOptions,
 	): Promise<T> => {
+		// split `format`/`fmt` results into text + entities wherever the schema allows
+		// them, so every method — not just the ctx helpers — accepts formatted values.
+		params = applyFormatFields(method, params);
+
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
 		// attempts). with no hook requesting a retry it throws on the first failure.
 		for (let attempt = 1; ; attempt++) {
@@ -243,7 +294,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			}
 
 			try {
-				let result = await rawCall<T>(method, p);
+				let result = await rawCall<T>(method, p, callOptions);
 
 				for (const hook of afterHooks) {
 					const next = await hook(method, p, result);
@@ -252,6 +303,9 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 
 				return result;
 			} catch (error) {
+				// a deliberate abort is a cancellation, not a failure — never offer it for retry
+				if (callOptions?.signal?.aborted) throw error;
+
 				let retry: ErrorAction | undefined;
 
 				for (const hook of errorHooks) {
@@ -285,7 +339,11 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	};
 
 	const api = new Proxy(registrar, {
-		get(obj, prop: string) {
+		get(obj, prop) {
+			// never materialise a fake Bot API method for `then` (or the promise machinery
+			// would treat the api object as a thenable — `await api` fired a real request)
+			// or for symbols (inspect/iterator probes; they can't be part of a URL anyway).
+			if (typeof prop === "symbol" || prop === "then") return Reflect.get(obj, prop);
 			if (prop in obj) return obj[prop];
 
 			// lazily materialise `api.<method>(params)` → call(method, params).

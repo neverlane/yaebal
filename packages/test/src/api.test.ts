@@ -47,7 +47,7 @@ test("mockApi auto-increments message_id across send* calls", async () => {
 test("mockApi results: static override replaces the built-in default", async () => {
 	const { api } = mockApi({ results: { sendMessage: { message_id: 99 } } });
 
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 99 });
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 99 });
 });
 
 test("mockApi results: an Error value makes the call throw", async () => {
@@ -55,7 +55,7 @@ test("mockApi results: an Error value makes the call throw", async () => {
 		results: { sendMessage: new TelegramError("sendMessage", 400, "Bad Request") },
 	});
 
-	await assert.rejects(api.sendMessage({ chat_id: 1 }), TelegramError);
+	await assert.rejects(api.sendMessage({ chat_id: 1, text: "hi" }), TelegramError);
 });
 
 test("mockApi results: a function sees params and a running attempt count", async () => {
@@ -77,14 +77,14 @@ test("mockApi results: a function sees params and a running attempt count", asyn
 test("onApi sets a permanent override; reset() clears calls and counters but keeps it", async () => {
 	const { api, calls, onApi, reset } = mockApi();
 
-	await api.sendMessage({ chat_id: 1 });
+	await api.sendMessage({ chat_id: 1, text: "hi" });
 	onApi("sendMessage", { message_id: 42 });
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 42 });
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 42 });
 	assert.equal(calls.length, 2);
 
 	reset();
 	assert.equal(calls.length, 0);
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 42 });
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 42 });
 });
 
 test("onApi with { times } is one-shot, then falls back to the previous permanent reply", async () => {
@@ -92,8 +92,8 @@ test("onApi with { times } is one-shot, then falls back to the previous permanen
 
 	onApi("sendMessage", apiError(429, "Too Many Requests"), { times: 1 });
 
-	await assert.rejects(api.sendMessage({ chat_id: 1 }), TestApiError);
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 1 });
+	await assert.rejects(api.sendMessage({ chat_id: 1, text: "hi" }), TestApiError);
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 1 });
 });
 
 test("onApi { times: 2 } is consumed over exactly two calls", async () => {
@@ -112,7 +112,7 @@ test("offApi drops a method's override, or every override with no argument", asy
 
 	onApi("sendMessage", { message_id: 99 });
 	offApi("sendMessage");
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 1 });
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 1 });
 
 	onApi("getMe", { id: 7, is_bot: true, first_name: "x" });
 	offApi();
@@ -125,7 +125,7 @@ test("apiError() produces a sentinel that throws a TestApiError carrying paramet
 
 	const { api } = mockApi({ results: { sendMessage: sentinel } });
 
-	await assert.rejects(api.sendMessage({ chat_id: 1 }), (error: unknown) => {
+	await assert.rejects(api.sendMessage({ chat_id: 1, text: "hi" }), (error: unknown) => {
 		assert.ok(error instanceof TestApiError);
 		assert.ok(error instanceof TelegramError);
 		assert.equal(error.code, 429);
@@ -138,7 +138,7 @@ test("strictApi throws for methods with no builtin default and no override", asy
 	const { api } = mockApi({ strictApi: true });
 
 	await assert.rejects(api.call("getChatMember"), /no stub for "getChatMember"/);
-	assert.deepEqual(await api.sendMessage({ chat_id: 1 }), { message_id: 1 });
+	assert.deepEqual(await api.sendMessage({ chat_id: 1, text: "hi" }), { message_id: 1 });
 });
 
 test("mockApi.lastCall and callsTo filter recorded calls", async () => {
@@ -160,7 +160,7 @@ test("mockApi hooks actually run: before rewrites params, after rewrites result"
 	api.before((_method, params) => ({ ...params, injected: true }));
 	api.after((_method, _params, result) => ({ ...(result as object), tagged: true }));
 
-	const result = await api.sendMessage({ chat_id: 1 });
+	const result = await api.sendMessage({ chat_id: 1, text: "hi" });
 
 	assert.deepEqual(result, { message_id: 1, tagged: true });
 });
@@ -171,7 +171,11 @@ test("reply_markup builder instances are normalized to plain JSON on recorded ca
 	await api.sendMessage({
 		chat_id: 1,
 		text: "hi",
-		reply_markup: { toJSON: () => ({ inline_keyboard: [[{ text: "ok", callback_data: "ok" }]] }) },
+		// a raw toJSON carrier (what the keyboard builders are at runtime) — cast past the
+		// typed param; the assertion below is exactly about this normalization
+		reply_markup: {
+			toJSON: () => ({ inline_keyboard: [[{ text: "ok", callback_data: "ok" }]] }),
+		} as never,
 	});
 
 	assert.deepEqual(calls[0]?.params?.reply_markup, {

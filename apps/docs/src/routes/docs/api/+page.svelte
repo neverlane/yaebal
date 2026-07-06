@@ -4,16 +4,14 @@
 
 	const slug = (s: string) => s.toLowerCase().replace(/\s+/g, "-");
 
-	const example = `import type { SendMessageParams, Message } from "@yaebal/types";
-
-// every method: full params + return type, cross-linked to its own reference page
-await bot.api.call<Message>("sendMessage", {
-  chat_id: 123456789,
-  text: "hello!",
-} satisfies SendMessageParams);
-
-// a growing subset also gets a direct typed shortcut on \`Api\`:
+	const example = `// every method is a fully typed call on \`Api\` (params + return type,
+// cross-linked to its own reference page) — the client materialises them at runtime:
 await bot.api.sendMessage({ chat_id: 123456789, text: "hello!" });
+
+// the untyped passthrough still exists — for brand-new methods the types
+// haven't shipped for, or params built dynamically as plain records:
+import type { Message } from "@yaebal/types";
+await bot.api.call<Message>("sendMessage", { chat_id: 123456789, text: "hello!" });
 
 // ...and/or a context shortcut, wired by @yaebal/contexts:
 bot.on("message", (ctx) => ctx.send("hello!"));`;
@@ -35,8 +33,9 @@ bot.on("message", (ctx) => ctx.send("hello!"));`;
 
 <h2>calling a method</h2>
 <p>
-	three ways a method can end up typed, from most to least common — every method page below shows
-	whichever apply:
+	every method is typed directly on <code>Api</code> (via the generated
+	<code>BotApiMethods</code>); <code>call</code> stays as the untyped passthrough, and many
+	methods also get a context shortcut:
 </p>
 <Code code={example} title="bot.ts" />
 

@@ -668,3 +668,59 @@ test("sugar: moderation defaults the target to the sender", () => {
 	} as never);
 	assert.throws(() => noFrom.ban(), /no target/);
 });
+
+test("sendGift fills only user_id; an explicit chat_id suppresses the sender fill", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: {
+			message_id: 5,
+			date: 0,
+			chat: { id: 42, type: "private" },
+			from: { id: 7, is_bot: false, first_name: "u" },
+		},
+	} as never);
+
+	// default: gift the sender — user_id only, never both ids (Telegram wants exactly one)
+	ctx.sendGift({ gift_id: "g1" });
+	assert.deepEqual(calls[0], { m: "sendGift", p: { user_id: 7, gift_id: "g1" } });
+
+	// explicit chat target: the auto user_id fill backs off
+	calls.length = 0;
+	ctx.sendGift({ gift_id: "g1", chat_id: -100 });
+	assert.deepEqual(calls[0], { m: "sendGift", p: { gift_id: "g1", chat_id: -100 } });
+});
+
+test("generated user_id fills fail loud without a sender, and accept an explicit override", () => {
+	const { api, calls } = recorder();
+	const noFrom = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 5, date: 0, chat: { id: -1, type: "supergroup" } },
+	} as never);
+
+	// channel-style message without `from`: clear error instead of a silent 400
+	assert.throws(() => noFrom.banChatMember({}), /banChatMember\(\): cannot fill `user_id`/);
+
+	// the id stays passable — Omit<> no longer swallows it
+	noFrom.banChatMember({ user_id: 99 });
+	assert.deepEqual(calls[0], { m: "banChatMember", p: { chat_id: -1, user_id: 99 } });
+});
+
+test("callback send: requiredId guards chat_id when the message is gone, explicit chat_id works", () => {
+	const { api, calls } = recorder();
+	const noMessage = new CallbackQueryContext(api, {
+		update_id: 1,
+		callback_query: {
+			id: "q1",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			chat_instance: "ci",
+			data: "d",
+		},
+	} as never);
+
+	// a very old callback carries no message — fail loud, not `chat_id: undefined`
+	assert.throws(() => noMessage.send({ text: "hi" }), /send\(\): cannot fill `chat_id`/);
+
+	noMessage.send({ text: "hi", chat_id: 42 });
+	assert.deepEqual(calls[0], { m: "sendMessage", p: { text: "hi", chat_id: 42 } });
+});

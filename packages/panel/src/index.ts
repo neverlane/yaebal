@@ -500,7 +500,7 @@ export function recorder(store: PanelStore): Plugin<Context, Record<never, never
  * `@yaebal/core` `Api`. without them, media routes answer `501`.
  */
 export interface PanelApi {
-	sendMessage(params: Record<string, unknown>): Promise<unknown>;
+	sendMessage(params: { chat_id: number | string; text: string }): Promise<unknown>;
 	call?<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
 	fileUrl?(filePath: string): string;
 }
@@ -894,7 +894,10 @@ export function panelHandler(
 				return finish(json({ error: "text required" }, 400));
 			}
 
-			const params: Record<string, unknown> = { chat_id: chatId, text: body.text };
+			const params: { chat_id: number | string; text: string } & Record<string, unknown> = {
+				chat_id: chatId,
+				text: body.text,
+			};
 			for (const field of SEND_PASSTHROUGH) {
 				if (body[field] !== undefined) params[field] = body[field];
 			}

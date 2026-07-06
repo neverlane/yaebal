@@ -1,13 +1,14 @@
 import type { Update } from "./telegram-types.js";
 
 /** telegram updates are tiny; reject anything wildly larger to avoid memory abuse. */
-const MAX_BODY = 1 << 20; // 1 MiB
+export const MAX_BODY = 1 << 20; // 1 MiB
 
 /**
  * constant-time string compare so the secret-token check can't be timed.
  * pure js (no node:crypto / Buffer) so it runs on node, bun, deno and edge/web.
+ * shared with the node webhook handler; not part of the public index.
  */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
 	if (a.length !== b.length) return false;
 	let diff = 0;
 

@@ -200,3 +200,111 @@ test("derive scoped: fn receives the context for async enrichment", async () => 
 	await run(composer, msgCtx);
 	assert.equal((msgCtx as unknown as { textLen?: number }).textLen, 5);
 });
+
+test("filter query: :text and :caption are distinct predicates", async () => {
+	const { matchQuery } = await import("./composer.js");
+
+	const captionOnly = makeCtx({
+		update_id: 3,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			caption: "pic",
+		},
+	} as Update);
+	const textOnly = makeMessageCtx("hi");
+
+	assert.equal(matchQuery(captionOnly, "message:caption"), true);
+	assert.equal(matchQuery(captionOnly, "message:text"), false); // captions are not text
+	assert.equal(matchQuery(textOnly, "message:text"), true);
+	assert.equal(matchQuery(textOnly, "message:caption"), false);
+});
+
+test("command: skips edited messages and captions, matches fresh text", async () => {
+	const hits: string[] = [];
+	const composer = new Composer().command("start", (ctx) => {
+		hits.push((ctx as Context & { command: string }).command);
+	});
+
+	await run(composer, makeMessageCtx("/start now"));
+	assert.deepEqual(hits, ["start"]);
+
+	// an edited `/start` must not re-fire the handler
+	hits.length = 0;
+	await run(
+		composer,
+		makeCtx({
+			update_id: 4,
+			edited_message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: 1, type: "private" as const },
+				text: "/start now",
+			},
+		} as Update),
+	);
+	assert.deepEqual(hits, []);
+
+	// a `/start` caption is not a command
+	await run(
+		composer,
+		makeCtx({
+			update_id: 5,
+			message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: 1, type: "private" as const },
+				caption: "/start now",
+			},
+		} as Update),
+	);
+	assert.deepEqual(hits, []);
+});
+
+test("command: /cmd@botname is checked against ctx.me when known", async () => {
+	const me = { id: 1, is_bot: true, first_name: "b", username: "MyBot" };
+	const withMe = (text: string) =>
+		new Context({
+			api: stubApi,
+			updateType: "message",
+			me: me as never,
+			update: {
+				update_id: 6,
+				message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text },
+			} as never,
+		});
+
+	let hits = 0;
+	const composer = new Composer().command("start", () => {
+		hits++;
+	});
+
+	await run(composer, withMe("/start@mybot")); // case-insensitive match
+	assert.equal(hits, 1);
+
+	await run(composer, withMe("/start@other_bot")); // addressed to someone else
+	assert.equal(hits, 1);
+
+	// without getMe info (webhook mode) a mention is accepted, as before
+	await run(composer, makeMessageCtx("/start@whoever"));
+	assert.equal(hits, 2);
+});
+
+test("hears: a callback update never triggers text handlers, even with a grafted message", async () => {
+	let fired = false;
+	const composer = new Composer().hears(/hello/, () => {
+		fired = true;
+	});
+
+	const ctx = makeCallbackCtx();
+	// simulate the rich context factory grafting the button's message onto the ctx
+	Object.defineProperty(ctx, "message", {
+		value: { message_id: 9, date: 0, chat: { id: 1, type: "private" }, text: "hello world" },
+		enumerable: true,
+		configurable: true,
+	});
+
+	await run(composer, ctx);
+	assert.equal(fired, false);
+});

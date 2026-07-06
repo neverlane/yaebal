@@ -1,4 +1,4 @@
-import type { Context } from "./context.js";
+import { type Context, messageOf } from "./context.js";
 import type { CallbackQuery, MessageEntity, UpdateName } from "./telegram-types.js";
 
 export type NextFn = () => Promise<void>;
@@ -65,21 +65,32 @@ export function compose<C>(middlewares: Middleware<C>[]): (ctx: C, next?: NextFn
 	};
 }
 
+// field checks read the raw update (via messageOf), never ctx getters — enrichment
+// (e.g. the rich contexts grafting the button's message onto a callback ctx) must not
+// change what a filter query matches.
 function checkField(ctx: Context, field: string): boolean {
+	const msg = messageOf(ctx.update);
+
 	switch (field) {
 		case "text":
+			return typeof msg?.text === "string" && msg.text.length > 0;
 		case "caption":
-			return typeof ctx.text === "string" && ctx.text.length > 0;
+			return typeof msg?.caption === "string" && msg.caption.length > 0;
 		case "data":
-			return Boolean(ctx.callbackQuery?.data);
+			return Boolean(ctx.update.callback_query?.data);
 		case "entities":
-			return Boolean(ctx.message?.entities?.length);
-		default: {
-			const msg = ctx.message as Record<string, unknown> | undefined;
-			return Boolean(msg?.[field]);
-		}
+			return Boolean(msg?.entities?.length);
+		default:
+			return Boolean((msg as Record<string, unknown> | undefined)?.[field]);
 	}
 }
+
+/** update types whose text can carry a fresh (non-edited) command. */
+const COMMAND_UPDATES: ReadonlySet<string> = new Set([
+	"message",
+	"channel_post",
+	"business_message",
+]);
 
 export function matchQuery(ctx: Context, query: string): boolean {
 	const [head, ...rest] = query.split(":");
@@ -119,17 +130,27 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/** handle `/<name>` commands. Strips a trailing `@botname` and parses args. */
+	/**
+	 * handle `/<name>` commands. matches the text of fresh messages only (an edited
+	 * `/cmd` doesn't re-fire), strips a trailing `@botname` — and when the bot's
+	 * username is known (`ctx.me`, filled by long polling) a mismatching mention
+	 * (`/cmd@other_bot`) is skipped. parses args.
+	 */
 	command(name: string, ...handlers: Middleware<C & { command: string; args: string[] }>[]): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
 
 		this.middlewares.push((ctx, next) => {
-			const text = ctx.text;
+			if (!COMMAND_UPDATES.has(ctx.updateType)) return next();
+
+			const text = messageOf(ctx.update)?.text;
 			if (text === undefined || !text.startsWith("/")) return next();
 
-			const [head, ...args] = text.slice(1).split(/\s+/);
-			const base = head?.split("@")[0];
+			const [head = "", ...args] = text.slice(1).split(/\s+/);
+			const [base, mention] = head.split("@");
 			if (base !== name) return next();
+
+			const username = ctx.me?.username;
+			if (mention && username && mention.toLowerCase() !== username.toLowerCase()) return next();
 
 			Object.assign(ctx as object, { command: base, args });
 			return handler(ctx, next);
@@ -146,7 +167,10 @@ export class Composer<C extends Context = Context> {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
 
 		this.middlewares.push((ctx, next) => {
-			const text = ctx.text;
+			// the update's own message only — a callback query (whose rich context carries
+			// the button's message) must not trigger text handlers
+			const msg = messageOf(ctx.update);
+			const text = msg?.text ?? msg?.caption;
 			if (text === undefined) return next();
 
 			if (typeof trigger === "string") {
@@ -176,7 +200,7 @@ export class Composer<C extends Context = Context> {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
 
 		this.middlewares.push((ctx, next) => {
-			const data = ctx.callbackQuery?.data;
+			const data = ctx.update.callback_query?.data;
 
 			if (data === undefined) return next();
 
@@ -197,8 +221,15 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
+	/**
+	 * narrowing form: a type-guard predicate types everything registered after it
+	 * as `C2` — the type flows down the chain, like `derive`/`filter`.
+	 */
+	guard<C2 extends C>(predicate: (ctx: C) => ctx is C2): Composer<C2>;
 	/** continue only if the predicate holds. */
-	guard(predicate: (ctx: C) => boolean | Promise<boolean>): this {
+	guard(predicate: (ctx: C) => boolean | Promise<boolean>): this;
+	// biome-ignore lint/suspicious/noExplicitAny: overload implementation
+	guard(predicate: (ctx: C) => boolean | Promise<boolean>): any {
 		this.middlewares.push(async (ctx, next) => {
 			if (await predicate(ctx)) await next();
 		});
@@ -225,7 +256,18 @@ export class Composer<C extends Context = Context> {
 	install<Add extends object>(
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
 	): Composer<C & Add> {
-		return plugin(this);
+		const out = plugin(this);
+
+		// plugins chain on the composer they receive (derive/decorate/use all return it);
+		// a different object means its middleware landed somewhere detached — fail loud
+		// instead of silently dropping it.
+		if ((out as unknown) !== this) {
+			throw new Error(
+				"install(): the plugin must chain on (and return) the composer it was given — returning a different composer would silently detach its middleware",
+			);
+		}
+
+		return out;
 	}
 
 	/** async, per-request context enrichment. adds `D` to the context type. */

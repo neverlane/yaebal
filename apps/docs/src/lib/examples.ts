@@ -94,7 +94,7 @@ bot.start();`,
 	},
 	"fmt-html": {
 		title: "safe html formatting",
-		code: `import { createBot, html } from "yaebal";
+		code: `import { createBot, html, md } from "yaebal";
 
 const bot = createBot(process.env.BOT_TOKEN!);
 
@@ -102,8 +102,12 @@ bot.command("start", (ctx) =>
   ctx.reply(html\`<b>hello</b>, \${ctx.from?.first_name ?? "friend"}\n<code>no parse_mode needed</code>\`),
 );
 
+bot.command("md", (ctx) =>
+  ctx.reply(md\`**bold**, *italic*, __underline__ and ~~strike~~\n> a quoted line\`),
+);
+
 bot.start();`,
-		steps: [{ user: "/start" }],
+		steps: [{ user: "/start" }, { user: "/md" }],
 	},
 	"reply-keyboard": {
 		title: "reply keyboard",

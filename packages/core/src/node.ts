@@ -1,16 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Update } from "./telegram-types.js";
-import type { UpdateSink, WebhookOptions } from "./webhook.js";
-
-const MAX_BODY = 1 << 20; // 1 MiB
-
-function safeEqual(a: string, b: string): boolean {
-	if (a.length !== b.length) return false;
-	let diff = 0;
-
-	for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-	return diff === 0;
-}
+import { MAX_BODY, safeEqual, type UpdateSink, type WebhookOptions } from "./webhook.js";
 
 /** a node `http` webhook handler — `http.createServer(nodeWebhookCallback(bot))`. */
 export function nodeWebhookCallback(

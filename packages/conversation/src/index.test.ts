@@ -11,8 +11,8 @@ const entry = <C extends Context>(c: Composer<C>) =>
 function fakeApi() {
 	const sent: string[] = [];
 	const api = {
-		sendMessage(p: Record<string, unknown>) {
-			sent.push(String(p.text));
+		call(method: string, p: Record<string, unknown>) {
+			if (method === "sendMessage") sent.push(String(p.text));
 			return Promise.resolve({ message_id: 1 });
 		},
 	} as never;

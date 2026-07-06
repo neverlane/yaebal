@@ -1,4 +1,4 @@
-import { Bot, bold, code, format } from "@yaebal/core";
+import { Bot, blockquote, bold, code, format, italic, join } from "@yaebal/core";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -11,10 +11,19 @@ if (!token) {
 const bot = new Bot(token, { allowedUpdates: ["message"] })
 	.derive(() => ({ receivedAt: new Date() }))
 	.command("start", (ctx) =>
+		// helpers nest (bold(italic(…))) and join() keeps entities where [].join() would drop them
 		ctx.send(
-			format`${bold("core echo")} — a bot on bare @yaebal/core.
-send any text and it comes back; try ${code("/me")} and ${code("/react")}.`,
+			format`${bold("core echo")} — a bot on ${bold(italic("bare"))} @yaebal/core.
+send any text and it comes back; try ${join(["/me", "/react", "/quote"], (cmd) => code(cmd))}.`,
 		),
+	)
+	.command("quote", (ctx) =>
+		// a format result is accepted by every api method — the client splits it into
+		// text + entities anywhere the schema allows formatted text, nested params included
+		ctx.api.sendMessage({
+			chat_id: ctx.chat!.id,
+			text: format`${blockquote("sent through raw api.sendMessage — still no parse_mode")}`,
+		}),
 	)
 	.command("me", async (ctx) => {
 		const me = await ctx.api.getMe();

@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createApi, encodeRequest, TelegramError } from "./api.js";
+import type { InputFile } from "@yaebal/types";
+import { createApi, encodeRequest, HttpError, TelegramError } from "./api.js";
 import { Bot, type BotPlugin } from "./bot.js";
+import { Composer } from "./composer.js";
 import type { Context } from "./context.js";
+import { bold, format } from "./format.js";
 import { isMediaSource, media } from "./media.js";
 import { webhookCallback } from "./webhook.js";
 
@@ -259,6 +262,246 @@ test("Api before hooks run for every retry attempt", async () => {
 
 		assert.equal(await api.call("sendMessage", { chat_id: 1 }), true);
 		assert.equal(beforeRuns, 2);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("api proxy is not thenable and ignores symbols — `await api` is safe", async () => {
+	const api = createApi("123:abc");
+
+	assert.equal((api as unknown as { then?: unknown }).then, undefined);
+	assert.equal((api as unknown as Record<symbol, unknown>)[Symbol.iterator], undefined);
+
+	// adopting the api object in the promise machinery must not fire a request or hang
+	const resolved = await Promise.resolve(api);
+	assert.equal(resolved, api);
+});
+
+test("non-JSON reply (proxy 502 page) surfaces an HttpError with method + status", async () => {
+	const previousFetch = globalThis.fetch;
+	globalThis.fetch = async () =>
+		new Response("<html>bad gateway</html>", { status: 502, statusText: "Bad Gateway" });
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+
+		await assert.rejects(api.call("sendMessage", { chat_id: 1 }), (error: unknown) => {
+			assert.ok(error instanceof HttpError);
+			assert.equal(error.method, "sendMessage");
+			assert.equal(error.status, 502);
+			return true;
+		});
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("encodeRequest does not mutate the caller's params", async () => {
+	const pending = Promise.resolve("ok");
+	const params: Record<string, unknown> = { chat_id: 1, pending };
+
+	const r = await encodeRequest(params);
+
+	assert.equal(params.pending, pending); // caller's object untouched
+	assert.deepEqual(JSON.parse(r.body as string), { chat_id: 1, pending: "ok" });
+});
+
+test("stop() aborts the in-flight long poll so start() resolves promptly", async () => {
+	const previousFetch = globalThis.fetch;
+
+	globalThis.fetch = (async (url: unknown, init?: { signal?: AbortSignal }) => {
+		if (String(url).endsWith("/getMe")) {
+			return new Response(
+				JSON.stringify({
+					ok: true,
+					result: { id: 1, is_bot: true, first_name: "b", username: "mybot" },
+				}),
+			);
+		}
+
+		// getUpdates long poll: hang until the signal aborts
+		return new Promise((_resolve, reject) => {
+			init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+		});
+	}) as typeof fetch;
+
+	try {
+		const bot = new Bot("123:abc");
+		const started = bot.start();
+
+		await new Promise((r) => setTimeout(r, 50)); // let getMe + the first poll begin
+
+		const t0 = Date.now();
+		await bot.stop();
+		await started;
+		assert.ok(Date.now() - t0 < 1000, "start() must not wait out the 30s poll timeout");
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("Context.send/reply accept the params-object form without losing fields", async () => {
+	const calls: unknown[] = [];
+	const api = {
+		call: (_method: string, p: unknown) => {
+			calls.push(p);
+			return Promise.resolve({});
+		},
+	} as never;
+
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api,
+		updateType: "message",
+		update: {
+			update_id: 1,
+			message: { message_id: 5, date: 0, chat: { id: 42, type: "private" }, text: "hi" },
+		} as never,
+	});
+
+	await ctx.send({ text: "yo", reply_markup: { inline_keyboard: [] } });
+	assert.deepEqual(calls[0], {
+		chat_id: 42,
+		text: "yo",
+		reply_markup: { inline_keyboard: [] },
+	});
+
+	// reply object form: default reply_parameters stays unless overridden
+	calls.length = 0;
+	await ctx.reply({ text: "yo", reply_markup: { inline_keyboard: [] } });
+	assert.deepEqual(calls[0], {
+		chat_id: 42,
+		reply_parameters: { message_id: 5 },
+		text: "yo",
+		reply_markup: { inline_keyboard: [] },
+	});
+
+	// a pure format result is still the text form, not params
+	const { format, bold } = await import("./format.js");
+	calls.length = 0;
+	await ctx.send(format`hey ${bold("you")}`);
+	assert.deepEqual(calls[0], {
+		chat_id: 42,
+		text: "hey you",
+		entities: [{ type: "bold", offset: 4, length: 3 }],
+	});
+});
+
+test("typed api.* is wired (BotApiMethods) and format results flow through", async () => {
+	const previousFetch = globalThis.fetch;
+	let sent: Record<string, unknown> | undefined;
+
+	globalThis.fetch = (async (_url: unknown, init?: { body?: string }) => {
+		sent = JSON.parse(init?.body ?? "{}");
+		return new Response(JSON.stringify({ ok: true, result: { message_id: 1 } }));
+	}) as typeof fetch;
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+
+		// fully typed params + return (Message), format result accepted where the schema allows it
+		const msg = await api.sendMessage({ chat_id: 1, text: format`hey ${bold("you")}` });
+		assert.equal(msg.message_id, 1);
+		assert.equal(sent?.text, "hey you"); // applyFormatFields split it on the wire
+		assert.deepEqual(sent?.entities, [{ type: "bold", offset: 4, length: 3 }]);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("MediaSource satisfies the generated InputFile type", () => {
+	// compile-time proof: the branded media builders flow into typed InputFile params
+	const url: InputFile = media.url("https://yaebal.mom/y.png");
+	const buf: InputFile = media.buffer(new Uint8Array([1]), "a.bin");
+
+	// @ts-expect-error junk objects no longer typecheck as InputFile
+	const junk: InputFile = new Date();
+
+	void url;
+	void buf;
+	void junk;
+});
+
+test("guard: type-guard predicate narrows the chain, boolean predicate still gates", async () => {
+	interface Tagged {
+		tag: number;
+	}
+
+	let seen: number | undefined;
+	const composer = new Composer()
+		.guard((ctx): ctx is Context & Tagged => {
+			Object.assign(ctx as object, { tag: 7 });
+			return true;
+		})
+		.use((ctx, next) => {
+			seen = ctx.tag; // typed as number — the narrowing flows down the chain
+			return next();
+		});
+
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api: null as never,
+		updateType: "message",
+		update: {
+			update_id: 1,
+			message: { message_id: 1, date: 0, chat: { id: 1, type: "private" } },
+		} as never,
+	});
+
+	await (composer as unknown as Composer).toMiddleware()(ctx, async () => {});
+	assert.equal(seen, 7);
+});
+
+test("install rejects a plugin that returns a different composer (silent detach)", () => {
+	const composer = new Composer();
+	assert.throws(() => composer.install((() => new Composer()) as never), /must chain on/);
+
+	const bot = new Bot("123:abc");
+	assert.throws(() => bot.install((() => new Composer()) as never), /must chain on/);
+});
+
+test("onPollingError intercepts getUpdates failures and polling retries", async () => {
+	const previousFetch = globalThis.fetch;
+	let polls = 0;
+
+	globalThis.fetch = (async (url: unknown, init?: { signal?: AbortSignal }) => {
+		if (String(url).endsWith("/getMe")) {
+			return new Response(
+				JSON.stringify({
+					ok: true,
+					result: { id: 1, is_bot: true, first_name: "b", username: "mybot" },
+				}),
+			);
+		}
+
+		polls++;
+		if (polls === 1) throw new TypeError("boom"); // first poll: network failure
+
+		// later polls hang until aborted by stop()
+		return new Promise((_resolve, reject) => {
+			init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+		});
+	}) as typeof fetch;
+
+	try {
+		const errors: unknown[] = [];
+		const bot = new Bot("123:abc").onPollingError((error) => {
+			errors.push(error);
+		});
+
+		const started = bot.start();
+
+		// the failure surfaces via the handler almost immediately
+		for (let i = 0; i < 100 && errors.length === 0; i++) {
+			await new Promise((r) => setTimeout(r, 20));
+		}
+
+		assert.equal(errors.length, 1);
+		assert.match(String(errors[0]), /boom/);
+
+		await bot.stop();
+		await started; // resolves after the retry pause; polling never wedged
 	} finally {
 		globalThis.fetch = previousFetch;
 	}

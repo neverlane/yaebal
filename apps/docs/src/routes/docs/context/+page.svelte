@@ -41,12 +41,14 @@ bot.on("callback_query:data", (ctx) => {
   ctx.callbackQuery; // CallbackQuery, guaranteed present
 });`;
 
-	const match = `// matchQuery splits "message:text" into head + fields and checks each:
+	const match = `// matchQuery splits "message:text" into head + fields and checks each
+// (always against the raw update — enrichment can't change what matches):
 //   head  → must equal ctx.updateType
-//   text  → ctx.text is a non-empty string
-//   data  → ctx.callbackQuery?.data is set
-//   entities → ctx.message?.entities has length
-//   <other> → truthy on ctx.message[field] (e.g. photo, document, sticker)`;
+//   text  → the update's message.text is a non-empty string
+//   caption → the update's message.caption is a non-empty string (distinct from :text)
+//   data  → update.callback_query.data is set
+//   entities → the message's entities have length
+//   <other> → truthy on the message's [field] (e.g. photo, document, sticker)`;
 
 	const enrich = `bot
   .derive(async (ctx) => ({ user: await db.find(ctx.from!.id) })) // per-request

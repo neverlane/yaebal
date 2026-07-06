@@ -34,6 +34,16 @@ export const updateNames = [
 	"managed_bot",
 ] as const;
 
+/**
+ * a formatted text value — the `{ text, entities }` shape `format`/`fmt` produce.
+ * accepted wherever the schema pairs a text field with a `*_entities` sibling; the
+ * api client splits it into the two wire params before sending (see `formatFields`).
+ */
+export interface FormattedText {
+	text: string;
+	entities: MessageEntity[];
+}
+
 /** This object describes the types of gifts that can be gifted to a user or a chat. */
 export interface AcceptedGiftTypes {
 	/** *True*, if unlimited regular gifts are accepted */
@@ -1468,7 +1478,7 @@ export interface InlineQueryResultAudio {
 	/** Title */
 	title: string;
 	/** *Optional*. Caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1492,7 +1502,7 @@ export interface InlineQueryResultCachedAudio {
 	/** A valid file identifier for the audio file */
 	audio_file_id: string;
 	/** *Optional*. Caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1516,7 +1526,7 @@ export interface InlineQueryResultCachedDocument {
 	/** *Optional*. Short description of the result */
 	description?: string;
 	/** *Optional*. Caption of the document to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1538,7 +1548,7 @@ export interface InlineQueryResultCachedGif {
 	/** *Optional*. Title for the result */
 	title?: string;
 	/** *Optional*. Caption of the GIF file to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1562,7 +1572,7 @@ export interface InlineQueryResultCachedMpeg4Gif {
 	/** *Optional*. Title for the result */
 	title?: string;
 	/** *Optional*. Caption of the MPEG-4 file to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1588,7 +1598,7 @@ export interface InlineQueryResultCachedPhoto {
 	/** *Optional*. Short description of the result */
 	description?: string;
 	/** *Optional*. Caption of the photo to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1628,7 +1638,7 @@ export interface InlineQueryResultCachedVideo {
 	/** *Optional*. Short description of the result */
 	description?: string;
 	/** *Optional*. Caption of the video to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1652,7 +1662,7 @@ export interface InlineQueryResultCachedVoice {
 	/** Voice message title */
 	title: string;
 	/** *Optional*. Caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1698,7 +1708,7 @@ export interface InlineQueryResultDocument {
 	/** Title for the result */
 	title: string;
 	/** *Optional*. Caption of the document to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1754,7 +1764,7 @@ export interface InlineQueryResultGif {
 	/** *Optional*. Title for the result */
 	title?: string;
 	/** *Optional*. Caption of the GIF file to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1820,7 +1830,7 @@ export interface InlineQueryResultMpeg4Gif {
 	/** *Optional*. Title for the result */
 	title?: string;
 	/** *Optional*. Caption of the MPEG-4 file to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1852,7 +1862,7 @@ export interface InlineQueryResultPhoto {
 	/** *Optional*. Short description of the result */
 	description?: string;
 	/** *Optional*. Caption of the photo to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1914,7 +1924,7 @@ export interface InlineQueryResultVideo {
 	/** Title for the result */
 	title: string;
 	/** *Optional*. Caption of the video to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1946,7 +1956,7 @@ export interface InlineQueryResultVoice {
 	/** Recording title */
 	title: string;
 	/** *Optional*. Caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -1972,7 +1982,7 @@ export interface InlineQueryResultsButton {
 /** Describes a checklist to create. */
 export interface InputChecklist {
 	/** Title of the checklist; 1-255 characters after entities parsing */
-	title: string;
+	title: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the title. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the title, which can be specified instead of parse_mode. Currently, only *bold*, *italic*, *underline*, *strikethrough*, *spoiler*, *custom\_emoji*, and *date\_time* entities are allowed. */
@@ -1990,7 +2000,7 @@ export interface InputChecklistTask {
 	/** Unique identifier of the task; must be positive and unique among all task identifiers currently present in the checklist */
 	id: number;
 	/** Text of the task; 1-100 characters after entities parsing */
-	text: string;
+	text: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the text, which can be specified instead of parse_mode. Currently, only *bold*, *italic*, *underline*, *strikethrough*, *spoiler*, *custom\_emoji*, and *date\_time* entities are allowed. */
@@ -2010,7 +2020,11 @@ export interface InputContactMessageContent {
 }
 
 /** This object represents the contents of a file to be uploaded. Must be posted using multipart/form-data in the usual way that files are uploaded via the browser. */
-export type InputFile = Record<never, never>;
+export type InputFile =
+	| { kind: "path"; path: string }
+	| { kind: "url"; url: string }
+	| { kind: "buffer"; buffer: Uint8Array; filename?: string }
+	| { kind: "fileId"; fileId: string };
 
 /** Represents the [content](https://core.telegram.org/bots/api/#inputmessagecontent) of an invoice message to be sent as the result of an inline query. */
 export interface InputInvoiceMessageContent {
@@ -2084,7 +2098,7 @@ export interface InputMediaAnimation {
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	thumbnail?: string;
 	/** *Optional*. Caption of the animation to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the animation caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2110,7 +2124,7 @@ export interface InputMediaAudio {
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	thumbnail?: string;
 	/** *Optional*. Caption of the audio to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2132,7 +2146,7 @@ export interface InputMediaDocument {
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	thumbnail?: string;
 	/** *Optional*. Caption of the document to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2158,7 +2172,7 @@ export interface InputMediaLivePhoto {
 	/** The static photo to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass "attach://<file_attach_name>" to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
 	photo: string;
 	/** *Optional*. Caption of the live photo to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the live photo caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2188,7 +2202,7 @@ export interface InputMediaPhoto {
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass "attach://<file_attach_name>" to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: string;
 	/** *Optional*. Caption of the photo to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2244,7 +2258,7 @@ export interface InputMediaVideo {
 	/** *Optional*. Start timestamp for the video in the message */
 	start_timestamp?: number;
 	/** *Optional*. Caption of the video to be sent, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -2315,7 +2329,7 @@ export type InputPollMedia = InputMediaAnimation | InputMediaAudio | InputMediaD
 /** This object contains information about one answer option in a poll to be sent. */
 export interface InputPollOption {
 	/** Option text, 1-100 characters */
-	text: string;
+	text: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Currently, only custom emoji entities are allowed. */
 	text_parse_mode?: string;
 	/** *Optional*. A JSON-serialized list of special entities that appear in the poll option text. It can be specified instead of *text\_parse\_mode*. */
@@ -2408,7 +2422,7 @@ export interface InputStoryContentVideo {
 /** Represents the [content](https://core.telegram.org/bots/api/#inputmessagecontent) of a text message to be sent as the result of an inline query. */
 export interface InputTextMessageContent {
 	/** Text of the message to be sent, 1-4096 characters */
-	message_text: string;
+	message_text: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** *Optional*. List of special entities that appear in message text, which can be specified instead of *parse\_mode* */
@@ -3563,7 +3577,7 @@ export interface ReplyParameters {
 	/** *Optional*. Pass *True* if the message should be sent even if the specified message to be replied to is not found. Always *False* for replies in another chat or forum topic. Always *True* for messages sent on behalf of a business account. */
 	allow_sending_without_reply?: boolean;
 	/** *Optional*. Quoted part of the message to be replied to; 0-1024 characters after entities parsing. The quote must be an exact substring of the message to be replied to, including *bold*, *italic*, *underline*, *strikethrough*, *spoiler*, *custom\_emoji*, and *date\_time* entities. The message will fail to send if the quote isn't found in the original message. */
-	quote?: string;
+	quote?: string | FormattedText;
 	/** *Optional*. Mode for parsing entities in the quote. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	quote_parse_mode?: string;
 	/** *Optional*. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of *quote\_parse\_mode*. */
@@ -5098,7 +5112,7 @@ export interface CopyMessageParams {
 	/** New start timestamp for the copied video in the message */
 	video_start_timestamp?: number;
 	/** New caption for media, 0-1024 characters after entities parsing. If not specified, the original caption is kept. */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the new caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the new caption, which can be specified instead of *parse\_mode* */
@@ -5418,7 +5432,7 @@ export interface EditMessageCaptionParams {
 	/** Required if *chat\_id* and *message\_id* are not specified. Identifier of the inline message. */
 	inline_message_id?: string;
 	/** New caption of the message, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the message caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -5510,7 +5524,7 @@ export interface EditMessageTextParams {
 	/** Required if *chat\_id* and *message\_id* are not specified. Identifier of the inline message. */
 	inline_message_id?: string;
 	/** New text of the message, 1-4096 characters after entity parsing; required if *rich\_message* isn't specified */
-	text?: string;
+	text?: string | FormattedText;
 	/** Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in message text, which can be specified instead of *parse\_mode* */
@@ -5532,7 +5546,7 @@ export interface EditStoryParams {
 	/** Content of the story */
 	content: InputStoryContent;
 	/** Caption of the story, 0-2048 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the story caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -5873,7 +5887,7 @@ export interface GiftPremiumSubscriptionParams {
 	/** Number of Telegram Stars to pay for the Telegram Premium subscription; must be 1000 for 3 months, 1500 for 6 months, and 2500 for 12 months */
 	star_count: number;
 	/** Text that will be shown along with the service message about the subscription; 0-128 characters */
-	text?: string;
+	text?: string | FormattedText;
 	/** Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored. */
 	text_parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of *text\_parse\_mode*. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored. */
@@ -5916,7 +5930,7 @@ export interface PostStoryParams {
 	/** Period after which the story is moved to the archive, in seconds; must be one of `6 * 3600`, `12 * 3600`, `86400`, or `2 * 86400` */
 	active_period: number;
 	/** Caption of the story, 0-2048 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the story caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6127,7 +6141,7 @@ export interface SendAnimationParams {
 	/** Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	thumbnail?: InputFile | string;
 	/** Animation caption (may also be used when resending animation by *file\_id*), 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the animation caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6165,7 +6179,7 @@ export interface SendAudioParams {
 	/** Audio file to send. Pass a file_id as String to send an audio file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an audio file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	audio: InputFile | string;
 	/** Audio caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6311,7 +6325,7 @@ export interface SendDocumentParams {
 	/** Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass "attach://<file_attach_name>" if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	thumbnail?: InputFile | string;
 	/** Document caption (may also be used when resending documents by *file\_id*), 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6369,7 +6383,7 @@ export interface SendGiftParams {
 	/** Pass *True* to pay for the gift upgrade from the bot's balance, thereby making the upgrade free for the receiver */
 	pay_for_upgrade?: boolean;
 	/** Text that will be shown along with the gift; 0-128 characters */
-	text?: string;
+	text?: string | FormattedText;
 	/** Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored. */
 	text_parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of *text\_parse\_mode*. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, “custom_emoji”, and “date_time” are ignored. */
@@ -6457,7 +6471,7 @@ export interface SendLivePhotoParams {
 	/** The static photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
 	photo: InputFile | string;
 	/** Video caption (may also be used when resending videos by *file\_id*), 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6555,7 +6569,7 @@ export interface SendMessageParams {
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
 	/** Text of the message to be sent, 1-4096 characters after entities parsing */
-	text: string;
+	text: string | FormattedText;
 	/** Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in message text, which can be specified instead of *parse\_mode* */
@@ -6587,7 +6601,7 @@ export interface SendMessageDraftParams {
 	/** Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. */
 	draft_id: number;
 	/** Text of the message to be sent, 0-4096 characters after entities parsing. Pass an empty text to show a “Thinking…” placeholder. */
-	text?: string;
+	text?: string | FormattedText;
 	/** Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in message text, which can be specified instead of *parse\_mode* */
@@ -6611,7 +6625,7 @@ export interface SendPaidMediaParams {
 	/** Bot-defined paid media payload, 0-128 bytes. This will not be displayed to the user, use it for your internal processes. */
 	payload?: string;
 	/** Media caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the media caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6645,7 +6659,7 @@ export interface SendPhotoParams {
 	/** Photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a photo from the Internet, or upload a new photo using multipart/form-data. The photo must be at most 10 MB in size. The photo's width and height must not exceed 10000 in total. Width and height ratio must be at most 20. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	photo: InputFile | string;
 	/** Photo caption (may also be used when resending photos by *file\_id*), 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6679,7 +6693,7 @@ export interface SendPollParams {
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Poll question, 1-300 characters */
-	question: string;
+	question: string | FormattedText;
 	/** Mode for parsing entities in the question. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Currently, only custom emoji entities are allowed. */
 	question_parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the poll question. It can be specified instead of *question\_parse\_mode*. */
@@ -6707,7 +6721,7 @@ export interface SendPollParams {
 	/** A JSON-serialized list of monotonically increasing 0-based identifiers of the correct answer options, required for polls in quiz mode */
 	correct_option_ids?: number[];
 	/** Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing */
-	explanation?: string;
+	explanation?: string | FormattedText;
 	/** Mode for parsing entities in the explanation. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	explanation_parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the poll explanation. It can be specified instead of *explanation\_parse\_mode*. */
@@ -6721,7 +6735,7 @@ export interface SendPollParams {
 	/** Pass *True* if the poll needs to be immediately closed. This can be useful for poll preview. */
 	is_closed?: boolean;
 	/** Description of the poll to be sent, 0-1024 characters after entities parsing */
-	description?: string;
+	description?: string | FormattedText;
 	/** Mode for parsing entities in the poll description. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	description_parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the poll description, which can be specified instead of *description\_parse\_mode* */
@@ -6879,7 +6893,7 @@ export interface SendVideoParams {
 	/** Start timestamp for the video in the message */
 	start_timestamp?: number;
 	/** Video caption (may also be used when resending videos by *file\_id*), 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
@@ -6953,7 +6967,7 @@ export interface SendVoiceParams {
 	/** Audio file to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	voice: InputFile | string;
 	/** Voice message caption, 0-1024 characters after entities parsing */
-	caption?: string;
+	caption?: string | FormattedText;
 	/** Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */

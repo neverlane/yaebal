@@ -1,29 +1,55 @@
 import type { Api } from "./api.js";
-import type { FormatResult } from "./format.js";
-import type { MediaSource } from "./media.js";
+import { type FormatResult, isFormatResult } from "./format.js";
+import { isMediaSource, type MediaSource } from "./media.js";
 import type { CallbackQuery, Chat, Message, Update, UpdateName, User } from "./telegram-types.js";
 
 export interface ContextOptions {
 	api: Api;
 	update: Update;
 	updateType: UpdateName;
+	/** the bot's own account (from `getMe`), when known — long polling fills it in. */
+	me?: User;
 }
 
 type SendText = string | FormatResult;
+/** the object form of `send`/`reply` — full `sendMessage` params minus `chat_id`. */
+type SendParams = { text: string } & Record<string, unknown>;
+
+/**
+ * the message payload an update carries, straight from the raw update — unlike
+ * `ctx.message` this can't be shadowed by enrichment, so filter queries and
+ * `command`/`hears` route on what telegram actually sent.
+ */
+export function messageOf(update: Update): Message | undefined {
+	return (
+		update.message ??
+		update.edited_message ??
+		update.channel_post ??
+		update.edited_channel_post ??
+		update.business_message ??
+		update.edited_business_message
+	);
+}
 
 function resolveText(text: SendText): { text: string; entities?: FormatResult["entities"] } {
 	if (typeof text === "string") return { text };
 	return { text: text.text, entities: text.entities };
 }
 
-function isFormatResult(value: unknown): value is FormatResult {
-	return (
-		typeof value === "object" &&
-		value !== null &&
-		"text" in value &&
-		"entities" in value &&
-		Array.isArray((value as FormatResult).entities)
-	);
+/**
+ * exactly a `format` result — `{ text, entities }` and nothing else. anything with
+ * extra keys is the params-object form of `send`/`reply`, not a formatted text.
+ */
+function isPureFormatResult(value: object): value is FormatResult {
+	return isFormatResult(value) && Object.keys(value).every((k) => k === "text" || k === "entities");
+}
+
+/** if `params.text` is a `FormatResult`, split it into `text`/`entities` (mirrors {@link resolveCaption}). */
+function resolveTextParam(params: Record<string, unknown>): Record<string, unknown> {
+	const { text } = params;
+	if (!isFormatResult(text)) return params;
+
+	return { ...params, text: text.text, entities: params.entities ?? text.entities };
 }
 
 /** if `extra.caption` is a `FormatResult`, split it into `caption`/`caption_entities`. */
@@ -43,21 +69,18 @@ export class Context {
 	readonly api: Api;
 	readonly update: Update;
 	readonly updateType: UpdateName;
+	/** the bot's own account (from `getMe`), when known — e.g. `command` checks `/cmd@botname` against it. */
+	readonly me?: User;
 
 	constructor(options: ContextOptions) {
 		this.api = options.api;
 		this.update = options.update;
 		this.updateType = options.updateType;
+		this.me = options.me;
 	}
 
 	get message(): Message | undefined {
-		return (
-			this.update.message ??
-			this.update.edited_message ??
-			this.update.channel_post ??
-			this.update.business_message ??
-			this.update.edited_business_message
-		);
+		return messageOf(this.update);
 	}
 
 	get callbackQuery(): CallbackQuery | undefined {
@@ -123,13 +146,28 @@ export class Context {
 	}
 
 	/** send a message to the current chat. accepts a plain string or a `format` result. */
-	send(text: SendText, extra: Record<string, unknown> = {}): Promise<Message> {
+	send(text: SendText, extra?: Record<string, unknown>): Promise<Message>;
+	/** object form: full `sendMessage` params (minus `chat_id`) in one object. */
+	send(params: SendParams): Promise<Message>;
+	send(text: SendText | SendParams, extra: Record<string, unknown> = {}): Promise<Message> {
 		const chatId = this.chat?.id;
 		if (chatId === undefined) {
 			return Promise.reject(new Error("send(): no chat in this update"));
 		}
 
-		return this.api.sendMessage({
+		// params-object form — also what the rich per-update contexts type via their
+		// generated overloads, so both forms must hit the same runtime. defaults from
+		// `extra` (e.g. reply()'s reply_parameters) lose to explicit params.
+		if (typeof text !== "string" && !isPureFormatResult(text)) {
+			return this.api.call<Message>("sendMessage", {
+				chat_id: chatId,
+				...this.routing(),
+				...extra,
+				...resolveTextParam(text),
+			});
+		}
+
+		return this.api.call<Message>("sendMessage", {
 			chat_id: chatId,
 			...this.routing(),
 			...resolveText(text),
@@ -168,10 +206,13 @@ export class Context {
 	}
 
 	/** reply to the triggering message. */
-	reply(text: SendText, extra: Record<string, unknown> = {}): Promise<Message> {
+	reply(text: SendText, extra?: Record<string, unknown>): Promise<Message>;
+	/** object form: full `sendMessage` params (minus `chat_id`) in one object. */
+	reply(params: SendParams): Promise<Message>;
+	reply(text: SendText | SendParams, extra: Record<string, unknown> = {}): Promise<Message> {
 		const replyTo = this.message?.message_id;
 
-		return this.send(text, {
+		return this.send(text as SendText, {
 			...(replyTo !== undefined ? { reply_parameters: { message_id: replyTo } } : {}),
 			...extra,
 		});
@@ -181,10 +222,26 @@ export class Context {
 	 * send a photo. accepts a {@link MediaSource} or a raw file_id / URL string.
 	 * `extra.caption` accepts a plain string or a `format`/`fmt` result.
 	 */
-	sendPhoto(photo: MediaSource | string, extra: Record<string, unknown> = {}): Promise<Message> {
+	sendPhoto(photo: MediaSource | string, extra?: Record<string, unknown>): Promise<Message>;
+	/** object form: full `sendPhoto` params (minus `chat_id`) in one object. */
+	sendPhoto(params: { photo: MediaSource | string } & Record<string, unknown>): Promise<Message>;
+	sendPhoto(
+		photo: MediaSource | string | Record<string, unknown>,
+		extra: Record<string, unknown> = {},
+	): Promise<Message> {
 		const chatId = this.chat?.id;
 		if (chatId === undefined)
 			return Promise.reject(new Error("sendPhoto(): no chat in this update"));
+
+		// params-object form (typed by the rich contexts' generated overloads)
+		if (typeof photo !== "string" && !isMediaSource(photo)) {
+			return this.api.call<Message>("sendPhoto", {
+				chat_id: chatId,
+				...this.routing(),
+				...extra,
+				...resolveCaption(photo),
+			});
+		}
 
 		return this.api.call<Message>("sendPhoto", {
 			chat_id: chatId,
@@ -198,13 +255,28 @@ export class Context {
 	 * send a document. accepts a {@link MediaSource} or a raw file_id / URL string.
 	 * `extra.caption` accepts a plain string or a `format`/`fmt` result.
 	 */
+	sendDocument(document: MediaSource | string, extra?: Record<string, unknown>): Promise<Message>;
+	/** object form: full `sendDocument` params (minus `chat_id`) in one object. */
 	sendDocument(
-		document: MediaSource | string,
+		params: { document: MediaSource | string } & Record<string, unknown>,
+	): Promise<Message>;
+	sendDocument(
+		document: MediaSource | string | Record<string, unknown>,
 		extra: Record<string, unknown> = {},
 	): Promise<Message> {
 		const chatId = this.chat?.id;
 		if (chatId === undefined) {
 			return Promise.reject(new Error("sendDocument(): no chat in this update"));
+		}
+
+		// params-object form (typed by the rich contexts' generated overloads)
+		if (typeof document !== "string" && !isMediaSource(document)) {
+			return this.api.call<Message>("sendDocument", {
+				chat_id: chatId,
+				...this.routing(),
+				...extra,
+				...resolveCaption(document),
+			});
 		}
 
 		return this.api.call<Message>("sendDocument", {
@@ -220,6 +292,6 @@ export class Context {
 		const id = this.callbackQuery?.id;
 		if (id === undefined) return Promise.resolve(false);
 
-		return this.api.answerCallbackQuery({ callback_query_id: id, ...extra });
+		return this.api.call<boolean>("answerCallbackQuery", { callback_query_id: id, ...extra });
 	}
 }

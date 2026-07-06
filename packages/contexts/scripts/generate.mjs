@@ -104,6 +104,13 @@ const POSITIONAL_KINDS = {
 	},
 };
 
+// methods where two fillable ids are mutually exclusive alternatives (Telegram wants exactly
+// one). auto-fill `prefer`, but back off when the caller passes `drop` in params explicitly;
+// `drop` is never auto-filled and stays passable (not omitted from the params type).
+const EXCLUSIVE_IDS = {
+	sendGift: { prefer: "user_id", drop: "chat_id" },
+};
+
 // update prop -> public class comes from src/sugar/<kebab>.ts (extends the generated *Base)
 const SUGARED = {
 	message: true,
@@ -201,20 +208,42 @@ function providersFor(payload, propName) {
 
 // these three can legitimately be undefined at runtime even when "filled" (e.g. a
 // non-topic message has no message_thread_id, a callback on a plain message has no
-// business_connection_id) — emitted as a conditional spread so the call object never
-// carries a literal `key: undefined`, instead of the plain `key: expr` used below for
-// ids that are always present once filled (chat_id, message_id, …).
+// business_connection_id) — like any provider expression containing `?.`, they are
+// runtime-optional, unlike the ids that are always present once filled (chat_id on a
+// message, message_id, …).
 const SOFT_FILLS = new Set(["business_connection_id", "message_thread_id", "direct_messages_topic_id"]);
 
-const fillPiece = (f, providers) =>
-	SOFT_FILLS.has(f)
-		? `...((${providers[f]}) === undefined ? {} : { ${f}: ${providers[f]} })`
-		: `${f}: ${providers[f]}`;
+const maybeUndefined = (f, providers) => SOFT_FILLS.has(f) || /\?\./.test(providers[f]);
+
+// how one auto-filled id lands in the call object:
+// - always-present ids -> plain `key: expr`
+// - runtime-optional id, optional param -> conditional spread (never a literal `key: undefined`)
+// - runtime-optional id, REQUIRED param -> caller's explicit params[f] wins; otherwise
+//   `requiredId(...)` fails loud instead of silently sending a request Telegram rejects
+// - `unlessParam` (exclusive pairs, e.g. sendGift) -> also back off when the alternative
+//   id was passed explicitly
+const fillPiece = (f, providers, { required = false, method = "", unlessParam } = {}) => {
+	const expr = providers[f];
+
+	if (!maybeUndefined(f, providers) && !unlessParam) return `${f}: ${expr}`;
+
+	if (required) {
+		return `...(params?.${f} !== undefined ? {} : { ${f}: requiredId(${expr}, ${JSON.stringify(f)}, ${JSON.stringify(method)}) })`;
+	}
+
+	const skip = [
+		...(unlessParam ? [`params?.${unlessParam} !== undefined`] : []),
+		`(${expr}) === undefined`,
+	].join(" || ");
+
+	return `...((${skip}) ? {} : { ${f}: ${expr} })`;
+};
 
 function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 	const lines = [];
 	const used = new Set();
 	let usesMedia = false;
+	let usesRequiredId = false;
 
 	if (isMessage && providers.chat_id && providers.message_id) {
 		// same extra routing ids as send() below (business connection / thread / dm topic),
@@ -258,15 +287,45 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 		if (used.has(name)) continue;
 		used.add(name);
 
+		const argByName = new Map(args.map((a) => [a.name, a]));
+
+		// exclusive id pair: drop the alternative from the fills (it stays passable),
+		// and make the preferred fill back off when the caller passes the alternative
+		const exclusive = EXCLUSIVE_IDS[m.name];
+		const excluding =
+			exclusive && fills.includes(exclusive.prefer) && fills.includes(exclusive.drop);
+		const effFills = excluding ? fills.filter((f) => f !== exclusive.drop) : fills;
+
+		// required ids the update may not carry: keep them passable on the params type
+		// (`& { user_id?: number }`) since Omit<> would otherwise make the fallback unreachable
+		const requiredSoft = effFills.filter(
+			(f) => argByName.get(f)?.required && maybeUndefined(f, providers),
+		);
+		if (requiredSoft.length > 0) usesRequiredId = true;
+
 		const paramsType = `t.${capFirst(m.name)}Params`;
-		const omit = fills.map((f) => JSON.stringify(f)).join(" | ");
-		const fillObj = fills.map((f) => fillPiece(f, providers)).join(", ");
+		const omit = effFills.map((f) => JSON.stringify(f)).join(" | ");
+		const ext =
+			requiredSoft.length > 0
+				? ` & { ${requiredSoft.map((f) => `${f}?: ${returnType(argByName.get(f))}`).join("; ")} }`
+				: "";
+		const fillObj = effFills
+			.map((f) =>
+				fillPiece(f, providers, {
+					required: argByName.get(f)?.required ?? false,
+					method: name,
+					unlessParam: excluding && f === exclusive.prefer ? exclusive.drop : undefined,
+				}),
+			)
+			.join(", ");
 		const ret = m.return_type ? returnType(m.return_type) : "unknown";
-		const otherArgs = args.some((a) => !fills.includes(a.name));
-		const sig = otherArgs ? `params: Omit<${paramsType}, ${omit}>` : `params?: Omit<${paramsType}, ${omit}>`;
+		const otherArgs = args.some((a) => !effFills.includes(a.name));
+		const sig = otherArgs
+			? `params: Omit<${paramsType}, ${omit}>${ext}`
+			: `params?: Omit<${paramsType}, ${omit}>${ext}`;
 		const desc = (m.description || "").replace(/\r?\n/g, " ").replace(/\*\//g, "*\\/").trim();
 
-		const positional = positionalFor(m, { name, paramsType, omit, fillObj, ret, desc, args, fills });
+		const positional = positionalFor(m, { name, paramsType, omit, ext, fillObj, ret, desc, args, fills: effFills });
 		if (positional) {
 			if (POSITIONAL[m.name].kind === "media") usesMedia = true;
 			lines.push(positional);
@@ -279,39 +338,39 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 	}`);
 	}
 
-	return { lines, usesMedia };
+	return { lines, usesMedia, usesRequiredId };
 }
 
 // overloaded emission for POSITIONAL methods: the params-object form stays, plus a
 // positional form for the method's "main" argument(s). returns null when not applicable
 // (method not in the table, or its main param is already auto-filled on this context).
-function positionalFor(m, { name, paramsType, omit, fillObj, ret, desc, args, fills }) {
+function positionalFor(m, { name, paramsType, omit, ext = "", fillObj, ret, desc, args, fills }) {
 	const spec = POSITIONAL[m.name];
 	if (!spec) return null;
 
-	const objForm = `Omit<${paramsType}, ${omit}>`;
+	const objForm = `Omit<${paramsType}, ${omit}>${ext}`;
 	const objRequired = args.some((a) => a.required && !fills.includes(a.name));
 	const objSig = `params${objRequired ? "" : "?"}: ${objForm}`;
 
 	if (spec.kind === "location") {
-		const posOmit = `${omit} | "latitude" | "longitude"`;
+		const posForm = `Omit<${paramsType}, ${omit} | "latitude" | "longitude">${ext}`;
 
 		return `	/** ${desc} */
-	${name}(latitude: number, longitude: number, params?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(latitude: number, longitude: number, params?: ${posForm}): Promise<${ret}>;
 	${name}(${objSig}): Promise<${ret}>;
-	${name}(a: number | ${objForm}, b?: number, c?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+	${name}(a: number | ${objForm}, b?: number, c?: ${posForm}): Promise<${ret}> {
 		const params = typeof a === "number" ? ({ latitude: a, longitude: b as number, ...c } as unknown as ${objForm}) : a;
 		return this.api.call<${ret}>("${m.name}", { ${fillObj}, ...params });
 	}`;
 	}
 
 	if (spec.kind === "poll") {
-		const posOmit = `${omit} | "question" | "options"`;
+		const posForm = `Omit<${paramsType}, ${omit} | "question" | "options">${ext}`;
 
 		return `	/** ${desc} */
-	${name}(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(question: string, options: readonly (string | t.InputPollOption)[], params?: ${posForm}): Promise<${ret}>;
 	${name}(${objSig}): Promise<${ret}>;
-	${name}(a: string | ${objForm}, b?: readonly (string | t.InputPollOption)[], c?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+	${name}(a: string | ${objForm}, b?: readonly (string | t.InputPollOption)[], c?: ${posForm}): Promise<${ret}> {
 		const params = typeof a === "string"
 			? ({ question: a, options: (b ?? []).map((o) => (typeof o === "string" ? { text: o } : o)), ...c } as unknown as ${objForm})
 			: a;
@@ -323,14 +382,14 @@ function positionalFor(m, { name, paramsType, omit, fillObj, ret, desc, args, fi
 	if (!arg || fills.includes(spec.param)) return null;
 
 	const kind = POSITIONAL_KINDS[spec.kind];
-	const posOmit = `${omit} | ${JSON.stringify(spec.param)}`;
+	const posForm = `Omit<${paramsType}, ${omit} | ${JSON.stringify(spec.param)}>${ext}`;
 	const restRequired = args.some((x) => x.required && !fills.includes(x.name) && x.name !== spec.param);
 	const implOpt = arg.required && objRequired ? "" : "?";
 
 	return `	/** ${desc} */
-	${name}(${spec.param.replace(/_(.)/g, (_, c) => c.toUpperCase())}: ${kind.type}, params${restRequired ? "" : "?"}: Omit<${paramsType}, ${posOmit}>): Promise<${ret}>;
+	${name}(${spec.param.replace(/_(.)/g, (_, c) => c.toUpperCase())}: ${kind.type}, params${restRequired ? "" : "?"}: ${posForm}): Promise<${ret}>;
 	${name}(${objSig}): Promise<${ret}>;
-	${name}(a${implOpt}: ${kind.type} | ${objForm}, b?: Omit<${paramsType}, ${posOmit}>): Promise<${ret}> {
+	${name}(a${implOpt}: ${kind.type} | ${objForm}, b?: ${posForm}): Promise<${ret}> {
 		const params = a !== undefined && (${kind.test})
 			? ({ ${spec.param}: a, ...b } as unknown as ${objForm})
 			: ((a ?? {}) as ${objForm});
@@ -410,10 +469,10 @@ const payloadProps = update.properties.filter((p) => p.name !== "update_id");
 const genDir = new URL("src/generated/", root);
 mkdirSync(genDir, { recursive: true });
 
-const header = (usesMedia) => `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
+const header = (usesMedia, usesRequiredId) => `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 ${usesMedia ? 'import { isMediaSource } from "@yaebal/core";\n' : ""}import type * as t from "@yaebal/types";
-
+${usesRequiredId ? 'import { requiredId } from "../require-id.js";\n' : ""}
 `;
 
 const entries = []; // { prop, payloadName, pascal, kebab, sugared }
@@ -433,14 +492,14 @@ for (const prop of payloadProps) {
 	const targetIds = prop.name.includes("business")
 		? new Set([...TARGET_IDS, "business_connection_id"])
 		: TARGET_IDS;
-	const { lines: methods, usesMedia } = methodsFor(
+	const { lines: methods, usesMedia, usesRequiredId } = methodsFor(
 		providersFor(payload, prop.name),
 		payloadName === "Message",
 		targetIds,
 	);
 	const getters = gettersFor(payload);
 
-	const file = `${header(usesMedia)}export interface ${className} extends t.${payloadName} {}
+	const file = `${header(usesMedia, usesRequiredId)}export interface ${className} extends t.${payloadName} {}
 export class ${className} {
 	readonly api: Api;
 	readonly update: t.Update;

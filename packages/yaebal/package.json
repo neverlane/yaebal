@@ -1,8 +1,9 @@
 {
 	"name": "yaebal",
-	"version": "0.0.7",
+	"version": "0.1.0",
 	"description": "yaebal — batteries-included Telegram Bot API framework: core + auto-generated contexts + the common plugins, one import.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {
@@ -11,7 +12,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -34,7 +38,14 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "bot-api", "framework", "typescript", "yaebal"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"bot-api",
+		"framework",
+		"typescript",
+		"yaebal"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

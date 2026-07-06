@@ -7,4 +7,5 @@
  * await bot.api.call<Message>("sendMessage", params satisfies SendMessageParams);
  * ```
  */
+export * from "./format-fields.js";
 export * from "./telegram.js";

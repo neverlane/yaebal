@@ -13,6 +13,7 @@
 			"!**/.omc",
 			"!**/packages/types/schema.json",
 			"!**/packages/types/src/telegram.ts",
+			"!**/packages/types/src/format-fields.ts",
 			"!**/packages/types/scripts",
 			"!**/packages/contexts/src/generated",
 			"!**/packages/contexts/scripts"

@@ -60,8 +60,8 @@ const autoReadFile: FileReader = async (path) => {
  * (`react`, `editText`, `pin`, …) of the matching per-update context onto it.
  * core's own methods (`send`/`reply`/…) win; the rest are added.
  */
-export const richContext: ContextFactory = (api, update, updateType) => {
-	const ctx = new Context({ api, update, updateType });
+export const richContext: ContextFactory = (api, update, updateType, me) => {
+	const ctx = new Context({ api, update, updateType, me });
 	const rich = contextFor(updateType as keyof ContextByType, api, update);
 	const target = ctx as unknown as Record<string, unknown>;
 
@@ -117,8 +117,10 @@ type RichFor<Q extends string> =
  */
 export class Bot<C extends Context = Context> extends CoreBot<C> {
 	constructor(token: string, options: BotOptions = {}) {
-		// auto-detecting file reader as the default; an explicit `readFile` still wins
-		super(token, { readFile: autoReadFile, ...options });
+		// rich per-update contexts + auto-detecting file reader as the defaults — the
+		// typed routers below promise the generated shortcut methods, so the factory
+		// that grafts them on must be wired even without createBot(). explicit options win.
+		super(token, { readFile: autoReadFile, contextFactory: richContext, ...options });
 	}
 
 	override derive<D extends object>(fn: (ctx: C) => D | Promise<D>): Bot<C & D>;
@@ -138,6 +140,14 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 		return this as unknown as Bot<C & D>;
 	}
 
+	override guard<C2 extends C>(predicate: (ctx: C) => ctx is C2): Bot<C2>;
+	override guard(predicate: (ctx: C) => boolean | Promise<boolean>): this;
+	// biome-ignore lint/suspicious/noExplicitAny: overload implementation mirrors core Bot
+	override guard(predicate: (ctx: C) => boolean | Promise<boolean>): any {
+		super.guard(predicate);
+		return this;
+	}
+
 	override extend<C2 extends Context>(other: Composer<C2>): Bot<C & C2> {
 		super.extend(other);
 		return this as unknown as Bot<C & C2>;
@@ -152,7 +162,14 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 			| ((composer: Composer<C>) => Composer<C & Add>)
 			| ((bot: CoreBot<C>) => CoreBot<C & Add>),
 	): Bot<C & Add> {
-		(plugin as (bot: CoreBot<C>) => CoreBot<C & Add>)(this);
+		const out = (plugin as (bot: CoreBot<C>) => CoreBot<C & Add>)(this);
+
+		if ((out as unknown) !== this) {
+			throw new Error(
+				"install(): the plugin must chain on (and return) the composer it was given — returning a different composer would silently detach its middleware",
+			);
+		}
+
 		return this as unknown as Bot<C & Add>;
 	}
 
@@ -189,9 +206,19 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 			...(handlers as unknown as Middleware<C & { command: string; args: string[] }>[]),
 		);
 	}
+
+	override hears(
+		trigger: string | RegExp,
+		...handlers: Middleware<C & { match: string | RegExpMatchArray } & ContextByType["message"]>[]
+	): this {
+		return super.hears(
+			trigger,
+			...(handlers as unknown as Middleware<C & { match: string | RegExpMatchArray }>[]),
+		);
+	}
 }
 
 /** create a bot whose handlers receive the rich auto-generated context — typed and at runtime. */
 export function createBot(token: string, options: BotOptions = {}): Bot {
-	return new Bot(token, { contextFactory: richContext, ...options });
+	return new Bot(token, options);
 }

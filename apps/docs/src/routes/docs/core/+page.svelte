@@ -84,10 +84,10 @@ if (matchQuery(ctx, "message:text")) {
 	<tbody>
 		<tr><td><code>use(...middleware)</code></td><td>raw middleware. receives <code>(ctx, next)</code>.</td></tr>
 		<tr><td><code>on(query, ...handlers)</code></td><td>filter-query routing: <code>"message:text"</code>, <code>"callback_query:data"</code>, <code>":photo"</code>.</td></tr>
-		<tr><td><code>command(name, ...handlers)</code></td><td>matches <code>/name</code>, strips <code>@botname</code>, adds <code>ctx.command</code> and <code>ctx.args</code>.</td></tr>
+		<tr><td><code>command(name, ...handlers)</code></td><td>matches <code>/name</code> in fresh message text (edits don't re-fire), verifies <code>@botname</code> against the bot's username when known, adds <code>ctx.command</code> and <code>ctx.args</code>.</td></tr>
 		<tr><td><code>hears(trigger, ...handlers)</code></td><td>matches text/caption by string or RegExp and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>callbackQuery(trigger, ...handlers)</code></td><td>matches <code>callback_query.data</code> and adds <code>ctx.match</code>.</td></tr>
-		<tr><td><code>guard(predicate)</code></td><td>continues only when the predicate returns true.</td></tr>
+		<tr><td><code>guard(predicate)</code></td><td>continues only when the predicate returns true. a type-guard predicate (<code>ctx is …</code>) narrows the context for everything after it.</td></tr>
 		<tr><td><code>filter(filter, ...handlers)</code></td><td>runs a composable type-guard filter, e.g. from <code>@yaebal/filters</code>.</td></tr>
 	</tbody>
 </table>
@@ -125,6 +125,7 @@ if (matchQuery(ctx, "message:text")) {
 		<tr><td><code>bot.onStart(handler)</code></td><td>runs after <code>getMe()</code> succeeds in <code>start()</code>.</td></tr>
 		<tr><td><code>bot.onStop(handler)</code></td><td>runs once when <code>stop()</code> is requested or polling exits.</td></tr>
 		<tr><td><code>bot.onError(handler)</code></td><td>handles errors thrown by middleware for a specific context.</td></tr>
+		<tr><td><code>bot.onPollingError(handler)</code></td><td>handles <code>getUpdates</code> failures (default: <code>console.error</code>); polling retries after a short pause either way. hung connections are aborted and retried automatically.</td></tr>
 	</tbody>
 </table>
 
@@ -155,12 +156,24 @@ if (matchQuery(ctx, "message:text")) {
 
 <h2>formatting helpers in core</h2>
 <p>
-	Core includes entity-based formatting helpers: <code>format</code>, <code>Stringable</code>,
-	<code>bold</code>, <code>italic</code>, <code>underline</code>, <code>strikethrough</code>,
-	<code>spoiler</code>, <code>code</code>, <code>pre</code>, <code>link</code>, and
-	<code>mention</code>. For HTML/Markdown parsing, use <a href="/docs/plugins/fmt/">@yaebal/fmt</a>. For
-	telegram's block-tree rich message format (<code>sendRichMessage</code>/<code>sendRichMessageDraft</code>),
-	use <a href="/docs/plugins/rich/">@yaebal/rich</a>.
+	Core includes entity-based formatting helpers: <code>format</code>, <code>bold</code>,
+	<code>italic</code>, <code>underline</code>, <code>strikethrough</code>, <code>spoiler</code>,
+	<code>code</code>, <code>pre</code> (with a language), <code>blockquote</code>,
+	<code>expandableBlockquote</code>, <code>link</code>, <code>mention</code>,
+	<code>customEmoji</code>, <code>dateTime</code>, and <code>join</code> (keeps entities where
+	<code>[].join()</code> would drop them). Helpers nest — <code>bold(italic("x"))</code> — and
+	double as tagged templates: <code>bold`…`</code>.
+</p>
+<p>
+	A <code>format</code>/<code>fmt</code> result is accepted by <em>every</em> API call, not just
+	<code>ctx.send</code>: the api client splits it into text + the right
+	<code>*_entities</code> sibling wherever the schema allows formatted text — including nested
+	spots like <code>reply_parameters.quote</code>, poll options, media groups and inline results
+	(driven by the code-generated <code>formatFields</code> map in <code>@yaebal/types</code>). For
+	HTML/Markdown parsing, use <a href="/docs/plugins/fmt/">@yaebal/fmt</a>. For telegram's
+	block-tree rich message format
+	(<code>sendRichMessage</code>/<code>sendRichMessageDraft</code>), use
+	<a href="/docs/plugins/rich/">@yaebal/rich</a>.
 </p>
 
 <div class="note">

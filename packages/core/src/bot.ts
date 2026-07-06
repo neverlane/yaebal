@@ -21,15 +21,24 @@ export interface BotOptions {
 	allowedUpdates?: UpdateName[];
 	/**
 	 * build the context for each update. defaults to the base {@link Context}.
-	 * gigher-level packages (e.g. the `yaebal` meta-package) inject a factory here
+	 * higher-level packages (e.g. the `yaebal` meta-package) inject a factory here
 	 * to produce richer per-update contexts with auto-generated shortcut methods.
+	 * `me` is the bot's own account when known (long polling fills it after `getMe`).
 	 */
-	contextFactory?: (api: Api, update: Update, updateType: UpdateName) => Context;
+	contextFactory?: (api: Api, update: Update, updateType: UpdateName, me?: User) => Context;
 }
 
 type StartHandler = (info: User) => unknown | Promise<unknown>;
 type StopHandler = () => unknown | Promise<unknown>;
 type ErrorHandler = (error: unknown, ctx: Context) => unknown | Promise<unknown>;
+type PollingErrorHandler = (error: unknown) => unknown | Promise<unknown>;
+
+/** server-side long-poll window (seconds) requested from getUpdates. */
+const POLL_TIMEOUT_S = 30;
+/** grace on top of the window before a silent, hung connection is aborted and retried. */
+const POLL_GRACE_MS = 15_000;
+/** pause before retrying after a failed getUpdates. */
+const POLL_RETRY_MS = 3_000;
 
 function detectUpdateType(update: Update): UpdateName {
 	for (const key of Object.keys(update)) {
@@ -50,12 +59,16 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	#running = false;
 	#offset = 0;
 	#info?: User;
+	#pollAbort?: AbortController;
 	readonly #options: BotOptions;
 	readonly #startHandlers: StartHandler[] = [];
 	readonly #stopHandlers: StopHandler[] = [];
 	#stopPromise?: Promise<void>;
 	#errorHandler: ErrorHandler = (error) => {
 		console.error("[yaebal] unhandled error in middleware:", error);
+	};
+	#pollingErrorHandler: PollingErrorHandler = (error) => {
+		console.error(`[yaebal] getUpdates failed, retrying in ${POLL_RETRY_MS / 1000}s:`, error);
 	};
 	#handle?: Middleware<Context>;
 
@@ -89,6 +102,14 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		return this as unknown as Bot<C & D>;
 	}
 
+	override guard<C2 extends C>(predicate: (ctx: C) => ctx is C2): Bot<C2>;
+	override guard(predicate: (ctx: C) => boolean | Promise<boolean>): this;
+	// biome-ignore lint/suspicious/noExplicitAny: overload implementation forwards to the base
+	override guard(predicate: (ctx: C) => boolean | Promise<boolean>): any {
+		super.guard(predicate);
+		return this;
+	}
+
 	override extend<C2 extends Context>(other: Composer<C2>): Bot<C & C2> {
 		super.extend(other);
 		return this as unknown as Bot<C & C2>;
@@ -102,7 +123,14 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		plugin: ((composer: Composer<C>) => Composer<C & Add>) | ((bot: Bot<C>) => Bot<C & Add>),
 	): Bot<C & Add> {
 		// biome-ignore lint/suspicious/noExplicitAny: overloaded plugin entry point
-		(plugin as any)(this);
+		const out = (plugin as any)(this);
+
+		if (out !== this) {
+			throw new Error(
+				"install(): the plugin must chain on (and return) the composer it was given — returning a different composer would silently detach its middleware",
+			);
+		}
+
 		return this as unknown as Bot<C & Add>;
 	}
 
@@ -125,6 +153,15 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	/**
+	 * replace the default polling-error handler (a `console.error`). called when a
+	 * `getUpdates` long poll fails; polling retries after a short pause either way.
+	 */
+	onPollingError(handler: PollingErrorHandler): this {
+		this.#pollingErrorHandler = handler;
+		return this;
+	}
+
+	/**
 	 * run the middleware chain for a single update. this is the webhook entry
 	 * point — call it from your HTTP handler. errors go to the error handler.
 	 *
@@ -136,8 +173,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 		const updateType = detectUpdateType(update);
 		const ctx = this.#options.contextFactory
-			? this.#options.contextFactory(this.api, update, updateType)
-			: new Context({ api: this.api, update, updateType });
+			? this.#options.contextFactory(this.api, update, updateType, this.#info)
+			: new Context({ api: this.api, update, updateType, me: this.#info });
 
 		try {
 			await this.#handle(ctx, async () => {});
@@ -151,6 +188,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		if (this.#running) return;
 		this.#running = true;
 		this.#stopPromise = undefined;
+		this.#pollAbort = new AbortController();
 
 		try {
 			this.#info = await this.api.getMe();
@@ -159,21 +197,37 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 			while (this.#running) {
 				let updates: Update[];
 
+				// per-request signal: aborted by stop() (so start() resolves promptly instead
+				// of waiting out the poll window) OR by the hang timeout — a connection that
+				// stays silent past the long-poll window + grace would otherwise stall the
+				// bot forever, since fetch itself never times out. (manual composition —
+				// AbortSignal.any needs node >= 20.3.)
+				const poll = new AbortController();
+				const onStop = () => poll.abort();
+				this.#pollAbort.signal.addEventListener("abort", onStop, { once: true });
+				const hangTimer = setTimeout(() => poll.abort(), POLL_TIMEOUT_S * 1000 + POLL_GRACE_MS);
+
 				try {
-					updates = await this.api.getUpdates({
-						offset: this.#offset,
-						timeout: 30,
-						...(this.#options.allowedUpdates
-							? { allowed_updates: this.#options.allowedUpdates }
-							: {}),
-					});
+					updates = await this.api.call<Update[]>(
+						"getUpdates",
+						{
+							offset: this.#offset,
+							timeout: POLL_TIMEOUT_S,
+							...(this.#options.allowedUpdates
+								? { allowed_updates: this.#options.allowedUpdates }
+								: {}),
+						},
+						{ signal: poll.signal },
+					);
 				} catch (error) {
 					if (!this.#running) break;
 
-					console.error("[yaebal] getUpdates failed, retrying in 3s:", error);
-
-					await new Promise((r) => setTimeout(r, 3000));
+					await this.#pollingErrorHandler(error);
+					await new Promise((r) => setTimeout(r, POLL_RETRY_MS));
 					continue;
+				} finally {
+					clearTimeout(hangTimer);
+					this.#pollAbort.signal.removeEventListener("abort", onStop);
 				}
 
 				for (const update of updates) {
@@ -183,13 +237,15 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 			}
 		} finally {
 			this.#running = false;
+			this.#pollAbort = undefined;
 			await this.#runStopHandlers();
 		}
 	}
 
-	/** stop the polling loop and run registered stop handlers once. */
+	/** stop the polling loop (aborting the in-flight long poll) and run registered stop handlers once. */
 	stop(): Promise<void> {
 		this.#running = false;
+		this.#pollAbort?.abort();
 		return this.#runStopHandlers();
 	}
 

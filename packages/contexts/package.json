@@ -1,8 +1,9 @@
 {
 	"name": "@yaebal/contexts",
-	"version": "0.0.6",
+	"version": "0.1.0",
 	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {

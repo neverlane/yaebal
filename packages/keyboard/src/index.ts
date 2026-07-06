@@ -148,6 +148,11 @@ export class InlineKeyboard {
 	toJSON(): InlineKeyboardMarkup {
 		return this.build();
 	}
+
+	/** makes the builder structurally satisfy `InlineKeyboardMarkup`, so typed `reply_markup` params take it directly. */
+	get inline_keyboard(): InlineKeyboardButton[][] {
+		return this.build().inline_keyboard;
+	}
 }
 
 /** fluent reply keyboard with resize / one-time / persistence flags. */
@@ -344,6 +349,11 @@ export class Keyboard {
 	/** lets `JSON.stringify` (and thus `Api`, which stringifies `reply_markup`) accept the builder directly. */
 	toJSON(): ReplyKeyboardMarkup {
 		return this.build();
+	}
+
+	/** makes the builder structurally satisfy `ReplyKeyboardMarkup`, so typed `reply_markup` params take it directly. */
+	get keyboard(): KeyboardButton[][] {
+		return this.build().keyboard;
 	}
 
 	/** `reply_markup` that hides the current custom keyboard. */

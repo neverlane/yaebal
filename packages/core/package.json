@@ -1,8 +1,9 @@
 {
 	"name": "@yaebal/core",
-	"version": "0.0.10",
+	"version": "0.1.0",
 	"description": "yaebal core — type-safe, chainable Telegram Bot API framework.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {
@@ -15,7 +16,10 @@
 			"import": "./lib/node.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"dependencies": {
 		"@yaebal/types": "workspace:*"
 	},
@@ -30,7 +34,14 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "bot-api", "framework", "typescript", "yaebal"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"bot-api",
+		"framework",
+		"typescript",
+		"yaebal"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

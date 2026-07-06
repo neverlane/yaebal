@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Context, callbackData, createBot, richContext, session } from "./index.js";
+import {
+	type Api,
+	Context,
+	callbackData,
+	createBot,
+	InlineKeyboard,
+	richContext,
+	session,
+} from "./index.js";
 
 const api = {} as never;
 
@@ -139,4 +147,59 @@ test("guest_message answer() posts a real message via answerGuestQuery", async (
 			},
 		},
 	});
+});
+
+test("new Bot() (without createBot) wires the rich contexts it promises in its types", async () => {
+	const { Bot } = await import("./index.js");
+
+	let reactType = "";
+	const bot = new Bot("123:abc").on("message:text", (ctx) => {
+		reactType = typeof ctx.react; // typed by RichFor — must also exist at runtime
+	});
+
+	await bot.handleUpdate(messageUpdate as never);
+	assert.equal(reactType, "function");
+});
+
+test("rich context: object-form send() keeps every param (no silent drops)", async () => {
+	const calls: unknown[] = [];
+	const stubApi = {
+		call: (_method: string, p: unknown) => {
+			calls.push(p);
+			return Promise.resolve({});
+		},
+	} as never;
+
+	const ctx = richContext(stubApi, messageUpdate, "message") as Context & {
+		send: (p: Record<string, unknown>) => Promise<unknown>;
+	};
+
+	await ctx.send({ text: "yo", reply_markup: { inline_keyboard: [] } });
+	assert.deepEqual(calls[0], {
+		chat_id: 42,
+		text: "yo",
+		reply_markup: { inline_keyboard: [] },
+	});
+});
+
+test("keyboard builders satisfy typed reply_markup; guard narrows through the meta Bot", () => {
+	// compile-time proof: the builder is assignable to the typed reply_markup param
+	const markup: NonNullable<Parameters<Api["sendMessage"]>[0]["reply_markup"]> =
+		new InlineKeyboard().text("ok", "cb");
+	void markup;
+
+	const bot = createBot("123:abc")
+		.guard((ctx): ctx is typeof ctx & { admin: true } => Boolean(ctx.from))
+		.on("message:text", (ctx) => {
+			const admin: true = ctx.admin; // the type-guard narrowing survives the chain
+			void admin;
+			void ctx.react; // rich typing intact after guard
+		});
+
+	bot.hears(/hi/, (ctx) => {
+		void ctx.react; // hears handlers get the rich message context too
+		void ctx.match;
+	});
+
+	assert.ok(bot);
 });

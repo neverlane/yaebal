@@ -5,6 +5,35 @@
 /** the Telegram Bot API version these types were generated from. */
 export const BOT_API_VERSION = "10.1";
 
+/** runtime list of `Update` payload keys (every update kind, excluding `update_id`). */
+export const updateNames = [
+	"message",
+	"edited_message",
+	"channel_post",
+	"edited_channel_post",
+	"business_connection",
+	"business_message",
+	"edited_business_message",
+	"deleted_business_messages",
+	"guest_message",
+	"message_reaction",
+	"message_reaction_count",
+	"inline_query",
+	"chosen_inline_result",
+	"callback_query",
+	"shipping_query",
+	"pre_checkout_query",
+	"purchased_paid_media",
+	"poll",
+	"poll_answer",
+	"my_chat_member",
+	"chat_member",
+	"chat_join_request",
+	"chat_boost",
+	"removed_chat_boost",
+	"managed_bot",
+] as const;
+
 /** This object describes the types of gifts that can be gifted to a user or a chat. */
 export interface AcceptedGiftTypes {
 	/** *True*, if unlimited regular gifts are accepted */

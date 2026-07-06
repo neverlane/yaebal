@@ -8,15 +8,16 @@ name = "demo"
 
 [[commands]]
 name = "start"
-description = "start command"
+description = "say hello"
 reply = "привет! я бот из toml."
 
 [[commands]]
 name = "ping"
+description = "check the bot is alive"
 handler = "ping"
 
 [[hears]]
-text = "ping"
+regex = "^p[io]ng$"
 reply = "pong"
 
 [[messages]]
@@ -26,19 +27,25 @@ reply = "yaebal мощь"
 
 [[callbacks]]
 data = "profile"
-handler = "profileCallback"`;
+handler = "profileCallback"
+
+[[callbacks]]
+regex = "^item:\\\\d+$"
+reply = "открываю товар…"`;
 
 	const usage = `import { Bot } from "@yaebal/core";
 import { installToml } from "@yaebal/toml";
 
 const bot = new Bot(process.env.BOT_TOKEN!);
 
-await installToml(bot, "./bot.toml", {
+installToml(bot, "./bot.toml", {
+  syncCommands: true, // push described commands to the / menu on start
   handlers: {
     ping: async (ctx) => {
       await ctx.reply("pong from typescript");
     },
     profileCallback: async (ctx) => {
+      await ctx.answerCallbackQuery();
       await ctx.reply("profile");
     },
   },
@@ -76,7 +83,11 @@ validateTomlConfig(config);`;
 <h2>bot.toml</h2>
 <p>
 	all route arrays are optional. an empty config is valid and registers nothing. every route must
-	define at least <code>reply</code> or <code>handler</code>.
+	define at least <code>reply</code> or <code>handler</code>. <code>hears</code> takes exactly one
+	of <code>text</code> (exact match) or <code>regex</code>; <code>callbacks</code> takes exactly
+	one of <code>data</code> or <code>regex</code>. a <code>regex</code> value is compiled with
+	<code>new RegExp()</code> at install time — an invalid pattern is a startup error, not a dead
+	route.
 </p>
 <Code code={botToml} title="bot.toml" lang="toml" />
 
@@ -84,8 +95,18 @@ validateTomlConfig(config);`;
 <p>
 	call <code>installToml</code> once before <code>bot.start()</code>. it accepts a file path,
 	a raw toml string, or an already parsed object, and returns the same bot or composer instance.
+	the whole config is validated up front, so a bad route can never leave the bot half-wired.
 </p>
 <Code code={usage} title="index.ts" />
+
+<h2>command menu</h2>
+<p>
+	with <code>syncCommands: true</code>, commands that have a <code>description</code> are pushed
+	to the telegram command menu (<code>setMyCommands</code>) once the bot starts. commands without
+	a description are still routed — they just stay out of the menu. <code>syncCommands</code>
+	needs a <code>Bot</code> target (it hooks <code>onStart</code>); installing on a plain
+	<code>Composer</code> fails with a readable error.
+</p>
 
 <h2>handler registry</h2>
 <p>
@@ -98,20 +119,34 @@ validateTomlConfig(config);`;
 	</thead>
 	<tbody>
 		<tr><td><code>[[commands]] name = "start" reply = "hi"</code></td><td><code>bot.command("start", ctx =&gt; ctx.reply("hi"))</code></td></tr>
-		<tr><td><code>[[hears]] text = "ping" reply = "pong"</code></td><td><code>bot.hears("ping", ...)</code></td></tr>
+		<tr><td><code>[[hears]] text = "ping" reply = "pong"</code></td><td><code>bot.hears("ping", ...)</code> — exact match</td></tr>
+		<tr><td><code>[[hears]] regex = "^p[io]ng$"</code></td><td><code>bot.hears(/^p[io]ng$/, ...)</code></td></tr>
 		<tr><td><code>[[messages]] on = "message:text" contains = "x"</code></td><td><code>bot.on("message:text", ...)</code> plus a text filter</td></tr>
 		<tr><td><code>[[callbacks]] data = "profile" handler = "profile"</code></td><td><code>bot.callbackQuery("profile", handlers.profile)</code></td></tr>
+		<tr><td><code>[[callbacks]] regex = "^item:\d+$" reply = "…"</code></td><td><code>bot.callbackQuery(/^item:\d+$/, ...)</code></td></tr>
 	</tbody>
 </table>
 
 <div class="note">
 	if both <code>handler</code> and <code>reply</code> are present, the handler wins. the reply is
-	only used when no handler is configured.
+	only used when no handler is configured. callback routes that use <code>reply</code> answer the
+	callback query first (<code>answerCallbackQuery</code>), so the button never hangs on a spinner
+	— handler-based callback routes answer it themselves.
 	<br /><br />
 	example errors: <code>Missing handler "ping" referenced in commands[1]</code>,
 	<code>commands[0] must define either reply or handler</code>,
-	<code>messages[0].on is required</code>.
+	<code>hears[0] must define either text or regex</code>,
+	<code>messages[0].on unknown update type "mesage"</code>.
 </div>
+
+<h2>validation</h2>
+<p>
+	the config is validated with zod before anything touches the bot: every route needs a response,
+	<code>regex</code> patterns must compile, and the update-type prefix of
+	<code>messages[].on</code> is checked against the real bot api update names (generated from the
+	telegram schema), so a typo like <code>"mesage:text"</code> fails at install instead of
+	registering a route that never matches.
+</p>
 
 <h2>plugin usage</h2>
 <p>
@@ -148,10 +183,16 @@ validateTomlConfig(config);`;
 		</tr>
 	</tbody>
 </table>
+<p>
+	<code>options.handlers</code> is the named handler registry; <code>options.syncCommands</code>
+	enables the command-menu sync described above.
+</p>
 
 <h2>raw strings and objects</h2>
 <p>
 	file paths are the common case, but tests and generated configs can pass raw toml or an object.
+	a path that does not exist fails with a clear read error; a path-looking string that cannot be
+	parsed as toml gets a "is this a missing file?" hint.
 </p>
 <Code code={rawString} title="config.ts" />
 

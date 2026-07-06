@@ -32,12 +32,22 @@ const emitObject = (o) => {
 
 const byName = (a, b) => (a.name < b.name ? -1 : 1);
 
+const updateObject = schema.objects.find((o) => o.name === "Update");
+const updateNames = (updateObject?.properties ?? [])
+	.map((p) => p.name)
+	.filter((name) => name !== "update_id");
+
 let body = `// AUTO-GENERATED from the Telegram Bot API schema — do not edit by hand.
 // regenerate with: pnpm --filter @yaebal/types generate
 // source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
 /** the Telegram Bot API version these types were generated from. */
 export const BOT_API_VERSION = ${JSON.stringify(schema.version?.major != null ? `${schema.version.major}.${schema.version.minor}` : String(schema.version))};
+
+/** runtime list of \`Update\` payload keys (every update kind, excluding \`update_id\`). */
+export const updateNames = [
+${updateNames.map((name) => `\t${JSON.stringify(name)},`).join("\n")}
+] as const;
 
 `;
 

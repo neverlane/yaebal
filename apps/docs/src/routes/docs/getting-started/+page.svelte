@@ -4,11 +4,11 @@
 	import Try from "$lib/Try.svelte";
 
 	const scaffoldTabs = [
-		{ label: "pnpm", code: "pnpm create yaebal my-bot" },
-		{ label: "npm", code: "npm create yaebal@latest my-bot" },
-		{ label: "yarn", code: "yarn create yaebal my-bot" },
-		{ label: "bun", code: "bun create yaebal my-bot" },
-		{ label: "deno", code: "deno run -A npm:create-yaebal@latest my-bot" },
+		{ label: "pnpm", code: "pnpm create yaebal" },
+		{ label: "npm", code: "npm create yaebal@latest" },
+		{ label: "yarn", code: "yarn create yaebal" },
+		{ label: "bun", code: "bun create yaebal" },
+		{ label: "deno", code: "deno run -A npm:create-yaebal@latest" },
 	];
 
 	const installTabs = [

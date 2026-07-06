@@ -37,6 +37,8 @@ interface TemplateSpec {
 	setup?: string;
 	/** replaces the default `await bot.start()` bootstrap */
 	bootstrap?: string;
+	/** extra project files the template ships (path → contents) */
+	files?: Record<string, string>;
 }
 
 interface Scripts {
@@ -252,6 +254,42 @@ bot.command("status", async (ctx) => {
 });
 
 bot.onStop(() => broadcaster.stop({ drain: true }));`,
+	},
+	toml: {
+		plugins: ["toml"],
+		imports: ['import { installToml } from "@yaebal/toml";'],
+		body: `installToml(bot, "./bot.toml", {
+\tsyncCommands: true, // push described commands to the / menu on start
+\thandlers: {
+\t\tping: async (ctx) => {
+\t\t\tawait ctx.reply("pong from typescript 🏓");
+\t\t},
+\t},
+});`,
+		files: {
+			"bot.toml": `# declarative routes — edit replies without touching typescript.
+# every route needs either reply = "..." or handler = "name" (from installToml handlers).
+
+[[commands]]
+name = "start"
+description = "say hello"
+reply = "hello! i'm a yaebal bot described in toml 🤖"
+
+[[commands]]
+name = "ping"
+description = "check the bot is alive"
+handler = "ping"
+
+[[hears]]
+regex = "^(hi|hello)$"
+reply = "hey there 👋"
+
+[[messages]]
+on = "message:text"
+contains = "yaebal"
+reply = "you said the magic word ✨"
+`,
+		},
 	},
 };
 
@@ -685,6 +723,7 @@ runtime: **${opts.runtime}** · template: **${templateId}**${
 		".env.example": "BOT_TOKEN=\n",
 		".gitignore": "node_modules\nlib\n.env\n*.log\n",
 		"README.md": readme,
+		...(spec.files ?? {}),
 	};
 }
 

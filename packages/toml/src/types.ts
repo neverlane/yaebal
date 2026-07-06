@@ -17,11 +17,15 @@ export interface TomlRouteResponse {
 
 export interface TomlCommandRoute extends TomlRouteResponse {
 	name: string;
+	/** shown in the telegram command menu when `syncCommands` is enabled. */
 	description?: string;
 }
 
 export interface TomlHearRoute extends TomlRouteResponse {
-	text: string;
+	/** exact text to match. exactly one of `text` or `regex` is required. */
+	text?: string;
+	/** regular expression source to match against the text. */
+	regex?: string;
 }
 
 export interface TomlMessageRoute extends TomlRouteResponse {
@@ -31,7 +35,10 @@ export interface TomlMessageRoute extends TomlRouteResponse {
 }
 
 export interface TomlCallbackRoute extends TomlRouteResponse {
-	data: string;
+	/** exact callback data to match. exactly one of `data` or `regex` is required. */
+	data?: string;
+	/** regular expression source to match against the callback data. */
+	regex?: string;
 }
 
 export type TomlHandler<C extends Context = Context> = Middleware<C>;
@@ -41,6 +48,11 @@ export type TomlHandlers<C extends Context = Context> = Record<string, TomlHandl
 export interface InstallTomlOptions<C extends Context = Context> {
 	/** named handlers referenced by `handler = "name"` in toml routes. */
 	handlers?: TomlHandlers<C>;
+	/**
+	 * sync commands that have a `description` to the telegram command menu
+	 * (`setMyCommands`) once the bot starts. requires a `Bot` target.
+	 */
+	syncCommands?: boolean;
 }
 
 export type TomlConfigInput = string | TomlBotConfig | Record<string, unknown>;

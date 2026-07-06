@@ -6,7 +6,8 @@ if (!token) throw new Error("BOT_TOKEN is required");
 
 const bot = createBot(token);
 
-await installToml(bot, "./bot.toml", {
+installToml(bot, "./bot.toml", {
+	syncCommands: true,
 	handlers: {
 		ping: async (ctx) => {
 			await ctx.reply("pong from typescript");

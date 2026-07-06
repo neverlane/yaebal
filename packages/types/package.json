@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/types",
-	"version": "10.1.0",
+	"version": "10.1.1",
 	"description": "yaebal types — full Telegram Bot API types, code-generated from the schema.",
 	"type": "module",
 	"main": "./lib/index.js",

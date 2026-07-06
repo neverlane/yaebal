@@ -1,3 +1,4 @@
+import { updateNames } from "@yaebal/core";
 import { z } from "zod";
 import type { TomlBotConfig } from "./types.js";
 
@@ -13,51 +14,85 @@ function hasResponse(route: { reply?: string; handler?: string }): boolean {
 	return route.reply !== undefined || route.handler !== undefined;
 }
 
+function requireResponse(route: { reply?: string; handler?: string }, ctx: z.RefinementCtx): void {
+	if (!hasResponse(route)) {
+		ctx.addIssue({ code: "custom", message: "must define either reply or handler" });
+	}
+}
+
+function requireExactlyOneTrigger(
+	route: Record<string, string | undefined>,
+	ctx: z.RefinementCtx,
+	first: string,
+	second: string,
+): void {
+	const hasFirst = route[first] !== undefined;
+	const hasSecond = route[second] !== undefined;
+
+	if (hasFirst && hasSecond) {
+		ctx.addIssue({ code: "custom", message: `must not define both ${first} and ${second}` });
+	} else if (!hasFirst && !hasSecond) {
+		ctx.addIssue({ code: "custom", message: `must define either ${first} or ${second}` });
+	}
+}
+
+const regexString = requiredString.superRefine((source, ctx) => {
+	try {
+		new RegExp(source);
+	} catch (error) {
+		const detail = error instanceof Error ? error.message : String(error);
+		ctx.addIssue({ code: "custom", message: `is not a valid regular expression: ${detail}` });
+	}
+});
+
+const filterQueryString = requiredString.superRefine((query, ctx) => {
+	const head = query.split(":")[0];
+
+	if (head && !(updateNames as readonly string[]).includes(head)) {
+		ctx.addIssue({
+			code: "custom",
+			message: `unknown update type "${head}" (expected one of: ${updateNames.join(", ")})`,
+		});
+	}
+});
+
 const commandSchema = z
 	.object({
 		name: requiredString,
-		description: optionalString,
+		description: z.string().min(1).max(256).optional(),
 		...responseShape,
 	})
-	.superRefine((route, ctx) => {
-		if (!hasResponse(route)) {
-			ctx.addIssue({ code: "custom", message: "must define either reply or handler" });
-		}
-	});
+	.superRefine(requireResponse);
 
 const hearSchema = z
 	.object({
-		text: requiredString,
+		text: optionalString,
+		regex: regexString.optional(),
 		...responseShape,
 	})
 	.superRefine((route, ctx) => {
-		if (!hasResponse(route)) {
-			ctx.addIssue({ code: "custom", message: "must define either reply or handler" });
-		}
+		requireResponse(route, ctx);
+		requireExactlyOneTrigger(route, ctx, "text", "regex");
 	});
 
 const messageSchema = z
 	.object({
-		on: requiredString,
+		on: filterQueryString,
 		contains: optionalString,
 		equals: optionalString,
 		...responseShape,
 	})
-	.superRefine((route, ctx) => {
-		if (!hasResponse(route)) {
-			ctx.addIssue({ code: "custom", message: "must define either reply or handler" });
-		}
-	});
+	.superRefine(requireResponse);
 
 const callbackSchema = z
 	.object({
-		data: requiredString,
+		data: optionalString,
+		regex: regexString.optional(),
 		...responseShape,
 	})
 	.superRefine((route, ctx) => {
-		if (!hasResponse(route)) {
-			ctx.addIssue({ code: "custom", message: "must define either reply or handler" });
-		}
+		requireResponse(route, ctx);
+		requireExactlyOneTrigger(route, ctx, "data", "regex");
 	});
 
 export const tomlBotConfigSchema = z.object({

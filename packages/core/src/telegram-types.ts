@@ -15,6 +15,7 @@ export type {
 	Update,
 	User,
 } from "@yaebal/types";
+export { updateNames } from "@yaebal/types";
 
 /** the keys of `Update` that carry a payload (everything except `update_id`). */
 export type UpdateName = Exclude<keyof Update, "update_id" | symbol | number>;

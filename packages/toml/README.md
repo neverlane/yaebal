@@ -17,20 +17,18 @@ pnpm add @yaebal/toml
 ## bot.toml
 
 ```toml
-[bot]
-name = "demo"
-
 [[commands]]
 name = "start"
-description = "start command"
+description = "say hello"
 reply = "привет! я бот из toml."
 
 [[commands]]
 name = "ping"
+description = "check the bot is alive"
 handler = "ping"
 
 [[hears]]
-text = "ping"
+regex = "^p[io]ng$"
 reply = "pong"
 
 [[messages]]
@@ -43,6 +41,11 @@ data = "profile"
 handler = "profileCallback"
 ```
 
+every route needs `reply = "..."` or `handler = "name"`. `hears` takes exactly one of `text`
+(exact match) or `regex`; `callbacks` takes exactly one of `data` or `regex`. `messages` filters
+by an `on` filter query (validated against the real update names at install time) plus optional
+`contains` / `equals` text filters.
+
 ## index.ts
 
 ```ts
@@ -52,6 +55,7 @@ import { installToml } from "@yaebal/toml";
 const bot = new Bot(process.env.BOT_TOKEN!);
 
 installToml(bot, "./bot.toml", {
+	syncCommands: true,
 	handlers: {
 		ping: async (ctx) => {
 			await ctx.reply("pong from typescript");
@@ -65,15 +69,31 @@ installToml(bot, "./bot.toml", {
 await bot.start();
 ```
 
+`installToml` accepts a file path, a raw toml string, or an already parsed object, and returns the
+same bot or composer instance. the whole config is validated before any route is registered, so a
+bad config can never leave the bot half-wired.
+
+## command menu
+
+with `syncCommands: true`, commands that have a `description` are pushed to the telegram command
+menu (`setMyCommands`) once the bot starts. commands without a description are still routed — they
+just stay out of the menu. `syncCommands` needs a `Bot` target (it hooks `onStart`); installing on
+a plain `Composer` fails with a readable error.
+
 ## handler registry
 
-when a route uses `handler = "name"`, the name must exist in `options.handlers`. if a handler is missing, install fails before routes are registered:
+when a route uses `handler = "name"`, the name must exist in `options.handlers`. if a handler is
+missing, install fails before any route is registered:
 
 ```txt
 Missing handler "ping" referenced in commands[1]
 ```
 
-if both `handler` and `reply` are present, the handler wins. the reply is only used when no handler is configured.
+if both `handler` and `reply` are present, the handler wins. the reply is only used when no
+handler is configured.
+
+callback routes that use `reply` also answer the callback query first, so the button never hangs
+on a spinner. handler-based callback routes answer it themselves (`ctx.answerCallbackQuery()`).
 
 ## plugin usage
 
@@ -89,4 +109,4 @@ toml does not replace typescript logic. it only describes routes and simple repl
 
 ---
 
-part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic telegram bot api framework. mit.
+part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.

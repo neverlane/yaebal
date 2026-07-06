@@ -46,4 +46,5 @@ export {
 } from "./format.js";
 export { isMediaSource, type MediaSource, media } from "./media.js";
 export type * from "./telegram-types.js";
+export { updateNames } from "./telegram-types.js";
 export { type UpdateSink, type WebhookOptions, webhookCallback } from "./webhook.js";

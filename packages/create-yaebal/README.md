@@ -69,6 +69,7 @@ and type-checks the output against the workspace packages.
 | `runner`          | concurrent long-polling via `run()` (runner)                           |
 | `rich-message`    | `sendRichMessage` block builder + a streaming draft demo (rich)        |
 | `broadcast`       | subscriber list + typed broadcast jobs (broadcast)                     |
+| `toml`            | declarative routes in `bot.toml` + a handler registry (toml)           |
 | `plugin`          | reusable plugin package with `src`, tests and examples                 |
 
 bracketed plugins are added & wired automatically, on top of anything you pick yourself.

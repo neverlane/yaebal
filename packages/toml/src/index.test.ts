@@ -3,9 +3,9 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { Composer } from "@yaebal/core";
+import { Bot, Composer } from "@yaebal/core";
 import { createTestEnv } from "@yaebal/test";
-import { installToml, parseTomlConfig, validateTomlConfig } from "./index.js";
+import { createTomlPlugin, installToml, parseTomlConfig, validateTomlConfig } from "./index.js";
 
 test("parse raw toml string", () => {
 	const config = parseTomlConfig(`
@@ -109,6 +109,196 @@ test("messages equals filter works", async () => {
 
 	assert.equal(env.callsTo("sendMessage").length, 1);
 	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "match");
+});
+
+test("parse error hints at a missing file for path-looking input", () => {
+	assert.throws(
+		() => parseTomlConfig("./nonexistent/bot"),
+		/failed to parse toml config: [\s\S]*\(if "\.\/nonexistent\/bot" is a file path, the file does not exist\)/,
+	);
+});
+
+test("missing .toml file fails with a read error", () => {
+	assert.throws(
+		() => parseTomlConfig("./nonexistent/bot.toml"),
+		/failed to read toml config file "\.\/nonexistent\/bot\.toml"/,
+	);
+});
+
+test("validate hears with both text and regex should fail", () => {
+	assert.throws(
+		() => validateTomlConfig({ hears: [{ text: "a", regex: "b", reply: "x" }] }),
+		/hears\[0\] must not define both text and regex/,
+	);
+});
+
+test("validate hears with neither text nor regex should fail", () => {
+	assert.throws(
+		() => validateTomlConfig({ hears: [{ reply: "x" }] }),
+		/hears\[0\] must define either text or regex/,
+	);
+});
+
+test("validate invalid regex should fail", () => {
+	assert.throws(
+		() => validateTomlConfig({ hears: [{ regex: "(", reply: "x" }] }),
+		/hears\[0\]\.regex is not a valid regular expression/,
+	);
+});
+
+test("validate unknown update type in on should fail", () => {
+	assert.throws(
+		() => validateTomlConfig({ messages: [{ on: "mesage:text", reply: "x" }] }),
+		/messages\[0\]\.on unknown update type "mesage"/,
+	);
+});
+
+test("install registers hears reply", async () => {
+	const composer = new Composer();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	installToml(composer, { hears: [{ text: "ping", reply: "pong" }] });
+	await user.sendMessage("ping");
+	await user.sendMessage("ping!");
+
+	assert.equal(env.callsTo("sendMessage").length, 1);
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "pong");
+});
+
+test("hears regex route matches by pattern", async () => {
+	const composer = new Composer();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	installToml(composer, { hears: [{ regex: "^p[io]ng$", reply: "match" }] });
+	await user.sendMessage("ping");
+	await user.sendMessage("pong");
+	await user.sendMessage("pang");
+
+	assert.equal(env.callsTo("sendMessage").length, 2);
+});
+
+test("callbacks regex route matches by pattern", async () => {
+	const composer = new Composer();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	installToml(composer, { callbacks: [{ regex: "^item:\\d+$", reply: "opened" }] });
+	await user.click("item:42");
+	await user.click("item:none");
+
+	assert.equal(env.callsTo("sendMessage").length, 1);
+});
+
+test("callback reply answers the callback query", async () => {
+	const composer = new Composer();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	installToml(composer, { callbacks: [{ data: "buy", reply: "bought" }] });
+	await user.click("buy");
+
+	assert.equal(env.callsTo("answerCallbackQuery").length, 1);
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "bought");
+});
+
+test("handler wins over reply when both are set", async () => {
+	const composer = new Composer();
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	installToml(
+		composer,
+		{ commands: [{ name: "start", reply: "from toml", handler: "start" }] },
+		{
+			handlers: {
+				start: async (ctx) => {
+					await ctx.reply("from handler");
+				},
+			},
+		},
+	);
+
+	await user.sendCommand("start");
+
+	assert.equal(env.callsTo("sendMessage").length, 1);
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "from handler");
+});
+
+test("createTomlPlugin installs routes through bot.install", async () => {
+	const composer = new Composer().install(
+		createTomlPlugin({ commands: [{ name: "start", reply: "hi" }] }),
+	);
+	const env = createTestEnv(composer);
+	const user = env.createUser();
+
+	await user.sendCommand("start");
+
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "hi");
+});
+
+class FakeBot extends Composer {
+	startHandlers: Array<() => unknown> = [];
+	apiCalls: Array<{ method: string; params?: Record<string, unknown> }> = [];
+	api = {
+		call: async (method: string, params?: Record<string, unknown>): Promise<unknown> => {
+			this.apiCalls.push({ method, params });
+			return true;
+		},
+	};
+
+	onStart(handler: () => unknown): this {
+		this.startHandlers.push(handler);
+		return this;
+	}
+}
+
+test("syncCommands registers an onStart hook that syncs described commands", async () => {
+	const bot = new FakeBot();
+
+	installToml(
+		bot,
+		{
+			commands: [
+				{ name: "start", description: "start the bot", reply: "hi" },
+				{ name: "ping", reply: "pong" },
+			],
+		},
+		{ syncCommands: true },
+	);
+
+	assert.equal(bot.startHandlers.length, 1);
+	await bot.startHandlers[0]?.();
+
+	assert.deepEqual(bot.apiCalls, [
+		{
+			method: "setMyCommands",
+			params: { commands: [{ command: "start", description: "start the bot" }] },
+		},
+	]);
+});
+
+test("syncCommands accepts a real Bot target", () => {
+	const bot = new Bot("42:TEST");
+
+	installToml(
+		bot,
+		{ commands: [{ name: "start", description: "start the bot", reply: "hi" }] },
+		{ syncCommands: true },
+	);
+});
+
+test("syncCommands on a plain composer throws", () => {
+	assert.throws(
+		() =>
+			installToml(
+				new Composer(),
+				{ commands: [{ name: "start", description: "d", reply: "hi" }] },
+				{ syncCommands: true },
+			),
+		/syncCommands requires a Bot target/,
+	);
 });
 
 test("callbacks with handler works", async () => {

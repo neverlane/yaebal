@@ -8,10 +8,11 @@ reply = "Привет! Я бот из TOML."
 
 [[commands]]
 name = "ping"
+description = "check the bot is alive"
 handler = "ping"
 
 [[hears]]
-text = "ping"
+regex = "^p[io]ng$"
 reply = "pong"
 
 [[hears]]
@@ -35,3 +36,7 @@ reply = "Вы нажали купить"
 [[callbacks]]
 data = "profile"
 handler = "profileCallback"
+
+[[callbacks]]
+regex = "^item:\\d+$"
+reply = "Открываю товар…"

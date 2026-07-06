@@ -14,7 +14,12 @@ function isPathLike(input: string): boolean {
 	if (trimmed.includes("\n") || trimmed.includes("=") || trimmed.startsWith("[")) return false;
 	if (existsSync(input)) return true;
 
-	return trimmed.endsWith(".toml") || trimmed.endsWith(".tml");
+	return trimmed.endsWith(".toml");
+}
+
+/** a raw toml document has newlines or key/value pairs; a bare single line is likely a path. */
+function looksLikeMissingPath(input: string): boolean {
+	return !input.includes("\n") && !input.includes("=") && input.trim() !== "";
 }
 
 function loadTomlSource(input: string): string {
@@ -37,7 +42,13 @@ export function parseTomlConfig(input: TomlConfigInput): TomlBotConfig {
 	try {
 		parsed = parse(source);
 	} catch (error) {
-		throw new Error(`failed to parse toml config: ${errorMessage(error)}`);
+		let message = `failed to parse toml config: ${errorMessage(error)}`;
+
+		if (source === input && looksLikeMissingPath(input)) {
+			message += ` (if "${input.trim()}" is a file path, the file does not exist)`;
+		}
+
+		throw new Error(message);
 	}
 
 	return validateTomlConfig(parsed);

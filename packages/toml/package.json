@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/toml",
-	"version": "0.0.2",
+	"version": "0.1.0",
 	"description": "yaebal toml — declarative toml routes for yaebal bots.",
 	"type": "module",
 	"main": "./lib/index.js",

@@ -20,6 +20,7 @@ export type TemplateId =
 	| "runner"
 	| "rich-message"
 	| "broadcast"
+	| "toml"
 	| "plugin";
 
 export interface Choice<T extends string> {
@@ -61,6 +62,11 @@ export const TEMPLATES: Choice<TemplateId>[] = [
 		value: "broadcast",
 		label: "broadcast",
 		hint: "subscriber list + typed broadcast jobs via @yaebal/broadcast",
+	},
+	{
+		value: "toml",
+		label: "toml",
+		hint: "declarative routes in bot.toml via @yaebal/toml",
 	},
 	{
 		value: "plugin",
@@ -277,6 +283,13 @@ export const PLUGINS: PluginDef[] = [
 		hint: "split long text across messages",
 		wire: "dep",
 		import: 'import { split } from "@yaebal/split";',
+	},
+	{
+		id: "toml",
+		dep: "@yaebal/toml",
+		hint: "declarative toml routes + handler registry",
+		wire: "dep",
+		import: 'import { installToml } from "@yaebal/toml";',
 	},
 	{
 		id: "runner",

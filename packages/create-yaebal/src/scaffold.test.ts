@@ -133,6 +133,21 @@ test("renderFiles: broadcast template wires typed broadcast jobs", () => {
 	assert.match(src, /"digest"/);
 });
 
+test("renderFiles: toml template ships bot.toml and wires installToml", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [], template: "toml" });
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+	const src = f["src/index.ts"] ?? "";
+	const toml = f["bot.toml"] ?? "";
+
+	assert.ok(pkg.dependencies["@yaebal/toml"]);
+	assert.match(src, /import \{ installToml \} from "@yaebal\/toml";/);
+	assert.match(src, /installToml\(bot, "\.\/bot\.toml"/);
+	assert.match(src, /syncCommands: true/);
+	assert.match(toml, /\[\[commands\]\]/);
+	assert.match(toml, /handler = "ping"/);
+	assert.match(toml, /regex = /);
+});
+
 test("renderFiles: plugin template emits a package authoring scaffold", () => {
 	const f = renderFiles({
 		name: "my-plugin",

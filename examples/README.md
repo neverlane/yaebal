@@ -45,6 +45,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [panel](./panel/) | `@yaebal/example-panel` | operator dashboard, media viewer, callbacks, outgoing replies, realtime events | `pnpm --filter @yaebal/example-panel dev` |
 | [commerce-suite](./commerce-suite/) | `@yaebal/example-commerce-suite` | shop bot with session cart, i18n, pagination, commands, callback-data, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
 | [dialog-quest](./dialog-quest/) | `@yaebal/example-dialog-quest` | morda cockpit, scene wizard, prompt, conversation, session profile | `pnpm --filter @yaebal/example-dialog-quest dev` |
+| [morda-jsx](./morda-jsx/) | `@yaebal/example-morda-jsx` | jsx screens with hooks: persisted `useState`/`useEffect`, `useDialogData`, widgets (Toggle/Select/Counter/Pagination), `onText` input | `pnpm --filter @yaebal/example-morda-jsx dev` |
 | [media-studio](./media-studio/) | `@yaebal/example-media-studio` | albums, file metadata + links, file_id introspection, media cache, svg previews, long message splitting | `pnpm --filter @yaebal/example-media-studio dev` |
 | [modular-router](./modular-router/) | `@yaebal/example-modular-router` | file-based routes from `routes/commands` and `routes/on` | `pnpm --filter @yaebal/example-modular-router dev` |
 | [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | fetch webhook handler, local node adapter, `setWebhook`, secret token | `pnpm --filter @yaebal/example-webhook-edge dev` |
@@ -72,7 +73,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/keyboard`      | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions   |
 | `@yaebal/media-cache`   | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/media-group`   | `media-studio`                                                                         | package tests plus example smoke               |
-| `@yaebal/morda`         | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
+| `@yaebal/morda`         | `basic`, `dialog-quest`, `morda-jsx`                                                   | package tests plus example smoke               |
 | `@yaebal/onboarding`    | `onboarding`                                                                           | package tests plus example smoke               |
 | `@yaebal/pagination`    | `commerce-suite`                                                                       | package tests plus example smoke               |
 | `@yaebal/panel`         | `panel`                                                                                | package tests plus example smoke               |

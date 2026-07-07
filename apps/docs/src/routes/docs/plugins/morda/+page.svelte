@@ -4,7 +4,7 @@
 	const install = `pnpm add @yaebal/morda`;
 
 	const basicDialogs = `import { Bot } from "@yaebal/core";
-import { dialogs, switchTo, back, button } from "@yaebal/morda";
+import { dialogs, switchTo, back, button, url } from "@yaebal/morda";
 
 const bot = new Bot(process.env.BOT_TOKEN!)
   .install(dialogs({
@@ -13,6 +13,7 @@ const bot = new Bot(process.env.BOT_TOKEN!)
       keyboard: [
         [switchTo("settings →", "settings")],
         [button("ping", { id: "ping", onClick: (ctx) => ctx.answerCallbackQuery({ text: "pong" }) })],
+        [url("docs", "https://example.com")],
       ],
     }),
     settings: () => ({
@@ -21,55 +22,92 @@ const bot = new Bot(process.env.BOT_TOKEN!)
     }),
   }));
 
+// window ids are typed: start("mian") is a compile error
 bot.command("menu", (ctx) => ctx.dialog.start("main"));
 bot.start();`;
 
 	const dialogControl = `// ctx.dialog is available on every update after .install(dialogs(...))
 
-// open a fresh dialog (sends a new message + initialises the stack)
-await ctx.dialog.start("main");
+// open a fresh dialog (closes any previous one, sends a new message)
+await ctx.dialog.start("main", { params: { orderId: 42 }, data: { step: 1 } });
 
-// push a window onto the stack (edits the message)
-await ctx.dialog.push("settings");
+// push a window onto the stack (edits the message); params land in frame.params
+await ctx.dialog.push("confirm", { orderId: 42 });
 
 // replace the top window without growing the stack
-await ctx.dialog.replace("confirm");
+await ctx.dialog.replace("done");
 
-// pop one window; if the stack becomes empty the message is deleted
-await ctx.dialog.back();
+// pop one window; the result (if any) reaches the parent window's onResult.
+// at the root this closes the dialog (message deleted, state dropped)
+await ctx.dialog.back("2026-07-08");
 
-// re-render the current window in place after mutating external state
-await ctx.dialog.rerender();`;
+// close the whole dialog from anywhere
+await ctx.dialog.close();
 
-	const buttonHelpers = `import { switchTo, back, button } from "@yaebal/morda";
+// re-render right now / schedule one re-render after the handler
+await ctx.dialog.rerender();
+ctx.dialog.invalidate();
 
-// navigate to another window on click
-switchTo("settings →", "settings");
+// the dialog-wide data bag (persisted; every window's render sees frame.data)
+await ctx.dialog.update({ dark: true });   // merge + re-render
+await ctx.dialog.setData({ dark: true });  // merge only
+const data = await ctx.dialog.getData();   // read (undefined when closed)`;
 
-// pop the stack (default label "← назад")
-back();
-back("← go back");
+	const windowDefs = `import { dialogs } from "@yaebal/morda";
+import { format, bold } from "@yaebal/core";
 
-// arbitrary action button
-button("refresh", {
-  id: "refresh",
-  onClick: async (ctx) => {
-    await ctx.answerCallbackQuery({ text: "refreshed" });
-    await ctx.dialog.rerender();
+bot.install(dialogs({
+  // a window is a render function…
+  main: (ctx, frame) => ({
+    text: format\`hello \${bold(ctx.from?.first_name ?? "there")}\`, // entities flow to the wire
+    keyboard: [[switchTo("ask →", "ask")]],
+  }),
+
+  // …or a full def with lifecycle + free-text input
+  ask: {
+    render: (ctx, frame) => ({
+      text: frame.data.name ? \`hi, \${frame.data.name}!\` : "what's your name?",
+    }),
+    onText: (ctx) => ctx.dialog.update({ name: ctx.text }), // commands are never routed here
+    onEnter: (ctx, frame) => {},          // pushed / replaced in
+    onLeave: (ctx, frame) => {},          // popped / replaced out / dialog closed
+    onResult: (ctx, result, frame) => {}, // a child window's back(result)
   },
-});`;
 
-	const customStorage = `import { dialogs } from "@yaebal/morda";
-import { type StorageAdapter } from "@yaebal/session";
-import type { DialogState } from "@yaebal/morda";
+  // media windows: text becomes the caption; media↔text transitions are
+  // handled for you (delete + resend where telegram refuses to edit)
+  photo: () => ({
+    text: "caption",
+    media: { type: "photo", media: "<file_id or url or media.file(...)>" },
+  }),
+}));`;
 
-class RedisDialogStorage implements StorageAdapter<DialogState> {
-  async get(key: string) { /* ... */ }
-  async set(key: string, value: DialogState) { /* ... */ }
-  async delete(key: string) { /* ... */ }
-}
+	const options = `import { dialogs } from "@yaebal/morda";
 
-bot.install(dialogs(def, { storage: new RedisDialogStorage() }));`;
+bot.install(dialogs(def, {
+  storage: redisAdapter,          // default: in-memory (dev only)
+  prefix: "shop",                 // callback namespace — unique per install
+  getKey: (ctx) => \`\${ctx.chat?.id}\`, // default: chat id, chat:user in groups
+  access: (ctx) => ctx.from?.id === ADMIN_ID, // gate who may press buttons
+  maxStack: 32,                   // navigation depth cap
+  events: {
+    onStale: (ctx) => ctx.answerCallbackQuery({ text: "this menu expired" }),
+    onAccessDenied: (ctx) => ctx.answerCallbackQuery({ text: "not for you" }),
+    onClose: (ctx, result) => {}, // dialog fully closed
+  },
+}));`;
+
+	const backgroundUpdates = `import { createDialogs } from "@yaebal/morda";
+
+const { plugin, background } = createDialogs(def, { storage });
+bot.install(plugin);
+
+// later — from a timer, queue worker, or webhook, with no incoming update:
+const control = await background(bot.api, String(chatId)); // key = getKey's value
+if (control) {
+  await control.update({ price: 42 }); // merge data + edit the message in place
+  await control.push("alert");         // or navigate
+}`;
 
 	const jsxSetup = `// tsconfig.json — point the compiler at morda's jsx transform
 {
@@ -83,7 +121,7 @@ bot.install(dialogs(def, { storage: new RedisDialogStorage() }));`;
 import { Bot } from "@yaebal/core";
 import {
   jsxDialogs,
-  Screen, ButtonRow, Button,
+  Screen, ButtonRow, Button, Url,
   useState, useNavigation,
 } from "@yaebal/morda/jsx";
 
@@ -110,6 +148,9 @@ function MainScreen() {
         <Button id="tap" onClick={() => setCount((n) => n + 1)}>tap</Button>
         <Button id="settings" onClick={() => nav.push(SettingsScreen)}>settings</Button>
       </ButtonRow>
+      <ButtonRow>
+        <Url url="https://example.com">docs</Url>
+      </ButtonRow>
     </Screen>
   );
 }
@@ -122,27 +163,70 @@ bot.start();`;
 
 	const jsxHooks = `/** @jsxImportSource @yaebal/morda */
 import {
-  Screen, Button,
-  useState, useEffect, useNavigation, useUser, useSession,
+  Screen, ButtonRow, Button,
+  useState, useEffect, useNavigation, useParams, useDialogData, useUser,
 } from "@yaebal/morda/jsx";
 
 function ProfileScreen() {
   const user = useUser();
-  const session = useSession<{ visits: number }>();
-  const [loaded, setLoaded] = useState(false);
-  const nav = useNavigation();
+  const { userId } = useParams<{ userId: number }>();   // from nav.push(Profile, { userId })
+  const [data, patch] = useDialogData<{ theme?: string }>(); // dialog-wide bag
+  const [profile, setProfile] = useState<Profile | null>(null);
 
+  // effects run AFTER the render is delivered, so the load-then-show
+  // pattern works: the screen shows "loading…", then edits itself.
   useEffect(() => {
-    console.log("screen mounted");
-  }, []); // empty deps → runs once per mount
+    loadProfile(userId).then(setProfile);
+  }, [userId]);
 
   return (
-    <Screen>
-      {\`hello \${user?.first_name}! visits: \${session.visits}\`}
-      <Button id="back" onClick={() => nav.back()}>← back</Button>
+    <Screen onText={(ctx) => patch({ theme: ctx.text })}>
+      {profile ? \`\${profile.name} (\${data.theme ?? "light"})\` : "loading…"}
+      <ButtonRow>
+        <Button id="hi">{\`hello \${user?.first_name ?? "?"}\`}</Button>
+      </ButtonRow>
     </Screen>
   );
 }`;
+
+	const jsxWidgets = `/** @jsxImportSource @yaebal/morda */
+import { Screen, Counter, Toggle, Select, Pagination, useState } from "@yaebal/morda/jsx";
+
+function SettingsScreen() {
+  const [page, setPage] = useState(1);
+  return (
+    <Screen>
+      settings
+      <Counter id="volume" min={0} max={10} />
+      <Toggle id="dark">dark mode</Toggle>
+      <Select
+        id="lang"
+        items={[{ code: "en", name: "english" }, { code: "ru", name: "русский" }]}
+        itemId={(l) => l.code}
+        label={(l) => l.name}
+        columns={2}
+      />
+      <Pagination id="p" page={page} pages={5} onPage={setPage} />
+    </Screen>
+  );
+}`;
+
+	const testing = `import { Composer, Context } from "@yaebal/core";
+import { MemoryStorage } from "@yaebal/session";
+import { dialogs, type DialogState } from "@yaebal/morda";
+
+// morda talks to telegram only through api.call — a structural fake records
+// every call, and callback_data can be read straight off the recorded keyboard
+const storage = new MemoryStorage<DialogState>();
+const mw = new Composer<Context>()
+  .install(dialogs(def, { storage }))
+  .command("go", (ctx) => ctx.dialog.start("main"))
+  .toMiddleware();
+
+await mw(msgCtx(api, "/go", chatId), noop);
+const sent = calls.find((c) => c.method === "sendMessage");
+const data = sent.params.reply_markup.inline_keyboard[0][0].callback_data;
+await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 </script>
 
 <svelte:head>
@@ -151,9 +235,11 @@ function ProfileScreen() {
 
 <h1>@yaebal/morda</h1>
 <p class="lead">
-	dialogs engine + jsx/hooks layer. declarative windows, automatic callback routing, per-chat
-	navigation stack — and an optional "react-for-telegram" surface where screens are components and
-	state is managed with hooks.
+	dialogs engine + jsx/hooks layer. declarative windows rendered into one message, automatic
+	callback routing, a persisted navigation stack — and an optional "react-for-telegram" surface
+	where screens are components and state is managed with hooks. the engine owns the unglamorous
+	parts: per-key locking, stale-press detection, edit/delete fallbacks, per-user dialogs in
+	groups, business-chat routing.
 </p>
 
 <h2>install</h2>
@@ -162,18 +248,16 @@ function ProfileScreen() {
 <h2>the dialogs API</h2>
 <p>
 	the core export is <code>dialogs(def, options?)</code>. a <em>dialog</em> is a flat map of named
-	windows; each window is a function that returns <code>&#123; text, keyboard &#125;</code>. morda
-	encodes button ids into <code>callback_data</code> automatically and routes presses back to the
-	right <code>onClick</code> — no manual <code>editMessageText</code> or callback-data wrangling
-	needed.
+	windows; each window is a render function (or a full <code>WindowDef</code>) returning
+	<code>&#123; text, keyboard?, media?, linkPreview? &#125;</code>. morda encodes button ids into
+	<code>callback_data</code> automatically and routes presses back to the right
+	<code>onClick</code> — no manual <code>editMessageText</code> or callback-data wrangling.
+	window ids are part of the type: <code>ctx.dialog.start("mian")</code> is a compile error.
 </p>
 <Code code={basicDialogs} title="menu.ts" />
 
 <h2>ctx.dialog</h2>
-<p>
-	installing the plugin adds <code>ctx.dialog</code> on every update. the five methods cover all
-	navigation needs:
-</p>
+<p>installing the plugin adds <code>ctx.dialog</code> on every update:</p>
 <Code code={dialogControl} title="navigation.ts" />
 
 <table>
@@ -181,85 +265,103 @@ function ProfileScreen() {
 		<tr><th>method</th><th>description</th></tr>
 	</thead>
 	<tbody>
-		<tr><td><code>start(windowId)</code></td><td>send a new message and start a fresh stack</td></tr>
-		<tr><td><code>push(windowId)</code></td><td>push a window; edits the dialog message</td></tr>
-		<tr><td><code>replace(windowId)</code></td><td>replace the top window without growing the stack</td></tr>
-		<tr><td><code>back()</code></td><td>pop the stack; deletes the message when the stack empties</td></tr>
-		<tr><td><code>rerender()</code></td><td>re-render the current window in place</td></tr>
+		<tr><td><code>start(w, &#123; params?, data? &#125;)</code></td><td>close any open dialog, send a new message, start a fresh stack</td></tr>
+		<tr><td><code>push(w, params?)</code></td><td>push a window; edits the dialog message</td></tr>
+		<tr><td><code>replace(w, params?)</code></td><td>replace the top window without growing the stack</td></tr>
+		<tr><td><code>back(result?)</code></td><td>pop the stack; <code>result</code> reaches the parent's <code>onResult</code>. closes the dialog at the root</td></tr>
+		<tr><td><code>close()</code></td><td>delete the message and drop the state from anywhere</td></tr>
+		<tr><td><code>rerender()</code></td><td>re-render the current window in place, immediately</td></tr>
+		<tr><td><code>invalidate()</code></td><td>schedule one re-render after the current handler (batched)</td></tr>
+		<tr><td><code>update(patch)</code></td><td>merge into the dialog <code>data</code> bag + re-render</td></tr>
+		<tr><td><code>setData(patch)</code></td><td>merge into <code>data</code>, persist, no render</td></tr>
+		<tr><td><code>getData()</code></td><td>read the <code>data</code> bag (<code>undefined</code> when closed)</td></tr>
+		<tr><td><code>active()</code></td><td>whether a dialog is open for this key</td></tr>
 	</tbody>
 </table>
 
-<h2>button helpers</h2>
-<p>three named helpers build <code>Button</code> objects without constructing them by hand:</p>
-<Code code={buttonHelpers} title="buttons.ts" />
+<h2>windows: lifecycle, input, media, formatting</h2>
+<p>
+	a window render receives <code>(ctx, frame)</code> — <code>frame.params</code> are the values
+	passed to <code>push</code>/<code>start</code>, <code>frame.data</code> is the dialog-wide
+	persisted bag. <code>text</code> accepts a plain string or a core
+	<code>format</code> result (entities are threaded into <code>sendMessage</code> /
+	<code>editMessageText</code> automatically).
+</p>
+<Code code={windowDefs} title="windows.ts" />
 
+<h2>button helpers</h2>
 <table>
 	<thead>
-		<tr><th>helper</th><th>signature</th><th>description</th></tr>
+		<tr><th>helper</th><th>description</th></tr>
 	</thead>
 	<tbody>
-		<tr>
-			<td><code>switchTo</code></td>
-			<td><code>(label, windowId) =&gt; Button</code></td>
-			<td>button that calls <code>ctx.dialog.push(windowId)</code></td>
-		</tr>
-		<tr>
-			<td><code>back</code></td>
-			<td><code>(label?) =&gt; Button</code></td>
-			<td>button that calls <code>ctx.dialog.back()</code>; default label <code>"← Назад"</code></td>
-		</tr>
-		<tr>
-			<td><code>button</code></td>
-			<td><code>(label, &#123; id, onClick? &#125;) =&gt; Button</code></td>
-			<td>arbitrary action button</td>
-		</tr>
+		<tr><td><code>button(label, &#123; id, onClick? &#125;)</code></td><td>arbitrary action button</td></tr>
+		<tr><td><code>switchTo(label, windowId, params?)</code></td><td>pushes another window on click</td></tr>
+		<tr><td><code>back(label?, result?)</code></td><td>pops the stack, optionally handing a result up</td></tr>
+		<tr><td><code>cancel(label?)</code></td><td>closes the whole dialog</td></tr>
+		<tr><td><code>url(label, url)</code></td><td>opens a url</td></tr>
+		<tr><td><code>webApp(label, url)</code></td><td>opens a web app</td></tr>
+		<tr><td><code>copy(label, text)</code></td><td>copies text to the clipboard</td></tr>
+		<tr><td><code>switchInline(label, query?, &#123; currentChat? &#125;)</code></td><td>starts an inline query</td></tr>
 	</tbody>
 </table>
 
 <h2>dialogs() options</h2>
+<Code code={options} title="options.ts" />
 <table>
 	<thead>
-		<tr><th>option</th><th>type</th><th>required</th><th>description</th></tr>
+		<tr><th>option</th><th>default</th><th>description</th></tr>
 	</thead>
 	<tbody>
 		<tr>
 			<td><code>storage</code></td>
-			<td><code>StorageAdapter&lt;DialogState&gt;</code></td>
-			<td>no</td>
-			<td>where to persist the navigation stack. defaults to <code>MemoryStorage</code> (lost on restart)</td>
+			<td><code>MemoryStorage</code></td>
+			<td>where dialog state persists — stack, params, data, jsx hook state. use a persistent
+			adapter in production and dialogs survive restarts</td>
 		</tr>
 		<tr>
-			<td><code>onLeave</code></td>
-			<td><code>(chatId, windowId) =&gt; void</code></td>
-			<td>no</td>
-			<td>called when a window leaves the stack. the jsx layer uses this to evict hook state</td>
+			<td><code>prefix</code></td>
+			<td><code>"dlg"</code></td>
+			<td>callback_data namespace. <strong>set a unique prefix per install</strong> when
+			installing several dialogs on one bot</td>
+		</tr>
+		<tr>
+			<td><code>getKey</code></td>
+			<td>chat id / <code>chat:user</code></td>
+			<td>state key per update. the default gives every group member an independent dialog</td>
+		</tr>
+		<tr>
+			<td><code>access</code></td>
+			<td>—</td>
+			<td>predicate gating presses and text input on an open dialog</td>
+		</tr>
+		<tr>
+			<td><code>maxStack</code></td>
+			<td><code>32</code></td>
+			<td>navigation depth cap; <code>push</code> beyond it throws</td>
+		</tr>
+		<tr>
+			<td><code>events</code></td>
+			<td>silent</td>
+			<td><code>onStale</code> / <code>onAccessDenied</code> / <code>onClose(ctx, result)</code></td>
 		</tr>
 	</tbody>
 </table>
-<Code code={customStorage} title="custom-storage.ts" />
 
-<h2>public types</h2>
-<table>
-	<thead>
-		<tr><th>export</th><th>description</th></tr>
-	</thead>
-	<tbody>
-		<tr><td><code>DialogContext</code></td><td><code>Context & &#123; dialog: DialogControl &#125;</code> — context inside a window render or button onClick</td></tr>
-		<tr><td><code>DialogControl</code></td><td>the five navigation methods on <code>ctx.dialog</code></td></tr>
-		<tr><td><code>DialogDef</code></td><td><code>Record&lt;string, WindowRender&gt;</code> — the map passed to <code>dialogs()</code></td></tr>
-		<tr><td><code>WindowRender</code></td><td><code>(ctx: DialogContext) =&gt; WindowView | Promise&lt;WindowView&gt;</code></td></tr>
-		<tr><td><code>WindowView</code></td><td><code>&#123; text: string; keyboard?: Button[][] &#125;</code></td></tr>
-		<tr><td><code>Button</code></td><td><code>&#123; id: string; label: string; onClick?: (ctx) =&gt; unknown &#125;</code></td></tr>
-		<tr><td><code>DialogState</code></td><td>persisted per-chat state: <code>&#123; stack: string[]; messageId: number; chatId: number &#125;</code></td></tr>
-		<tr><td><code>DialogsOptions</code></td><td>options interface for <code>dialogs()</code></td></tr>
-	</tbody>
-</table>
+<h2>background updates</h2>
+<p>
+	<code>createDialogs</code> returns the plugin plus a <code>background</code> handle — edit a
+	user's open dialog from outside a handler. renders get a synthetic context
+	(<code>ctx.chat</code> carries the stored chat id, <code>ctx.from</code> is undefined).
+</p>
+<Code code={backgroundUpdates} title="background.ts" />
 
 <h2>jsx / hooks layer</h2>
 <p>
 	<code>@yaebal/morda/jsx</code> is an optional higher-level surface. screens become zero-arg
-	components that return <code>&lt;Screen&gt;</code> trees, and React-style hooks manage local
-	state. the compiler must be configured to use morda's jsx transform.
+	components that return <code>&lt;Screen&gt;</code> trees, and react-style hooks manage state.
+	hook state is persisted in the dialog frames — with a persistent storage it survives restarts
+	and horizontal scaling. values must be JSON-serializable.
 </p>
 <Code code={jsxSetup} title="tsconfig.json" lang="text" />
 <Code code={jsxBasic} title="bot.tsx" />
@@ -269,101 +371,92 @@ function ProfileScreen() {
 
 <table>
 	<thead>
-		<tr><th>hook</th><th>signature</th><th>description</th></tr>
+		<tr><th>hook</th><th>description</th></tr>
 	</thead>
 	<tbody>
 		<tr>
-			<td><code>useState</code></td>
-			<td><code>&lt;T&gt;(initial: T | (() =&gt; T)) =&gt; [T, setter]</code></td>
-			<td>per-screen, per-chat state slot. calling the setter triggers <code>ctx.dialog.rerender()</code></td>
+			<td><code>useState&lt;T&gt;(initial)</code></td>
+			<td>persisted per-screen state slot. the setter batches: any number of calls in one
+			handler produce one edit</td>
 		</tr>
 		<tr>
-			<td><code>useEffect</code></td>
-			<td><code>(fn, deps?) =&gt; void</code></td>
-			<td>fire-and-forget side-effect after render; <code>deps</code> gate re-runs. no cleanup support</td>
+			<td><code>useEffect(fn, deps?)</code></td>
+			<td>runs after the render is delivered; <code>deps</code> are persisted, so
+			<code>[]</code> means once per screen instance (not once per process). no cleanup</td>
 		</tr>
 		<tr>
-			<td><code>useNavigation</code></td>
-			<td><code>() =&gt; Navigation</code></td>
-			<td>returns <code>&#123; push, replace, back &#125;</code>; accepts a <code>ScreenComponent</code> or a window id string</td>
+			<td><code>useNavigation()</code></td>
+			<td><code>&#123; push, replace, back, close &#125;</code> — navigate by component:
+			<code>nav.push(Settings, params)</code></td>
 		</tr>
-		<tr>
-			<td><code>useUser</code></td>
-			<td><code>() =&gt; User | undefined</code></td>
-			<td>the Telegram user from the current update's <code>ctx.from</code></td>
-		</tr>
-		<tr>
-			<td><code>useSession</code></td>
-			<td><code>&lt;S&gt;() =&gt; S</code></td>
-			<td>raw access to <code>ctx.session</code>; requires <code>@yaebal/session</code> installed before the dialog</td>
-		</tr>
-		<tr>
-			<td><code>useTranslation</code></td>
-			<td><code>() =&gt; &#123; t, changeLanguage &#125;</code></td>
-			<td>i18n helpers; requires <code>@yaebal/i18n</code> installed before the dialog</td>
-		</tr>
+		<tr><td><code>useParams&lt;P&gt;()</code></td><td>params passed to <code>push</code>/<code>replace</code>/<code>start</code></td></tr>
+		<tr><td><code>useDialogData&lt;T&gt;()</code></td><td><code>[data, patch]</code> — the dialog-wide persisted bag</td></tr>
+		<tr><td><code>useUser()</code> / <code>useChat()</code></td><td><code>ctx.from</code> / <code>ctx.chat</code></td></tr>
+		<tr><td><code>useContext&lt;C&gt;()</code></td><td>the full context — the escape hatch</td></tr>
+		<tr><td><code>useSession&lt;S&gt;()</code></td><td><code>ctx.session</code>; throws a clear error if <code>@yaebal/session</code> is missing</td></tr>
+		<tr><td><code>useTranslation()</code></td><td><code>&#123; t, changeLanguage &#125;</code>; requires <code>@yaebal/i18n</code></td></tr>
 	</tbody>
 </table>
 
-<h2>jsx components</h2>
+<h2>jsx components &amp; widgets</h2>
+<Code code={jsxWidgets} title="widgets.tsx" />
 <table>
 	<thead>
-		<tr><th>component</th><th>props</th><th>description</th></tr>
+		<tr><th>component</th><th>description</th></tr>
 	</thead>
 	<tbody>
-		<tr>
-			<td><code>&lt;Screen&gt;</code></td>
-			<td><code>children</code></td>
-			<td>root element of every screen component — required</td>
-		</tr>
-		<tr>
-			<td><code>&lt;ButtonRow&gt;</code></td>
-			<td><code>children</code></td>
-			<td>groups <code>&lt;Button&gt;</code> elements into one keyboard row</td>
-		</tr>
-		<tr>
-			<td><code>&lt;Button&gt;</code></td>
-			<td><code>id, onClick?, children</code></td>
-			<td>a single inline button; <code>children</code> becomes the label</td>
-		</tr>
+		<tr><td><code>&lt;Screen onText? media? linkPreview?&gt;</code></td><td>root of every screen. <code>onText</code> consumes free text (return <code>false</code> to decline)</td></tr>
+		<tr><td><code>&lt;ButtonRow&gt;</code></td><td>groups buttons into one keyboard row</td></tr>
+		<tr><td><code>&lt;Button id onClick?&gt;</code></td><td>callback button; children become the label</td></tr>
+		<tr><td><code>&lt;Url&gt;</code> / <code>&lt;WebApp&gt;</code> / <code>&lt;Copy&gt;</code> / <code>&lt;SwitchInline&gt;</code></td><td>the other telegram button kinds</td></tr>
+		<tr><td><code>&lt;Counter id min? max? step? value? onChange?&gt;</code></td><td><code>− n +</code> stepper (uncontrolled or controlled)</td></tr>
+		<tr><td><code>&lt;Toggle id value? onChange?&gt;</code></td><td>on/off switch with a ☑/☐ mark</td></tr>
+		<tr><td><code>&lt;Select id items itemId label selected? onSelect? columns?&gt;</code></td><td>single-choice list, chosen item marked ✓</td></tr>
+		<tr><td><code>&lt;Pagination id page pages onPage&gt;</code></td><td><code>« ‹ n/m › »</code> pager (controlled)</td></tr>
 	</tbody>
 </table>
 
-<h2>jsx public exports</h2>
-<table>
-	<thead><tr><th>export</th><th>subpath</th><th>description</th></tr></thead>
-	<tbody>
-		<tr><td><code>jsxDialogs</code></td><td><code>@yaebal/morda/jsx</code></td><td>register JSX screens as a dialog plugin.</td></tr>
-		<tr><td><code>Screen</code>, <code>ButtonRow</code>, <code>Button</code></td><td><code>@yaebal/morda/jsx</code></td><td>JSX components used to build a Telegram window.</td></tr>
-		<tr><td><code>useState</code>, <code>useEffect</code>, <code>useNavigation</code>, <code>useUser</code>, <code>useSession</code>, <code>useTranslation</code></td><td><code>@yaebal/morda/jsx</code></td><td>hooks available during screen render.</td></tr>
-		<tr><td><code>ScreenComponent</code>, <code>ButtonProps</code>, <code>Navigation</code>, <code>Translation</code>, <code>VNode</code></td><td><code>@yaebal/morda/jsx</code></td><td>public JSX layer types.</td></tr>
-		<tr><td><code>jsx</code>, <code>jsxs</code>, <code>Fragment</code>, <code>JSX</code>, <code>VNODE</code></td><td><code>@yaebal/morda/jsx-runtime</code></td><td>automatic JSX runtime used by TypeScript when <code>jsxImportSource</code> is <code>"@yaebal/morda"</code>. You normally do not import this subpath manually.</td></tr>
-	</tbody>
-</table>
-
-<h2>registration</h2>
-<p>
-	both the builder API and the jsx layer use <code>.install()</code> — the same method used by
-	every other yaebal plugin.
-</p>
-
+<h2>reliability &amp; production notes</h2>
 <div class="note">
-	<strong>stale-press guard.</strong> morda ignores button presses whose window id does not match
-	the live stack top — a double-tap or a press on an old keyboard before the edit landed is
-	silently discarded and the spinner is cleared.
+	<strong>concurrent taps are serialized.</strong> a per-key lock wraps every state
+	read-modify-write, so a double-tap in webhook mode can't corrupt the stack — the second press
+	sees the new window and is discarded as stale (single-process; multi-process deployments need
+	sticky routing per chat).
 	<br /><br />
-	<strong>no auto re-render in the builder API.</strong> after mutating external state that a
-	window reads, call <code>ctx.dialog.rerender()</code> yourself. the jsx layer automates this via
-	<code>useState</code>.
+	<strong>stale presses are detected by dialog instance.</strong> every <code>start()</code> mints
+	a new intent id; presses from previous instances, from windows no longer on top, or on buttons
+	that vanished from a fresh render are answered silently (customize via
+	<code>events.onStale</code>).
 	<br /><br />
-	<strong>useState fires one edit per call.</strong> calling the setter multiple times in one
-	handler issues one <code>editMessageText</code> per call — there is no batching. combine writes
-	if you need to update several slots at once.
+	<strong>telegram refusals are handled.</strong> <code>message is not modified</code> is
+	swallowed (identical renders are skipped before the API call); a message the user deleted is
+	replaced by a fresh send; <code>deleteMessage</code> past the 48-hour window falls back to
+	disarming the keyboard — a dialog can always close.
 	<br /><br />
-	<strong>hooks must be unconditional.</strong> changing the number of hook calls between renders
-	(e.g. hooks inside <code>if</code> blocks) throws at runtime — same rule as React.
+	<strong>the spinner always clears.</strong> <code>answerCallbackQuery</code> runs even when an
+	<code>onClick</code> throws; answering again inside <code>onClick</code> (e.g. with a text) is
+	safe.
 	<br /><br />
-	<strong>hook state is in-memory.</strong> <code>useState</code> slots are stored in a module-level
-	<code>Map</code> and are lost on process restart. they are evicted cleanly when a window leaves
-	the stack, so reopened screens re-mount fresh.
+	<strong>several installs need distinct prefixes.</strong> two <code>dialogs()</code> installs
+	sharing the default <code>"dlg"</code> prefix can misattribute each other's presses when both
+	have an open dialog in one chat — pass <code>prefix</code> to each install.
+	<br /><br />
+	<strong>hooks must be unconditional.</strong> rendering fewer hooks than the persisted slots
+	throws (same rule as react). appending new hooks in a deploy over live dialogs is allowed.
 </div>
+
+<h2>testing</h2>
+<p>
+	morda reaches telegram only through <code>api.call</code>, so a structural fake api records
+	everything; read <code>callback_data</code> from the recorded keyboard and feed it back as a
+	callback update. <code>packages/morda/src/index.test.ts</code> is a complete worked example.
+</p>
+<Code code={testing} title="morda.test.ts" />
+
+<h2>related</h2>
+<p>
+	<a href="/docs/plugins/scenes">@yaebal/scenes</a> for message-per-step wizards,
+	<a href="/docs/plugins/prompt">@yaebal/prompt</a> for one-off questions,
+	<a href="/docs/plugins/session">@yaebal/session</a> for the storage adapters morda reuses, and
+	the <a href="/docs/examples">dialog-quest example</a> for a running bot.
+</p>

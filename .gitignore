@@ -15,6 +15,7 @@ apps/docs/**/.svelte-kit
 apps/docs/**/build
 packages/**/lib
 !packages/**/scripts/lib
+examples/**/lib
 
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

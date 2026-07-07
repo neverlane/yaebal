@@ -1,0 +1,19 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ES2023"],
+		"types": ["node"],
+		"jsx": "react-jsx",
+		"jsxImportSource": "@yaebal/morda"
+	},
+	"references": [
+		{ "path": "../../packages/yaebal" },
+		{ "path": "../../packages/morda" }
+	],
+	"include": ["src/**/*.tsx", "src/**/*.ts"],
+	"exclude": ["lib"]
+}

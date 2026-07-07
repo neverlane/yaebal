@@ -1,0 +1,19 @@
+{
+	"name": "@yaebal/example-morda-jsx",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "tsc -p tsconfig.json && node --env-file=.env lib/index.js",
+		"start": "tsc -p tsconfig.json && node --env-file=.env lib/index.js",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "pnpm typecheck"
+	},
+	"dependencies": {
+		"yaebal": "workspace:*",
+		"@yaebal/morda": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

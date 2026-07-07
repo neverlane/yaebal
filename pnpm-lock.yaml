@@ -261,6 +261,19 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/morda-jsx:
+    dependencies:
+      '@yaebal/morda':
+        specifier: workspace:*
+        version: link:../../packages/morda
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.0
+
   examples/onboarding:
     dependencies:
       '@yaebal/onboarding':

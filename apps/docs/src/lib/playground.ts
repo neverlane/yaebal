@@ -1,20 +1,87 @@
-import { type ChatMessage, renderChat } from "@yaebal/preview";
+import type { ChatMessage } from "@yaebal/preview";
 import {
 	type RecordedCall,
 	callbackUpdate,
 	inlineQueryUpdate,
 	messageUpdate,
-	mockApi,
 	preCheckoutQueryUpdate,
 } from "@yaebal/test";
-import { type Bot, createBot, richContext } from "yaebal";
+import type { Bot } from "yaebal";
 
 export type Step =
 	| { user: string }
 	| { click: string; label?: string }
 	| { inline: string }
 	| { preCheckout: string }
-	| { system: string };
+	| { system: string }
+	| { wait: number };
+
+/** a chat message stamped with its virtual time (ms since scenario start). */
+export type TimedMessage = ChatMessage & { at?: number };
+
+/** the slice of a @yaebal/test TestClock that feedSteps drives. */
+export interface StepClock {
+	now(): number;
+	advance(ms: number): Promise<void>;
+}
+
+/** how much virtual time to run out after the last step so pending timers fire. */
+export const SETTLE_MS = 5000;
+
+const fmtSecs = (ms: number): string => {
+	const s = ms / 1000;
+	return `${s % 1 ? s.toFixed(1) : s}s`;
+};
+
+export function formatStep(step: Step): string {
+	if ("user" in step) return step.user;
+	if ("system" in step) return `system:${step.system}`;
+	if ("inline" in step) return `inline:${step.inline}`;
+	if ("preCheckout" in step) return `pre_checkout:${step.preCheckout}`;
+	if ("wait" in step) return `wait:${step.wait}`;
+
+	return `click:${step.click}`;
+}
+
+export function formatSteps(value: Step[]): string {
+	return value.map(formatStep).join("\n");
+}
+
+/** `wait:` accepts plain ms (`wait:1500`) or seconds with a suffix (`wait:1.5s`). */
+function parseWait(raw: string): number {
+	const trimmed = raw.trim();
+	const n = trimmed.endsWith("s") ? Number(trimmed.slice(0, -1)) * 1000 : Number(trimmed);
+
+	return Number.isFinite(n) && n > 0 ? Math.round(n) : 0;
+}
+
+export function parseSteps(value: string): Step[] {
+	const steps: Step[] = [];
+
+	for (const raw of value.split("\n")) {
+		const line = raw.trim();
+		if (!line) continue;
+
+		if (line.startsWith("system:")) {
+			const system = line.slice("system:".length).trim();
+			if (system) steps.push({ system });
+		} else if (line.startsWith("inline:")) {
+			steps.push({ inline: line.slice("inline:".length).trim() });
+		} else if (line.startsWith("pre_checkout:")) {
+			steps.push({ preCheckout: line.slice("pre_checkout:".length).trim() });
+		} else if (line.startsWith("wait:")) {
+			const wait = parseWait(line.slice("wait:".length));
+			if (wait) steps.push({ wait });
+		} else if (line.startsWith("click:")) {
+			const [click = ""] = line.slice("click:".length).split("|", 1);
+			steps.push({ click: click.trim() });
+		} else {
+			steps.push({ user: line });
+		}
+	}
+
+	return steps;
+}
 
 interface InlineBtn {
 	text: string;
@@ -231,81 +298,33 @@ export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 	}
 }
 
-export async function runScenario(
-	setup: (bot: Bot) => void,
-	steps: Step[],
-	width = 360,
-	theme: "light" | "dark" = "light",
-): Promise<string> {
-	const { bot, calls } = mockBot();
-	setup(bot);
-
-	const convo = await feedSteps(bot, calls, steps);
-	return renderChat(convo, { theme, width: Math.max(280, width) });
-}
-
-export function mockBot(): { bot: Bot; calls: RecordedCall[] } {
-	const { api, calls } = mockApi();
-	const bot = createBot("playground:token", {
-		contextFactory: (_api, update, type) => richContext(api, update, type),
-	});
-
-	return { bot, calls };
-}
-
+/**
+ * replay `steps` against the bot and assemble the conversation. with a `clock`
+ * (a @yaebal/test virtual clock installed by the runner) delayed replies work:
+ * due timers are flushed after every update, `wait:` steps advance virtual time,
+ * and after the last step the clock runs {@link SETTLE_MS} further so trailing
+ * `setTimeout` replies still land. every message carries `at` — virtual ms since
+ * the scenario started — which the result pane uses to pace the reveal animation.
+ */
 export async function feedSteps(
 	bot: Bot,
 	calls: RecordedCall[],
 	steps: Step[],
-): Promise<ChatMessage[]> {
-	const convo: ChatMessage[] = [];
+	clock?: StepClock,
+): Promise<TimedMessage[]> {
+	const convo: TimedMessage[] = [];
 	const callbackLabels = new Map<string, string>();
 	let nextMessageId = 1;
 	let lastBotMessageId: number | undefined;
 	let ts = 0;
 
-	for (const step of steps) {
-		ts += 1;
-		const before = calls.length;
+	const startAt = clock?.now() ?? 0;
+	const now = () => (clock ? clock.now() - startAt : ts);
+	const stamp = (at: number): string => (clock ? `, t+${fmtSecs(at)}` : "");
 
-		if ("system" in step) {
-			convo.push({ from: "system", text: step.system });
-			continue;
-		}
-
-		if ("user" in step) {
-			const messageId = nextMessageId++;
-			const update = messageUpdate({ text: step.user });
-			setMessageId(update, messageId);
-
-			convo.push({
-				from: "user",
-				text: step.user,
-				status: "read",
-				messageId,
-				debug: `incoming message, ts: ${ts}, id: ${messageId}`,
-			});
-			await bot.handleUpdate(update);
-		} else if ("inline" in step) {
-			convo.push({ from: "system", text: `inline query: ${quote(step.inline)}` });
-			await bot.handleUpdate(inlineQueryUpdate({ query: step.inline }));
-		} else if ("preCheckout" in step) {
-			convo.push({ from: "system", text: `pre-checkout query: ${quote(step.preCheckout)}` });
-			await bot.handleUpdate(preCheckoutQueryUpdate({ invoicePayload: step.preCheckout }));
-		} else {
-			const label = callbackLabels.get(step.click) ?? step.click;
-			const targetId = lastBotMessageId ?? 1;
-			const update = callbackUpdate({ data: step.click });
-			setMessageId(update, targetId);
-
-			convo.push({
-				from: "system",
-				text: `inline pressed: button ${quote(label)} with data ${quote(step.click)}`,
-			});
-			await bot.handleUpdate(update);
-		}
-
-		for (const c of calls.slice(before)) {
+	const collect = (from: number) => {
+		for (const c of calls.slice(from)) {
+			const at = clock ? Math.max(0, c.at - startAt) : ts;
 			collectCallbackLabels(c.params?.reply_markup, callbackLabels);
 
 			if (c.method === "answerCallbackQuery") {
@@ -313,20 +332,25 @@ export async function feedSteps(
 				convo.push({
 					from: "system",
 					text: text ? `callback answered: ${quote(text)}` : "callback answered",
+					at,
 				});
 				continue;
 			}
 
 			if (c.method === "answerInlineQuery") {
 				const results = Array.isArray(c.params?.results) ? c.params.results.length : 0;
-				convo.push({ from: "system", text: `inline answered: ${results} result(s)` });
+				convo.push({ from: "system", text: `inline answered: ${results} result(s)`, at });
 				continue;
 			}
 
 			if (c.method === "answerPreCheckoutQuery") {
 				const ok = c.params?.ok === true;
 				const error = typeof c.params?.error_message === "string" ? `: ${c.params.error_message}` : "";
-				convo.push({ from: "system", text: ok ? "pre-checkout approved" : `pre-checkout rejected${error}` });
+				convo.push({
+					from: "system",
+					text: ok ? "pre-checkout approved" : `pre-checkout rejected${error}`,
+					at,
+				});
 				continue;
 			}
 
@@ -352,11 +376,78 @@ export async function feedSteps(
 				name: "bot",
 				...msg,
 				messageId,
+				at,
 				debug: edited
-					? `edited message, ts: ${ts}, id: ${messageId}`
-					: `${c.method}, ts: ${ts}, id: ${messageId}${replyTo}`,
+					? `edited message, ts: ${ts}, id: ${messageId}${stamp(at)}`
+					: `${c.method}, ts: ${ts}, id: ${messageId}${replyTo}${stamp(at)}`,
 			});
 		}
+	};
+
+	for (const step of steps) {
+		ts += 1;
+		const before = calls.length;
+
+		if ("system" in step) {
+			convo.push({ from: "system", text: step.system, at: now() });
+			continue;
+		}
+
+		if ("wait" in step) {
+			convo.push({ from: "system", text: `⏱ waited ${fmtSecs(step.wait)}`, at: now() });
+			await clock?.advance(step.wait);
+			collect(before);
+			continue;
+		}
+
+		if ("user" in step) {
+			const messageId = nextMessageId++;
+			const update = messageUpdate({ text: step.user });
+			setMessageId(update, messageId);
+
+			convo.push({
+				from: "user",
+				text: step.user,
+				status: "read",
+				messageId,
+				at: now(),
+				debug: `incoming message, ts: ${ts}, id: ${messageId}`,
+			});
+			await bot.handleUpdate(update);
+		} else if ("inline" in step) {
+			convo.push({ from: "system", text: `inline query: ${quote(step.inline)}`, at: now() });
+			await bot.handleUpdate(inlineQueryUpdate({ query: step.inline }));
+		} else if ("preCheckout" in step) {
+			convo.push({
+				from: "system",
+				text: `pre-checkout query: ${quote(step.preCheckout)}`,
+				at: now(),
+			});
+			await bot.handleUpdate(preCheckoutQueryUpdate({ invoicePayload: step.preCheckout }));
+		} else {
+			const label = callbackLabels.get(step.click) ?? step.click;
+			const targetId = lastBotMessageId ?? 1;
+			const update = callbackUpdate({ data: step.click });
+			setMessageId(update, targetId);
+
+			convo.push({
+				from: "system",
+				text: `inline pressed: button ${quote(label)} with data ${quote(step.click)}`,
+				at: now(),
+			});
+			await bot.handleUpdate(update);
+		}
+
+		// fire timers that came due while handling (setTimeout(fn, 0) and friends)
+		await clock?.advance(0);
+		collect(before);
+	}
+
+	// run out trailing timers so delayed replies after the last step still render
+	if (clock) {
+		const before = calls.length;
+		await clock.advance(SETTLE_MS);
+		collect(before);
 	}
 
 	return convo;

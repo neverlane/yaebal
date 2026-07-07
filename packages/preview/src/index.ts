@@ -589,6 +589,15 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 	let y = PAD;
 
 	for (const m of messages) {
+		// every rendered message is wrapped in <g class="yb-msg"> so consumers can
+		// target messages individually (e.g. the docs playground animates them in)
+		const msgStart = body.length;
+		const wrapMessage = () => {
+			if (body.length === msgStart) return;
+			body.splice(msgStart, 0, `<g class="yb-msg">`);
+			body.push("</g>");
+		};
+
 		const out = m.from === "user";
 		const indent = out ? 0 : AV + AVGAP;
 		const base = out ? p.outText : p.inText;
@@ -615,6 +624,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			});
 			y += bh + GAP;
 
+			wrapMessage();
 			continue;
 		}
 
@@ -638,6 +648,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			body.push(meta(out ? W - PAD : sx + sz, y + sz, time, m.status, out, p, false));
 			y += sz + GAP;
 
+			wrapMessage();
 			continue;
 		}
 
@@ -937,6 +948,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 		}
 
 		y += GAP;
+		wrapMessage();
 	}
 
 	const H = Math.round(y - GAP + PAD);

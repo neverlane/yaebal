@@ -1,119 +1,18 @@
-import { type ChatMessage, renderChat } from "@yaebal/preview";
-import { transform } from "sucrase";
+/**
+ * playground run orchestration. mock runs go to a web worker (with an inline fallback
+ * when workers are unavailable or time out); live mode runs in the page against a real
+ * token. the sandbox itself — compiler, module registry, bot capture — lives in
+ * `playground-sandbox.ts` and is loaded on demand so doc pages embedding `Try` blocks
+ * don't pay for the full plugin registry.
+ */
+import type { ChatMessage } from "@yaebal/preview";
 
-import * as yaebal from "yaebal";
-import * as ypreview from "@yaebal/preview";
-import * as ytest from "@yaebal/test";
+import { type Step, mapCall } from "./playground";
+import type { LogLine, RunResult } from "./playground-sandbox";
 
-import { type Step, feedSteps, mapCall } from "./playground";
-
-export type LogLine = { level: "log" | "warn" | "error"; text: string };
-
-type AnyBot = Parameters<typeof feedSteps>[0];
+export type { LogLine, RunResult } from "./playground-sandbox";
 
 let mockRunId = 0;
-
-export interface RunResult {
-	svg: string;
-	logs: { level: "log" | "warn" | "error"; text: string }[];
-	error?: string;
-}
-
-const fmt = (args: unknown[]): string =>
-	args
-		.map((a) => {
-			if (typeof a === "string") return a;
-
-			try {
-				return JSON.stringify(a);
-			} catch {
-				return String(a);
-			}
-		})
-		.join(" ");
-
-async function runUserCodeInline(
-	code: string,
-	steps: Step[],
-	width = 360,
-	theme: "light" | "dark" = "light",
-): Promise<RunResult> {
-	const logs: RunResult["logs"] = [];
-	const sandboxConsole = {
-		log: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		info: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		debug: (...a: unknown[]) => logs.push({ level: "log", text: fmt(a) }),
-		warn: (...a: unknown[]) => logs.push({ level: "warn", text: fmt(a) }),
-		error: (...a: unknown[]) => logs.push({ level: "error", text: fmt(a) }),
-	};
-
-	let js: string;
-	try {
-		js = transform(code, { transforms: ["typescript", "imports"], filePath: "playground.ts" }).code;
-	} catch (e) {
-		return { svg: "", logs, error: `compile: ${e instanceof Error ? e.message : String(e)}` };
-	}
-
-	const { api, calls } = ytest.mockApi();
-	const wire = {
-		contextFactory: (_a: unknown, u: unknown, t: unknown) =>
-			yaebal.richContext(api, u as never, t as never),
-	};
-
-	let captured: AnyBot | null = null;
-	const tame = (b: AnyBot): AnyBot => {
-		captured = b;
-		(b as { start: () => Promise<void> }).start = async () => {};
-		
-		return b;
-	};
-
-	class PatchedBot extends (yaebal.Bot as new (t: string, o?: object) => AnyBot) {
-		constructor(token?: string, options: object = {}) {
-			super(token || "playground", { ...options, ...wire });
-			tame(this as AnyBot);
-		}
-	}
-
-	const patchedCreateBot = (token?: string, options: object = {}) =>
-		tame(yaebal.createBot(token || "playground", { ...options, ...wire }));
-
-	const patched = { ...yaebal, Bot: PatchedBot, createBot: patchedCreateBot };
-	const modules: Record<string, unknown> = {
-		yaebal: patched,
-		"@yaebal/core": patched,
-		"@yaebal/fmt": yaebal,
-		"@yaebal/keyboard": yaebal,
-		"@yaebal/test": ytest,
-		"@yaebal/preview": ypreview,
-	};
-	const require = (name: string): unknown => {
-		const m = modules[name];
-		if (!m) throw new Error(`cannot import "${name}" in the playground`);
-		
-		return m;
-	};
-
-	try {
-		const mod = { exports: {} };
-		const fn = new Function("require", "console", "process", "exports", "module", js);
-		
-		await fn(require, sandboxConsole, { env: {}, argv: [] }, mod.exports, mod);
-	} catch (e) {
-		return { svg: "", logs, error: `runtime: ${e instanceof Error ? e.message : String(e)}` };
-	}
-
-	if (!captured) {
-		return { svg: "", logs, error: "no bot created — make one with new Bot(...) or createBot(...)" };
-	}
-
-	try {
-		const convo = await feedSteps(captured, calls, steps);
-		return { svg: renderChat(convo, { theme, width: Math.max(280, width) }), logs };
-	} catch (e) {
-		return { svg: "", logs, error: `runtime: ${e instanceof Error ? e.message : String(e)}` };
-	}
-}
 
 export async function runUserCode(
 	code: string,
@@ -124,17 +23,20 @@ export async function runUserCode(
 	const id = ++mockRunId;
 	const plainSteps = JSON.parse(JSON.stringify(steps)) as Step[];
 
+	const inline = async (): Promise<RunResult> =>
+		(await import("./playground-sandbox")).runMockScenario(code, plainSteps, width, theme);
+
 	let worker: Worker;
 	try {
 		worker = new Worker(new URL("./playground-worker.ts", import.meta.url), { type: "module" });
 	} catch {
-		return runUserCodeInline(code, plainSteps, width, theme);
+		return inline();
 	}
 
 	return new Promise((resolve) => {
 		const fallback = () => {
 			worker.terminate();
-			void runUserCodeInline(code, plainSteps, width, theme).then(resolve);
+			void inline().then(resolve);
 		};
 
 		const timeout = setTimeout(fallback, 2000);
@@ -145,7 +47,12 @@ export async function runUserCode(
 			clearTimeout(timeout);
 			worker.terminate();
 
-			resolve({ svg: event.data.svg, logs: event.data.logs, error: event.data.error });
+			resolve({
+				svg: event.data.svg,
+				logs: event.data.logs,
+				convo: event.data.convo ?? [],
+				error: event.data.error,
+			});
 		};
 
 		worker.onerror = () => {
@@ -182,76 +89,30 @@ export async function startLive(
 	onLog: (l: LogLine) => void,
 	settings: LiveSettings = {},
 ): Promise<LiveSession> {
-	const js = transform(code, { transforms: ["typescript", "imports"], filePath: "playground.ts" }).code;
+	const sandbox = await import("./playground-sandbox");
+	const js = sandbox.compile(code);
 
-	let captured: LiveBot = null;
-	let realStart: () => Promise<void> = async () => {};
-
-	const tame = (b: LiveBot): LiveBot => {
-		captured = b;
-		realStart = b.start.bind(b);
-
-		b.start = async () => {};
-		return b;
-	};
-	const configuredApiRoot = settings.corsProxy && settings.proxyUrl ? settings.proxyUrl : settings.apiRoot;
+	const configuredApiRoot =
+		settings.corsProxy && settings.proxyUrl ? settings.proxyUrl : settings.apiRoot;
 	const withSettings = (o: object = {}) => ({
 		...(configuredApiRoot ? { apiRoot: configuredApiRoot } : {}),
 		...o,
 	});
 
-	class PatchedBot extends (yaebal.Bot as new (t: string, o?: object) => LiveBot) {
-		constructor(t?: string, o: object = {}) {
-			super(t || token, withSettings(o));
-			tame(this);
-		}
-	}
-	
-	const patched = {
-		...yaebal,
-		Bot: PatchedBot,
-		createBot: (t?: string, o: object = {}) => tame(yaebal.createBot(t || token, withSettings(o))),
-	};
+	const { patched, captured } = sandbox.patchBotModule(token, withSettings);
 
-	const MODULES: Record<string, unknown> = {
-		yaebal: patched,
-		"@yaebal/core": patched,
-		"@yaebal/fmt": yaebal,
-		"@yaebal/keyboard": yaebal,
-		"@yaebal/test": ytest,
-		"@yaebal/preview": ypreview,
-	};
-
-	const require = (name: string): unknown => {
-		const m = MODULES[name];
-		if (!m) throw new Error(`cannot import "${name}" in the playground`);
-
-		return m;
-	};
-
-	const proc = {
+	await sandbox.execute(js, {
+		require: sandbox.makeRequire({ yaebal: patched, "@yaebal/core": patched }),
+		console: sandbox.sandboxConsole(onLog),
 		env: {
 			BOT_TOKEN: token,
 			...(configuredApiRoot ? { YAEBAL_API_ROOT: configuredApiRoot } : {}),
 			...(settings.proxyUrl ? { YAEBAL_PROXY_URL: settings.proxyUrl } : {}),
-		} as Record<string, string>,
-		argv: [] as string[],
-	};
-	const sandboxConsole = {
-		log: (...a: unknown[]) => onLog({ level: "log", text: fmt(a) }),
-		info: (...a: unknown[]) => onLog({ level: "log", text: fmt(a) }),
-		debug: (...a: unknown[]) => onLog({ level: "log", text: fmt(a) }),
-		warn: (...a: unknown[]) => onLog({ level: "warn", text: fmt(a) }),
-		error: (...a: unknown[]) => onLog({ level: "error", text: fmt(a) }),
-	};
+		},
+	});
+	if (!captured.bot) throw new Error("no bot created — make one with new Bot(...) or createBot(...)");
 
-	const mod = { exports: {} };
-	const fn = new Function("require", "console", "process", "exports", "module", js);
-
-	await fn(require, sandboxConsole, proc, mod.exports, mod);
-	if (!captured) throw new Error("no bot created — make one with new Bot(...) or createBot(...)");
-
-	const bot = captured;
+	const bot = captured.bot as LiveBot;
 	const orig = bot.handleUpdate.bind(bot);
 
 	bot.handleUpdate = async (u: { message?: { text?: string }; callback_query?: { data?: string } }) => {
@@ -271,9 +132,9 @@ export async function startLive(
 	});
 
 	const me = await bot.api.getMe();
-	
+
 	onLog({ level: "log", text: `@${me.username ?? "bot"} is live — message it on telegram` });
-	void realStart().catch((error: unknown) => {
+	void captured.realStart().catch((error: unknown) => {
 		onLog({ level: "error", text: `polling stopped: ${error instanceof Error ? error.message : String(error)}` });
 	});
 

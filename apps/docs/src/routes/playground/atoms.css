@@ -1,0 +1,117 @@
+/*
+ * shared playground atoms — tiny controls used across several panes and the
+ * settings dialog. scoped under .pg so nothing leaks into the docs pages;
+ * imported once from +page.svelte.
+ */
+
+.pg .mini {
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	font-size: 12px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--gray);
+	border-radius: 7px;
+	flex: none;
+	transition: background 0.14s ease, color 0.14s ease;
+}
+
+.pg .mini:hover {
+	color: var(--secondary);
+	background: var(--button-hover);
+}
+
+.pg .mini.ghost {
+	width: 26px;
+	height: 26px;
+	border-radius: 8px;
+	background: rgba(127, 127, 127, 0.16);
+}
+
+.pg .mini.ghost:hover {
+	background: rgba(127, 127, 127, 0.28);
+}
+
+.pg .ti {
+	width: 100%;
+	padding: 8px 10px;
+	border-radius: 8px;
+	border: 1px solid var(--input-border);
+	background: var(--button);
+	color: var(--secondary);
+	font-size: 12px;
+	outline: none;
+	transition: box-shadow 0.16s ease;
+}
+
+.pg .ti:focus {
+	outline: var(--focus-ring);
+	outline-offset: var(--focus-ring-offset);
+}
+
+.pg .add {
+	font-size: 12px;
+	padding: 7px;
+	border-radius: 8px;
+	background: var(--button);
+	box-shadow: var(--button-box-shadow);
+	color: var(--button-text);
+}
+
+.pg .add:hover:not(:disabled) {
+	background: var(--button-hover);
+}
+
+.pg .add.ghosty {
+	background: transparent;
+	color: var(--gray);
+	box-shadow: none;
+	border: 1px solid var(--input-border);
+}
+
+.pg .add:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+}
+
+.pg .note {
+	font-size: 10px;
+	color: var(--gray);
+	margin: 3px 2px 0;
+	line-height: 1.45;
+}
+
+.pg .cclear {
+	font-size: 11px;
+	padding: 3px 9px;
+	border-radius: 7px;
+	background: transparent;
+	box-shadow: none;
+	color: var(--gray);
+}
+
+.pg .cclear:hover:not(:disabled) {
+	background: var(--button);
+	color: var(--secondary);
+}
+
+.pg .cclear:disabled {
+	opacity: 0.4;
+}
+
+.pg .bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 8px 8px 8px 14px;
+	border-bottom: 1px solid var(--code-stroke);
+	flex: none;
+}
+
+.pg .label {
+	font-size: 11px;
+	color: var(--gray);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}

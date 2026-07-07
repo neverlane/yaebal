@@ -141,3 +141,15 @@ test("renders a sticker standalone (no bubble path)", () => {
 
 	assert.ok(svg.includes("🔥"));
 });
+
+test("wraps every rendered message in a g.yb-msg group", () => {
+	const svg = renderChat([
+		{ from: "user", text: "/start" },
+		{ from: "bot", text: "hi", buttons: [["ok"]] },
+		{ from: "system", text: "note" },
+		{ from: "system", text: "" }, // empty system message renders nothing — no group
+	]);
+
+	assert.equal((svg.match(/<g class="yb-msg">/g) ?? []).length, 3);
+	assert.equal((svg.match(/<g\b/g) ?? []).length, (svg.match(/<\/g>/g) ?? []).length);
+});

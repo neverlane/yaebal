@@ -350,6 +350,35 @@ bot.command("ask", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/ask why yaebal" }],
 	},
+	"pagination-list": {
+		title: "paginated list (plugin import)",
+		code: `import { createBot } from "yaebal";
+import { pagination } from "@yaebal/pagination";
+
+const changelog = [
+  "0.1 — first light",
+  "0.2 — plugins everywhere",
+  "0.3 — files and media",
+  "0.4 — scenes",
+  "0.5 — i18n",
+  "0.6 — playground",
+];
+
+const releases = pagination({
+  id: "rel",
+  pageSize: 3,
+  source: () => changelog,
+  line: (entry) => entry,
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(releases.plugin());
+
+bot.command("releases", (ctx) => releases.send(ctx));
+
+bot.start();`,
+		steps: [{ user: "/releases" }, { click: "pg_rel:1", label: "▶" }],
+	},
 	"webhook-ready": {
 		title: "webhook entrypoint",
 		code: `import { createBot, webhook } from "yaebal";

@@ -88,7 +88,7 @@ if (matchQuery(ctx, "message:text")) {
 		<tr><td><code>hears(trigger, ...handlers)</code></td><td>matches text/caption by string or RegExp and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>callbackQuery(trigger, ...handlers)</code></td><td>matches <code>callback_query.data</code> and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>guard(predicate)</code></td><td>continues only when the predicate returns true. a type-guard predicate (<code>ctx is …</code>) narrows the context for everything after it.</td></tr>
-		<tr><td><code>filter(filter, ...handlers)</code></td><td>runs a composable type-guard filter, e.g. from <code>@yaebal/filters</code>.</td></tr>
+		<tr><td><code>filter(filter, ...handlers)</code></td><td>runs a composable filter (sync or async, may stage typed data), e.g. from <code>@yaebal/filters</code>.</td></tr>
 	</tbody>
 </table>
 

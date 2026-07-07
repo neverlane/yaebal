@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/filters",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"description": "yaebal filters — composable, type-narrowing update filters (and/or/not) for ctx.filter().",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -21,12 +24,19 @@
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "filter", "filters"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"filter",
+		"filters"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

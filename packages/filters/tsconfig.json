@@ -4,8 +4,19 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"composite": true,
-		"types": ["node"]
+		"types": [
+			"node"
+		]
 	},
-	"references": [{ "path": "../core" }],
-	"include": ["src/**/*.ts"]
+	"references": [
+		{
+			"path": "../core"
+		},
+		{
+			"path": "../test"
+		}
+	],
+	"include": [
+		"src/**/*.ts"
+	]
 }

@@ -841,6 +841,10 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 
 			bubbleW = clamp(bubbleW, 60, maxBubbleW);
 
+			// an inline keyboard spans at least media width — widen the bubble to match,
+			// so the bubble and its keyboard sit flush like one telegram message
+			if (m.buttons?.length) bubbleW = clamp(Math.max(bubbleW, MW), 60, maxBubbleW);
+
 			// stack height
 			let inner = 0;
 

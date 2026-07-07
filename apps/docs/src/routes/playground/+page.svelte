@@ -2,7 +2,7 @@
 	import { afterNavigate } from "$app/navigation";
 	import { base } from "$app/paths";
 	import { page } from "$app/stores";
-	import { onMount, untrack } from "svelte";
+	import { onMount, tick, untrack } from "svelte";
 
 	import Menu from "$lib/ui/Menu.svelte";
 
@@ -46,8 +46,12 @@
 		wm.load();
 		session.init($page.url);
 
-		requestAnimationFrame(() => {
+		requestAnimationFrame(async () => {
 			wm.layoutWindows();
+			// let the new window boxes reach the DOM first — the mock render sizes
+			// itself to the visible chat, and measuring pre-layout panes would produce
+			// a small svg stretched to fit (the "zoomed in" preview)
+			await tick();
 			session.runMock();
 		});
 		window.addEventListener("resize", wm.onViewportResize);

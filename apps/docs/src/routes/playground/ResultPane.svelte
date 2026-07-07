@@ -7,9 +7,46 @@
   let { session, wm }: { session: PlaygroundSession; wm: WindowManager<PgKey> } = $props();
 
   let chatEl = $state<HTMLDivElement>();
+  let skipReveal = false;
 
   $effect(() => {
     session.chatEl = chatEl;
+  });
+
+  // keep the rendered chat matched to the pane: when the result window is resized
+  // (or the initial layout lands after the first run), re-render the svg from the
+  // conversation we already have — no need to re-run the snippet
+  $effect(() => {
+    const el = chatEl;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let lastW = el.clientWidth;
+
+    const ro = new ResizeObserver(() => {
+      const w = el.clientWidth;
+      if (Math.abs(w - lastW) < 8) return;
+      lastW = w;
+
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        const msgs = session.mode === "live" ? session.liveMsgs : session.convo;
+        if (!msgs.length || session.busy) return;
+
+        skipReveal = true;
+        session.svg = renderChat(msgs, {
+          theme: session.theme,
+          width: Math.max(280, Math.round(w)),
+        });
+      }, 120);
+    });
+
+    ro.observe(el);
+
+    return () => {
+      ro.disconnect();
+      clearTimeout(timer);
+    };
   });
 
   // live mode renders incrementally: every streamed message re-renders the chat
@@ -71,11 +108,16 @@
   }
 
   // animate whenever a fresh chat lands: full cascade for mock runs, just the
-  // newest message for live streaming
+  // newest message for live streaming. resize re-renders skip the animation.
   $effect(() => {
     const svg = session.svg;
     const isLive = session.mode === "live" && !!session.live;
     if (!svg) return;
+
+    if (skipReveal) {
+      skipReveal = false;
+      return;
+    }
 
     requestAnimationFrame(() => reveal("settle", isLive));
   });

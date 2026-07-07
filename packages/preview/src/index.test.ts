@@ -153,3 +153,13 @@ test("wraps every rendered message in a g.yb-msg group", () => {
 	assert.equal((svg.match(/<g class="yb-msg">/g) ?? []).length, 3);
 	assert.equal((svg.match(/<g\b/g) ?? []).length, (svg.match(/<\/g>/g) ?? []).length);
 });
+
+test("inline keyboard aligns flush with its bubble", () => {
+	// short text would make a narrow bubble; with buttons it widens to the keyboard
+	const svg = renderChat([{ from: "bot", text: "hi", buttons: [["only button"]] }]);
+	const rect = svg.match(/<rect x="(\d+)" y="\d+" width="(\d+)" height="34"/);
+
+	assert.ok(rect, "button rect not found");
+	// single button spans the whole row, and the row equals the (widened) bubble width
+	assert.equal(Number(rect[2]), 252); // MW — media/keyboard width
+});

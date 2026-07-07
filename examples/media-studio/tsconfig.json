@@ -17,6 +17,9 @@
 			"path": "../../packages/yaebal"
 		},
 		{
+			"path": "../../packages/file-id"
+		},
+		{
 			"path": "../../packages/files"
 		},
 		{

@@ -101,7 +101,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [panel](/examples/panel/)                   | operator dashboard with media viewer, keyboards, callbacks and events                                          | `pnpm --filter @yaebal/example-panel dev`           |
 | [commerce-suite](/examples/commerce-suite/) | shop bot: cart session, i18n, pagination, callback data, command registry, ratelimiter                         | `pnpm --filter @yaebal/example-commerce-suite dev`  |
 | [dialog-quest](/examples/dialog-quest/)     | morda cockpit, scenes, prompt, conversation and session profile                                                | `pnpm --filter @yaebal/example-dialog-quest dev`    |
-| [media-studio](/examples/media-studio/)     | albums, file links, media cache, generated svg previews and long-message splitting                             | `pnpm --filter @yaebal/example-media-studio dev`    |
+| [media-studio](/examples/media-studio/)     | albums, file metadata + links, file_id introspection, media cache, svg previews, splitting                     | `pnpm --filter @yaebal/example-media-studio dev`    |
 | [modular-router](/examples/modular-router/) | file-based routes from `routes/commands` and `routes/on`                                                       | `pnpm --filter @yaebal/example-modular-router dev`  |
 | [webhook-edge](/examples/webhook-edge/)     | fetch webhook handler, local node adapter, secret token and `setWebhook`                                       | `pnpm --filter @yaebal/example-webhook-edge dev`    |
 | [runner-workers](/examples/runner-workers/) | concurrent polling plus worker thread offload                                                                  | `pnpm --filter @yaebal/example-runner-workers dev`  |
@@ -117,7 +117,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/session](/packages/session/)             | per-chat session with pluggable storage                                        |
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                      |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                            |
-| [@yaebal/filters](/packages/filters/)             | composable, type-narrowing update filters (`ctx.filter`)                       |
+| [@yaebal/filters](/packages/filters/)             | composable, type-narrowing update filters: `and`/`or`/`not`, deep links, async |
 | [@yaebal/fmt](/packages/fmt/)                     | `html` / `md` tagged templates with auto-escaping                              |
 | [@yaebal/rich](/packages/rich/)                   | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts |
 | [@yaebal/morda](/packages/morda/)                 | dialogs engine and jsx/hooks for telegram ui                                   |
@@ -129,14 +129,15 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/router](/packages/router/)               | file-based routing from a `routes/` directory                                  |
 | [@yaebal/toml](/packages/toml/)                   | declarative toml routes with a handler registry                                |
 | [@yaebal/throttle](/packages/throttle/)           | priority outbound scheduler with global/private/group buckets                  |
-| [@yaebal/files](/packages/files/)                 | resolve and download telegram files                                            |
+| [@yaebal/files](/packages/files/)                 | inspect, link, stream and download files; local Bot API server aware           |
+| [@yaebal/file-id](/packages/file-id/)             | parse and re-serialize `file_id` / `file_unique_id` strings (zero deps)        |
 | [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                                               |
 | [@yaebal/broadcast](/packages/broadcast/)         | typed broadcast jobs with storage, retry, progress and controls                |
 | [@yaebal/panel](/packages/panel/)                 | framework-agnostic operator panel with media, keyboards and event timeline     |
 | [@yaebal/web](/packages/web/)                     | run your bot on edge/web runtimes via webhooks                                 |
 | [@yaebal/runner](/packages/runner/)               | concurrent long-polling for scale                                              |
-| [@yaebal/media-group](/packages/media-group/)     | collect album updates into one handler                                         |
-| [@yaebal/media-cache](/packages/media-cache/)     | reuse a `file_id` instead of re-uploading                                      |
+| [@yaebal/media-group](/packages/media-group/)     | collect albums into one handler call or a `ctx.mediaGroup` pass-through        |
+| [@yaebal/media-cache](/packages/media-cache/)     | upload once, reuse the `file_id` — self-heals when telegram rejects it         |
 | [@yaebal/split](/packages/split/)                 | break long messages into telegram-sized chunks                                 |
 | [@yaebal/commands](/packages/commands/)           | one registry for handlers and the `/` menu — localized, scoped, diff-synced    |
 | [@yaebal/pagination](/packages/pagination/)       | paginated lists with inline prev/next                                          |

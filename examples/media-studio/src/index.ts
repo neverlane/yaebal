@@ -1,3 +1,4 @@
+import { FileId } from "@yaebal/file-id";
 import { files } from "@yaebal/files";
 import { mediaCache } from "@yaebal/media-cache";
 import { mediaGroup } from "@yaebal/media-group";
@@ -15,18 +16,23 @@ const cache = mediaCache();
 
 const bot = createBot(token)
 	.install(files())
+	.install(cache.plugin())
 	.install(splitter(900))
 	.install(
-		mediaGroup(async (ctx, messages) => {
-			const photoCount = messages.filter((message) => message.photo).length;
-			const videoCount = messages.filter((message) => message.video).length;
-			await ctx.reply(
-				`album captured: ${messages.length} item(s), ${photoCount} photo(s), ${videoCount} video(s).`,
-			);
-		}),
+		mediaGroup(
+			async (ctx, messages) => {
+				const photoCount = messages.filter((message) => message.photo).length;
+				const videoCount = messages.filter((message) => message.video).length;
+				await ctx.reply(
+					`album captured: ${messages.length} item(s), ${photoCount} photo(s), ${videoCount} video(s).`,
+				);
+			},
+			{
+				// albums flush from a timer, outside bot.onError's reach — handle failures here
+				onError: (error) => console.error("album handler failed:", error),
+			},
+		),
 	);
-
-cache.hook(bot.api);
 
 bot
 	.command("start", (ctx) =>
@@ -49,11 +55,11 @@ bot
 			"poster:v1",
 			media.url("https://picsum.photos/seed/yaebal-cache/900/600"),
 			{
-				caption: "first call may upload/fetch; cache stores file_id after telegram responds",
+				caption: "manual mode: file_id cached under the key poster:v1",
 			},
 		);
-		await ctx.sendPhoto(cache.media.url("https://picsum.photos/seed/yaebal-cache/900/600"), {
-			caption: "second call can transparently reuse cached file_id",
+		await ctx.sendPhoto(media.url("https://picsum.photos/seed/yaebal-cache/900/600"), {
+			caption: "transparent mode: same url, so the cached file_id is reused — no re-upload",
 		});
 	})
 	.command("preview", (ctx) => {
@@ -89,18 +95,33 @@ bot
 		return ctx.replyLong(report);
 	})
 	.on("message:document", async (ctx) => {
-		const fileId = ctx.document?.file_id;
-		if (!fileId) return;
+		if (!ctx.document) return;
 
-		const url = await ctx.files.fileLink(fileId);
-		return ctx.reply(`document link resolved. do not leak this url:\n${url}`);
+		// one getFile, memoized on the handle: metadata first, url after
+		const dl = ctx.files.download(ctx.document);
+		const info = await dl.info();
+		const url = await dl.url();
+
+		return ctx.reply(
+			[
+				`document: ${info.file_size ?? "?"} byte(s), unique id ${info.file_unique_id}.`,
+				"link resolved. do not leak this url:",
+				url,
+			].join("\n"),
+		);
 	})
 	.on("message:photo", async (ctx) => {
-		const fileId = ctx.photo?.at(-1)?.file_id;
-		if (!fileId) return;
+		const largest = ctx.photo?.at(-1);
+		if (!ctx.photo || !largest) return;
 
-		const url = await ctx.files.fileLink(fileId);
-		return ctx.reply(`largest photo file link resolved:\n${url}`);
+		// PhotoSize[] goes in as-is — the largest size is picked automatically
+		const url = await ctx.files.url(ctx.photo);
+		// @yaebal/file-id looks *inside* the id — no api call involved
+		const parsed = FileId.from(largest.file_id);
+
+		return ctx.reply(
+			`largest photo lives on DC ${parsed.dcId} (${parsed.kind}, format v${parsed.version}).\n${url}`,
+		);
 	})
 	.onStart(async (info) => {
 		await bot.api

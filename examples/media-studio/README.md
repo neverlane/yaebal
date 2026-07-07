@@ -1,7 +1,8 @@
 # @yaebal/example-media-studio (a runnable bot)
 
-a media-heavy bot that receives albums, resolves telegram files, caches uploaded media,
-sends generated svg previews and splits long reports.
+a media-heavy bot that receives albums, inspects and links telegram files (metadata via
+`ctx.files`, datacenter via `@yaebal/file-id`), caches uploaded media, sends generated svg
+previews and splits long reports.
 
 ## running
 
@@ -32,8 +33,10 @@ telegram, so the commands below show up in the `/` picker.
 | `/preview` | generates and sends an svg chat mockup                  |
 | `/long`    | sends a long report with automatic splitting            |
 
-send a photo, document or album to trigger the receive-side demos for `@yaebal/files` and
-`@yaebal/media-group`.
+send a photo, document or album to trigger the receive-side demos: a document answers with
+`getFile` metadata and a download link (`@yaebal/files`), a photo answers with the telegram
+datacenter parsed straight out of the `file_id` (`@yaebal/file-id`), and an album shows
+`@yaebal/media-group` batching.
 
 ---
 

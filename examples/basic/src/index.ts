@@ -107,6 +107,11 @@ const bot = createBot(token)
 	.derive((ctx) => ({
 		who: ctx.from?.username ? `@${ctx.from.username}` : (ctx.from?.first_name ?? "stranger"),
 	}))
+	// @yaebal/filters: deep link — t.me/<bot>?start=ref_<id> lands here, payload parsed.
+	// registered before the plain /start handler so referred starts don't fall through to it
+	.filter(filters.deeplink(/^ref_(\d+)$/), (ctx) =>
+		ctx.reply(`welcome! you were referred by user ${ctx.match[1]}`),
+	)
 	// command router: matches /start, strips @botname, parses args
 	.command("start", (ctx) =>
 		ctx.send(
@@ -154,6 +159,8 @@ ${COMMANDS.map((c) => `/${c.command} — ${c.description}`).join("\n")}`,
 	.filter(filters.regex(/^(hello|привет)/i), (ctx) =>
 		ctx.send(html`<b>hello!</b> you wrote: <i>${ctx.match[0]}</i>`),
 	)
+	// @yaebal/filters: media shorthands — or() unites branches, ctx.message is narrowed
+	.filter(filters.or(filters.photo, filters.video), (ctx) => ctx.reply("nice media! 📸"))
 	// filter query: only text messages; ctx.text is narrowed to string
 	.on("message:text", (ctx) => ctx.reply(format`you said: ${bold(ctx.text)}`))
 	// typed callback buttons: only "vote:*" data, payload parsed via callback-data

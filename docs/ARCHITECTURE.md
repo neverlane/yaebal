@@ -204,7 +204,8 @@ core по-прежнему держит свой минимальный ручн
 | **`@yaebal/morda/jsx`** ✅ | JSX-runtime + хуки (`useState`/`useEffect`/`useNavigation`/`useUser`/`useSession`/`useTranslation`) поверх morda, subpath | `morda` | @gramio/jsx + Templatio-style hooks |
 | **`@yaebal/scenes`** ✅ | step-FSM визард: `enter`/`next`/`leave`, per-chat шаг; `ctx.scene`. Sequential-safe (без suspended promises) | `session` | @gramio/scenes, @puregram/scenes |
 | **`@yaebal/prompt`** ✅ | `ctx.prompt(q, handler)` — спросил, хендлер ловит следующее сообщение (callback-style, in-memory) | — | @gramio/prompt, @puregram/prompt |
-| **`@yaebal/files`** ✅ | `ctx.files.fileLink` / `download` (через `getFile` + `api.fileUrl`). Upload — в ядре через `MediaSource` | — | @gramio/files, grammY files |
+| **`@yaebal/files`** ✅ | `ctx.files.info/url/download` + ленивый `FileDownload` (bytes/text/json/blob/stream/toFile), стратегии для local Bot API server (disk/rewrite/url), standalone `createFiles(api)`. Upload — в ядре через `MediaSource` | — | @gramio/files, grammY files |
+| **`@yaebal/file-id`** ✅ | парсер/сериализатор `file_id`/`file_unique_id` (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
 | **`@yaebal/zanachka`** | media-cache — `file_id` вместо повторной заливки | — | `api.before` | @gramio/media-cache |
 | **`@yaebal/pachka`** | media-group — собрать альбом из пачки апдейтов | — | @gramio/media-group |
 | **`@yaebal/otvet`** | auto-answer callbackQuery | — | @gramio/auto-answer-cbq |

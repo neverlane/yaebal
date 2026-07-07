@@ -11,6 +11,7 @@
 	},
 	"dependencies": {
 		"yaebal": "workspace:*",
+		"@yaebal/file-id": "workspace:*",
 		"@yaebal/files": "workspace:*",
 		"@yaebal/media-cache": "workspace:*",
 		"@yaebal/media-group": "workspace:*",

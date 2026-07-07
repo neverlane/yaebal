@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/media-cache",
-	"version": "0.0.4",
-	"description": "yaebal media-cache — reuse a file_id instead of re-uploading the same file.",
+	"version": "0.1.0",
+	"description": "yaebal media-cache — upload once, reuse the file_id everywhere (media groups and edits included), self-healing when telegram rejects a stale id.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -22,7 +22,8 @@
 		"@yaebal/session": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

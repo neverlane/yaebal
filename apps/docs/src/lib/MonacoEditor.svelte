@@ -46,12 +46,21 @@
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: Monaco is loaded dynamically from the CDN.
-  async function addYaebalTypes(ts: any) {
+  async function addYaebalTypes(ts: any): Promise<boolean> {
     // the real generated d.ts of every workspace package (own lazy chunk — it's big)
     const { PLAYGROUND_DTS } = await import("./playground-dts");
+    const entries = Object.entries(PLAYGROUND_DTS);
 
-    for (const [path, content] of Object.entries(PLAYGROUND_DTS))
-      ts.typescriptDefaults.addExtraLib(content, path);
+    // empty means the docs app was built without `pnpm build` (no packages/*/lib) —
+    // report it and leave semantic validation off rather than flag every import red
+    if (!entries.length) {
+      console.warn(
+        "playground: no package d.ts bundled — build the workspace packages (pnpm build) before building the docs app; editor diagnostics stay off",
+      );
+      return false;
+    }
+
+    for (const [path, content] of entries) ts.typescriptDefaults.addExtraLib(content, path);
 
     const globals = `declare const process: { env: Record<string, string | undefined> };
 declare namespace NodeJS { interface ProcessEnv extends Record<string, string | undefined> {} }`;
@@ -59,6 +68,8 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
       globals,
       "file:///node_modules/@types/playground-globals/index.d.ts",
     );
+
+    return true;
   }
 
 
@@ -120,12 +131,14 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
         strict: true,
       });
       void addYaebalTypes(ts)
-        .then(() =>
+        .then((loaded) => {
+          if (!loaded) return;
+
           ts.typescriptDefaults.setDiagnosticsOptions({
             noSemanticValidation: false,
             noSyntaxValidation: false,
-          }),
-        )
+          });
+        })
         .catch(() => {
           /* types chunk failed to load — editor still works, just without diagnostics */
         });

@@ -1,11 +1,11 @@
 {
 	"name": "@yaebal/docs",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"private": true,
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build && pagefind --site build",
+		"build": "pnpm -w build && vite build && pagefind --site build",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"health": "node scripts/check-docs-health.mjs",

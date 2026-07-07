@@ -224,14 +224,19 @@
 				"build multi-step yaebal telegram bot conversations with await-style flows, typed context, cancellation, validation, and no replay engine.",
 		},
 		"/docs/plugins/files": {
-			title: "@yaebal/files — resolve and download telegram files",
+			title: "@yaebal/files — inspect, stream and download telegram files",
 			description:
-				"resolve telegram file ids, get file paths, download content, and integrate file handling with yaebal media workflows.",
+				"download telegram files with a lazy response-like handle: bytes, text, json, streams, save to disk, abort signals, and self-hosted bot api server support.",
+		},
+		"/docs/plugins/file-id": {
+			title: "@yaebal/file-id — parse telegram file_id strings",
+			description:
+				"decode telegram file_id and file_unique_id strings: datacenter, access hash, file reference, photo size source, stable dedupe keys. zero deps.",
 		},
 		"/docs/plugins/filters": {
 			title: "@yaebal/filters — composable typed telegram update filters",
 			description:
-				"compose yaebal update filters with and, or, not, ctx.filter, custom predicates, and type-narrowing handlers.",
+				"compose yaebal update filters with and, or, not: commands, deep links, media, entities, service messages, async custom predicates, and type-narrowing handlers.",
 		},
 		"/docs/plugins/fmt": {
 			title: "@yaebal/fmt — safe html and markdown formatting",
@@ -251,12 +256,12 @@
 		"/docs/plugins/media-cache": {
 			title: "@yaebal/media-cache — reuse telegram file ids",
 			description:
-				"cache telegram file ids with @yaebal/media-cache to avoid repeated uploads, speed up sends, and reduce api load in yaebal bots.",
+				"cache telegram file ids with @yaebal/media-cache — upload once, reuse everywhere (media groups and edits included), self-healing when telegram rejects a stale id.",
 		},
 		"/docs/plugins/media-group": {
 			title: "@yaebal/media-group — collect telegram albums",
 			description:
-				"collect telegram media group updates into one yaebal handler with album buffering, timeout control, and typed grouped messages.",
+				"collect telegram albums into one yaebal handler call or a ctx.mediaGroup pass-through — per-chat keying, sorted and deduplicated parts, error routing, and graceful flush.",
 		},
 		"/docs/plugins/morda": {
 			title: "@yaebal/morda — jsx dialogs for telegram bots",

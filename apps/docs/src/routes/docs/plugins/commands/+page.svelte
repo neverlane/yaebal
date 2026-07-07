@@ -134,6 +134,11 @@ env.callsTo("setMyCommands");`;
 			<td><code>string[]</code></td>
 			<td>whitespace-split words after the command</td>
 		</tr>
+		<tr>
+			<td><code>ctx.payload</code></td>
+			<td><code>string</code></td>
+			<td>the raw trimmed text after the command — deep-link parameters arrive intact</td>
+		</tr>
 	</tbody>
 </table>
 <Code code={typed} title="typed.ts" />

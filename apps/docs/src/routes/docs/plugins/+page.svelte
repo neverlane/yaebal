@@ -21,7 +21,7 @@ const bot = new Bot(token)
 		["@yaebal/session", "/docs/plugins/session/", "per-chat session with pluggable storage"],
 		["@yaebal/keyboard", "/docs/plugins/keyboard/", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
-		["@yaebal/filters", "/docs/plugins/filters/", "composable, type-narrowing update filters (ctx.filter)"],
+		["@yaebal/filters", "/docs/plugins/filters/", "composable, type-narrowing update filters: and / or / not, commands, deep links, media, async"],
 		["@yaebal/fmt", "/docs/plugins/fmt/", "`` html`` `` / `` md`` `` tagged templates with auto-escaping"],
 		["@yaebal/rich", "/docs/plugins/rich/", "sendRichMessage / sendRichMessageDraft: block builder + streaming drafts"],
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
@@ -33,14 +33,15 @@ const bot = new Bot(token)
 		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
 		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a handler registry"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "priority outbound scheduler with Telegram buckets"],
-		["@yaebal/files", "/docs/plugins/files/", "resolve and download telegram files"],
+		["@yaebal/files", "/docs/plugins/files/", "inspect, link, stream and download telegram files"],
+		["@yaebal/file-id", "/docs/plugins/file-id/", "parse and re-serialize file_id / file_unique_id strings"],
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who spam"],
 		["@yaebal/broadcast", "/docs/plugins/broadcast/", "typed broadcast jobs with storage, retry, progress and controls"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes via webhooks"],
 		["@yaebal/runner", "/docs/runner/", "concurrent long-polling for scale"],
-		["@yaebal/media-group", "/docs/plugins/media-group/", "collect album updates into one handler"],
-		["@yaebal/media-cache", "/docs/plugins/media-cache/", "reuse a file_id instead of re-uploading"],
+		["@yaebal/media-group", "/docs/plugins/media-group/", "collect albums into one handler call or ctx.mediaGroup"],
+		["@yaebal/media-cache", "/docs/plugins/media-cache/", "upload once, reuse the file_id — self-heals when telegram rejects it"],
 		["@yaebal/split", "/docs/plugins/split/", "break long messages into telegram-sized chunks"],
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu — localized, scoped, diff-synced"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists with inline prev/next"],
@@ -56,7 +57,7 @@ const bot = new Bot(token)
 
 <h1>plugins</h1>
 <p class="lead">
-	30 first-party plugins. each is a typed composer extension — installing one enriches the context
+	{plugins.length} first-party plugins. each is a typed composer extension — installing one enriches the context
 	type, and its dependencies are checked at compile time.
 </p>
 

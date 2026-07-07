@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/files",
-	"version": "0.0.3",
-	"description": "yebal files plugin — ctx.files: resolve and download telegram files.",
+	"version": "0.1.0",
+	"description": "yaebal files plugin — ctx.files: inspect, link, stream and download telegram files; local Bot API server aware.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -18,10 +18,12 @@
 		"test": "node --test lib/*.test.js"
 	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*"
+		"@yaebal/core": "workspace:*",
+		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

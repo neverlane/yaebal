@@ -9,7 +9,7 @@ export type { CallbackData, Codec, InferInput, InferOutput, Schema } from "@yaeb
 export { callbackData, field } from "@yaebal/callback-data";
 export * from "@yaebal/contexts";
 export * from "@yaebal/core";
-export { and, filters, not, or } from "@yaebal/filters";
+export { and, defineFilter, filters, not, or } from "@yaebal/filters";
 export { html, htmlToEntities, md, mdToEntities } from "@yaebal/fmt";
 export type { Dict, I18n, I18nControls, LocaleLike, TFn } from "@yaebal/i18n";
 export { createI18n, i18n } from "@yaebal/i18n";
@@ -214,11 +214,15 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 
 	override command(
 		name: string,
-		...handlers: Middleware<C & { command: string; args: string[] } & ContextByType["message"]>[]
+		...handlers: Middleware<
+			C & { command: string; args: string[]; payload: string } & ContextByType["message"]
+		>[]
 	): this {
 		return super.command(
 			name,
-			...(handlers as unknown as Middleware<C & { command: string; args: string[] }>[]),
+			...(handlers as unknown as Middleware<
+				C & { command: string; args: string[]; payload: string }
+			>[]),
 		);
 	}
 

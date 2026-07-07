@@ -138,7 +138,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "files",
 		dep: "@yaebal/files",
-		hint: "ctx.files: resolve & download telegram files",
+		hint: "ctx.files: inspect, stream & download telegram files",
 		wire: "install",
 		import: 'import { files } from "@yaebal/files";',
 		install: "files()",
@@ -196,9 +196,9 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "filters",
 		dep: "@yaebal/filters",
-		hint: "composable type-narrowing filters",
+		hint: "composable type-narrowing filters (and/or/not, deep links, async)",
 		wire: "dep",
-		import: 'import { and, command, isPrivate, regex, text } from "@yaebal/filters";',
+		import: 'import { and, command, deeplink, isPrivate, or, regex } from "@yaebal/filters";',
 	},
 	{
 		id: "callback-data",
@@ -259,16 +259,23 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "media-group",
 		dep: "@yaebal/media-group",
-		hint: "collect album updates into one call",
+		hint: "collect albums into one call or ctx.mediaGroup",
 		wire: "dep",
 		import: 'import { mediaGroup } from "@yaebal/media-group";',
 	},
 	{
 		id: "media-cache",
 		dep: "@yaebal/media-cache",
-		hint: "reuse file_id instead of re-uploading",
+		hint: "upload once, reuse the file_id — self-heals stale ids",
 		wire: "dep",
 		import: 'import { mediaCache } from "@yaebal/media-cache";',
+	},
+	{
+		id: "file-id",
+		dep: "@yaebal/file-id",
+		hint: "parse file_id/file_unique_id — dc, access hash, dedupe keys",
+		wire: "dep",
+		import: 'import { FileId } from "@yaebal/file-id";',
 	},
 	{
 		id: "broadcast",

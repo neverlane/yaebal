@@ -13,22 +13,36 @@ const jsdoc = (desc, indent = "") => {
 	return `${indent}/** ${clean} */\n`;
 };
 
+// nested upload spots (`InputMedia*.media`, `InputSticker.sticker`, story/profile-photo
+// contents, …) are plain `string` in the schema — the wire form is an `attach://<name>`
+// reference. the description always spells that convention out, so it identifies exactly
+// the fields where @yaebal/core's encodeRequest accepts a MediaSource and rewrites it to
+// `attach://` — widen them to `InputFile | string` so the typed surface matches the runtime.
+const isAttachSite = (f) => f.type === "string" && /attach:\/\//.test(f.description ?? "");
+
 // `widen` marks format-site text fields (see the format-fields section below): they render
 // as `string | FormattedText`, so the typed method surface accepts a `format` result exactly
 // where the client's applyFormatFields will split it.
 const field = (f, indent = "\t", widen = null) => {
 	const base = fieldType(f);
-	const type = widen?.has(f.name) && base === "string" ? "string | FormattedText" : base;
+	const type =
+		widen?.has(f.name) && base === "string"
+			? "string | FormattedText"
+			: isAttachSite(f)
+				? "InputFile | string"
+				: base;
 	return `${jsdoc(f.description, indent)}${indent}${f.name}${f.required ? "" : "?"}: ${type};\n`;
 };
 
 // the docs give InputFile no schema shape ("the file contents"). emit the structural union
-// that `media.path/url/buffer/fileId` from @yaebal/core produce, instead of the old
+// that the `media.*` builders from @yaebal/core produce, instead of the old
 // `Record<never, never>` — which accepted literally any object (even `new Date()`).
 const INPUT_FILE_TYPE = `export type InputFile =
 	| { kind: "path"; path: string }
 	| { kind: "url"; url: string }
 	| { kind: "buffer"; buffer: Uint8Array; filename?: string }
+	| { kind: "stream"; stream: ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>; filename?: string }
+	| { kind: "text"; text: string; filename?: string }
 	| { kind: "fileId"; fileId: string };
 `;
 

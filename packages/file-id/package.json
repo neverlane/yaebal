@@ -1,0 +1,32 @@
+{
+	"name": "@yaebal/file-id",
+	"version": "0.0.1",
+	"description": "yaebal file-id — parse, inspect and re-serialize telegram file_id / file_unique_id strings. zero deps, runtime-agnostic.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	},
+	"engines": { "node": ">=20" },
+	"keywords": ["telegram", "telegram-bot", "yaebal", "file-id", "file_id", "parser", "tdlib"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/file-id"
+	},
+	"publishConfig": { "access": "public" }
+}

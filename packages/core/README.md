@@ -30,7 +30,7 @@ await bot.start(); // long polling — or bot.handleUpdate(update) behind a webh
 - typed plugins — `install(plugin)` checks a plugin's required context at compile time; `BotPlugin` covers bot/API/lifecycle extensions.
 - `api` — typed methods plus a `call(method, params)` passthrough, with `before` / `after` / `onError` hooks.
 - entity-based formatting — `` format`…` `` plus nestable helpers (`bold` … `blockquote`, `pre` with a language, `customEmoji`, `dateTime`) that also work as tagged templates, and `join` (keeps entities where `[].join()` drops them). a format result is accepted by *every* api call — the client splits it into text + the right `*_entities` sibling anywhere the schema allows formatted text, nested params included.
-- media — `media.path` / `url` / `buffer` / `fileId` and `ctx.sendPhoto` / `ctx.sendDocument`.
+- media — `media.path` / `url` / `buffer` / `stream` / `text` / `fileId`, `ctx.sendPhoto` / `ctx.sendDocument`, and nested uploads (`sendMediaGroup`, `editMessageMedia`, sticker sets, stories) rewritten to `attach://` automatically.
 - both transports — long polling (`start`/`stop`/`onStart`/`onStop`) and webhooks (`handleUpdate`).
 
 ## developing (in this monorepo)

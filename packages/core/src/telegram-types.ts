@@ -9,8 +9,11 @@ import type { ResponseParameters, Update } from "@yaebal/types";
 export type {
 	CallbackQuery,
 	Chat,
+	ChatMemberUpdated,
+	InlineQuery,
 	Message,
 	MessageEntity,
+	MessageOrigin,
 	ResponseParameters,
 	Update,
 	User,

@@ -128,12 +128,43 @@ export class Context {
 		);
 	}
 
+	/** the user this update came from, whatever kind of update carries it. */
 	get from(): User | undefined {
-		return this.message?.from ?? this.callbackQuery?.from;
+		const u = this.update;
+
+		return (
+			this.message?.from ??
+			u.callback_query?.from ??
+			u.inline_query?.from ??
+			u.chosen_inline_result?.from ??
+			u.shipping_query?.from ??
+			u.pre_checkout_query?.from ??
+			u.purchased_paid_media?.from ??
+			u.my_chat_member?.from ??
+			u.chat_member?.from ??
+			u.chat_join_request?.from ??
+			u.message_reaction?.user ??
+			u.poll_answer?.user ??
+			u.business_connection?.user
+		);
 	}
 
+	/** the chat this update happened in, whatever kind of update carries it. */
 	get chat(): Chat | undefined {
-		return this.message?.chat ?? this.callbackQuery?.message?.chat;
+		const u = this.update;
+
+		return (
+			this.message?.chat ??
+			u.callback_query?.message?.chat ??
+			u.my_chat_member?.chat ??
+			u.chat_member?.chat ??
+			u.chat_join_request?.chat ??
+			u.message_reaction?.chat ??
+			u.message_reaction_count?.chat ??
+			u.chat_boost?.chat ??
+			u.removed_chat_boost?.chat ??
+			u.deleted_business_messages?.chat
+		);
 	}
 
 	get text(): string | undefined {

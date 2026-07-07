@@ -43,36 +43,30 @@ async function run(composer: Composer, ctx: Context): Promise<void> {
 	await composer.toMiddleware()(ctx, async () => {});
 }
 
-test("filter: runs handlers when filter.test returns true", async () => {
-	const alwaysTrue: Filter = {
-		test(_ctx): _ctx is Context {
-			return true;
-		},
-	};
-
+test("filter: runs handlers when the filter returns true", async () => {
 	let called = false;
-	const composer = new Composer().filter(alwaysTrue, (_ctx) => {
-		called = true;
-	});
+	const composer = new Composer().filter(
+		() => true,
+		(_ctx) => {
+			called = true;
+		},
+	);
 
 	await run(composer, makeMessageCtx("hi"));
 	assert.ok(called, "handler should have been called");
 });
 
-test("filter: skips handlers and calls next when filter.test returns false", async () => {
-	const alwaysFalse: Filter = {
-		test(_ctx): _ctx is Context {
-			return false;
-		},
-	};
-
+test("filter: skips handlers and calls next when the filter returns false", async () => {
 	let handlerCalled = false;
 	let nextCalled = false;
 
 	const composer = new Composer()
-		.filter(alwaysFalse, (_ctx) => {
-			handlerCalled = true;
-		})
+		.filter(
+			() => false,
+			(_ctx) => {
+				handlerCalled = true;
+			},
+		)
 		.use((_ctx, next) => {
 			nextCalled = true;
 			return next();
@@ -83,68 +77,54 @@ test("filter: skips handlers and calls next when filter.test returns false", asy
 	assert.ok(nextCalled, "next middleware must still be reached");
 });
 
-test("filter: handler sees data attached by filter.test via Object.assign", async () => {
+test("filter: staged bag fields are committed onto the context on match", async () => {
 	interface WithMatch {
 		match: RegExpMatchArray;
 	}
 
-	const regexFilter: Filter<Context, WithMatch> = {
-		test(ctx): ctx is Context & WithMatch {
-			const m = ctx.text?.match(/hello (\w+)/);
-			if (!m) return false;
+	const regexFilter: Filter<Context, WithMatch> = (ctx, bag) => {
+		const m = ctx.text?.match(/hello (\w+)/);
+		if (!m) return false;
 
-			Object.assign(ctx as object, { match: m });
-			return true;
-		},
+		bag.match = m;
+		return true;
 	};
 
 	let captured: RegExpMatchArray | undefined;
 	const composer = new Composer().filter(regexFilter, (ctx) => {
-		captured = (ctx as Context & WithMatch).match;
+		captured = ctx.match;
 	});
 
 	await run(composer, makeMessageCtx("hello world"));
-	assert.ok(captured, "match should be set on ctx");
+	assert.ok(captured, "match should be committed onto ctx");
 	assert.equal(captured[1], "world");
 });
 
-test("filter: filter.test that attaches data is not called for non-matching ctx", async () => {
-	interface WithMatch {
-		match: RegExpMatchArray;
-	}
-
-	const regexFilter: Filter<Context, WithMatch> = {
-		test(ctx): ctx is Context & WithMatch {
-			const m = ctx.text?.match(/hello (\w+)/);
-			if (!m) return false;
-
-			Object.assign(ctx as object, { match: m });
-			return true;
-		},
+test("filter: a rejecting filter leaves the context untouched, even if it staged data", async () => {
+	const staging: Filter<Context, { tag: number }> = (_ctx, bag) => {
+		bag.tag = 42; // staged, then rejected — must never land on ctx
+		return false;
 	};
 
-	let handlerCalled = false;
-	const composer = new Composer().filter(regexFilter, (_ctx) => {
-		handlerCalled = true;
-	});
+	const ctx = makeMessageCtx("hi");
+	await run(
+		new Composer().filter(staging, () => {}),
+		ctx,
+	);
 
-	// callback_query ctx has no text — regex won't match
-	await run(composer, makeCallbackCtx());
-	assert.equal(handlerCalled, false);
+	assert.equal((ctx as Context & { tag?: number }).tag, undefined);
 });
 
-test("filter: type guard narrows — handler sees ctx.tag added by filter", async () => {
-	const tagFilter: Filter<Context, { tag: number }> = {
-		test(ctx): ctx is Context & { tag: number } {
-			Object.assign(ctx as object, { tag: 42 });
-			return true;
-		},
+test("filter: async filters are awaited and commit their bag", async () => {
+	const asyncTag: Filter<Context, { tag: number }> = async (_ctx, bag) => {
+		await Promise.resolve();
+		bag.tag = 42;
+		return true;
 	};
 
 	let seenTag: number | undefined;
-	const composer = new Composer().filter(tagFilter, (ctx) => {
-		// typescript sees ctx.tag as number here (narrowed by the Filter type)
-		seenTag = (ctx as Context & { tag: number }).tag;
+	const composer = new Composer().filter(asyncTag, (ctx) => {
+		seenTag = ctx.tag;
 	});
 
 	await run(composer, makeMessageCtx());
@@ -289,6 +269,62 @@ test("command: /cmd@botname is checked against ctx.me when known", async () => {
 	// without getMe info (webhook mode) a mention is accepted, as before
 	await run(composer, makeMessageCtx("/start@whoever"));
 	assert.equal(hits, 2);
+});
+
+test("command: case-insensitive name, clean args, raw payload", async () => {
+	const seen: Array<{ command: string; args: string[]; payload: string }> = [];
+	const composer = new Composer().command("start", (ctx) => {
+		const { command, args, payload } = ctx as Context & {
+			command: string;
+			args: string[];
+			payload: string;
+		};
+		seen.push({ command, args, payload });
+	});
+
+	await run(composer, makeMessageCtx("/START ref_42"));
+	await run(composer, makeMessageCtx("/start  ")); // trailing whitespace → no phantom "" arg
+	assert.deepEqual(seen, [
+		{ command: "START", args: ["ref_42"], payload: "ref_42" },
+		{ command: "start", args: [], payload: "" },
+	]);
+});
+
+test("hears: a shared sticky/global regex matches every update, not every other one", async () => {
+	let hits = 0;
+	const composer = new Composer().hears(/\d+/y, () => {
+		hits++;
+	});
+
+	await run(composer, makeMessageCtx("123"));
+	await run(composer, makeMessageCtx("123")); // stateful lastIndex would skip this one
+	assert.equal(hits, 2);
+});
+
+test("context: from/chat cover non-message updates (inline query, chat member)", async () => {
+	const inlineCtx = makeCtx({
+		update_id: 7,
+		inline_query: {
+			id: "iq",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			query: "q",
+			offset: "",
+		},
+	} as unknown as Update);
+	assert.equal(inlineCtx.from?.id, 7);
+
+	const memberCtx = makeCtx({
+		update_id: 8,
+		my_chat_member: {
+			chat: { id: 5, type: "group" as const, title: "g" },
+			from: { id: 7, is_bot: false, first_name: "u" },
+			date: 0,
+			old_chat_member: { status: "member", user: { id: 1, is_bot: true, first_name: "b" } },
+			new_chat_member: { status: "kicked", user: { id: 1, is_bot: true, first_name: "b" } },
+		},
+	} as unknown as Update);
+	assert.equal(memberCtx.chat?.id, 5);
+	assert.equal(memberCtx.from?.id, 7);
 });
 
 test("hears: a callback update never triggers text handlers, even with a grafted message", async () => {

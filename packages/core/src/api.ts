@@ -1,6 +1,6 @@
 import type { BotApiMethods } from "@yaebal/types";
 import { applyFormatFields } from "./format-hook.js";
-import { isMediaSource, type MediaSource } from "./media.js";
+import { isMediaSource, type MediaSource, type MediaStream } from "./media.js";
 import type { ApiResponse, ResponseParameters } from "./telegram-types.js";
 
 /**
@@ -119,14 +119,6 @@ interface EncodedRequest {
 	contentType?: string;
 }
 
-function containsMedia(v: unknown): boolean {
-	if (isMediaSource(v)) return true;
-	if (Array.isArray(v)) return v.some(containsMedia);
-	if (v !== null && typeof v === "object") return Object.values(v).some(containsMedia);
-
-	return false;
-}
-
 /** basename without node:path — keeps core free of node: imports. */
 const baseName = (p: string): string => p.split(/[\\/]/).pop() || "file";
 const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => {
@@ -136,33 +128,74 @@ const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => {
 	return copy.buffer;
 };
 
+/** drain a web stream / async iterable into one buffer (multipart needs a sized body). */
+async function streamToBytes(stream: MediaStream): Promise<Uint8Array> {
+	const chunks: Uint8Array[] = [];
+	let total = 0;
+
+	const iterable: AsyncIterable<Uint8Array> =
+		Symbol.asyncIterator in stream
+			? (stream as AsyncIterable<Uint8Array>)
+			: readerToIterable(stream as ReadableStream<Uint8Array>);
+
+	for await (const chunk of iterable) {
+		chunks.push(chunk);
+		total += chunk.byteLength;
+	}
+
+	const out = new Uint8Array(total);
+	let offset = 0;
+	for (const chunk of chunks) {
+		out.set(chunk, offset);
+		offset += chunk.byteLength;
+	}
+
+	return out;
+}
+
+// ReadableStream is async-iterable in node/bun/deno, but not in every edge runtime —
+// fall back to the reader protocol so media.stream() works wherever fetch does.
+async function* readerToIterable(stream: ReadableStream<Uint8Array>): AsyncIterable<Uint8Array> {
+	const reader = stream.getReader();
+	try {
+		for (;;) {
+			const { done, value } = await reader.read();
+			if (done) return;
+			if (value) yield value;
+		}
+	} finally {
+		reader.releaseLock();
+	}
+}
+
 async function mediaToBlob(
 	m: MediaSource,
 	readFile?: FileReader,
 ): Promise<{ blob: Blob; filename: string }> {
-	if (m.kind === "path") {
-		if (!readFile)
-			throw new Error(
-				"media.path() needs a filesystem — use the `yaebal` package (auto-detects node/bun/deno), " +
-					"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
-			);
+	switch (m.kind) {
+		case "path": {
+			if (!readFile)
+				throw new Error(
+					"media.path() needs a filesystem — use the `yaebal` package (auto-detects node/bun/deno), " +
+						"pass `readFile` to the Bot, or send media.buffer()/url() instead (e.g. on edge).",
+				);
 
-		const bytes = await readFile(m.path);
-		return { blob: new Blob([toArrayBuffer(bytes)]), filename: baseName(m.path) };
+			const bytes = await readFile(m.path);
+			return { blob: new Blob([toArrayBuffer(bytes)]), filename: baseName(m.path) };
+		}
+		case "buffer":
+			return { blob: new Blob([toArrayBuffer(m.buffer)]), filename: m.filename ?? "file" };
+		case "stream": {
+			const bytes = await streamToBytes(m.stream);
+			return { blob: new Blob([toArrayBuffer(bytes)]), filename: m.filename ?? "file" };
+		}
+		case "text":
+			return { blob: new Blob([m.text]), filename: m.filename ?? "text.txt" };
+		default:
+			throw new Error(`mediaToBlob: ${m.kind} is not an uploadable source`);
 	}
-
-	if (m.kind === "buffer") {
-		return { blob: new Blob([toArrayBuffer(m.buffer)]), filename: m.filename ?? "file" };
-	}
-
-	throw new Error(`mediaToBlob: ${m.kind} is not an uploadable source`);
 }
 
-/**
- * encode request params. Plain params (and `url`/`fileId` media) go as JSON;
- * if any `path`/`buffer` media is present the whole request becomes multipart,
- * with each upload attached via `attach://`. exported for testing.
- */
 type Thenable<T> = { then: (resolve: (value: T) => unknown) => unknown };
 
 function isThenable(v: unknown): v is Thenable<unknown> {
@@ -176,6 +209,51 @@ async function resolveThenables(params: Record<string, unknown>): Promise<void> 
 	}
 }
 
+// a value the media walk may descend into: arrays and plain objects only. anything
+// exotic (typed arrays, Blobs, Dates, class instances) is passed through untouched —
+// walking a Uint8Array's indices or flattening a Date to `{}` would corrupt params.
+function isWalkable(v: unknown): v is Record<string, unknown> {
+	if (Array.isArray(v)) return true;
+	if (v === null || typeof v !== "object") return false;
+
+	const proto = Object.getPrototypeOf(v);
+	return proto === Object.prototype || proto === null;
+}
+
+/**
+ * replace every {@link MediaSource} in `value` — at any depth — with its wire form:
+ * `url`/`fileId` inline to their string; uploadable kinds become an `attach://_fileN`
+ * reference and land in `uploads`. containers are copied, never mutated. this is what
+ * makes nested media (`sendMediaGroup`, `editMessageMedia`, `createNewStickerSet`,
+ * story/profile-photo content, …) work with the same `media.*` builders as flat params.
+ */
+function extractMedia(value: unknown, uploads: { field: string; source: MediaSource }[]): unknown {
+	if (isMediaSource(value)) {
+		if (value.kind === "url") return value.url;
+		if (value.kind === "fileId") return value.fileId;
+
+		const field = `_file${uploads.length}`;
+		uploads.push({ field, source: value });
+		return `attach://${field}`;
+	}
+
+	if (Array.isArray(value)) return value.map((item) => extractMedia(item, uploads));
+
+	if (isWalkable(value)) {
+		const out: Record<string, unknown> = {};
+		for (const [k, v] of Object.entries(value)) out[k] = extractMedia(v, uploads);
+		return out;
+	}
+
+	return value;
+}
+
+/**
+ * encode request params. plain params (and `url`/`fileId` media) go as JSON; if any
+ * uploadable media is present — at the top level or nested (`sendMediaGroup` & co) —
+ * the whole request becomes multipart, with each upload attached via `attach://`.
+ * exported for testing.
+ */
 export async function encodeRequest(
 	params: Record<string, unknown> | undefined,
 	readFile?: FileReader,
@@ -186,54 +264,24 @@ export async function encodeRequest(
 	params = { ...params };
 	await resolveThenables(params);
 
-	// ponytail: media is only handled at the top level. media nested inside arrays
-	// or objects (e.g. sendMediaGroup's `media[]`) would serialize to garbage, so
-	// fail loud until that method is actually supported.
-	if (Object.values(params).some((v) => !isMediaSource(v) && containsMedia(v))) {
-		throw new Error(
-			"encodeRequest: nested MediaSource (e.g. inside sendMediaGroup) is not supported yet — pass media as a top-level param",
-		);
-	}
+	const uploads: { field: string; source: MediaSource }[] = [];
+	const encoded = extractMedia(params, uploads) as Record<string, unknown>;
 
-	const needsUpload = Object.values(params).some(
-		(v) => isMediaSource(v) && (v.kind === "path" || v.kind === "buffer"),
-	);
-
-	if (!needsUpload) {
-		const inlined: Record<string, unknown> = {};
-
-		for (const [k, v] of Object.entries(params)) {
-			inlined[k] = isMediaSource(v)
-				? v.kind === "url"
-					? v.url
-					: (v as { fileId: string }).fileId
-				: v;
-		}
-
-		return { body: JSON.stringify(inlined), contentType: "application/json" };
+	if (uploads.length === 0) {
+		return { body: JSON.stringify(encoded), contentType: "application/json" };
 	}
 
 	const form = new FormData();
-	let n = 0;
 
-	for (const [k, v] of Object.entries(params)) {
+	for (const [k, v] of Object.entries(encoded)) {
 		if (v === undefined || v === null) continue;
 
-		if (isMediaSource(v)) {
-			if (v.kind === "fileId") form.set(k, v.fileId);
-			else if (v.kind === "url") form.set(k, v.url);
-			else {
-				const field = `_file${n++}`;
-				const { blob, filename } = await mediaToBlob(v, readFile);
+		form.set(k, typeof v === "string" ? v : JSON.stringify(v));
+	}
 
-				form.set(field, blob, filename);
-				form.set(k, `attach://${field}`);
-			}
-		} else if (typeof v === "string") {
-			form.set(k, v);
-		} else {
-			form.set(k, JSON.stringify(v));
-		}
+	for (const { field, source } of uploads) {
+		const { blob, filename } = await mediaToBlob(source, readFile);
+		form.set(field, blob, filename);
 	}
 
 	return { body: form };

@@ -22,14 +22,21 @@ export type Plugin<In extends Context = Context, Out extends object = Record<nev
 ) => Composer<C & Out>;
 
 /**
- * a composable filter (the mtcute idea). `test` is a type guard, so a matching
- * filter narrows the context to `C & Add`; filters may also attach `Add` fields
- * onto the context as a side effect (e.g. `regex` exposes `ctx.match`). combine
- * with `and` / `or` / `not` from `@yaebal/filters`.
+ * a composable filter (the mtcute idea, made two-phase). a filter is a predicate
+ * over the context — sync or async — that may *stage* extra fields in `bag`
+ * (e.g. `regex` stages `ctx.match`). nothing touches the context until the whole
+ * filter tree matches: `composer.filter()` commits the bag onto the context only
+ * on success, so a failing branch can never leak or corrupt data. `Add` describes
+ * what the handler gains — staged bag fields and/or purely type-level narrowing
+ * (e.g. `chatType("private")` narrows `ctx.chat` without staging anything).
+ * combine with `and` / `or` / `not` from `@yaebal/filters`; any bare
+ * `(ctx) => boolean` predicate is already a valid `Filter`.
  */
-export interface Filter<C = Context, Add extends object = Record<never, never>> {
-	test(ctx: C): ctx is C & Add;
-}
+export type Filter<C = Context, Add extends object = Record<never, never>> = {
+	(ctx: C, bag: Record<string, unknown>): boolean | Promise<boolean>;
+	/** type-level carrier for `Add` — never present at runtime. */
+	readonly "~adds"?: Add;
+};
 
 /**
  * the structural shape of a `@yaebal/callback-data` namespace that `callbackQuery`
@@ -96,11 +103,21 @@ function checkField(ctx: Context, field: string): boolean {
 }
 
 /** update types whose text can carry a fresh (non-edited) command. */
-const COMMAND_UPDATES: ReadonlySet<string> = new Set([
+export const COMMAND_UPDATES: ReadonlySet<string> = new Set([
 	"message",
 	"channel_post",
 	"business_message",
 ]);
+
+/**
+ * `String.match` with a `g`/`y` regex is stateful across calls (`lastIndex`
+ * persists on the shared RegExp), so a trigger could silently skip every other
+ * update. reset before matching — each update matches from the start.
+ */
+export function matchOf(text: string, re: RegExp): RegExpMatchArray | null {
+	if (re.global || re.sticky) re.lastIndex = 0;
+	return text.match(re);
+}
 
 export function matchQuery(ctx: Context, query: string): boolean {
 	const [head, ...rest] = query.split(":");
@@ -142,12 +159,18 @@ export class Composer<C extends Context = Context> {
 
 	/**
 	 * handle `/<name>` commands. matches the text of fresh messages only (an edited
-	 * `/cmd` doesn't re-fire), strips a trailing `@botname` — and when the bot's
-	 * username is known (`ctx.me`, filled by long polling) a mismatching mention
-	 * (`/cmd@other_bot`) is skipped. parses args.
+	 * `/cmd` doesn't re-fire), case-insensitively (`/Start` hits `command("start")`),
+	 * strips a trailing `@botname` — and when the bot's username is known (`ctx.me`,
+	 * filled by long polling) a mismatching mention (`/cmd@other_bot`) is skipped.
+	 * exposes `ctx.command`, whitespace-split `ctx.args`, and the raw trimmed
+	 * remainder as `ctx.payload` (deep-link parameters arrive intact).
 	 */
-	command(name: string, ...handlers: Middleware<C & { command: string; args: string[] }>[]): this {
+	command(
+		name: string,
+		...handlers: Middleware<C & { command: string; args: string[]; payload: string }>[]
+	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+		const wanted = name.toLowerCase();
 
 		this.middlewares.push((ctx, next) => {
 			if (!COMMAND_UPDATES.has(ctx.updateType)) return next();
@@ -155,14 +178,17 @@ export class Composer<C extends Context = Context> {
 			const text = messageOf(ctx.update)?.text;
 			if (text === undefined || !text.startsWith("/")) return next();
 
-			const [head = "", ...args] = text.slice(1).split(/\s+/);
-			const [base, mention] = head.split("@");
-			if (base !== name) return next();
+			const [head = ""] = text.slice(1).split(/\s/, 1);
+			const [base = "", mention] = head.split("@");
+			if (base.toLowerCase() !== wanted) return next();
 
 			const username = ctx.me?.username;
 			if (mention && username && mention.toLowerCase() !== username.toLowerCase()) return next();
 
-			Object.assign(ctx as object, { command: base, args });
+			const payload = text.slice(1 + head.length).trim();
+			const args = payload === "" ? [] : payload.split(/\s+/);
+
+			Object.assign(ctx as object, { command: base, args, payload });
 			return handler(ctx, next);
 		});
 
@@ -188,7 +214,7 @@ export class Composer<C extends Context = Context> {
 
 				Object.assign(ctx as object, { match: text });
 			} else {
-				const m = text.match(trigger);
+				const m = matchOf(text, trigger);
 				if (!m) return next();
 
 				Object.assign(ctx as object, { match: m });
@@ -249,7 +275,7 @@ export class Composer<C extends Context = Context> {
 
 				Object.assign(ctx as object, { match: data });
 			} else {
-				const m = data.match(trigger);
+				const m = matchOf(data, trigger);
 				if (!m) return next();
 
 				Object.assign(ctx as object, { match: m });
@@ -278,17 +304,32 @@ export class Composer<C extends Context = Context> {
 	}
 
 	/**
-	 * run `handlers` only when `filter` matches. the filter narrows the context
-	 * (and may attach data), so handlers see `C & Add`. compose filters with
-	 * `and` / `or` / `not` from `@yaebal/filters`.
+	 * run `handlers` only when `filter` matches; handlers see `C & Add`. the
+	 * filter may be sync or async, and any bare `(ctx) => boolean` predicate
+	 * works. fields the filter staged in its bag are committed onto the context
+	 * only here, after the whole filter tree matched — a rejected filter leaves
+	 * the context untouched. compose filters with `and` / `or` / `not` from
+	 * `@yaebal/filters`.
 	 */
-	filter<Add extends object>(
-		filter: Filter<Context, Add>,
+	filter<Add extends object = Record<never, never>>(
+		filter: Filter<C, Add>,
 		...handlers: Middleware<C & Add>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
 
-		this.middlewares.push((ctx, next) => (filter.test(ctx) ? handler(ctx, next) : next()));
+		this.middlewares.push((ctx, next) => {
+			const bag: Record<string, unknown> = {};
+			const decide = (matched: boolean) => {
+				if (!matched) return next();
+
+				Object.assign(ctx as object, bag);
+				return handler(ctx, next);
+			};
+
+			const verdict = filter(ctx, bag);
+			return typeof verdict === "boolean" ? decide(verdict) : verdict.then(decide);
+		});
+
 		return this;
 	}
 

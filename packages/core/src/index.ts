@@ -22,12 +22,14 @@ export {
 export { Bot, type BotOptions, type BotPlugin } from "./bot.js";
 export {
 	type CallbackDataMatcher,
+	COMMAND_UPDATES,
 	Composer,
 	compose,
 	type Filter,
 	type Filtered,
 	type FilterQuery,
 	type Middleware,
+	matchOf,
 	matchQuery,
 	type NextFn,
 	type Plugin,
@@ -56,7 +58,7 @@ export {
 	underline,
 } from "./format.js";
 export { applyFormatFields } from "./format-hook.js";
-export { isMediaSource, type MediaSource, media } from "./media.js";
+export { isMediaSource, type MediaSource, type MediaStream, media } from "./media.js";
 export type * from "./telegram-types.js";
 export { updateNames } from "./telegram-types.js";
 export { type UpdateSink, type WebhookOptions, webhookCallback } from "./webhook.js";

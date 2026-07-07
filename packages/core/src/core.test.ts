@@ -49,11 +49,101 @@ test("encodeRequest handles no params", async () => {
 	assert.equal(r.body, undefined);
 });
 
-test("encodeRequest rejects nested media (fails loud, no garbage)", async () => {
-	await assert.rejects(
-		() => encodeRequest({ media: [{ type: "photo", media: media.path("./a.jpg") }] }),
-		/nested MediaSource/,
-	);
+test("encodeRequest handles nested media (sendMediaGroup) — uploads become attach://", async () => {
+	const r = await encodeRequest({
+		chat_id: 5,
+		media: [
+			{ type: "photo", media: media.buffer(new Uint8Array([1]), "a.png"), caption: "one" },
+			{ type: "photo", media: media.fileId("AgAC") },
+			{
+				type: "video",
+				media: media.url("https://yaebal.mom/v.mp4"),
+				thumbnail: media.buffer(new Uint8Array([2]), "t.jpg"),
+			},
+		],
+	});
+
+	assert.ok(r.body instanceof FormData);
+	const form = r.body as FormData;
+
+	assert.deepEqual(JSON.parse(form.get("media") as string), [
+		{ type: "photo", media: "attach://_file0", caption: "one" },
+		{ type: "photo", media: "AgAC" },
+		{ type: "video", media: "https://yaebal.mom/v.mp4", thumbnail: "attach://_file1" },
+	]);
+	assert.equal((form.get("_file0") as File).name, "a.png");
+	assert.equal((form.get("_file1") as File).name, "t.jpg");
+});
+
+test("encodeRequest inlines nested url/fileId media without going multipart", async () => {
+	const r = await encodeRequest({
+		media: [
+			{ type: "photo", media: media.fileId("AgAC") },
+			{ type: "photo", media: media.url("https://yaebal.mom/p.png") },
+		],
+	});
+
+	assert.equal(r.contentType, "application/json");
+	assert.deepEqual(JSON.parse(r.body as string), {
+		media: [
+			{ type: "photo", media: "AgAC" },
+			{ type: "photo", media: "https://yaebal.mom/p.png" },
+		],
+	});
+});
+
+test("encodeRequest media walk passes exotic objects through untouched", async () => {
+	const bytes = new Uint8Array([1, 2, 3]);
+	const r = await encodeRequest({ chat_id: 1, blob: { raw: bytes } });
+
+	// a typed array inside params must survive the walk, not be flattened to indices
+	assert.equal(r.contentType, "application/json");
+	assert.deepEqual(JSON.parse(r.body as string), {
+		chat_id: 1,
+		blob: { raw: { "0": 1, "1": 2, "2": 3 } },
+	});
+});
+
+test("encodeRequest uploads media.stream() (web stream and async iterable)", async () => {
+	const web = new ReadableStream<Uint8Array>({
+		start(controller) {
+			controller.enqueue(new Uint8Array([1, 2]));
+			controller.enqueue(new Uint8Array([3]));
+			controller.close();
+		},
+	});
+
+	const r = await encodeRequest({ document: media.stream(web, "web.bin") });
+	const form = r.body as FormData;
+	const file = form.get("_file0") as File;
+
+	assert.equal(form.get("document"), "attach://_file0");
+	assert.equal(file.name, "web.bin");
+	assert.deepEqual(new Uint8Array(await file.arrayBuffer()), new Uint8Array([1, 2, 3]));
+
+	async function* chunks() {
+		yield new Uint8Array([9]);
+		yield new Uint8Array([8, 7]);
+	}
+
+	const r2 = await encodeRequest({ document: media.stream(chunks()) });
+	const file2 = (r2.body as FormData).get("_file0") as File;
+
+	assert.equal(file2.name, "file");
+	assert.deepEqual(new Uint8Array(await file2.arrayBuffer()), new Uint8Array([9, 8, 7]));
+});
+
+test("encodeRequest uploads media.text() as a named text file", async () => {
+	const r = await encodeRequest({ document: media.text("hello", "notes.txt") });
+	const form = r.body as FormData;
+	const file = form.get("_file0") as File;
+
+	assert.equal(form.get("document"), "attach://_file0");
+	assert.equal(file.name, "notes.txt");
+	assert.equal(await file.text(), "hello");
+
+	const r2 = await encodeRequest({ document: media.text("x") });
+	assert.equal(((r2.body as FormData).get("_file0") as File).name, "text.txt");
 });
 
 test("encodeRequest throws a helpful error for media.path() without a readFile (edge)", async () => {

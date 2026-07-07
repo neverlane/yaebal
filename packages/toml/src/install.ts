@@ -112,7 +112,7 @@ export function installToml<C extends Context, T extends Composer<C>>(
 
 	for (const [index, route] of (config.commands ?? []).entries()) {
 		const handler = resolveHandler(route, "commands", index, options) as Middleware<
-			C & { command: string; args: string[] }
+			C & { command: string; args: string[]; payload: string }
 		>;
 
 		registrations.push(() => target.command(route.name, handler));

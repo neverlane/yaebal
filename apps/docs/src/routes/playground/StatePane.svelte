@@ -4,6 +4,36 @@
   import type { WindowManager } from "./window-manager.svelte";
 
   let { session, wm }: { session: PlaygroundSession; wm: WindowManager<PgKey> } = $props();
+
+  // the tooltip is position:fixed so it escapes the pane's overflow:hidden; anchor it
+  // to the "?" button on hover/focus (recomputed each time, since the window moves).
+  function anchoredTooltip(wrap: HTMLElement) {
+    const tip = wrap.querySelector<HTMLElement>(".state-tooltip");
+    const btn = wrap.querySelector<HTMLElement>(".help-btn");
+    if (!tip || !btn) return;
+
+    const place = () => {
+      const r = btn.getBoundingClientRect();
+      const width = tip.offsetWidth || 280;
+      const left = Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8));
+      const below = r.bottom + 8;
+      const height = tip.offsetHeight || 180;
+      const top = below + height > window.innerHeight - 8 ? r.top - height - 8 : below;
+
+      tip.style.left = `${left}px`;
+      tip.style.top = `${top}px`;
+    };
+
+    wrap.addEventListener("pointerenter", place);
+    wrap.addEventListener("focusin", place);
+
+    return {
+      destroy() {
+        wrap.removeEventListener("pointerenter", place);
+        wrap.removeEventListener("focusin", place);
+      },
+    };
+  }
 </script>
 
 <div class="state-pane">
@@ -15,7 +45,7 @@
   >
     <span class="label">state</span>
     <div class="state-tools">
-      <div class="help-wrap">
+      <div class="help-wrap" use:anchoredTooltip>
         <button class="help-btn mono" aria-label="state help">?</button>
         <div class="state-tooltip mono" role="tooltip">
           <div><b>mock state</b> is replayed top to bottom on every run.</div>
@@ -139,10 +169,8 @@
   }
 
   .state-tooltip {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 8px);
-    z-index: 40;
+    position: fixed;
+    z-index: 100000;
     width: 280px;
     padding: 10px 12px;
     border-radius: 12px;

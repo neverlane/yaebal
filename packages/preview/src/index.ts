@@ -767,13 +767,15 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			const opts = poll.options;
 			const rowH = 34;
 			const h = 26 + opts.length * rowH + 16;
+			// polls sit at media width (like a photo), not the full text bubble width
+			const pollW = MW - PADX * 2;
 
 			blocks.push({
 				block: {
-					w: maxBubbleW - PADX * 2,
+					w: pollW,
 					h,
 					render: (x, y2) => {
-						const w = maxBubbleW - PADX * 2;
+						const w = pollW;
 						let s = `<text x="${round(x)}" y="${round(y2 + 15)}" font-size="14" font-weight="600" fill="${base}" font-family="${FONT}">${esc(poll.question)}</text>`;
 
 						s += `<text x="${round(x)}" y="${round(y2 + 15)}" dx="0" font-size="11" fill="${p.meta}" font-family="${FONT}" text-anchor="end" transform="translate(${round(w)},0)">${poll.is_anonymous === false ? "Public" : "Anonymous"}</text>`;

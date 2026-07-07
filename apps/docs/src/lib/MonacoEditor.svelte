@@ -16,6 +16,16 @@
   let monaco = $state<any>(null);
   let failed = $state(false);
 
+  // hover/suggest/parameter-hint widgets render into this body-level node instead of
+  // inside the editor — so they escape the window pane's `overflow: hidden` and the
+  // z-index of neighbouring windows, and float above everything. paired with
+  // `fixedOverflowWidgets` below.
+  let overflowNode: HTMLDivElement | undefined;
+
+  function overflowClass(t: "dark" | "light"): string {
+    return `monaco-editor yb-monaco-overflow ${t === "dark" ? "vs-dark" : "vs"}`;
+  }
+
   // biome-ignore lint/suspicious/noExplicitAny: AMD loader bootstrap
   function loadMonaco(): Promise<any> {
     const w = window as any;
@@ -173,10 +183,16 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
         monaco.editor.createModel(value, "typescript", modelUri);
       model.setValue(value);
 
+      overflowNode = document.createElement("div");
+      overflowNode.className = overflowClass(theme);
+      document.body.appendChild(overflowNode);
+
       editor = monaco.editor.create(host, {
         model,
         theme: theme === "dark" ? "yaebal-dark" : "vs",
         automaticLayout: true,
+        fixedOverflowWidgets: true,
+        overflowWidgetsDomNode: overflowNode,
         minimap: { enabled: false },
         fontSize: EDITOR_FONT.size,
         fontFamily: EDITOR_FONT.family,
@@ -218,12 +234,14 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
 
   $effect(() => {
     if (monaco) monaco.editor.setTheme(theme === "dark" ? "yaebal-dark" : "vs");
+    if (overflowNode) overflowNode.className = overflowClass(theme);
   });
 
   onDestroy(() => {
     const model = editor?.getModel();
     editor?.dispose();
     model?.dispose();
+    overflowNode?.remove();
   });
 </script>
 
@@ -268,6 +286,21 @@ declare namespace NodeJS { interface ProcessEnv extends Record<string, string | 
     --monaco-monospace-font: var(--editor-font-family) !important;
     font-family: var(--editor-font-family) !important;
     font-weight: var(--editor-font-weight) !important;
+  }
+
+  /* the broad `.monaco-editor *` rule above would force the code font onto the
+     suggest/hover icon glyphs (`.codicon`), which then render as tofu squares —
+     restore the icon font. higher specificity than the override, and also global
+     so it reaches the body-level overflow widgets. */
+  .host :global(.monaco-editor .codicon),
+  :global(.yb-monaco-overflow .codicon),
+  :global(.codicon) {
+    font-family: codicon !important;
+  }
+
+  /* float the overflow widgets above the floating windows */
+  :global(.yb-monaco-overflow) {
+    z-index: 100000;
   }
 
   .fallback {

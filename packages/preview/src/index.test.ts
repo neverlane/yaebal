@@ -107,6 +107,11 @@ test("renders a poll with percentage bars", () => {
 	assert.ok(svg.includes("tabs or spaces?"));
 	assert.ok(svg.includes("75%"));
 	assert.ok(svg.includes("25%"));
+
+	// poll sits at media width (252), not the full 76%-of-canvas text bubble width
+	const track = svg.match(/<rect x="\d+" y="\d+" width="(\d+)" height="4"/);
+	assert.ok(track, "poll bar track not found");
+	assert.equal(Number(track[1]), 252 - 11 * 2); // MW - PADX*2
 });
 
 test("renders picture media (photo) with a caption", () => {

@@ -2,28 +2,17 @@
 	import Code from "$lib/Code.svelte";
 
 	const ban = `bot.command("ban", async (ctx) => {
-  const target = ctx.message?.reply_to_message?.from;
-  if (!target || !ctx.chat) return ctx.reply("reply to a user first");
+  const target = ctx.reply_to_message?.from;
+  if (!target) return ctx.reply("reply to a user first");
 
-  await ctx.api.call("banChatMember", {
-    chat_id: ctx.chat.id,
-    user_id: target.id,
-  });
+  await ctx.ban(target.id); // chat_id comes from ctx; defaults to the sender without an id
 });`;
 
 	const join = `bot.on("chat_join_request", async (ctx) => {
-  const request = ctx.update.chat_join_request!;
-
-  if (await isAllowed(request.from.id)) {
-    await ctx.api.call("approveChatJoinRequest", {
-      chat_id: request.chat.id,
-      user_id: request.from.id,
-    });
+  if (await isAllowed(ctx.from.id)) {
+    await ctx.approve();
   } else {
-    await ctx.api.call("declineChatJoinRequest", {
-      chat_id: request.chat.id,
-      user_id: request.from.id,
-    });
+    await ctx.decline();
   }
 });`;
 

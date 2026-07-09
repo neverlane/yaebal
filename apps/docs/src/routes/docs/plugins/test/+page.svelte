@@ -89,8 +89,7 @@ await linia.on(msg).editMessage("updated");`;
   ctx.send("Pick:", { reply_markup: { inline_keyboard: [[{ text: "Next", callback_data: "next" }]] } }),
 );
 bot.callbackQuery("next", async (ctx) => {
-  const { chat, message_id } = ctx.callbackQuery.message;
-  await ctx.api.call("editMessageText", { chat_id: chat.id, message_id, text: "Done!" });
+  await ctx.editText("Done!"); // chat_id/message_id taken from the attached message
 });
 
 await linia.sendMessage("hi");

@@ -45,10 +45,7 @@ const bot = createBot(token, {
 		if (!chargeId || userId === undefined)
 			return ctx.reply("usage: /refund telegram_payment_charge_id");
 
-		await ctx.api.call("refundStarPayment", {
-			user_id: userId,
-			telegram_payment_charge_id: chargeId,
-		});
+		await ctx.refundStarPayment({ user_id: userId, telegram_payment_charge_id: chargeId });
 		return ctx.reply("refund requested.");
 	})
 	.callbackQuery(planData.pattern, async (ctx) => {

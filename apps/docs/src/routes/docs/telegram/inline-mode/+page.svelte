@@ -2,28 +2,24 @@
 	import Code from "$lib/Code.svelte";
 
 	const answer = `bot.on("inline_query", async (ctx) => {
-  const query = ctx.update.inline_query!;
-  const results = await search(query.query);
+  const results = await search(ctx.query);
 
-  await ctx.api.call("answerInlineQuery", {
-    inline_query_id: query.id,
-    cache_time: 10,
-    is_personal: true,
-    results: results.map((item) => ({
+  await ctx.answer(
+    results.map((item) => ({
       type: "article",
       id: item.id,
       title: item.title,
       input_message_content: { message_text: item.text },
     })),
-  });
+    { cache_time: 10, is_personal: true },
+  );
 });`;
 
 	const chosen = `bot.on("chosen_inline_result", async (ctx) => {
-  const chosen = ctx.update.chosen_inline_result!;
   await analytics.track("inline_chosen", {
-    resultId: chosen.result_id,
-    userId: chosen.from.id,
-    query: chosen.query,
+    resultId: ctx.result_id,
+    userId: ctx.from.id,
+    query: ctx.query,
   });
 });`;
 

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
-	const invoice = `await bot.api.call("sendInvoice", {
-  chat_id: ctx.chat!.id,
+	const invoice = `await ctx.sendInvoice({
   title: "pro plan",
   description: "one month of access",
   payload: "pro_monthly",
@@ -11,23 +10,15 @@
 });`;
 
 	const checkout = `bot.on("pre_checkout_query", async (ctx) => {
-  const query = ctx.update.pre_checkout_query!;
+  const ok = await isOrderValid(ctx.invoice_payload, ctx.from.id);
 
-  const ok = await isOrderValid(query.invoice_payload, query.from.id);
-
-  await ctx.api.call("answerPreCheckoutQuery", {
-    pre_checkout_query_id: query.id,
-    ok,
+  await ctx.answer(ok, {
     error_message: ok ? undefined : "order is no longer available",
   });
 });`;
 
 	const shipping = `bot.on("shipping_query", async (ctx) => {
-  const query = ctx.update.shipping_query!;
-
-  await ctx.api.call("answerShippingQuery", {
-    shipping_query_id: query.id,
-    ok: true,
+  await ctx.answer(true, {
     shipping_options: [
       {
         id: "standard",
@@ -39,7 +30,7 @@
 });`;
 
 	const success = `bot.on("message", async (ctx) => {
-  const payment = ctx.message?.successful_payment;
+  const payment = ctx.successful_payment;
   if (!payment) return;
 
   await grantAccess(payment.invoice_payload, ctx.from!.id);

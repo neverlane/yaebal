@@ -161,11 +161,7 @@ bot.command("launch", async (ctx) => {
     caption: "release image by url",
   });
 
-  await ctx.api.call("sendPoll", {
-    chat_id: ctx.chat!.id,
-    question: "ship today?",
-    options: ["yes", "hold"],
-  });
+  await ctx.sendPoll("ship today?", ["yes", "hold"]);
 });
 
 bot.start();`,
@@ -224,8 +220,7 @@ bot.start();`,
 const bot = createBot(process.env.BOT_TOKEN!);
 
 bot.command("buy", async (ctx) => {
-  await ctx.api.call("sendInvoice", {
-    chat_id: ctx.chat!.id,
+  await ctx.sendInvoice({
     title: "coffee",
     description: "support the bot with stars",
     payload: "coffee",
@@ -339,8 +334,9 @@ bot.command("ask", async (ctx) => {
   const sent = await ctx.reply(\`thinking about: \${question}\`);
 
   for (const text of ["reading context", "drafting answer", "yaebal keeps types flowing"]) {
+    // editing the *sent* message, not ctx's own — so the raw call is the right tool
     await ctx.api.call("editMessageText", {
-      chat_id: ctx.chat!.id,
+      chat_id: sent.chat.id,
       message_id: sent.message_id,
       text,
     });

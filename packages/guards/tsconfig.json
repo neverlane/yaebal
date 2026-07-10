@@ -1,0 +1,11 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"composite": true,
+		"types": ["node"]
+	},
+	"references": [{ "path": "../core" }, { "path": "../filters" }, { "path": "../test" }],
+	"include": ["src/**/*.ts"]
+}

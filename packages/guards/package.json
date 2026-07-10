@@ -1,0 +1,37 @@
+{
+	"name": "@yaebal/guards",
+	"version": "0.0.1",
+	"description": "yaebal guards — reusable bot.guard() predicates: isAdmin, isPrivate, isGroup, hasMembership, hasPermission.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/filters": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
+	},
+	"engines": { "node": ">=20" },
+	"keywords": ["telegram", "telegram-bot", "yaebal", "guards", "permissions"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/guards"
+	},
+	"publishConfig": { "access": "public" }
+}

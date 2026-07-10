@@ -53,13 +53,13 @@ importers:
         version: 5.2.8
       '@sveltejs/adapter-static':
         specifier: ^3.0.10
-        version: 3.0.10(@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))
+        version: 3.0.10(@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))
       '@sveltejs/kit':
         specifier: ^2.68.0
-        version: 2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))
+        version: 2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))
       '@sveltejs/vite-plugin-svelte':
         specifier: ^7.1.2
-        version: 7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))
+        version: 7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))
       pagefind:
         specifier: ^1.5.2
         version: 1.5.2
@@ -74,7 +74,7 @@ importers:
         version: 6.0.3
       vite:
         specifier: ^8.1.0
-        version: 8.1.0(@types/node@26.1.0)(esbuild@0.28.1)
+        version: 8.1.0(@types/node@26.1.1)(esbuild@0.28.1)
 
   examples/again:
     dependencies:
@@ -287,6 +287,19 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/pagination:
+    dependencies:
+      '@yaebal/pagination':
+        specifier: workspace:*
+        version: link:../../packages/pagination
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/panel:
     dependencies:
       '@yaebal/again':
@@ -341,6 +354,19 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.0
+
+  examples/session:
+    dependencies:
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../../packages/sklad
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
 
   examples/simple:
     dependencies:
@@ -540,9 +566,9 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
-      '@yaebal/session':
+      '@yaebal/sklad':
         specifier: workspace:*
-        version: link:../session
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
@@ -566,9 +592,9 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
-      '@yaebal/session':
+      '@yaebal/sklad':
         specifier: workspace:*
-        version: link:../session
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
@@ -598,9 +624,9 @@ importers:
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../keyboard
-      '@yaebal/session':
+      '@yaebal/sklad':
         specifier: workspace:*
-        version: link:../session
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
@@ -634,6 +660,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/panel:
     dependencies:
@@ -716,9 +745,9 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
-      '@yaebal/session':
+      '@yaebal/sklad':
         specifier: workspace:*
-        version: link:../session
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
@@ -732,10 +761,19 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+
+  packages/sklad:
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
 
   packages/split:
     dependencies:
@@ -746,6 +784,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/test:
     dependencies:
@@ -807,6 +848,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/yaebal:
     dependencies:
@@ -834,6 +878,9 @@ importers:
       '@yaebal/session':
         specifier: workspace:*
         version: link:../session
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../sklad
       '@yaebal/web':
         specifier: workspace:*
         version: link:../web
@@ -1419,6 +1466,9 @@ packages:
 
   '@types/node@26.1.0':
     resolution: {integrity: sha512-O0A1G3xPGy4w7AgQdAQYUlQ+BKk2Oovw8eRpofyp5KdBZULnbe+WqaOVNrm705SHphCiG4XHsACrSmPu1f+Kgw==}
+
+  '@types/node@26.1.1':
+    resolution: {integrity: sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -2612,15 +2662,15 @@ snapshots:
     dependencies:
       acorn: 8.17.0
 
-  '@sveltejs/adapter-static@3.0.10(@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))':
+  '@sveltejs/adapter-static@3.0.10(@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))':
     dependencies:
-      '@sveltejs/kit': 2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))
+      '@sveltejs/kit': 2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))
 
-  '@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))':
+  '@sveltejs/kit@2.68.0(@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)))(svelte@5.56.4)(typescript@6.0.3)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.10(acorn@8.17.0)
-      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))
+      '@sveltejs/vite-plugin-svelte': 7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))
       '@types/cookie': 0.6.0
       acorn: 8.17.0
       cookie: 0.6.0
@@ -2632,20 +2682,20 @@ snapshots:
       set-cookie-parser: 3.1.0
       sirv: 3.0.2
       svelte: 5.56.4
-      vite: 8.1.0(@types/node@26.1.0)(esbuild@0.28.1)
+      vite: 8.1.0(@types/node@26.1.1)(esbuild@0.28.1)
     optionalDependencies:
       typescript: 6.0.3
 
   '@sveltejs/load-config@0.2.0': {}
 
-  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))':
+  '@sveltejs/vite-plugin-svelte@7.1.2(svelte@5.56.4)(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))':
     dependencies:
       deepmerge: 4.3.1
       magic-string: 0.30.21
       obug: 2.1.3
       svelte: 5.56.4
-      vite: 8.1.0(@types/node@26.1.0)(esbuild@0.28.1)
-      vitefu: 1.1.3(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1))
+      vite: 8.1.0(@types/node@26.1.1)(esbuild@0.28.1)
+      vitefu: 1.1.3(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1))
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
@@ -2671,6 +2721,10 @@ snapshots:
       undici-types: 8.3.0
 
   '@types/node@26.1.0':
+    dependencies:
+      undici-types: 8.3.0
+
+  '@types/node@26.1.1':
     dependencies:
       undici-types: 8.3.0
 
@@ -3324,7 +3378,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1):
+  vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1):
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
@@ -3332,13 +3386,13 @@ snapshots:
       rolldown: 1.1.3
       tinyglobby: 0.2.17
     optionalDependencies:
-      '@types/node': 26.1.0
+      '@types/node': 26.1.1
       esbuild: 0.28.1
       fsevents: 2.3.3
 
-  vitefu@1.1.3(vite@8.1.0(@types/node@26.1.0)(esbuild@0.28.1)):
+  vitefu@1.1.3(vite@8.1.0(@types/node@26.1.1)(esbuild@0.28.1)):
     optionalDependencies:
-      vite: 8.1.0(@types/node@26.1.0)(esbuild@0.28.1)
+      vite: 8.1.0(@types/node@26.1.1)(esbuild@0.28.1)
 
   which@2.0.2:
     dependencies:

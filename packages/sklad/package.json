@@ -1,0 +1,40 @@
+{
+	"name": "@yaebal/sklad",
+	"version": "0.0.1",
+	"description": "yaebal sklad — the shared storage contract and zero-dependency adapters: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json file.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		},
+		"./file": {
+			"types": "./lib/file.d.ts",
+			"import": "./lib/file.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "storage", "sklad", "redis", "sqlite"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/sklad"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

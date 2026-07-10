@@ -98,7 +98,7 @@ type Plugin<In extends Context, Out extends object> =
 
 rules (these are the core invariants — do not bend them):
 
-- export a factory returning `Plugin<In, Out>`: `export function split(max = N): Plugin<Context, SplitControl>`.
+- export a factory returning `Plugin<In, Out>`: `export function splitter(options = {}): Plugin<Context, SplitControl>`.
 - `decorate()` for static values (zero per-update cost); `derive()` for per-update / async values.
   keep them distinct.
 - a dependency on another plugin's context goes into `In`

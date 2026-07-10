@@ -49,6 +49,15 @@ const kb = new InlineKeyboard()
   .style("danger")
   .text("confirm", "action:confirm")
   .style("success")
+  .build();
+
+// or pass a third \`deco\` argument to decorate the button inline — an object,
+// or a "<customEmojiId>:<style>" string shorthand:
+const inline = new InlineKeyboard()
+  .text("delete", "action:delete", { style: "danger", icon: "5368324170671202286" })
+  .text("confirm", "action:confirm", "success")           // bare style
+  .text("star", "action:star", "5368324170671202286")     // bare custom-emoji id
+  .text("pin", "action:pin", "5368324170671202286:primary") // both
   .build();`;
 
 	const requestButtons = `import { Keyboard } from "@yaebal/keyboard";
@@ -134,7 +143,10 @@ await ctx.reply("pick one", {
 <h2>styling a button</h2>
 <p>
 	<code>.style()</code> and <code>.icon()</code> apply to the button most recently added — on
-	either builder. call them right after the button they should affect.
+	either builder. call them right after the button they should affect. on inline buttons you can
+	also skip the chaining and pass a third <code>deco</code> argument — either
+	<code>{'{ style, icon }'}</code> or a <code>"&lt;customEmojiId&gt;:&lt;style&gt;"</code> string
+	shorthand (a bare style or a bare custom-emoji id works too).
 </p>
 <Code code={styleIcon} title="style.ts" />
 

@@ -4,6 +4,7 @@ import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 import { type ApiLike, deliverView, removeMessage } from "./deliver.js";
 import { KeyedLock, MAX_COMMIT_PASSES, MordaError, shortId } from "./internal.js";
 import type {
+	ButtonDecoration,
 	CallbackButton,
 	CopyButton,
 	DialogContext,
@@ -36,48 +37,68 @@ export type Button = CallbackButton;
 /** A plain action button. */
 export function button(
 	label: string,
-	opts: { id: string; onClick?: (ctx: DialogContext) => unknown },
+	opts: { id: string; onClick?: (ctx: DialogContext) => unknown } & ButtonDecoration,
 ): CallbackButton {
-	return { id: opts.id, label, onClick: opts.onClick };
+	return { id: opts.id, label, onClick: opts.onClick, icon: opts.icon, style: opts.style };
 }
 
 /** A button that pushes another window (optionally with params). */
-export function switchTo(label: string, windowId: string, params?: unknown): CallbackButton {
-	return { id: `to:${windowId}`, label, onClick: (ctx) => ctx.dialog.push(windowId, params) };
+export function switchTo(
+	label: string,
+	windowId: string,
+	params?: unknown,
+	deco: ButtonDecoration = {},
+): CallbackButton {
+	return {
+		id: `to:${windowId}`,
+		label,
+		onClick: (ctx) => ctx.dialog.push(windowId, params),
+		...deco,
+	};
 }
 
 /** A button that pops the stack (optionally handing `result` to the parent). */
-export function back(label = "← back", result?: unknown): CallbackButton {
-	return { id: "back", label, onClick: (ctx) => ctx.dialog.back(result) };
+export function back(
+	label = "← back",
+	result?: unknown,
+	deco: ButtonDecoration = {},
+): CallbackButton {
+	return { id: "back", label, onClick: (ctx) => ctx.dialog.back(result), ...deco };
 }
 
 /** A button that closes the whole dialog. */
-export function cancel(label = "✕ close"): CallbackButton {
-	return { id: "cancel", label, onClick: (ctx) => ctx.dialog.close() };
+export function cancel(label = "✕ close", deco: ButtonDecoration = {}): CallbackButton {
+	return { id: "cancel", label, onClick: (ctx) => ctx.dialog.close(), ...deco };
 }
 
 /** A button that opens a url. */
-export function url(label: string, target: string): UrlButton {
-	return { label, url: target };
+export function url(label: string, target: string, deco: ButtonDecoration = {}): UrlButton {
+	return { label, url: target, ...deco };
 }
 
 /** A button that opens a web app. */
-export function webApp(label: string, target: string): WebAppButton {
-	return { label, webApp: target };
+export function webApp(label: string, target: string, deco: ButtonDecoration = {}): WebAppButton {
+	return { label, webApp: target, ...deco };
 }
 
 /** A button that copies `text` to the clipboard. */
-export function copy(label: string, text: string): CopyButton {
-	return { label, copy: text };
+export function copy(label: string, text: string, deco: ButtonDecoration = {}): CopyButton {
+	return { label, copy: text, ...deco };
 }
 
 /** A button that starts an inline query (in another chat, or the current one). */
 export function switchInline(
 	label: string,
 	query = "",
-	opts: { currentChat?: boolean } = {},
+	opts: { currentChat?: boolean } & ButtonDecoration = {},
 ): SwitchInlineButton {
-	return { label, switchInline: query, currentChat: opts.currentChat };
+	return {
+		label,
+		switchInline: query,
+		currentChat: opts.currentChat,
+		icon: opts.icon,
+		style: opts.style,
+	};
 }
 
 // ── engine ───────────────────────────────────────────────────────────────────

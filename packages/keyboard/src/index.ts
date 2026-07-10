@@ -27,7 +27,53 @@ export type {
 } from "@yaebal/types";
 
 // both button types share this union — reuse rather than redeclare it.
-type ButtonStyle = NonNullable<KeyboardButton["style"]>;
+export type ButtonStyle = NonNullable<KeyboardButton["style"]>;
+
+const BUTTON_STYLES = new Set<ButtonStyle>(["danger", "success", "primary"]);
+
+/**
+ * icon + style applied to a button inline, so you don't have to chain `.icon()`/`.style()`.
+ *
+ * either an object — `{ style: "primary", icon: "5368324170671202286" }` — or a string
+ * shorthand `"<customEmojiId>:<style>"`, e.g. `"5368324170671202286:primary"`. a bare style
+ * (`"primary"`) sets only the style; a bare custom-emoji id (`"5368324170671202286"`) sets only
+ * the icon.
+ */
+export type ButtonDecoration = string | { style?: ButtonStyle; icon?: string };
+
+function isButtonStyle(value: string): value is ButtonStyle {
+	return BUTTON_STYLES.has(value as ButtonStyle);
+}
+
+/** normalizes a {@link ButtonDecoration} into `{ style, icon }`. */
+export function parseButtonDecoration(deco: ButtonDecoration): {
+	style?: ButtonStyle;
+	icon?: string;
+} {
+	if (typeof deco !== "string") return deco;
+	const colon = deco.indexOf(":");
+	if (colon === -1) {
+		// bare token: a style name if it matches one, otherwise a custom-emoji id.
+		return isButtonStyle(deco) ? { style: deco } : { icon: deco };
+	}
+	const icon = deco.slice(0, colon);
+	const style = deco.slice(colon + 1);
+	if (!isButtonStyle(style)) {
+		throw new Error(
+			`invalid button style "${style}" in "${deco}" — expected one of: danger, success, primary`,
+		);
+	}
+	return { style, icon: icon || undefined };
+}
+
+/** applies a decoration to a raw button in place, returning it. */
+function decorate(button: InlineKeyboardButton, deco?: ButtonDecoration): InlineKeyboardButton {
+	if (deco === undefined) return button;
+	const { style, icon } = parseButtonDecoration(deco);
+	if (style) button.style = style;
+	if (icon) button.icon_custom_emoji_id = icon;
+	return button;
+}
 
 /** fluent inline keyboard. `.row()` ends a row; buttons accumulate into the current one. */
 export class InlineKeyboard {
@@ -59,62 +105,71 @@ export class InlineKeyboard {
 		return this;
 	}
 
-	text(label: string, data: string): this {
-		return this.add(InlineKeyboard.text(label, data));
+	text(label: string, data: string, deco?: ButtonDecoration): this {
+		return this.add(InlineKeyboard.text(label, data, deco));
 	}
 
-	static text(label: string, data: string): InlineKeyboardButton {
-		return { text: label, callback_data: data };
+	static text(label: string, data: string, deco?: ButtonDecoration): InlineKeyboardButton {
+		return decorate({ text: label, callback_data: data }, deco);
 	}
 
-	url(label: string, url: string): this {
-		return this.add(InlineKeyboard.url(label, url));
+	url(label: string, url: string, deco?: ButtonDecoration): this {
+		return this.add(InlineKeyboard.url(label, url, deco));
 	}
 
-	static url(label: string, url: string): InlineKeyboardButton {
-		return { text: label, url };
+	static url(label: string, url: string, deco?: ButtonDecoration): InlineKeyboardButton {
+		return decorate({ text: label, url }, deco);
 	}
 
-	webApp(label: string, url: string): this {
-		return this.add(InlineKeyboard.webApp(label, url));
+	webApp(label: string, url: string, deco?: ButtonDecoration): this {
+		return this.add(InlineKeyboard.webApp(label, url, deco));
 	}
 
-	static webApp(label: string, url: string): InlineKeyboardButton {
-		return { text: label, web_app: { url } };
+	static webApp(label: string, url: string, deco?: ButtonDecoration): InlineKeyboardButton {
+		return decorate({ text: label, web_app: { url } }, deco);
 	}
 
 	/** auto-login button. defaults to the current bot's username if `bot_username` isn't set. */
-	login(label: string, url: string, options: Omit<LoginUrl, "url"> = {}): this {
-		return this.#push({ text: label, login_url: { url, ...options } });
+	login(
+		label: string,
+		url: string,
+		options: Omit<LoginUrl, "url"> = {},
+		deco?: ButtonDecoration,
+	): this {
+		return this.#push(decorate({ text: label, login_url: { url, ...options } }, deco));
 	}
 
-	switchInline(label: string, query = ""): this {
-		return this.#push({ text: label, switch_inline_query: query });
+	switchInline(label: string, query = "", deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, switch_inline_query: query }, deco));
 	}
 
 	/** inserts the query into the *current* chat's input field, instead of prompting for a chat. */
-	switchInlineCurrentChat(label: string, query = ""): this {
-		return this.#push({ text: label, switch_inline_query_current_chat: query });
+	switchInlineCurrentChat(label: string, query = "", deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, switch_inline_query_current_chat: query }, deco));
 	}
 
 	/** like `switchInline`, but restricts which chat types the user may pick. */
-	switchInlineChosenChat(label: string, options: SwitchInlineQueryChosenChat = {}): this {
-		return this.#push({ text: label, switch_inline_query_chosen_chat: options });
+	switchInlineChosenChat(
+		label: string,
+		options: SwitchInlineQueryChosenChat = {},
+		deco?: ButtonDecoration,
+	): this {
+		return this.#push(decorate({ text: label, switch_inline_query_chosen_chat: options }, deco));
 	}
 
 	/** copies `text` to the user's clipboard when pressed. */
-	copyText(label: string, text: string): this {
-		return this.#push({ text: label, copy_text: { text } });
+	copyText(label: string, text: string, deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, copy_text: { text } }, deco));
 	}
 
 	/** Stars/invoice pay button. must be the first button of the first row. */
-	pay(label: string): this {
-		return this.#push({ text: label, pay: true });
+	pay(label: string, deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, pay: true }, deco));
 	}
 
 	/** launches the game configured for this bot via @BotFather. must be the first button of the first row. */
-	game(label: string): this {
-		return this.#push({ text: label, callback_game: {} });
+	game(label: string, deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, callback_game: {} }, deco));
 	}
 
 	/** styles the most recently added button ("danger" | "success" | "primary"). */

@@ -224,9 +224,9 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "scenes",
 		dep: "@yaebal/scenes",
-		hint: "finite-state scene flows",
+		hint: "durable step-by-step wizards",
 		wire: "dep",
-		import: 'import { scenes } from "@yaebal/scenes";',
+		import: 'import { ask, defineScene, scenes } from "@yaebal/scenes";',
 	},
 	{
 		id: "onboarding",
@@ -252,7 +252,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "pagination",
 		dep: "@yaebal/pagination",
-		hint: "paginated inline lists",
+		hint: "paginated lists: lazy sources, item buttons, typed payload",
 		wire: "dep",
 		import: 'import { pagination } from "@yaebal/pagination";',
 	},
@@ -287,9 +287,10 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "split",
 		dep: "@yaebal/split",
-		hint: "split long text across messages",
-		wire: "dep",
-		import: 'import { split } from "@yaebal/split";',
+		hint: "ctx.sendLong / ctx.replyLong — long text as multiple messages, entities included",
+		wire: "install",
+		import: 'import { splitter } from "@yaebal/split";',
+		install: "splitter()",
 	},
 	{
 		id: "toml",

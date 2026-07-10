@@ -169,16 +169,20 @@ bot.command("count", (ctx) => {
 	},
 	webhook: {
 		plugins: ["web"],
-		imports: ['import { serve } from "@yaebal/web";'],
+		imports: ['import { serve, setWebhook } from "@yaebal/web";'],
 		body: `bot.command("start", (ctx) => ctx.reply("hello from a webhook bot 🤖"));
 bot.on("message:text", (ctx) => ctx.reply(ctx.text));`,
 		bootstrap: `const port = Number(process.env.PORT ?? 8080);
+const secretToken = process.env.WEBHOOK_SECRET;
 
-// point telegram at your public https url once (run this separately or here):
-// await bot.api.call("setWebhook", { url: "https://your.domain/" });
+const server = await serve(bot, { port, secretToken });
+process.once("SIGINT", () => server.stop());
+console.log(\`✓ webhook server listening on \${server.url}\`);
 
-serve(bot, { port });
-console.log(\`✓ webhook server listening on :\${port}\`);`,
+// point telegram at your public https url once (e.g. behind a tunnel / on deploy):
+if (process.env.PUBLIC_URL) {
+\tawait setWebhook(bot, process.env.PUBLIC_URL, { secretToken });
+}`,
 	},
 	runner: {
 		plugins: ["runner"],

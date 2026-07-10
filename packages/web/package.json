@@ -1,8 +1,9 @@
 {
 	"name": "@yaebal/web",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"description": "yaebal web — run your bot on edge/web runtimes (cloudflare workers, deno, bun) via webhooks.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {
@@ -11,7 +12,7 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": ["lib", "src", "!**/*.test.*"],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",

@@ -109,7 +109,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [morda-jsx](/examples/morda-jsx/)           | jsx dialog screens: persisted hooks, dialog data, widgets, free-text input                                                 | `pnpm --filter @yaebal/example-morda-jsx dev`       |
 | [media-studio](/examples/media-studio/)     | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware splitting                    | `pnpm --filter @yaebal/example-media-studio dev`    |
 | [modular-router](/examples/modular-router/) | file-based routes from `routes/commands` and `routes/on`                                                                   | `pnpm --filter @yaebal/example-modular-router dev`  |
-| [webhook-edge](/examples/webhook-edge/)     | fetch webhook handler, local node adapter, secret token and `setWebhook`                                                   | `pnpm --filter @yaebal/example-webhook-edge dev`    |
+| [webhook-edge](/examples/webhook-edge/)     | `serve()` on node, `sequentialize` + `dedupe`, secret token, `setWebhook` / `getWebhookInfo`                               | `pnpm --filter @yaebal/example-webhook-edge dev`    |
 | [runner-workers](/examples/runner-workers/) | concurrent polling plus worker thread offload                                                                              | `pnpm --filter @yaebal/example-runner-workers dev`  |
 | [testing-lab](/examples/testing-lab/)       | bot factory with real actor-driven `node:test` coverage                                                                    | `pnpm --filter @yaebal/example-testing-lab test`    |
 | [inline-search](/examples/inline-search/)   | core + `@yaebal/contexts` by hand: `contextFor`, `inline.answer()`, offset pagination, chosen-result analytics             | `pnpm --filter @yaebal/example-inline-search dev`   |
@@ -141,7 +141,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                                                      |
 | [@yaebal/broadcast](/packages/broadcast/)         | typed broadcast jobs with storage, retry, progress and controls                       |
 | [@yaebal/panel](/packages/panel/)                 | framework-agnostic operator panel with media, keyboards and event timeline            |
-| [@yaebal/web](/packages/web/)                     | run your bot on edge/web runtimes via webhooks                                        |
+| [@yaebal/web](/packages/web/)                     | webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, `sequentialize`, `dedupe`, lifecycle |
 | [@yaebal/runner](/packages/runner/)               | concurrent long-polling for scale                                                     |
 | [@yaebal/media-group](/packages/media-group/)     | collect albums into one handler call or a `ctx.mediaGroup` pass-through               |
 | [@yaebal/media-cache](/packages/media-cache/)     | upload once, reuse the `file_id` — self-heals when telegram rejects it                |

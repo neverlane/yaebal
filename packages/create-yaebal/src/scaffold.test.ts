@@ -88,7 +88,8 @@ test("renderFiles: rich templates pull in plugins, imports and wiring", () => {
 	const wh =
 		renderFiles({ name: "b", runtime: "bun", plugins: [], template: "webhook" })["src/index.ts"] ??
 		"";
-	assert.match(wh, /serve\(bot, \{ port \}\)/);
+	assert.match(wh, /await serve\(bot, \{ port, secretToken \}\)/);
+	assert.match(wh, /server\.stop\(\)/);
 	assert.doesNotMatch(wh, /bot\.start\(\)/);
 
 	const rn =

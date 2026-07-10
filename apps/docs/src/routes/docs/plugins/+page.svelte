@@ -39,7 +39,7 @@ const bot = new Bot(token)
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who spam"],
 		["@yaebal/broadcast", "/docs/plugins/broadcast/", "typed broadcast jobs with storage, retry, progress and controls"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
-		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes via webhooks"],
+		["@yaebal/web", "/docs/plugins/web/", "webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, sequentialize, dedupe, lifecycle"],
 		["@yaebal/runner", "/docs/runner/", "concurrent long-polling for scale"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect albums into one handler call or ctx.mediaGroup"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "upload once, reuse the file_id — self-heals when telegram rejects it"],

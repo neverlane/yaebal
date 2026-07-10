@@ -1,8 +1,13 @@
-import { createServer, type IncomingMessage } from "node:http";
-import { Readable } from "node:stream";
 import { Bot } from "@yaebal/core";
 import { InlineKeyboard } from "@yaebal/keyboard";
-import { deleteWebhook, setWebhook, webhook } from "@yaebal/web";
+import {
+	dedupe,
+	deleteWebhook,
+	getWebhookInfo,
+	sequentialize,
+	serve,
+	setWebhook,
+} from "@yaebal/web";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -14,15 +19,28 @@ const secretToken = process.env.WEBHOOK_SECRET || "dev-secret";
 const port = Number(process.env.PORT ?? 8080);
 const publicUrl = process.env.PUBLIC_URL?.replace(/\/$/, "");
 
-const bot = new Bot(token, { allowedUpdates: ["message", "callback_query"] })
+const bot = new Bot(token, { allowedUpdates: ["message", "callback_query"] });
+
+// production hardening: order updates per chat, and drop telegram's redeliveries.
+// install these before any state plugin.
+bot.use(sequentialize());
+bot.use(dedupe());
+
+bot
 	.command("start", (ctx) =>
 		ctx.reply("webhook edge bot is live. press the button or send /where.", {
 			reply_markup: new InlineKeyboard().text("answer over webhook", "edge:pong").build(),
 		}),
 	)
 	.command("where", (ctx) => ctx.reply("this update came through a fetch-style webhook handler."))
+	.command("status", async (ctx) => {
+		const info = await getWebhookInfo(bot);
+		return ctx.reply(
+			`url: ${info.url || "(none)"}\npending: ${info.pending_update_count}\nlast error: ${info.last_error_message ?? "none"}`,
+		);
+	})
 	.command("deletewebhook", async (ctx) => {
-		await deleteWebhook(bot, false);
+		await deleteWebhook(bot, { dropPendingUpdates: false });
 		return ctx.reply("webhook deleted. long polling can take over now.");
 	})
 	.callbackQuery("edge:pong", async (ctx) => {
@@ -30,54 +48,21 @@ const bot = new Bot(token, { allowedUpdates: ["message", "callback_query"] })
 		await ctx.send("callback handled through webhook.");
 	});
 
-export const fetch = webhook(bot, { secretToken });
-export default { fetch };
+// the same fetch handler edge runtimes use — export it for cloudflare/deno/bun/vercel:
+//   export default { fetch: webhook(bot, { secretToken }) };
+// here we run it as a local node server via serve() (which works on node too).
+const server = await serve(bot, { port, secretToken, path: "/telegram" });
+console.log(`webhook edge local server: ${server.url}/telegram`);
 
-const server = createServer(async (req, res) => {
-	try {
-		const response = await fetch(toFetchRequest(req));
-		const headers: Record<string, string> = {};
-		response.headers.forEach((value, key) => {
-			headers[key] = value;
-		});
-
-		res.writeHead(response.status, headers);
-		res.end(Buffer.from(await response.arrayBuffer()));
-	} catch (error) {
-		console.error("webhook request failed", error);
-		res.statusCode = 500;
-		res.end("internal error");
-	}
+process.once("SIGINT", () => {
+	void server.stop().then(() => process.exit(0));
 });
 
-server.listen(port, async () => {
-	console.log(`webhook edge local server: http://localhost:${port}`);
-	if (!publicUrl) return;
-
+if (publicUrl) {
 	await setWebhook(bot, `${publicUrl}/telegram`, {
 		secretToken,
 		allowedUpdates: ["message", "callback_query"],
 		dropPendingUpdates: true,
 	}).catch((error) => console.error("setWebhook failed", error));
 	console.log(`telegram webhook target: ${publicUrl}/telegram`);
-});
-
-function toFetchRequest(req: IncomingMessage): Request {
-	const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
-	const headers = new Headers();
-
-	for (const [key, value] of Object.entries(req.headers)) {
-		if (Array.isArray(value)) for (const item of value) headers.append(key, item);
-		else if (value !== undefined) headers.set(key, value);
-	}
-
-	const method = req.method ?? "GET";
-	const body = method === "GET" || method === "HEAD" ? undefined : Readable.toWeb(req);
-	const init: RequestInit & { duplex?: "half" } = {
-		method,
-		headers,
-		...(body ? { body: body as ReadableStream, duplex: "half" } : {}),
-	};
-
-	return new Request(url, init);
 }

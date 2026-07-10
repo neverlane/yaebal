@@ -36,7 +36,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/file-id", "/docs/plugins/file-id/", "parse and re-serialize file_id / file_unique_id strings"],
 		["@yaebal/ratelimiter", "/docs/plugins/ratelimiter/", "drop updates from users who send too many requests"],
 		["@yaebal/broadcast", "/docs/plugins/broadcast/", "typed broadcast jobs with storage, retry, progress and controls"],
-		["@yaebal/web", "/docs/plugins/web/", "run your bot on edge/web runtimes (Cloudflare Workers, Deno, Bun) via webhooks"],
+		["@yaebal/web", "/docs/plugins/web/", "webhooks on any runtime — edge, node/bun/deno servers, serverless, and fetch frameworks; adapters, sequentialize, dedupe, lifecycle"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect albums into one handler call or ctx.mediaGroup"],
 		["@yaebal/split", "/docs/plugins/split/", "long text as multiple messages — entities survive the split"],

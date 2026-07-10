@@ -50,7 +50,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [morda-jsx](./morda-jsx/) | `@yaebal/example-morda-jsx` | jsx screens with hooks: persisted `useState`/`useEffect`, `useDialogData`, widgets (Toggle/Select/Counter/Pagination), `onText` input | `pnpm --filter @yaebal/example-morda-jsx dev` |
 | [media-studio](./media-studio/) | `@yaebal/example-media-studio` | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware long message splitting + caption strategy | `pnpm --filter @yaebal/example-media-studio dev` |
 | [modular-router](./modular-router/) | `@yaebal/example-modular-router` | file-based routes from `routes/commands` and `routes/on` | `pnpm --filter @yaebal/example-modular-router dev` |
-| [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | fetch webhook handler, local node adapter, `setWebhook`, secret token | `pnpm --filter @yaebal/example-webhook-edge dev` |
+| [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | `serve()` on node, `sequentialize` + `dedupe`, `setWebhook` / `getWebhookInfo`, secret token, path routing | `pnpm --filter @yaebal/example-webhook-edge dev` |
 | [runner-workers](./runner-workers/) | `@yaebal/example-runner-workers` | concurrent polling and worker thread offload | `pnpm --filter @yaebal/example-runner-workers dev` |
 | [testing-lab](./testing-lab/) | `@yaebal/example-testing-lab` | bot factory plus actor-driven tests | `pnpm --filter @yaebal/example-testing-lab test` |
 | [inline-search](./inline-search/) | `@yaebal/example-inline-search` | core + `@yaebal/contexts` layering: `contextFor`, `inline.answer()`, pagination offset, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |

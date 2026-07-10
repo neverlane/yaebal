@@ -94,16 +94,17 @@ await bot.handleUpdate(update);`;
 	<tbody>
 		<tr><td>method is not <code>POST</code></td><td><code>405</code></td></tr>
 		<tr><td><code>secretToken</code> set and header mismatched</td><td><code>401</code></td></tr>
-		<tr><td>body larger than 1 MiB</td><td><code>413</code></td></tr>
-		<tr><td>body is not valid JSON</td><td><code>400</code></td></tr>
+		<tr><td>body larger than the cap</td><td><code>413</code></td></tr>
+		<tr><td>body is not valid JSON, or not an update object</td><td><code>400</code></td></tr>
+		<tr><td>handler throws (with <code>onError: "fail"</code>)</td><td><code>500</code></td></tr>
 		<tr><td>update dispatched</td><td><code>200 ok</code></td></tr>
 	</tbody>
 </table>
 <div class="note">
 	<strong>body size cap.</strong> Telegram updates are tiny, so the handler rejects anything over
-	1 MiB (<code>MAX_BODY</code>) to avoid memory abuse — the fetch handler checks
-	<code>content-length</code>; the node handler counts bytes as they stream and destroys the request
-	if it overflows.
+	1 MiB (<code>maxBodyBytes</code>) to avoid memory abuse. the limit is enforced <em>while
+	streaming</em> — an absent or spoofed <code>content-length</code> can't slip a large body past
+	it — and a fast <code>content-length</code> check rejects oversize declared bodies before reading.
 </div>
 
 <h2>nodeWebhookCallback (node http)</h2>
@@ -133,3 +134,14 @@ await bot.handleUpdate(update);`;
 
 <h2>deploy: Bun</h2>
 <Code code={bun} title="server.ts" />
+
+<h2>going further: @yaebal/web</h2>
+<p>
+	<a href="/docs/plugins/web/">@yaebal/web</a> wraps this engine with everything a real deployment
+	needs: one-line adapters for express, fastify, koa, hono, elysia, next.js, sveltekit, aws lambda,
+	azure and google cloud functions; a <code>serve()</code> that runs on node/bun/deno and returns a
+	stoppable handle; the <code>sequentialize()</code> and <code>dedupe()</code> combinators for
+	parallel delivery and redelivery; <code>setWebhook</code> / <code>getWebhookInfo</code> /
+	<code>deleteWebhook</code>; and timeout / error / webhook-reply policies on
+	<code>webhook()</code> itself.
+</p>

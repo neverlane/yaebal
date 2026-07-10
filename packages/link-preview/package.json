@@ -1,0 +1,35 @@
+{
+	"name": "@yaebal/link-preview",
+	"version": "0.0.1",
+	"description": "yaebal link-preview — fluent builder for LinkPreviewOptions (url, small/large media, above-text placement, disable).",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"dependencies": {
+		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	},
+	"engines": { "node": ">=20" },
+	"keywords": ["telegram", "telegram-bot", "yaebal", "link-preview"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/link-preview"
+	},
+	"publishConfig": { "access": "public" }
+}

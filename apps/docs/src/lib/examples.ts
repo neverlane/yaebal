@@ -199,6 +199,25 @@ const bot = createBot(process.env.BOT_TOKEN!)
 bot.start();`,
 		steps: [{ user: "/help" }, { user: "ticket refund" }],
 	},
+	"guards-private": {
+		title: "reusable bot.guard() predicates",
+		code: `import { createBot } from "yaebal";
+import { and } from "@yaebal/filters";
+import { isPrivate } from "@yaebal/guards";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.guard(isPrivate).command("whoami", (ctx) =>
+  ctx.reply(\`private chat — chat.type is narrowed to "\${ctx.chat.type}"\`),
+);
+
+bot.filter(and(isPrivate, (ctx) => (ctx.text?.length ?? 0) > 0), (ctx) =>
+  ctx.reply(\`hey \${ctx.from?.first_name}, guards compose with @yaebal/filters' and/or/not\`),
+);
+
+bot.start();`,
+		steps: [{ user: "/whoami" }, { user: "hi" }],
+	},
 	"media-poll": {
 		title: "media and poll",
 		code: `import { createBot } from "yaebal";
@@ -371,6 +390,67 @@ bot.command("broadcast", async (ctx) => {
 
 bot.start();`,
 		steps: [{ user: "/join" }, { user: "/broadcast release is live" }],
+	},
+	"analytics-track": {
+		title: "track events from middleware",
+		code: `import { createBot } from "yaebal";
+import { analytics, consoleAdapter } from "@yaebal/analytics";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+// swap consoleAdapter() for postHogAdapter / plausibleAdapter / sqliteAdapter / clickhouseAdapter
+bot.install(analytics({ adapters: [consoleAdapter()] }));
+
+bot.command("start", (ctx) => {
+  ctx.track("start", { source: "deeplink" });
+  return ctx.reply("hello!");
+});
+
+bot.on("message:text", (ctx) => {
+  ctx.track("message_received", { length: ctx.text.length });
+  return ctx.reply(\`you said: \${ctx.text}\`);
+});
+
+bot.start();`,
+		steps: [{ user: "/start" }, { user: "hi there" }],
+	},
+	"audit-log-basic": {
+		title: "structured logging for updates and api calls",
+		code: `import { createBot } from "yaebal";
+import { auditLog } from "@yaebal/audit-log";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+// default: jsonFormatter + consoleSink() — every update and every api call, as JSON
+bot.install(auditLog());
+
+bot.command("start", (ctx) => ctx.reply("hello!"));
+
+bot.start();`,
+		steps: [{ user: "/start" }],
+	},
+	"cache-wrap": {
+		title: "memoize a slow lookup",
+		code: `import { createBot } from "yaebal";
+import { cache } from "@yaebal/cache";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+bot.install(cache({ ttl: 60_000 }));
+
+let calls = 0;
+
+bot.command("weather", async (ctx) => {
+  // stands in for a slow api call (e.g. ctx.api.getChat) — wrap caches its result
+  const forecast = await ctx.cache.wrap("weather:london", async () => {
+    calls++;
+    return "sunny, 21°C";
+  });
+
+  await ctx.reply(\`\${forecast} (fetched \${calls} time(s) so far)\`);
+});
+
+bot.start();`,
+		steps: [{ user: "/weather" }, { user: "/weather" }],
 	},
 	"rich-ai": {
 		title: "streaming-style edits",

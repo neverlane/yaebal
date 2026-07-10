@@ -122,10 +122,14 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/again](/packages/again/)                 | awaited retry on structured `retry_after` / transient 5xx                             |
 | [@yaebal/session](/packages/session/)             | typed sessions: dirty-checked saves, lazy mode, multi-session, ttl fields, migrations |
 | [@yaebal/sklad](/packages/sklad/)                 | zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, file       |
+| [@yaebal/cache](/packages/cache/)                 | `ctx.cache.get/set/wrap` — ttl memoization for api calls and data, dedupes concurrent misses |
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
+| [@yaebal/link-preview](/packages/link-preview/)   | fluent builder for `link_preview_options`                                             |
 | [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
+| [@yaebal/typing](/packages/typing/)               | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction` |
 | [@yaebal/filters](/packages/filters/)             | composable, type-narrowing update filters: `and`/`or`/`not`, deep links, async        |
+| [@yaebal/guards](/packages/guards/)               | reusable `bot.guard()` predicates: `isAdmin`, `isPrivate`, `isGroup`, `hasMembership`, `hasPermission` |
 | [@yaebal/fmt](/packages/fmt/)                     | `html` / `md` tagged templates with auto-escaping                                     |
 | [@yaebal/rich](/packages/rich/)                   | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts        |
 | [@yaebal/morda](/packages/morda/)                 | dialogs engine and jsx/hooks for telegram ui                                          |
@@ -141,7 +145,10 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/file-id](/packages/file-id/)             | parse and re-serialize `file_id` / `file_unique_id` strings (zero deps)               |
 | [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                                                      |
 | [@yaebal/broadcast](/packages/broadcast/)         | typed broadcast jobs with storage, retry, progress and controls                       |
+| [@yaebal/cron](/packages/cron/)                   | typed cron jobs: declarative schedules, overlap control, graceful shutdown            |
 | [@yaebal/panel](/packages/panel/)                 | framework-agnostic operator panel with media, keyboards and event timeline            |
+| [@yaebal/analytics](/packages/analytics/)         | `ctx.track(event, properties)` with pluggable sinks: posthog, plausible, sqlite, clickhouse |
+| [@yaebal/audit-log](/packages/audit-log/)         | structured logging of updates and api calls — sinks, formatters, filters, sampling    |
 | [@yaebal/web](/packages/web/)                     | webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, `sequentialize`, `dedupe`, lifecycle |
 | [@yaebal/runner](/packages/runner/)               | concurrent long-polling for scale                                                     |
 | [@yaebal/media-group](/packages/media-group/)     | collect albums into one handler call or a `ctx.mediaGroup` pass-through               |

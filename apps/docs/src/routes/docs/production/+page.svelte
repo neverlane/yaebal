@@ -111,6 +111,11 @@ bot.onError((error, ctx) => {
 	<code>bot.stop()</code> stops the loop.
 </p>
 <Code code={graceful} title="shutdown.ts" />
+<p>
+	background schedules need the same care: <a href="/docs/plugins/cron/"><code>@yaebal/cron</code></a>
+	wires its jobs to <code>bot.onStart</code>/<code>onStop</code>, so <code>bot.stop()</code> won't
+	resolve until any in-flight cron run drains — no separate shutdown hook to remember.
+</p>
 
 <h2>observability</h2>
 <p>

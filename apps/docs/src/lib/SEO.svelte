@@ -213,10 +213,20 @@
 			description:
 				"run typed telegram broadcast jobs with @yaebal/broadcast, storage adapters, retry, rate limits, progress, pause, resume, cancel, and delivery events.",
 		},
+		"/docs/plugins/cache": {
+			title: "@yaebal/cache — ttl memoization for the telegram bot api",
+			description:
+				"memoize telegram bot api calls and arbitrary data with @yaebal/cache: ctx.cache.get/set/wrap, per-key ttl, in-flight dedup for concurrent misses, and any @yaebal/sklad storage adapter.",
+		},
 		"/docs/plugins/callback-data": {
 			title: "@yaebal/callback-data — typed telegram callback data",
 			description:
 				"pack, parse, validate, and route typed telegram callback_data payloads in yaebal inline keyboards without manual string parsing.",
+		},
+		"/docs/plugins/cron": {
+			title: "@yaebal/cron — typed telegram bot cron jobs",
+			description:
+				"schedule typed periodic tasks for yaebal telegram bots with @yaebal/cron: cron expressions, fixed intervals, overlap control, cooperative timeouts, and graceful bot.onStart/onStop shutdown.",
 		},
 		"/docs/plugins/commands": {
 			title: "@yaebal/commands — telegram command registry and menu",
@@ -243,6 +253,11 @@
 			description:
 				"compose yaebal update filters with and, or, not: commands, deep links, media, entities, service messages, async custom predicates, and type-narrowing handlers.",
 		},
+		"/docs/plugins/guards": {
+			title: "@yaebal/guards — reusable bot.guard() permission predicates",
+			description:
+				"reusable yaebal bot.guard() predicates: isAdmin, isPrivate, isGroup, hasMembership, hasPermission — live getChatMember checks plus isPrivate/isGroup adapted from @yaebal/filters, composable with and/or/not.",
+		},
 		"/docs/plugins/fmt": {
 			title: "@yaebal/fmt — safe html and markdown formatting",
 			description:
@@ -257,6 +272,11 @@
 			title: "@yaebal/keyboard — telegram inline and reply keyboards",
 			description:
 				"build telegram inline keyboards and reply keyboards in yaebal with fluent builders, typed buttons, dynamic rows, and callback data integration.",
+		},
+		"/docs/plugins/link-preview": {
+			title: "@yaebal/link-preview — telegram link_preview_options builder",
+			description:
+				"build telegram link_preview_options in yaebal with a fluent api: preview url, prefer small/large media, show above text, or disable the preview entirely.",
 		},
 		"/docs/plugins/media-cache": {
 			title: "@yaebal/media-cache — reuse telegram file ids",
@@ -287,6 +307,16 @@
 			title: "@yaebal/panel — operator panel for telegram bots",
 			description:
 				"run a framework-agnostic operator panel for yaebal bots with media previews, chats, keyboards, callbacks, avatars, and event timelines.",
+		},
+		"/docs/plugins/analytics": {
+			title: "@yaebal/analytics — telegram bot event tracking",
+			description:
+				"track events and funnels from yaebal bot middleware with ctx.track, and forward them to posthog, plausible, sqlite, clickhouse, or a console sink.",
+		},
+		"/docs/plugins/audit-log": {
+			title: "@yaebal/audit-log — structured audit logging for telegram bots",
+			description:
+				"log every incoming update and outgoing telegram api call as structured events, with configurable formatters, filters, sampling and pluggable sinks for production monitoring.",
 		},
 		"/docs/plugins/preview": {
 			title: "@yaebal/preview — render telegram chat previews",
@@ -348,6 +378,11 @@
 			title: "@yaebal/toml — declarative telegram bot routes",
 			description:
 				"define yaebal telegram bot routes in toml files with typed handler registries, filters, commands, and declarative routing.",
+		},
+		"/docs/plugins/typing": {
+			title: "@yaebal/typing — keep the telegram typing indicator alive",
+			description:
+				"keep telegram's 'is typing…' chat action alive for the duration of an async operation with @yaebal/typing — automatic keep-alive and cleanup for long LLM/API calls.",
 		},
 		"/docs/plugins/web": {
 			title: "@yaebal/web — telegram bot webhooks for web runtimes",

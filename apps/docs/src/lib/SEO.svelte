@@ -203,6 +203,11 @@
 			description:
 				"retry yaebal telegram bot api calls after flood waits, 429 responses, transient 5xx errors, network failures, and configurable backoff windows.",
 		},
+		"/docs/plugins/auto-answer": {
+			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
+			description:
+				"automatically answer telegram callback_query updates to clear the client's loading spinner, with immediate or deferred modes, filters, dynamic params, and no manual answerCallbackQuery calls.",
+		},
 		"/docs/plugins/broadcast": {
 			title: "@yaebal/broadcast — typed telegram broadcast jobs",
 			description:

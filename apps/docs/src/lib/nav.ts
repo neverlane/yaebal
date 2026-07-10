@@ -78,6 +78,7 @@ export const nav: NavSection[] = [
 		items: [
 			{ label: "keyboard", href: "/docs/plugins/keyboard" },
 			{ label: "callback-data", href: "/docs/plugins/callback-data" },
+			{ label: "auto-answer", href: "/docs/plugins/auto-answer", badge: "new" },
 			{ label: "pagination", href: "/docs/plugins/pagination" },
 			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
 			{ label: "rich messages", href: "/docs/plugins/rich" },

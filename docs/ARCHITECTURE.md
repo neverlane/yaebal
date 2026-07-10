@@ -220,7 +220,7 @@ source = where the idea came from.
 | **`@yaebal/file-id`** ✅ | `file_id`/`file_unique_id` parser/serialiser (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
 | **`@yaebal/media-cache`** | media cache — `file_id` instead of re-uploading | — | `api.before` | @gramio/media-cache |
 | **`@yaebal/media-group`** | media group — collect an album from a batch of updates | — | | @gramio/media-group |
-| **`@yaebal/auto-answer`** | auto-answer callbackQuery | — | | @gramio/auto-answer-cbq |
+| **`@yaebal/auto-answer`** ✅ | auto-clears the callback-query spinner: immediate (fire on arrival, non-blocking) or deferred (fallback only if nothing answered) mode, filter, dynamic per-update params, `onAnswer`/`onError` — never double-answers, never throws | — | `on("callback_query")` | @gramio/auto-answer-cbq |
 
 ### i18n / infra (yagni until needed)
 

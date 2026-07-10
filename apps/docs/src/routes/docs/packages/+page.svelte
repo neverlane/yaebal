@@ -24,6 +24,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/sklad", "/docs/plugins/sklad/", "zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, json file"],
 		["@yaebal/keyboard", "/docs/plugins/keyboard/", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
+		["@yaebal/auto-answer", "/docs/plugins/auto-answer/", "auto-clears the callback-query loading spinner, no manual answerCallbackQuery call"],
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "/docs/plugins/i18n/", "typed ctx.t (keys + params), Intl plurals, language_code detection"],
 		["@yaebal/scenes", "/docs/plugins/scenes/", "durable wizards: typed state, ask() validation, navigation, sub-scenes, ttl"],

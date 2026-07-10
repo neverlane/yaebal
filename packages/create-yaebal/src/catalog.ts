@@ -136,6 +136,14 @@ export const PLUGINS: PluginDef[] = [
 		install: "ratelimiter()",
 	},
 	{
+		id: "auto-answer",
+		dep: "@yaebal/auto-answer",
+		hint: "auto-clears the callback-query loading spinner",
+		wire: "install",
+		import: 'import { autoAnswer } from "@yaebal/auto-answer";',
+		install: "autoAnswer()",
+	},
+	{
 		id: "files",
 		dep: "@yaebal/files",
 		hint: "ctx.files: inspect, stream & download telegram files",

@@ -124,6 +124,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/sklad](/packages/sklad/)                 | zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, file       |
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
+| [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
 | [@yaebal/filters](/packages/filters/)             | composable, type-narrowing update filters: `and`/`or`/`not`, deep links, async        |
 | [@yaebal/fmt](/packages/fmt/)                     | `html` / `md` tagged templates with auto-escaping                                     |
 | [@yaebal/rich](/packages/rich/)                   | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts        |

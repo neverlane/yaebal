@@ -79,8 +79,9 @@ bracketed plugins are added & wired automatically, on top of anything you pick y
 - **runtimes** — `node` (the project standard, ts via type-stripping), `bun`, `deno`. the generated
   `package.json` scripts match your pick.
 - **plugins** — every published `@yaebal/*` plugin is offered. the cleanly-wired ones (`session`,
-  `again`, `throttle`, `ratelimiter`, `i18n`, `files`, `prompt`) drop straight into the bot chain;
-  the rest are added to `package.json` with a commented import so the starter always type-checks.
+  `again`, `throttle`, `ratelimiter`, `auto-answer`, `i18n`, `files`, `prompt`) drop straight into
+  the bot chain; the rest are added to `package.json` with a commented import so the starter
+  always type-checks.
 
 ## what you get
 

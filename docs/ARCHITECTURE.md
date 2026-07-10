@@ -18,6 +18,7 @@ it describes where we are going, not only what is already built. implemented ite
 | decoupled type codegen from Bot API schema | puregram | ✅ `@yaebal/types` (359 objects + 180 methods) |
 
 invariants (never break):
+
 1. `Bot extends Composer` — don't fork the middleware engine, extend it.
 2. `derive` — async, per-request. `decorate` — static, zero per-request cost. keep them separate.
 3. any method that enriches the context must return an augmented type, never `any`.
@@ -65,11 +66,12 @@ shortcuts:
 | `…:text` / `…:caption` | `text: string` |
 | `…:data` / `callback_query` | `callbackQuery: CallbackQuery` |
 | `…:photo` | `message: Message & { photo: PhotoSize[] }` |
+| `…:video` / `…:sticker` / `…:audio` / `…:voice` / `…:document` / `…:animation` / `…:contact` / `…:location` / `…:poll` / `…:dice` / `…:venue` / `…:video_note` / `…:game` / `…:invoice` / `…:successful_payment` | `message: Message & { <field>: <type> }` |
 | `…:entities:url` | `entities: MessageEntity[]` |
 
-✅ `text`/`caption`/`data` are implemented now. the rest are added as needed —
-**lazy default: an unknown query doesn't narrow the type (returns `C`) but still matches at runtime**
-via `checkField`/`matchQuery`. no crashes on unrecognised fields.
+✅ `text`/`caption`/`data`/media content fields (photo, video, sticker, …) are implemented now.
+**lazy default for anything else: an unknown query doesn't narrow the type (returns `C`) but still
+matches at runtime** via `checkField`/`matchQuery`. no crashes on unrecognised fields.
 
 runtime: `matchQuery(ctx, "message:text")` → `head=message` is compared to `ctx.updateType`,
 tail `text` is checked via `checkField`. ✅
@@ -207,6 +209,8 @@ source = where the idea came from.
 | **`@yaebal/sklad`** ✅ | storage contract (`StorageAdapter` + `has`/`touch`) and zero-dep adapters: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json-file (`/file`). clients typed structurally | — | — | grammy storages |
 | **`@yaebal/keyboard`** ✅ | inline/reply keyboard builder (pure helper) | — | export | @gramio/keyboards |
 | **`@yaebal/callback-data`** ✅ | typed `callback_data` (pack/unpack + `.pattern` for `callbackQuery`) | — | export | @gramio + @puregram callback-data |
+| **`@yaebal/link-preview`** ✅ | fluent builder for `link_preview_options` (url, prefer small/large media, show above text, disable) | — | export | native ops plugin |
+| **`@yaebal/guards`** ✅ | reusable `bot.guard()` predicates: `isPrivate`/`isGroup` adapted from `filters`, `isAdmin`/`hasMembership`/`hasPermission` via live `getChatMember`; every predicate also fits `Filter<Context>` so it composes with `filters`' `and`/`or`/`not` | `filters` | `guard()` / `filter()` | grammy/gramio hand-rolled admin checks |
 
 ### ux
 
@@ -221,6 +225,7 @@ source = where the idea came from.
 | **`@yaebal/media-cache`** | media cache — `file_id` instead of re-uploading | — | `api.before` | @gramio/media-cache |
 | **`@yaebal/media-group`** | media group — collect an album from a batch of updates | — | | @gramio/media-group |
 | **`@yaebal/auto-answer`** ✅ | auto-clears the callback-query spinner: immediate (fire on arrival, non-blocking) or deferred (fallback only if nothing answered) mode, filter, dynamic per-update params, `onAnswer`/`onError` — never double-answers, never throws | — | `on("callback_query")` | @gramio/auto-answer-cbq |
+| **`@yaebal/typing`** ✅ | `ctx.typing(fn, opts?)` keeps `sendChatAction` alive on an interval for the duration of an async call (LLM/API latency), clears on settle; overloads the existing `ctx.typing(action?)` one-off sugar so both forms compose | — | `derive` | native ops plugin |
 
 ### i18n / infra (yagni until needed)
 
@@ -229,26 +234,31 @@ source = where the idea came from.
 | **`@yaebal/i18n`** ✅ | `ctx.t` + `changeLanguage`, locale per-chat, fallback to default locale; feeds `useTranslation` | `session` | @gramio/i18n, grammy i18n |
 | **`@yaebal/throttle`** ✅ | outbound scheduler: global/private/group buckets, per-method limits, priority queue, shared storage, cancel/abort, metrics, retry_after feedback | — | puregram throttler, grammy transformer-throttler |
 | **`@yaebal/ratelimiter`** ✅ | anti-spam for incoming updates: drops updates over the limit per time window (per-user) | — | grammy ratelimiter, @gramio/rate-limiter |
+| **`@yaebal/cache`** ✅ | `ctx.cache.get/set/wrap` — ttl memoization for api calls and arbitrary data, in-flight dedup for concurrent misses (e.g. `getChat`/`getChatMember`) | `sklad` | — |
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` in names | — | @gramio/autoload + storona |
 | **`@yaebal/toml`** ✅ | declarative toml routes: commands, hears, message filters, callback queries and handler registry | — | config-driven routing |
 | **`@yaebal/pagination`** ✅ | pagination: array/lazy sources (`offset/limit` + optional `count`), element buttons with `onSelect`, typed payload, `view`/`edit`/`button`, ownership filter, not-modified/48h/forged data handling | `keyboard`, `callback-data` | @gramio/pagination |
 | **`@yaebal/split`** | split long messages into parts | — | | @gramio/split |
 | **`@yaebal/onboarding`** ✅ | onboarding — declarative tutorials, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
 | **`@yaebal/broadcast`** ✅ | typed broadcast jobs: storage adapter, worker, retry, rate limit, skipped recipients, progress, pause/resume/cancel, events | `core`, `types` | native ops plugin |
+| **`@yaebal/analytics`** ✅ | `ctx.track(event, properties)` — structurally-typed adapters (posthog, plausible, sqlite, clickhouse, console); `createAnalytics()` is a standalone collection point other plugins' event streams (e.g. `broadcast`'s `onEvent`) can feed into via `fromEvent` | — | native ops plugin |
+| **`@yaebal/audit-log`** ✅ | structured logging of every incoming update and outgoing api call: configurable formatters (json/text), filters, sampling rate, pluggable sinks (console + structural `AuditSink`), direct `{ use, api }` install form (`use` + `api.before`/`after`/`onError`) | — | native ops plugin |
+| **`@yaebal/cron`** ✅ | typed cron jobs: declarative schedule (cron expression / `@alias` / interval), overlap control, cooperative timeouts, `bot.onStart`/`onStop` wiring with graceful drain | — | native ops plugin |
 | **`@yaebal/commands`** | command/scope management | — | | grammy commands |
-| **`@yaebal/runner`** | runner — concurrent polling, scale-out | — | | grammy runner |
+| **`@yaebal/runner`** ✅ | concurrent update dispatch with a per-key scheduler (default key: chat id) — same-chat updates stay strictly ordered, different chats/keys run concurrently up to `concurrency` | — | grammy runner |
 
 ### dependency graph (core)
 
 ```
 sklad ─→ session ─→ i18n
-                ├→ scenes
-                ├→ onboarding
-                └→ morda ─→ morda/jsx
+     │          ├→ scenes
+     │          ├→ onboarding
+     │          └→ morda ─→ morda/jsx
+     └→ cache
 callback-data ───────────┘
 keyboard ──→ pagination
 throttle ─→ broadcast
-again · prompt · files · media-cache · media-group · auto-answer · ratelimiter · runner  (no session dependency)
+again · prompt · files · media-cache · media-group · auto-answer · ratelimiter · runner · analytics · audit-log · cron  (no session dependency)
 ```
 
 ---
@@ -349,29 +359,39 @@ bot.chatType("private", h)
 ## 5. build order
 
 **m0 — core (extend existing)**
+
 - request hooks `api.before/after/onError` in `createApi`
 - `install(plugin)` + `Plugin` type
 - complete `Filtered` mapping for common queries + shortcut routers (`command`/`hears`/`callbackQuery`)
 
 **m1 — plugin foundation**
+
 - ✅ `session` — storage contract and `MemoryStorage` extracted into ✅ `sklad` (memory/redis/sqlite/cloudflare kv/file), session re-exports them for backwards compatibility
 - ✅ `keyboard` (keyboard builder) + `callback-data` (typed callback_data, `.pattern` integrates with `bot.callbackQuery`)
 - `again` (on `api.onError`) — also verifies the monorepo pulls in a second package correctly
 
 **m2 — ux flagship**
+
 - ✅ **m2a** `morda` (builder api): windows + render + callback routing + navigation stack + stale-press gate. `button`/`switchTo`/`back` helpers, `ctx.dialog`
 - ✅ **m2b** `morda/jsx`: jsx runtime + hooks. "one screen = one message → no reconciler"; `setState` → `editMessageText` in place; hook state in frame slots, evicted on screen close; component navigation (`push(HomeScreen)`). screen example works.
 
 **m3 — soft context dependencies**
+
 - ✅ `i18n` → activates `useTranslation` (per-chat locale, fallback, `{placeholder}` interpolation)
 - ✅ `scenes` (durable wizards: firstTime steps, typed state/params, `ask()`, navigation, sub-scenes, passthrough/passCommands, ttl) + ✅ `prompt` (`ctx.prompt`, callback-style). both don't block the sequential loop (unlike await-prompt which would require concurrent dispatch)
 
 **m4 — infra on demand (yagni until needed)**
+
 - ✅ `router` · `throttle` · `files` (+ core `api.fileUrl`) · `ratelimiter` · `broadcast`
 - ✅ `web` — operator panel (view chats / reply from the browser): `recorder` plugin + `PanelStore` + `panelHandler` (fetch). webhooks moved to core (`webhookCallback`)
 - ✅ `media-group` · `split` · `commands` · `pagination` · `media-cache` (caches `file_id` via explicit keys — correct under concurrency)
 - ✅ codegen `@yaebal/types` (359 objects + 180 methods from schema, generator `scripts/generate.mjs`)
-- remaining: `onboarding` (niche), `runner` (concurrent polling — conflicts with sequential session)
+- ✅ `runner` — per-key scheduler (default key: chat id) serializes same-chat updates so they never
+  overlap through the middleware chain; different chats/keys run concurrently up to `concurrency`.
+  session's load-mutate-save cycle is therefore race-free under the default `sequentializeBy` —
+  only overriding it to a coarser key (or dispatching updates outside `run()`) reintroduces a race,
+  since neither `session` nor `sklad`'s `StorageAdapter` has optimistic locking/CAS.
+- remaining: `onboarding` (niche)
 
 **type codegen** (`@yaebal/types`) — runs in parallel, does not block m0–m3.
 

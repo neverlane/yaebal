@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/split",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"description": "yaebal split — break long messages into Telegram-sized chunks.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -21,7 +21,8 @@
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

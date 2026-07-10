@@ -201,6 +201,29 @@ test("filter query: :text and :caption are distinct predicates", async () => {
 	assert.equal(matchQuery(textOnly, "message:caption"), false);
 });
 
+test("on: message:photo narrows ctx.message.photo to non-optional", async () => {
+	let photoCount: number | undefined;
+
+	const composer = new Composer().on("message:photo", (ctx) => {
+		// no `?.` needed — `Filtered` narrows `ctx.message` to carry `photo`. if this
+		// stops compiling, the type-level narrowing for media queries has regressed.
+		photoCount = ctx.message.photo.length;
+	});
+
+	const ctx = makeCtx({
+		update_id: 9,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			photo: [{ file_id: "f1", file_unique_id: "u1", width: 90, height: 90 }],
+		},
+	} as Update);
+
+	await run(composer, ctx);
+	assert.equal(photoCount, 1);
+});
+
 test("command: skips edited messages and captions, matches fresh text", async () => {
 	const hits: string[] = [];
 	const composer = new Composer().command("start", (ctx) => {

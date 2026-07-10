@@ -1,5 +1,26 @@
 import { type Context, messageOf } from "./context.js";
-import type { CallbackQuery, MessageEntity, UpdateName } from "./telegram-types.js";
+import type {
+	Animation,
+	Audio,
+	CallbackQuery,
+	Contact,
+	Dice,
+	Document,
+	Game,
+	Invoice,
+	Location,
+	Message,
+	MessageEntity,
+	PhotoSize,
+	Poll,
+	Sticker,
+	SuccessfulPayment,
+	UpdateName,
+	Venue,
+	Video,
+	VideoNote,
+	Voice,
+} from "./telegram-types.js";
 
 export type NextFn = () => Promise<void>;
 export type Middleware<C> = (ctx: C, next: NextFn) => unknown | Promise<unknown>;
@@ -54,6 +75,26 @@ export interface CallbackDataMatcher<T> {
  */
 export type FilterQuery = UpdateName | `${UpdateName}:${string}` | `:${string}`;
 
+/** `message:<key>` content fields whose presence `on()` can narrow (L2 of the FilterQuery grammar). */
+interface MediaField {
+	photo: PhotoSize[];
+	video: Video;
+	sticker: Sticker;
+	audio: Audio;
+	voice: Voice;
+	document: Document;
+	animation: Animation;
+	contact: Contact;
+	location: Location;
+	poll: Poll;
+	dice: Dice;
+	venue: Venue;
+	video_note: VideoNote;
+	game: Game;
+	invoice: Invoice;
+	successful_payment: SuccessfulPayment;
+}
+
 /** narrows the context type for known queries so handlers get non-optional fields. */
 export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${string}:caption`
 	? C & { text: string }
@@ -61,7 +102,11 @@ export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${stri
 		? C & { callbackQuery: CallbackQuery }
 		: Q extends `${string}:entities${string}`
 			? C & { entities: MessageEntity[] }
-			: C;
+			: Q extends `${string}:${infer Field}`
+				? Field extends keyof MediaField
+					? C & { message: Message & { [K in Field]: MediaField[Field] } }
+					: C
+				: C;
 
 /** koa-style middleware composer with single-`next()` protection. */
 export function compose<C>(middlewares: Middleware<C>[]): (ctx: C, next?: NextFn) => Promise<void> {

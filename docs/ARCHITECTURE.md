@@ -1,129 +1,131 @@
-# YAEBAL — Architecture
+# yaebal — architecture
 
-Полная архитектура: ядро, контракт плагинов, каталог плагинов, нейминг событий,
-и подсистема `morda` (dialogs) + JSX/hooks. Документ проектный — он описывает
-куда едем, а не что уже собрано. Что уже есть в коде — помечено ✅.
+full architecture: core, plugin contract, plugin catalog, filter-query naming,
+and the `morda` subsystem (dialogs) + jsx/hooks. this document is a design spec —
+it describes where we are going, not only what is already built. implemented items are marked ✅.
 
-## 0. ДНК: что откуда взято
+## 0. dna: what came from where
 
-| Идея | Источник | Статус |
+| idea | source | status |
 |---|---|---|
-| Chainable `Composer`, тип контекста накапливается через цепочку (`derive`/`decorate`/`extend`) | GramIO | ✅ есть |
-| Filter queries `on("message:text")` с сужением типа контекста | grammY | ✅ частично |
-| Shortcut-роутеры (`command`/`hears`/`callbackQuery`) поверх queries | grammY + GramIO | план |
-| `api.call(method, params)` passthrough для ещё не типизированных методов | puregram | ✅ есть |
-| `ctx.is("callback_query")` narrowing | puregram | ✅ есть |
-| Request-хуки `api.before/after` (retry, throttle, media-cache цепляются сюда) | puregram | ✅ есть |
-| Медиа-абстракция `MediaSource` (path/url/buffer/fileId) | puregram | ✅ есть |
-| Декуплённый кодген типов из Bot API схемы | puregram | ✅ `@yaebal/types` (232 объекта + 135 методов) |
+| chainable `Composer`, context type accumulates through the chain (`derive`/`decorate`/`extend`) | gramio | ✅ done |
+| filter queries `on("message:text")` with context type narrowing | grammy | ✅ partial |
+| shortcut routers (`command`/`hears`/`callbackQuery`) on top of queries | grammy + gramio | planned |
+| `api.call(method, params)` passthrough for not-yet-typed methods | puregram | ✅ done |
+| `ctx.is("callback_query")` narrowing | puregram | ✅ done |
+| request hooks `api.before/after` (retry, throttle, media-cache attach here) | puregram | ✅ done |
+| media abstraction `MediaSource` (path/url/buffer/fileId) | puregram | ✅ done |
+| decoupled type codegen from Bot API schema | puregram | ✅ `@yaebal/types` (359 objects + 180 methods) |
 
-Инварианты (не нарушать):
-1. `Bot extends Composer` — не форкаем middleware-движок, расширяем.
-2. `derive` — async, per-request. `decorate` — статичный, ноль стоимости на запрос. Не смешивать.
-3. Любой метод, обогащающий контекст, возвращает аугментированный тип, никогда `any`.
-4. Зависимости плагинов явные и проверяются типами, а не порядком middleware.
+invariants (never break):
+1. `Bot extends Composer` — don't fork the middleware engine, extend it.
+2. `derive` — async, per-request. `decorate` — static, zero per-request cost. keep them separate.
+3. any method that enriches the context must return an augmented type, never `any`.
+4. plugin dependencies are explicit and type-checked, not implicit middleware ordering.
 
 ---
 
-## 1. Ядро (`@yaebal/core`)
+## 1. core (`@yaebal/core`)
 
-### 1.1 Composer — движок ✅
-Koa-style цепочка с защитой от двойного `next()`. Методы:
+### 1.1 composer — the engine ✅
+
+koa-style chain with double-`next()` protection. methods:
 `use` · `on(query, ...)` · `guard` · `derive` · `decorate` · `extend` · `toMiddleware`.
-Каждый обогащающий метод возвращает `Composer<C & D>`. `Bot` оверрайдит их, чтобы
-возвращать `Bot`, а не голый `Composer` (lifecycle-методы остаются доступны по цепочке). ✅
+each enriching method returns `Composer<C & D>`. `Bot` overrides them to return `Bot`
+instead of a bare `Composer` (lifecycle methods stay accessible through the chain). ✅
 
-Добавляется: **`install(plugin)`** — см. §1.6.
+added: **`install(plugin)`** — see §1.6.
 
-### 1.2 Filter queries — система событий (центр всего)
+### 1.2 filter queries — event system (the centre of everything)
 
-Синтаксис grammY-style `L1:L2:L3`. Понравившийся `message:text` — это `L1:L2`.
+grammy-style syntax `L1:L2:L3`. the beloved `message:text` is `L1:L2`.
 
 ```
-L1  тип апдейта      message · edited_message · channel_post · callback_query ·
-                     inline_query · poll · poll_answer · my_chat_member ·
-                     chat_member · chat_join_request · message_reaction · ...
-L2  контент          on message:  text · caption · photo · video · document · audio ·
-                       voice · sticker · animation · location · contact · dice ·
-                       entities · new_chat_members · left_chat_member · pinned_message
-                     on callback_query:  data · game_short_name
-                     on inline_query:  query
-L3  под-контент      on message:entities:  url · mention · hashtag · bot_command ·
-                       email · phone_number · bold · italic · code · spoiler · custom_emoji
+L1  update type     message · edited_message · channel_post · callback_query ·
+                    inline_query · poll · poll_answer · my_chat_member ·
+                    chat_member · chat_join_request · message_reaction · ...
+L2  content         on message:  text · caption · photo · video · document · audio ·
+                      voice · sticker · animation · location · contact · dice ·
+                      entities · new_chat_members · left_chat_member · pinned_message
+                    on callback_query:  data · game_short_name
+                    on inline_query:  query
+L3  sub-content     on message:entities:  url · mention · hashtag · bot_command ·
+                      email · phone_number · bold · italic · code · spoiler · custom_emoji
 ```
 
-Шорткаты:
-- `:text` — любой апдейт с текстом (`message` / `edited_message` / `channel_post`).
-- `::url` — любой апдейт, где есть entity типа `url`.
-- Массив: `on(["message:text", "edited_message:text"], handler)`.
+shortcuts:
+- `:text` — any update with text (`message` / `edited_message` / `channel_post`).
+- `::url` — any update containing a `url` entity.
+- array: `on(["message:text", "edited_message:text"], handler)`.
 
-**Сужение типа.** `Filtered<C, Q>` дописывает в контекст не-опциональные поля под запрос:
+**type narrowing.** `Filtered<C, Q>` writes non-optional fields into the context per query:
 
-| Запрос | Контекст получает |
+| query | context receives |
 |---|---|
 | `…:text` / `…:caption` | `text: string` |
 | `…:data` / `callback_query` | `callbackQuery: CallbackQuery` |
 | `…:photo` | `message: Message & { photo: PhotoSize[] }` |
 | `…:entities:url` | `entities: MessageEntity[]` |
 
-✅ сейчас реализованы `text`/`caption`/`data`. Остальные добавляются по мере надобности —
-**ленивый дефолт: неизвестный запрос не сужает тип (возвращает `C`), но матчится в рантайме**
-через `checkField`/`matchQuery`. Никаких падений на незнакомом поле.
+✅ `text`/`caption`/`data` are implemented now. the rest are added as needed —
+**lazy default: an unknown query doesn't narrow the type (returns `C`) but still matches at runtime**
+via `checkField`/`matchQuery`. no crashes on unrecognised fields.
 
-Рантайм: `matchQuery(ctx, "message:text")` → `head=message` сверяется с `ctx.updateType`,
-хвост `text` проверяется через `checkField`. ✅
+runtime: `matchQuery(ctx, "message:text")` → `head=message` is compared to `ctx.updateType`,
+tail `text` is checked via `checkField`. ✅
 
-### 1.3 Shortcut-роутеры — сахар поверх queries
+### 1.3 shortcut routers — sugar on top of queries
 
-Тонкие обёртки, каждая просто пушит middleware с `matchQuery`-проверкой. Не новая подсистема.
+thin wrappers; each simply pushes middleware with a `matchQuery` check. not a new subsystem.
 
-| Метод | Эквивалент query | Кладёт в ctx | Источник |
+| method | equivalent query | adds to ctx | source |
 |---|---|---|---|
-| `command("start", h)` | `message:text` где text начинается с `/start` | `ctx.command`, `ctx.args` | grammY + GramIO |
-| `hears(/rx/ \| "str", h)` | `message:text\|caption` + match | `ctx.match` | puregram hear + grammY |
-| `callbackQuery(data \| /rx/ \| CallbackData, h)` | `callback_query:data` + match | `ctx.match` | grammY + GramIO |
-| `reaction("👍", h)` | `message_reaction` | — | grammY |
-| `chatType("private", h)` | guard на `ctx.chat.type` | — | grammY |
-| `inlineQuery(/rx/, h)` | `inline_query:query` + match | `ctx.match` | grammY |
+| `command("start", h)` | `message:text` where text starts with `/start` | `ctx.command`, `ctx.args` | grammy + gramio |
+| `hears(/rx/ \| "str", h)` | `message:text\|caption` + match | `ctx.match` | puregram hear + grammy |
+| `callbackQuery(data \| /rx/ \| CallbackData, h)` | `callback_query:data` + match | `ctx.match` | grammy + gramio |
+| `reaction("👍", h)` | `message_reaction` | — | grammy |
+| `chatType("private", h)` | guard on `ctx.chat.type` | — | grammy |
+| `inlineQuery(/rx/, h)` | `inline_query:query` + match | `ctx.match` | grammy |
 
-`hear` из puregram **не** делаем отдельным плагином — это `bot.hears` в ядре.
+`hear` from puregram is **not** a separate plugin — it's `bot.hears` in core.
 
-### 1.4 Context ✅
-Базовый враппер апдейта. Геттеры: `message` (msg/edited/channel) · `callbackQuery` ·
-`from` · `chat` · `text` (text ?? caption). Методы: `is(type)` (puregram narrowing) ·
-`send` · `reply` · `answerCallbackQuery`. Принимает `string | FormatResult` (entity-форматирование).
-Плагины дописывают поля через `derive`/`decorate`, типы трекает Composer.
+### 1.4 context ✅
 
-✅ Медиа-шорткаты в ядре: `ctx.sendPhoto` / `ctx.sendDocument` (принимают `MediaSource | string`).
+base update wrapper. getters: `message` (msg/edited/channel) · `callbackQuery` ·
+`from` · `chat` · `text` (text ?? caption). methods: `is(type)` (puregram narrowing) ·
+`send` · `reply` · `answerCallbackQuery`. accepts `string | FormatResult` (entity formatting).
+plugins add fields via `derive`/`decorate`; composer tracks the types.
 
-### 1.5 Api — клиент + точки расширения
+✅ media shortcuts in core: `ctx.sendPhoto` / `ctx.sendDocument` (accept `MediaSource | string`).
 
-Сейчас ✅: Proxy-клиент. `api.getMe()` ≡ `api.call("getMe")`, неизвестные методы
-форвардятся прозрачно (puregram-идея — новый метод Bot API работает до регена типов).
-`TelegramError` на `ok:false`.
+### 1.5 api — client + extension points
 
-Добавляется (критично — на этом стоят пол-каталога плагинов):
+current ✅: proxy client. `api.getMe()` ≡ `api.call("getMe")`, unknown methods are forwarded
+transparently (puregram idea — a new Bot API method works before types are regenerated).
+`TelegramError` on `ok: false`.
 
-**Request-хуки** (puregram):
+added (critical — half the plugin catalog depends on this):
+
+**request hooks** (puregram):
 ```ts
 api.before((method, params) => params | void)   // throttle, media-cache, media upload rewrite
 api.after((method, result) => result | void)     // hydrate
-api.onError((method, error, retry) => ...)        // again (auto-retry), логирование
+api.onError((method, error, retry) => ...)        // again (auto-retry), logging
 ```
-Реализация — массивы интерсепторов внутри `createApi`, прогоняются вокруг `call`.
-Без этого `again`/`tormozi`/`zanachka` пришлось бы зашивать в ядро по одному — а так
-они просто подписчики.
+implementation — arrays of interceptors inside `createApi`, run around `call`.
+without this, `again`/`throttle`/`media-cache` would have to be baked into core one by one —
+instead they are just subscribers.
 
-**Медиа-абстракция** `MediaSource` (puregram) — дискриминированный юнион:
+**media abstraction** `MediaSource` (puregram) — discriminated union:
 ```ts
 MediaSource.path("./a.jpg") | .url("https://…") | .buffer(buf) | .fileId("AgAC…") | .stream(rs)
 ```
-Api-слой знает, как превратить каждый вариант в `multipart/form-data` либо в строку
-(`file_id`/url). На этом строятся `kachai` (upload) и `zanachka` (cache).
+the api layer knows how to turn each variant into `multipart/form-data` or a string
+(`file_id`/url). `@yaebal/files` (upload) and `@yaebal/media-cache` (cache) are built on this.
 
-### 1.6 Контракт плагина (инвариант №4)
+### 1.6 plugin contract (invariant #4)
 
-Плагин — это функция, зависимости выражены **типом аргумента**, не реестром:
+a plugin is a function; dependencies are expressed by **argument type**, not a registry:
 
 ```ts
 type Plugin<In extends Context = Context, Out extends object = {}> =
@@ -140,220 +142,237 @@ install<Out extends object>(plugin: Plugin<C, Out>): Bot<C & Out>;
 install<Out extends object>(plugin: BotPlugin<C, Out>): Bot<C & Out>;
 ```
 
-Зависимость ловит компилятор:
+the compiler catches missing dependencies:
 ```ts
 const session:  Plugin<Context, { session: Session }>;
 const tolmach: Plugin<Context & { session: Session }, { t: TFn; changeLanguage(l): void }>;
 
-bot.install(tolmach);                 // ❌ TS: нет session в контексте
-bot.install(session).install(tolmach); // ✅ порядок гарантирован типом In
+bot.install(tolmach);                  // ❌ ts: no session in context
+bot.install(session).install(tolmach); // ✅ order is guaranteed by the In type
 ```
 
-`Plugin` — для расширения `Composer`; `BotPlugin` — когда нужен `bot.api` или lifecycle
-хуки (`onStart`/`onStop`). Никакого рантайм-графа зависимостей, класса `Plugin`, DI-контейнера. Именованный
-рантайм-реестр («плагин X не установлен» человекочитаемо) — **YAGNI**, добавить если
-понадобится диагностика в рантайме.
+`Plugin` — for extending `Composer`; `BotPlugin` — when `bot.api` or lifecycle hooks
+(`onStart`/`onStop`) are needed. no runtime dependency graph, no `Plugin` class, no DI container.
+a named runtime registry ("plugin X is not installed" as a human-readable error) — **yagni**,
+add it if runtime diagnostics are ever needed.
 
-### 1.7 Bot — lifecycle ✅
-`extends Composer`. Long-polling петля (`getUpdates` с offset, retry на сетевой ошибке),
-`onStart` / `onStop` / `onError` / `start` / `stop`. `derive`/`decorate`/`extend` оверрайднуты под `Bot<…>`.
-✅ Webhook-режим: `bot.handleUpdate(update)` — точка входа; плюс `webhookCallback(bot)` (fetch-style `Request→Response`, для Bun/Deno/Workers) и `nodeWebhookCallback(bot)` (node http). Общий `toMiddleware` с polling (мемоизирован; регистрируй middleware до первого вызова).
+### 1.7 bot — lifecycle ✅
 
-### 1.9 Контексты (`@yaebal/contexts`) — ФУЛЛ автоген (киллер-фича) ✅
-Генератор лепит **класс на каждый тип апдейта** (`MessageContext`, `CallbackQueryContext`, …,
-23 штуки) из схемы: интерфейс мёржит payload (`interface MessageContext extends Message`),
-конструктор спредит поля на инстанс (`ctx.text`/`ctx.photo` напрямую, gramio-style), а
-**шорткат-методы выводятся автоматически** — по тому, какие id контекст несёт. Provider-таблица
-(`chat`→`chat_id`/`from_chat_id`, `message_id`, `from`→`user_id`, query-`id`) × все методы Bot API
-→ `reply`/`send*`/`editText`/`delete`/`pin`/`forward`/`answer`/`ban`/… с сигнатурами `Omit<XParams, заполненные>`
-из `@yaebal/types`. Добавили метод в Bot API → реген → контексты получили его. В отличие от gramio,
-где контексты пишут руками — у нас **полностью генерятся**.
+`extends Composer`. long-polling loop (`getUpdates` with offset, retry on network errors),
+`onStart` / `onStop` / `onError` / `start` / `stop`. `derive`/`decorate`/`extend` are overridden
+to return `Bot<…>`.
 
-### 1.8 Типы (`@yaebal/types`) — декуплённый кодген, свой скрапер ✅
-`scripts/lib/parse-schema.mjs` — собственный парсер `core.telegram.org/bots/api` (без
-зависимости от сторонних схем вроде ark0f/tg-bot-api или @gramio/schema-parser) → пишет
-`schema.json` → `scripts/generate.mjs` генерит `src/telegram.ts`: **359 объектов + 180
-методов** (Bot API 10.1) с JSDoc, плюс `BotApiMethods` и per-method `*Params`-интерфейсы.
-Версия пакета `@yaebal/types` = версия Bot API, из которой он сгенерирован (`10.1.0`).
-Реген вручную — `pnpm --filter @yaebal/types update-schema`. Автообновление —
-`.github/workflows/update-bot-api-types.yml`: раз в день проверяет живые доки, при новой
-версии регенерит `@yaebal/types` + `@yaebal/contexts` и открывает PR (`feat(types): update
-to bot api vX.Y.Z`); мердж прогоняет обычный ci.yml → release.yml и публикует пакет.
-core по-прежнему держит свой минимальный ручной срез (миграция core на `@yaebal/types` — позже).
+✅ webhook mode: `bot.handleUpdate(update)` — entry point; plus `webhookCallback(bot)`
+(fetch-style `Request→Response`, for Bun/Deno/Workers) and `nodeWebhookCallback(bot)` (node http).
+shared `toMiddleware` with polling (memoised; register middleware before the first call).
+
+### 1.8 types (`@yaebal/types`) — decoupled codegen, custom scraper ✅
+
+`scripts/lib/parse-schema.mjs` — custom parser for `core.telegram.org/bots/api` (no dependency
+on third-party schemas like ark0f/tg-bot-api or @gramio/schema-parser) → writes `schema.json`
+→ `scripts/generate.mjs` generates `src/telegram.ts`: **359 objects + 180 methods** (Bot API 10.1)
+with jsdoc, plus `BotApiMethods` and per-method `*Params` interfaces.
+the `@yaebal/types` package version equals the Bot API version it was generated from (`10.1.3`).
+manual regen — `pnpm --filter @yaebal/types update-schema`. auto-update —
+`.github/workflows/update-bot-api-types.yml`: checks live docs daily, on a new version
+regenerates `@yaebal/types` + `@yaebal/contexts` and opens a pr (`feat(types): update
+to bot api vX.Y.Z`); merge runs the usual ci.yml → release.yml and publishes the package.
+core still has its own minimal handwritten slice (migrating core to `@yaebal/types` — later).
+
+### 1.9 contexts (`@yaebal/contexts`) — full autogen (killer feature) ✅
+
+the generator produces **a class per update type** (`MessageContext`, `CallbackQueryContext`, …,
+26 classes) from the schema: the interface merges the payload (`interface MessageContext extends Message`),
+the constructor spreads fields onto the instance (`ctx.text`/`ctx.photo` directly, gramio-style),
+and **shortcut methods are derived automatically** — based on which ids the context carries.
+provider table (`chat`→`chat_id`/`from_chat_id`, `message_id`, `from`→`user_id`, query `id`)
+× all Bot API methods → `reply`/`send*`/`editText`/`delete`/`pin`/`forward`/`answer`/`ban`/…
+with `Omit<XParams, filled>` signatures from `@yaebal/types`. add a method to Bot API →
+regen → contexts get it. unlike gramio where contexts are written by hand — here they are
+**fully generated**.
 
 ---
 
-## 2. Каталог плагинов
+## 2. plugin catalog
 
-Имена в стиле проекта. Зависимость = что должно стоять в контексте раньше.
-Источник = откуда идея.
+naming follows the project style. dependency = what must be in the context first.
+source = where the idea came from.
 
-### Ядро экосистемы (первые)
-| Пакет | Что делает | Зависит | Цепляется | Источник |
+### core ecosystem (first priority)
+
+| package | what it does | depends on | attaches via | source |
 |---|---|---|---|---|
-| **`@yaebal/again`** ✅ | awaited retry на 429 `response_parameters.retry_after` + transient 5xx, без парсинга текста ошибки | — | `api.onError` | grammY auto-retry, @gramio/auto-retry |
-| **`@yaebal/session`** ✅ | session v2 — типизированный стейт: dirty-check по снапшоту (без Proxy), `lazySession`, мульти-сессии (`key`), `keyBy` пресеты + композитные ключи, `clearSession`/`saveSession`, `ttl()`-поля, версионные миграции, sliding-ttl через `touch`. Storage-контракт живёт в `sklad` (ре-экспорт для совместимости) | `sklad` | `use` → `ctx.session` | все три + grammY lazy/enhanceStorage |
-| **`@yaebal/sklad`** ✅ | storage-контракт (`StorageAdapter` + `has`/`touch`) и zero-dep адаптеры: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json-файл (`/file`). Клиенты типизируются структурно | — | — | grammY storages |
-| **`@yaebal/keyboard`** ✅ | builder inline/reply-клавиатур (чистый хелпер) | — | export | @gramio/keyboards |
-| **`@yaebal/callback-data`** ✅ | типизированный `callback_data` (pack/unpack + `.pattern` под `callbackQuery`) | — | export | @gramio + @puregram callback-data |
+| **`@yaebal/again`** ✅ | awaited retry on 429 `response_parameters.retry_after` + transient 5xx, no error text parsing | — | `api.onError` | grammy auto-retry, @gramio/auto-retry |
+| **`@yaebal/session`** ✅ | session v2 — typed state: dirty-check via snapshot (no proxy), `lazySession`, multi-sessions (`key`), `keyBy` presets + composite keys, `clearSession`/`saveSession`, `ttl()` fields, versioned migrations, sliding-ttl via `touch`. storage contract lives in `sklad` (re-exported for compatibility) | `sklad` | `use` → `ctx.session` | all three + grammy lazy/enhanceStorage |
+| **`@yaebal/sklad`** ✅ | storage contract (`StorageAdapter` + `has`/`touch`) and zero-dep adapters: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json-file (`/file`). clients typed structurally | — | — | grammy storages |
+| **`@yaebal/keyboard`** ✅ | inline/reply keyboard builder (pure helper) | — | export | @gramio/keyboards |
+| **`@yaebal/callback-data`** ✅ | typed `callback_data` (pack/unpack + `.pattern` for `callbackQuery`) | — | export | @gramio + @puregram callback-data |
 
-### UX
-| Пакет | Что делает | Зависит | Источник |
-|---|---|---|---|
-| **`@yaebal/morda`** ✅ | dialogs: окна → сообщение, callback-роутинг, стек навигации (`start`/`push`/`replace`/`back`), stale-press гейт | `session`, `callback-data`, `keyboard` | @gramio/dialogs |
-| **`@yaebal/morda/jsx`** ✅ | JSX-runtime + хуки (`useState`/`useEffect`/`useNavigation`/`useUser`/`useSession`/`useTranslation`) поверх morda, subpath | `morda` | @gramio/jsx + Templatio-style hooks |
-| **`@yaebal/scenes`** ✅ | durable-визарды: firstTime-шаги, типизированные state/params, `ask()` (standard-schema), навигация `go`/`next`/`previous`, sub-сцены, `onEnter`/`onLeave(reason)`, passthrough+passCommands, ttl, self-heal снапшотов. Ключ `chat:user`. Sequential-safe (без suspended promises) | `sklad` | @gramio/scenes, @puregram/scenes |
-| **`@yaebal/prompt`** ✅ | `ctx.prompt(q, handler)` — спросил, хендлер ловит следующее сообщение (callback-style, in-memory) | — | @gramio/prompt, @puregram/prompt |
-| **`@yaebal/files`** ✅ | `ctx.files.info/url/download` + ленивый `FileDownload` (bytes/text/json/blob/stream/toFile), стратегии для local Bot API server (disk/rewrite/url), standalone `createFiles(api)`. Upload — в ядре через `MediaSource` | — | @gramio/files, grammY files |
-| **`@yaebal/file-id`** ✅ | парсер/сериализатор `file_id`/`file_unique_id` (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
-| **`@yaebal/zanachka`** | media-cache — `file_id` вместо повторной заливки | — | `api.before` | @gramio/media-cache |
-| **`@yaebal/pachka`** | media-group — собрать альбом из пачки апдейтов | — | @gramio/media-group |
-| **`@yaebal/otvet`** | auto-answer callbackQuery | — | @gramio/auto-answer-cbq |
+### ux
 
-### i18n / инфра (по мере надобности — YAGNI до запроса)
-| Пакет | Что делает | Зависит | Источник |
+| package | what it does | depends on | source |
 |---|---|---|---|
-| **`@yaebal/i18n`** ✅ | `ctx.t` + `changeLanguage`, локаль per-chat, fallback на default-локаль; питает `useTranslation` | `session` | @gramio/i18n, grammY i18n |
-| **`@yaebal/throttle`** ✅ | outbound scheduler: global/private/group buckets, per-method limits, priority queue, shared storage, cancel/abort, metrics, retry_after feedback | — | puregram throttler, grammY transformer-throttler |
-| **`@yaebal/ratelimiter`** ✅ | анти-спам входящих: дропает апдейты сверх лимита за окно (per-user) | — | grammY ratelimiter, @gramio/rate-limiter |
-| **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` в именах | — | @gramio/autoload + storona |
-| **`@yaebal/toml`** ✅ | декларативные toml маршруты: commands, hears, message filters, callback queries и handler registry | — | config-driven routing |
-| **`@yaebal/pagination`** ✅ | пагинация: array/lazy источники (`offset/limit` + опц. `count`), кнопки-элементы с `onSelect`, typed payload, `view`/`edit`/`button`, ownership-фильтр, обработка not-modified/48h/forged data | `keyboard`, `callback-data` | @gramio/pagination |
-| **`@yaebal/narezka`** | резать длинные сообщения на части | — | @gramio/split |
-| **`@yaebal/onboarding`** ✅ | onboarding — декларативные туториалы, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
+| **`@yaebal/morda`** ✅ | dialogs: windows → message, callback routing, navigation stack (`start`/`push`/`replace`/`back`), stale-press gate | `session`, `callback-data`, `keyboard` | @gramio/dialogs |
+| **`@yaebal/morda/jsx`** ✅ | jsx runtime + hooks (`useState`/`useEffect`/`useNavigation`/`useUser`/`useSession`/`useTranslation`) on top of morda, subpath export | `morda` | @gramio/jsx + templatio-style hooks |
+| **`@yaebal/scenes`** ✅ | durable wizards: firstTime steps, typed state/params, `ask()` (standard-schema), navigation `go`/`next`/`previous`, sub-scenes, `onEnter`/`onLeave(reason)`, passthrough+passCommands, ttl, snapshot self-heal. key `chat:user`. sequential-safe (no suspended promises) | `sklad` | @gramio/scenes, @puregram/scenes |
+| **`@yaebal/prompt`** ✅ | `ctx.prompt(q, handler)` — ask a question, handler catches the next message (callback-style, in-memory) | — | @gramio/prompt, @puregram/prompt |
+| **`@yaebal/files`** ✅ | `ctx.files.info/url/download` + lazy `FileDownload` (bytes/text/json/blob/stream/toFile), strategies for local Bot API server (disk/rewrite/url), standalone `createFiles(api)`. upload — in core via `MediaSource` | — | @gramio/files, grammy files |
+| **`@yaebal/file-id`** ✅ | `file_id`/`file_unique_id` parser/serialiser (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
+| **`@yaebal/media-cache`** | media cache — `file_id` instead of re-uploading | — | `api.before` | @gramio/media-cache |
+| **`@yaebal/media-group`** | media group — collect an album from a batch of updates | — | | @gramio/media-group |
+| **`@yaebal/auto-answer`** | auto-answer callbackQuery | — | | @gramio/auto-answer-cbq |
+
+### i18n / infra (yagni until needed)
+
+| package | what it does | depends on | source |
+|---|---|---|---|
+| **`@yaebal/i18n`** ✅ | `ctx.t` + `changeLanguage`, locale per-chat, fallback to default locale; feeds `useTranslation` | `session` | @gramio/i18n, grammy i18n |
+| **`@yaebal/throttle`** ✅ | outbound scheduler: global/private/group buckets, per-method limits, priority queue, shared storage, cancel/abort, metrics, retry_after feedback | — | puregram throttler, grammy transformer-throttler |
+| **`@yaebal/ratelimiter`** ✅ | anti-spam for incoming updates: drops updates over the limit per time window (per-user) | — | grammy ratelimiter, @gramio/rate-limiter |
+| **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` in names | — | @gramio/autoload + storona |
+| **`@yaebal/toml`** ✅ | declarative toml routes: commands, hears, message filters, callback queries and handler registry | — | config-driven routing |
+| **`@yaebal/pagination`** ✅ | pagination: array/lazy sources (`offset/limit` + optional `count`), element buttons with `onSelect`, typed payload, `view`/`edit`/`button`, ownership filter, not-modified/48h/forged data handling | `keyboard`, `callback-data` | @gramio/pagination |
+| **`@yaebal/split`** | split long messages into parts | — | | @gramio/split |
+| **`@yaebal/onboarding`** ✅ | onboarding — declarative tutorials, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
 | **`@yaebal/broadcast`** ✅ | typed broadcast jobs: storage adapter, worker, retry, rate limit, skipped recipients, progress, pause/resume/cancel, events | `core`, `types` | native ops plugin |
-| **`@yaebal/komandy`** | управление командами/скоупами | — | grammY commands |
-| **`@yaebal/tolpa`** | runner — конкурентный поллинг, масштаб | — | grammY runner |
+| **`@yaebal/commands`** | command/scope management | — | | grammy commands |
+| **`@yaebal/runner`** | runner — concurrent polling, scale-out | — | | grammy runner |
 
-### Граф зависимостей (ядро)
+### dependency graph (core)
+
 ```
 sklad ─→ session ─→ i18n
                 ├→ scenes
                 ├→ onboarding
                 └→ morda ─→ morda/jsx
 callback-data ───────────┘
-keyboard ──→ listai
-tormozi ─→ rassylka
-again · prompt · kachai · zanachka · pachka · otvet · sam · tormozi · ne-speshi · tolpa  (без зависимостей от session)
+keyboard ──→ pagination
+throttle ─→ broadcast
+again · prompt · files · media-cache · media-group · auto-answer · ratelimiter · runner  (no session dependency)
 ```
 
 ---
 
-## 3. `morda` + JSX/hooks — React-for-Telegram
+## 3. `morda` + jsx/hooks — react-for-telegram
 
-### Главный инсайт
-**Один `<Screen>` = одно сообщение.** Поэтому НЕ нужен реконсилёр/фиберы/диффинг дерева.
-Рендер = пройти дерево один раз → `{ text, keyboard }`. Ре-рендер после `setState` =
-собрать заново, сравнить `(text, markup)` с прошлым → `editMessageText` если изменилось.
-Якорь маршрутизации — `id` на кнопке: `callback_data = pack(frameId, button.id)` (через `callback-data`).
+### the key insight
 
-### Движок `morda` (builder-API, без JSX)
-- **Виджеты:** `Screen`/`Window`, `Column`/`Row`/`ButtonRow`, `Button`, `SwitchTo` — узлы-объекты, без логики.
-- **Рендер:** flatten → текстовые ноды в `text`, кнопки в `InlineKeyboardMarkup`, каждой `callback_data`.
-- **Роутинг:** `on("callback_query:data")` → unpack → найти кадр → перерендер → найти кнопку по id → `onClick`.
-- **Навигация:** стек кадров. `start`/`push`/`replace`/`back`/`reset`. Кадр = `{ screenId, hookState[], mounted, prevDeps }`. Живёт в `session` → переживает рестарт процесса.
-- **Стейт кадра:** `useState` сериализуется в кадр → значения **обязаны быть JSON-serializable** (документируемое ограничение).
+**one `<Screen>` = one message.** therefore there is no need for a reconciler/fibres/tree diffing.
+render = walk the tree once → `{ text, keyboard }`. re-render after `setState` =
+rebuild, compare `(text, markup)` with the previous → `editMessageText` if changed.
+routing anchor — `id` on a button: `callback_data = pack(frameId, button.id)` (via `callback-data`).
 
-### `morda/jsx` — JSX + хуки
-JSX-runtime (~20-30 строк): `jsx(type, props)` возвращает узел виджета `morda`.
-Интринзики → конструкторы виджетов, функц-компоненты → вызвать с props. `jsxImportSource` в tsconfig.
+### `morda` engine (builder api, no jsx)
 
-Хуки — тонкие фасады над контекстом/стеком (правила React: вызывать безусловно, фиксированный порядок).
-Они **не импортят** плагины пакетом — читают `ctx` (мягкая зависимость, инвариант №4 ловит типом):
+- **widgets:** `Screen`/`Window`, `Column`/`Row`/`ButtonRow`, `Button`, `SwitchTo` — node objects, no logic.
+- **render:** flatten → text nodes into `text`, buttons into `InlineKeyboardMarkup`, each gets a `callback_data`.
+- **routing:** `on("callback_query:data")` → unpack → find frame → re-render → find button by id → `onClick`.
+- **navigation:** frame stack. `start`/`push`/`replace`/`back`/`reset`. frame = `{ screenId, hookState[], mounted, prevDeps }`. lives in `session` → survives process restarts.
+- **frame state:** `useState` serialised into the frame → values **must be json-serialisable** (documented constraint).
 
-| Хук | Что | Откуда |
+### `morda/jsx` — jsx + hooks
+
+jsx runtime (~20-30 lines): `jsx(type, props)` returns a `morda` widget node.
+intrinsics → widget constructors, functional components → called with props. `jsxImportSource` in tsconfig.
+
+hooks — thin facades over the context/stack (react rules: call unconditionally, fixed order).
+they **do not import** plugins as a package — they read `ctx` (soft dependency, invariant #4 catches it via type):
+
+| hook | what | from |
 |---|---|---|
-| `useState` | слот в `hookState[]` кадра по индексу; setState → кадр грязный → ре-рендер | jsx-runtime |
-| `useEffect(fn, deps)` | после commit; mount один раз (флаг `mounted`), сравнение `deps` JSON-eq | jsx-runtime |
-| `useNavigation` | `{ push, replace, back, reset }` | стек `morda` |
+| `useState` | slot in frame's `hookState[]` by index; setState → frame is dirty → re-render | jsx runtime |
+| `useEffect(fn, deps)` | after commit; mounts once (`mounted` flag), `deps` compared by json equality | jsx runtime |
+| `useNavigation` | `{ push, replace, back, reset }` | `morda` stack |
 | `useUser` | `ctx.user` | core derive |
 | `useSession` | `ctx.session` (`.get/.set`) | `session` |
-| `useTranslation` | `{ t, changeLanguage }` | `tolmach` |
+| `useTranslation` | `{ t, changeLanguage }` | `i18n` |
 
-### Жизненный цикл (пример `LangSelectScreen`)
-1. `start("lang")` → новый кадр, рендер, хуки читают пустой стейт.
-2. commit: `useEffect([],…)` фаерит один раз → `upsertUser` → `session.set("userDbId")`.
-3. Нажат `<Button id="ru">` → unpack callback → регидрат кадра → **перезапуск компонента**
-   (хуки читают сохранённый стейт, эффект НЕ фаерит) → найти кнопку `ru` → `onClick` →
+### lifecycle example (`LangSelectScreen`)
+
+1. `start("lang")` → new frame, render, hooks read empty state.
+2. commit: `useEffect([],…)` fires once → `upsertUser` → `session.set("userDbId")`.
+3. `<Button id="ru">` pressed → unpack callback → rehydrate frame → **re-run component**
+   (hooks read saved state, effect does NOT fire) → find button `ru` → `onClick` →
    `setUserLanguage` + `changeLanguage` + `replace(HomeScreen)`.
-4. `replace` → новый кадр → ре-рендер → `editMessageText`.
+4. `replace` → new frame → re-render → `editMessageText`.
 
-### Где НЕ ленимся (потолки)
-- Сериализация стейта: `useState` только JSON.
-- Правила хуков: рантайм-assert «число хуков == прошлый рендер», падать понятно.
-- Async `onClick` + батчинг: несколько `setState` за обработчик → один `editMessageText`.
-- Идемпотентность эффектов при рестарте между mount и press — флаг `mounted` в сессии.
+### hard limits (ceilings)
 
-### YAGNI (не делаем)
-Concurrent mode, Suspense, Context API (хватает встроенных хуков),
-key-based reconciliation списков (клава перерисовывается целиком), мульти-сообщение на Screen.
+- state serialisation: `useState` with json-only values.
+- hook rules: runtime assert "hook count == previous render", fail with a clear message.
+- async `onClick` + batching: multiple `setState` calls per handler → one `editMessageText`.
+- effect idempotency on restart between mount and press — `mounted` flag in session.
+
+### yagni (not doing)
+
+concurrent mode, suspense, context api (built-in hooks are enough),
+key-based list reconciliation (keyboard is fully re-rendered), multi-message screen.
 
 ---
 
-## 4. Шпаргалка событий
+## 4. filter query cheat-sheet
 
 ```ts
-// L1 — тип апдейта
+// L1 — update type
 bot.on("message", h)
 bot.on("edited_message", h)
 bot.on("callback_query", h)
 bot.on("inline_query", h)
 bot.on("my_chat_member", h)
 
-// L1:L2 — контент (понравившийся стиль)
+// L1:L2 — content
 bot.on("message:text", h)          // ctx.text: string
 bot.on("message:photo", h)         // ctx.message.photo
 bot.on("message:caption", h)
 bot.on("callback_query:data", h)   // ctx.callbackQuery: CallbackQuery
 bot.on("inline_query:query", h)
 
-// L1:L2:L3 — под-контент
+// L1:L2:L3 — sub-content
 bot.on("message:entities:url", h)
 bot.on("message:entities:bot_command", h)
 
-// шорткаты
-bot.on(":text", h)                 // любой апдейт с текстом
-bot.on("::url", h)                 // любой апдейт с entity url
+// shortcuts
+bot.on(":text", h)                  // any update with text
+bot.on("::url", h)                  // any update with a url entity
 bot.on(["message:text", "edited_message:text"], h)
 
-// сахар (поверх queries)
-bot.command("start", h)            // ctx.command, ctx.args
-bot.hears(/привет/i, h)            // ctx.match
-bot.callbackQuery(myData, h)       // ctx.match (через callback-data)
+// sugar (on top of queries)
+bot.command("start", h)             // ctx.command, ctx.args
+bot.hears(/hello/i, h)             // ctx.match
+bot.callbackQuery(myData, h)        // ctx.match (via callback-data)
 bot.reaction("👍", h)
 bot.chatType("private", h)
 ```
 
 ---
 
-## 5. Порядок сборки
+## 5. build order
 
-**M0 — ядро (расширить существующее)**
-- request-хуки `api.before/after/onError` в `createApi`
-- `install(plugin)` + тип `Plugin`
-- доспроектировать `Filtered` маппинг под частые queries + shortcut-роутеры (`command`/`hears`/`callbackQuery`)
+**m0 — core (extend existing)**
+- request hooks `api.before/after/onError` in `createApi`
+- `install(plugin)` + `Plugin` type
+- complete `Filtered` mapping for common queries + shortcut routers (`command`/`hears`/`callbackQuery`)
 
-**M1 — фундамент плагинов**
-- ✅ `session` (session) — storage-контракт и `MemoryStorage` выделены в ✅ `sklad` (memory/redis/sqlite/cloudflare kv/file), session ре-экспортирует их для обратной совместимости
-- ✅ `keyboard` (keyboard builder) + `callback-data` (typed callback_data, `.pattern` интегрируется с `bot.callbackQuery`)
-- `again` (на `api.onError`) — заодно проверка, что монорепа тащит второй пакет
-- `keyboard` + `callback-data`
+**m1 — plugin foundation**
+- ✅ `session` — storage contract and `MemoryStorage` extracted into ✅ `sklad` (memory/redis/sqlite/cloudflare kv/file), session re-exports them for backwards compatibility
+- ✅ `keyboard` (keyboard builder) + `callback-data` (typed callback_data, `.pattern` integrates with `bot.callbackQuery`)
+- `again` (on `api.onError`) — also verifies the monorepo pulls in a second package correctly
 
-**M2 — UX-флагман**
-- ✅ **M2a** `morda` (builder-API): окна + рендер + callback-роутинг + стек навигации + stale-press гейт. `button`/`switchTo`/`back` хелперы, `ctx.dialog`
-- ✅ **M2b** `morda/jsx`: JSX-runtime + хуки. «Один Screen = одно сообщение → без реконсилёра»; `setState` → `editMessageText` на месте; хук-стейт в слотах кадра, эвиктится при закрытии экрана; навигация по компонентам (`push(HomeScreen)`). Скрин-пример работает.
+**m2 — ux flagship**
+- ✅ **m2a** `morda` (builder api): windows + render + callback routing + navigation stack + stale-press gate. `button`/`switchTo`/`back` helpers, `ctx.dialog`
+- ✅ **m2b** `morda/jsx`: jsx runtime + hooks. "one screen = one message → no reconciler"; `setState` → `editMessageText` in place; hook state in frame slots, evicted on screen close; component navigation (`push(HomeScreen)`). screen example works.
 
-**M3 — мягкие зависимости контекста**
-- ✅ `i18n` → оживляет `useTranslation` (per-chat локаль, fallback, `{placeholder}`-интерполяция)
-- ✅ `scenes` (durable-визарды: firstTime-шаги, typed state/params, `ask()`, навигация, sub-сцены, passthrough/passCommands, ttl) + ✅ `prompt` (`ctx.prompt`, callback-style). Оба не блокируют sequential-loop (в отличие от await-prompt — он требовал бы конкурентного диспатча)
+**m3 — soft context dependencies**
+- ✅ `i18n` → activates `useTranslation` (per-chat locale, fallback, `{placeholder}` interpolation)
+- ✅ `scenes` (durable wizards: firstTime steps, typed state/params, `ask()`, navigation, sub-scenes, passthrough/passCommands, ttl) + ✅ `prompt` (`ctx.prompt`, callback-style). both don't block the sequential loop (unlike await-prompt which would require concurrent dispatch)
 
-**M4 — инфра по запросу (YAGNI до факта)**
-- ✅ `router` · `throttle` · `files` (+ ядро `api.fileUrl`) · `ratelimiter` · `broadcast`
-- ✅ `web` — операторская панель (смотреть чаты / отвечать из браузера): `recorder`-плагин + `PanelStore` + `panelHandler` (fetch). Вебхуки переехали в ядро (`webhookCallback`)
-- ✅ `media-group` · `split` · `commands` · `pagination` · `media-cache` (кэш `file_id` через явные ключи — корректно при конкуренции)
-- ✅ кодген `@yaebal/types` (232 объекта + 135 методов из схемы, генератор `scripts/generate.mjs`)
-- осталось: `onboarding` (ниша), `runner` (конкурентный поллинг — конфликтует с sequential session)
+**m4 — infra on demand (yagni until needed)**
+- ✅ `router` · `throttle` · `files` (+ core `api.fileUrl`) · `ratelimiter` · `broadcast`
+- ✅ `web` — operator panel (view chats / reply from the browser): `recorder` plugin + `PanelStore` + `panelHandler` (fetch). webhooks moved to core (`webhookCallback`)
+- ✅ `media-group` · `split` · `commands` · `pagination` · `media-cache` (caches `file_id` via explicit keys — correct under concurrency)
+- ✅ codegen `@yaebal/types` (359 objects + 180 methods from schema, generator `scripts/generate.mjs`)
+- remaining: `onboarding` (niche), `runner` (concurrent polling — conflicts with sequential session)
 
-**Кодген типов** (`@yaebal/types`) — параллельно, не блокирует M0-M3.
+**type codegen** (`@yaebal/types`) — runs in parallel, does not block m0–m3.
 
-Builder-API и JSX — два фронтенда к одному движку `morda`, так что JSX можно отложить и ничего не переписывать.
+builder api and jsx are two frontends to the same `morda` engine, so jsx can be deferred without rewriting anything.

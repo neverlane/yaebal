@@ -1,3 +1,6 @@
+<!-- markdownlint-disable MD033 -->
+<!-- markdownlint-disable MD041 -->
+<!-- markdownlint-disable MD013 -->
 <div align="center">
 
   ![yaebal logo](https://raw.githubusercontent.com/neverlane/yaebal/refs/heads/master/.github/yaebal.svg)
@@ -146,7 +149,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/commands](/packages/commands/)           | one registry for handlers and the `/` menu — localized, scoped, diff-synced           |
 | [@yaebal/pagination](/packages/pagination/)       | paginated lists over any source — lazy fetch, item buttons, typed payload             |
 | [@yaebal/preview](/packages/preview/)             | render telegram-style chats to svg                                                    |
-| [@yaebal/workers](/packages/workers/)             | `worker_threads` pool to offload cpu-heavy work                                       |
+| [@yaebal/workers](/packages/workers/)             | typed `worker_threads` pool — queueing, timeouts, aborts, crash recovery              |
 
 ### repository map
 

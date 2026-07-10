@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/workers",
-	"version": "0.0.2",
-	"description": "yaebal workers — a tiny worker_threads pool to offload CPU-heavy tasks from handlers.",
+	"version": "0.1.0",
+	"description": "yaebal workers — a typed worker_threads pool: queueing, timeouts, aborts, crash recovery, zero-copy transfers.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -9,21 +9,43 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
+		},
+		"./plugin": {
+			"types": "./lib/plugin.d.ts",
+			"import": "./lib/plugin.js"
 		}
 	},
+	"sideEffects": false,
 	"files": ["lib", "src"],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
+	"peerDependenciesMeta": {
+		"@yaebal/core": {
+			"optional": true
+		}
+	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "worker", "worker-threads", "pool"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"worker",
+		"worker-threads",
+		"pool",
+		"thread-pool"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

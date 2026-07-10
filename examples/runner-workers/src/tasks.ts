@@ -9,9 +9,13 @@ export type Tasks = {
 
 register<Tasks>({
 	digest: (input) => createHash("sha256").update(input).digest("hex"),
-	score: ({ text, rounds }) => {
+
+	// a deliberately cpu-heavy loop. it watches `signal` so a run() timeout (or abort) cancels it
+	// promptly and the worker lives to serve the next task instead of being killed.
+	score: ({ text, rounds }, { signal }) => {
 		let score = 0;
 		for (let i = 0; i < rounds; i++) {
+			if ((i & 0xffff) === 0 && signal.aborted) throw new Error("scoring aborted");
 			const code = text.charCodeAt(i % Math.max(1, text.length)) || 1;
 			score = (score + code * (i + 17)) % 1_000_003;
 		}

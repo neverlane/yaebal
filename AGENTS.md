@@ -36,14 +36,16 @@ pnpm workspace globs: `packages/*`, `examples/*`, `apps/*`. Node >= 20.
 
 - `packages/core` — `@yaebal/core`: `Bot`, `Composer`, context, filter queries, media, hooks.
   Entry: `src/index.ts`. Build output: `lib/` (via `tsc`). Every package follows this shape.
-- `packages/*` — the rest of the published `@yaebal/*` scope: ~29 plugins (`again`, `session`,
-  `keyboard`, `callback-data`, `filters`, `fmt`, `rich`, `morda`, `i18n`, `scenes`,
-  `conversation`, `prompt`, `router`, `toml`, `throttle`, `broadcast`, `panel`, `web`, `runner`,
-  `split`, `workers`, …), the codegen packages (`@yaebal/types` — generated Bot API types, with
-  `packages/types/schema.json` as the single source of truth; `@yaebal/contexts` — generated
-  per-update context classes), the `yaebal` meta package, `create-yaebal`, and `@yaebal/test`
-  (actor-driven test framework: `createTestEnv` / `UserActor` / `ChatActor`).
-- `examples/*` — 18 runnable bots, doubling as public-API smoke tests; the plugin coverage
+- `packages/*` — the rest of the published `@yaebal/*` scope: ~31 plugins (`again`, `session`,
+  `sklad`, `keyboard`, `callback-data`, `filters`, `fmt`, `rich`, `morda`, `i18n`, `scenes`,
+  `conversation`, `prompt`, `files`, `file-id`, `router`, `toml`, `throttle`, `ratelimiter`,
+  `broadcast`, `panel`, `web`, `runner`, `split`, `workers`, `onboarding`, `pagination`,
+  `media-cache`, `media-group`, `commands`, `preview`, …), the codegen packages (`@yaebal/types`
+  — generated Bot API types, with `packages/types/schema.json` as the single source of truth;
+  `@yaebal/contexts` — generated per-update context classes), the `yaebal` meta package,
+  `create-yaebal`, and `@yaebal/test` (actor-driven test framework: `createTestEnv` / `UserActor`
+  / `ChatActor`).
+- `examples/*` — 23 runnable bots, doubling as public-API smoke tests; the plugin coverage
   matrix lives in `examples/README.md`.
 - `apps/docs` — the SvelteKit docs site (Cloudflare adapter): guides, plugin pages, the
   playground, and a Bot API reference generated from `packages/types/schema.json`.

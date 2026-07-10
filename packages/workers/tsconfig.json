@@ -4,7 +4,9 @@
 		"rootDir": "./src",
 		"outDir": "./lib",
 		"composite": true,
+		"lib": ["ES2023", "ESNext.Disposable"],
 		"types": ["node"]
 	},
+	"references": [{ "path": "../core" }],
 	"include": ["src/**/*.ts"]
 }

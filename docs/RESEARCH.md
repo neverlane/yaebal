@@ -1,249 +1,332 @@
-# puregram vs grammY vs GramIO — разбор для будущей «рофлолибы»
+# puregram vs grammy vs gramio — analysis for yaebal
 
-> Цель отчёта: понять, как устроена каждая из трёх библиотек, что у кого хорошо, и что стоит **заимствовать** при проектировании собственного фреймворка для Telegram Bot API на TypeScript.
+> goal of this document: understand how each of the three libraries is built, what each does well,
+> and what is worth borrowing when designing a new telegram bot api framework in typescript.
 >
-> Дата: 22 июня 2026. Версии и метрики актуальны на эту дату (см. раздел «Факты и цифры»).
+> date: 22 june 2026. versions and metrics are current as of that date (see §6).
 
 ---
 
-## TL;DR
+## tl;dr
 
-| | **grammY** | **puregram** | **GramIO** |
+| | **grammy** | **puregram** | **gramio** |
 |---|---|---|---|
-| Что это по сути | Зрелый **фреймворк** | Современный **SDK / клиент** | Новый **type-safe фреймворк** |
-| Версия | `1.43.0` | `3.6.0` | `0.9.0` |
-| Загрузки/мес (npm) | ~15,4 млн | ~3,6 тыс | ~11,3 тыс |
-| Автор | KnorpelSenf | starkow (j++ team) | kravetsone |
-| Лицензия | MIT | MPL-2.0 | MIT |
-| Ядро абстракции | `Composer` + middleware + filter queries | `Telegram` + классы-контексты + hooks | chainable `Composer` с накоплением типов |
-| Главная фишка | Огромная экосистема + filter queries | Тонкий честный SDK + перехват запросов | Типы текут сквозь весь chain + кодоген |
-| Кого брать как референс | Экосистема, фильтрация апдейтов, runtime-agnostic билд | Контексты-классы, hooks на запросы, decoupled codegen | DX, `.derive/.decorate/.extend`, авто-типы, `format` |
+| what it is | mature **framework** | modern **sdk / client** | new **type-safe framework** |
+| version | `1.43.0` | `3.6.0` | `0.9.0` |
+| downloads/month (npm) | ~15.4 m | ~3.6 k | ~11.3 k |
+| author | KnorpelSenf | starkow (j++ team) | kravetsone |
+| licence | MIT | MPL-2.0 | MIT |
+| core abstraction | `Composer` + middleware + filter queries | `Telegram` + context classes + hooks | chainable `Composer` with type accumulation |
+| headline feature | huge ecosystem + filter queries | thin honest sdk + request interception | types flow through the whole chain + codegen |
+| best reference for | ecosystem, update filtering, runtime-agnostic build | context classes, request hooks, decoupled codegen | dx, `.derive/.decorate/.extend`, auto-types, `format` |
 
-Коротко: **grammY** — за зрелость и экосистему, **GramIO** — за современный type-safe дизайн и DX, **puregram** — за минималистичный SDK-подход и красивую работу с контекстами/хуками. Для рофлолибы есть смысл взять каркас в стиле GramIO, систему фильтрации апдейтов из grammY и идею decoupled-codegen + контексты-классы из puregram.
+short version: **grammy** — for maturity and ecosystem; **gramio** — for modern type-safe design and dx;
+**puregram** — for the minimalist sdk approach and clean context/hook model.
+for yaebal the sensible move is to take the gramio-style skeleton, the grammy filter-query system,
+and the puregram ideas of decoupled codegen + context classes.
 
 ---
 
-## 1. grammY
+## 1. grammy
 
-### Что это
-Самый популярный и зрелый TS-фреймворк для Telegram-ботов (наследник идей Telegraf, но переосмысленный). Цель — «легко и для новичка, и на масштабе». Работает на Node.js, Deno и в браузере/Cloudflare Workers (через web-бандл `grammy/web`).
+### what it is
 
-### Архитектура и API-дизайн
-- **`Bot extends Composer`.** Всё строится вокруг класса `Composer` — конвейера middleware в стиле Koa (`(ctx, next) => ...`). `Bot`, `Composer`, роутеры — всё это композеры, которые можно вкладывать друг в друга.
-- **Единый объект `Context`.** В отличие от puregram, нет дерева классов на каждый тип апдейта — один `Context`, который расширяется не классами, а **flavors** (чисто типовые миксины: `Context & SessionFlavor<S>`, `HydrateFlavor`, и т.д.). Расширение поведения — через middleware и **transformers** на уровне `bot.api`.
-- **Filter queries — главная киллер-фича.** Мини-язык запросов к апдейтам прямо в `.on()`:
+the most popular and mature ts framework for telegram bots (successor to telegraf, but rethought).
+goal — "easy for beginners and scalable". works on node.js, deno and in browser/cloudflare workers
+(via a `grammy/web` web bundle).
+
+### architecture and api design
+
+- **`Bot extends Composer`.** everything is built around `Composer` — a koa-style middleware
+  pipeline (`(ctx, next) => ...`). `Bot`, `Composer`, routers — all composers, composable with each other.
+- **single `Context` object.** unlike puregram, no class hierarchy per update type — one `Context`
+  extended not by classes but by **flavors** (pure type mixins: `Context & SessionFlavor<S>`,
+  `HydrateFlavor`, etc.). behaviour extension happens through middleware and **transformers** on `bot.api`.
+- **filter queries — the killer feature.** a mini query language for updates directly in `.on()`:
   ```ts
   bot.on("message:text", ...)
   bot.on("message:entities:url", ...)
   bot.on("callback_query:data", ...)
-  bot.on(":photo", ...)            // любое сообщение/пост с фото
+  bot.on(":photo", ...)            // any message/post with a photo
   bot.on("message").filter(predicate, ...)
   ```
-  Это типобезопасно: после `message:text` в хендлере `ctx.msg.text` уже `string`. Ни puregram, ни GramIO не дают такой выразительной фильтрации из коробки.
-- **Transformer API.** Перехват и модификация любых вызовов Bot API на уровне `bot.api.config.use(transformer)` — на этом построены `auto-retry`, `throttler`, `hydrate` и пр.
-- **Runtime-agnostic билд.** Исходники пишутся под Deno и компилируются в Node через `deno2node` — отсюда чистая мульти-рантайм поддержка и web-бандл.
+  type-safe: after `message:text` the handler gets `ctx.msg.text` as `string`.
+  neither puregram nor gramio offer this level of expressive filtering out of the box.
+- **transformer api.** intercept and modify any Bot API call via `bot.api.config.use(transformer)` —
+  `auto-retry`, `throttler`, `hydrate`, etc. are all built on this.
+- **runtime-agnostic build.** sources target deno and are compiled to node via `deno2node` —
+  hence clean multi-runtime support and the web bundle.
 
-### Экосистема и плагины
-Самая богатая из трёх. Официальные плагины (`@grammyjs/*`):
-- **conversations** — пошаговые диалоги как обычный async-код (без явных сцен-машин), очень мощно;
-- **menu** — интерактивные inline-меню с навигацией;
-- **runner** — конкурентная обработка апдейтов с backpressure (для высоконагруженных ботов);
-- **hydrate** — методы прямо на объектах (`ctx.msg.editText(...)`);
-- **auto-retry, transformer-throttler, ratelimiter** — устойчивость и лимиты;
-- **i18n / fluent**, **emoji**, **parse-mode**, **router**, **stateless-question**, **chat-members**, **files**;
-- **storage-адаптеры** для сессий (Redis, Mongo, Postgres, Deno KV, файлы, free-хранилища).
+### ecosystem and plugins
 
-Плюс: документация (grammy.dev) считается эталонной по полноте, есть большое комьюнити и шаблоны проектов.
+the richest of the three. official plugins (`@grammyjs/*`):
+- **conversations** — step-by-step dialogs as ordinary async code (no explicit scene machines), very powerful.
+- **menu** — interactive inline menus with navigation.
+- **runner** — concurrent update processing with backpressure (for high-load bots).
+- **hydrate** — methods directly on objects (`ctx.msg.editText(...)`).
+- **auto-retry, transformer-throttler, ratelimiter** — resilience and rate limiting.
+- **i18n / fluent**, **emoji**, **parse-mode**, **router**, **stateless-question**, **chat-members**, **files**.
+- **storage adapters** for sessions (redis, mongo, postgres, deno kv, files, free storage services).
 
-### Производительность
-- `runner` даёт sequential-by-chat конкуренцию + backpressure — для тысяч апдейтов в секунду.
-- Зависимости минимальны (`node-fetch`, `debug`, `abort-controller`), unpacked ~1,3 МБ.
-- Веб-бандл позволяет гонять на edge (CF Workers) с минимальным холодным стартом.
+plus: documentation at grammy.dev is considered the gold standard for completeness; large community and project templates.
 
-### DX и типобезопасность
-- Очень сильная фильтрация + сужение типов через filter queries.
-- Flavors хорошо комбинируются, но при многих плагинах тип `Context` обрастает пересечениями вручную (`type MyContext = Context & A & B & C`), что чуть менее эргономично, чем chain-накопление GramIO.
-- Документация и сообщество — лучший «онбординг» на рынке.
+### performance
 
-**Резюме grammY:** эталон зрелости. Берём как референс по **фильтрации апдейтов, transformer-слою API, экосистеме и runtime-agnostic сборке**.
+- `runner` provides sequential-by-chat concurrency + backpressure — for thousands of updates per second.
+- minimal dependencies (`node-fetch`, `debug`, `abort-controller`), unpacked ~1.3 mb.
+- the web bundle enables running on edge (cf workers) with minimal cold start.
+
+### dx and type safety
+
+- very strong filtering + type narrowing via filter queries.
+- flavors compose well, but with many plugins the `Context` type grows with manual intersections
+  (`type MyContext = Context & A & B & C`), which is slightly less ergonomic than gramio's chain accumulation.
+- documentation and community — the best onboarding in the market.
+
+**grammy summary:** the reference for maturity. taken as the model for **update filtering,
+transformer-layer api, ecosystem, and runtime-agnostic build**.
 
 ---
 
 ## 2. puregram
 
-### Что это
-«Powerful and modern Telegram bot API SDK for Node.js and TypeScript». По духу — не громоздкий фреймворк, а **аккуратный SDK/клиент** с приятными контекстами. Авторский стиль нарочито неформальный (lowercase README, мемы), автор — starkow, под крылом j++ team. Вдохновлён `vk-io` от negezor — это видно в архитектуре контекстов.
+### what it is
 
-### Архитектура и API-дизайн
-- **`Telegram` instance.** Точка входа: `Telegram.fromToken(token)` или `new Telegram({ token })`. Апдейты — через `telegram.updates.on('message', ...)`, поллинг `telegram.updates.startPolling()` или webhook-middleware.
-- **Контексты как иерархия классов.** Ключевое отличие от grammY: на каждый тип апдейта — свой класс (`MessageContext`, `CallbackQueryContext`, `ForumTopicCreatedContext`, …), нагруженный геттерами и шорткатами. Сужение типов — через **type guards**:
+"powerful and modern telegram bot api sdk for node.js and typescript". in spirit — not a heavy
+framework but a **clean sdk/client** with pleasant contexts. the authorial style is deliberately
+informal (lowercase readme, memes); author is starkow under the j++ team. inspired by `vk-io`
+by negezor — visible in the context architecture.
+
+### architecture and api design
+
+- **`Telegram` instance.** entry point: `Telegram.fromToken(token)` or `new Telegram({ token })`.
+  updates via `telegram.updates.on('message', ...)`, polling via `telegram.updates.startPolling()`, or webhook middleware.
+- **contexts as a class hierarchy.** the key difference from grammy: each update type gets its own class
+  (`MessageContext`, `CallbackQueryContext`, `ForumTopicCreatedContext`, …) loaded with getters and shortcuts.
+  type narrowing via **type guards**:
   ```ts
   if (context.is('callback_query')) { /* context: CallbackQueryContext */ }
   if (context.hasText()) { /* context.text: string */ }
   ```
-  Сознательно переведено: все методы-предикаты `is*/has*/can*` — именно методы (type guards), а не геттеры.
-- **Три способа звать API:** `telegram.api.call('getMe')` (сырой, работает даже до обновления типов под новую Bot API), `telegram.api.getMe()` (типизированный), и шорткаты на контексте (`context.send(...)`).
-- **Hooks — перехватчики запросов.** Пять стадий (`onBeforeRequest`, `onRequestIntercept`, `onResponseIntercept`, `onAfterRequest`, `onError`), можно менять параметры, подмешивать `parse_mode`, отменять запрос через `AbortController`. Хуки экспортируются пачкой через `telegram.useHooks(...)` — удобно паковать в сторонние пакеты.
-- **Middlewares** в стиле `(context, next)` — для расширения контекста и измерений.
-- **Медиа-абстракции.** `MediaSource` (path/stream/buffer/url/fileId) и `MediaSourceTo` для скачивания, `InputMedia` для media-group/editMessageMedia — чистый, продуманный слой работы с файлами.
-- **Decoupled codegen.** Типы и методы Bot API вынесены в отдельный пакет `@puregram/api` (зависимость `~10.1.4`), импортируются из `puregram/generated`, `puregram/methods`, `puregram/telegram-interfaces`. Само ядро отделено от сгенерированных типов.
+  all predicate methods `is*/has*/can*` are methods (type guards), not getters — a deliberate choice.
+- **three ways to call the api:** `telegram.api.call('getMe')` (raw, works even before types catch up
+  to a new bot api), `telegram.api.getMe()` (typed), and context shortcuts (`context.send(...)`).
+- **hooks — request interceptors.** five stages (`onBeforeRequest`, `onRequestIntercept`,
+  `onResponseIntercept`, `onAfterRequest`, `onError`): modify params, inject `parse_mode`,
+  cancel via `AbortController`. hooks are applied in bulk via `telegram.useHooks(...)` — easy to
+  package in third-party modules.
+- **middlewares** in the `(context, next)` style — for extending context and instrumentation.
+- **media abstractions.** `MediaSource` (path/stream/buffer/url/fileId) and `MediaSourceTo` for
+  downloading, `InputMedia` for media-group/editMessageMedia — a clean, well-thought-out layer.
+- **decoupled codegen.** Bot API types and methods live in a separate package `@puregram/api`
+  (dependency `~10.1.4`), imported from `puregram/generated`, `puregram/methods`, `puregram/telegram-interfaces`.
+  the core is decoupled from generated types.
 
-### Экосистема и плагины
-Скромнее, но покрывает базу. Официальные `@puregram/*`:
-- **hear** — реакция на текст/caption по условиям;
-- **scenes** — middleware-сцены (пошаговые сценарии);
-- **session** — сессии;
-- **prompt** — ожидание следующего сообщения;
-- **callback-data** — валидация/сериализация callback data;
-- **markup** — система разметки;
-- **media-cacher** — кэш `file_id`;
-- **utils** — утилиты (валидация WebApp, конвертация крипто-значений).
-- Неофициально: `nestjs-puregram` для NestJS.
+### ecosystem and plugins
 
-Важный нюанс порядка middleware: `session()` нужно подключать **до** `hear`/`scenes`, иначе `Cannot read property '__scene' of undefined`.
+smaller, but covers the basics. official `@puregram/*`:
+- **hear** — react to text/caption by conditions.
+- **scenes** — middleware scenes (step-by-step scenarios).
+- **session** — sessions.
+- **prompt** — wait for the next message.
+- **callback-data** — validate/serialise callback data.
+- **markup** — markup system.
+- **media-cacher** — `file_id` cache.
+- **utils** — utilities (webapp validation, crypto value conversion).
+- unofficial: `nestjs-puregram` for nestjs.
 
-### Производительность
-- Тонкий слой над `fetch`/`undici`, без тяжёлого рантайма — оверхед минимальный.
-- ESM-only, `node >= 22` — современная база, но отсекает старые окружения.
-- Заявленной мульти-рантайм истории (Bun/Deno как у GramIO) в README нет — фокус на Node.js.
+important middleware ordering note: `session()` must be registered **before** `hear`/`scenes`,
+otherwise `Cannot read property '__scene' of undefined`.
 
-### DX и типобезопасность
-- Очень приятная работа с контекстами и type guards — код читается.
-- Авторский неформальный стиль документации: весело, но местами менее «корпоративно-предсказуемо», чем у grammY/GramIO.
-- Меньше комьюнити и загрузок → меньше готовых рецептов на StackOverflow/в чатах.
+### performance
 
-**Резюме puregram:** красивый минималистичный SDK. Берём как референс по **контекстам-классам + type guards, хукам на запросы, медиа-абстракциям (`MediaSource`/`InputMedia`) и decoupled-codegen API-пакету**.
+- thin layer over `fetch`/`undici`, no heavy runtime — minimal overhead.
+- esm-only, `node >= 22` — modern baseline but cuts off older environments.
+- no claimed multi-runtime story (bun/deno like gramio) in the readme — focus is on node.js.
+
+### dx and type safety
+
+- very pleasant context handling and type guards — code reads well.
+- informal authorial documentation style: fun, but less "corporate-predictable" than grammy/gramio.
+- smaller community and downloads → fewer ready-made recipes on stackoverflow/in chats.
+
+**puregram summary:** a beautiful minimalist sdk. taken as the model for **context classes + type guards,
+request hooks, media abstractions (`MediaSource`/`InputMedia`), and decoupled codegen api package**.
 
 ---
 
-## 3. GramIO
+## 3. gramio
 
-### Что это
-Самый молодой и самый «современно спроектированный» из трёх. Девиз — «Powerful, extensible and really type-safe». Работает на Node.js, Bun и Deno без изменений конфигурации. Автор — kravetsone. Версия пока `0.9.0` (т.е. до 1.0), но API уже богатый и продуманный.
+### what it is
 
-### Архитектура и API-дизайн
-- **`Bot extends Composer`, и типы текут сквозь весь chain.** Каждый метод обогащает контекст и **возвращает обновлённый тип** — поэтому цепочка всегда полностью типизирована без ручных аннотаций:
+the youngest and most "modernly designed" of the three. tagline — "powerful, extensible and really type-safe".
+works on node.js, bun and deno with no config changes. author — kravetsone. still at version `0.9.0`
+(pre-1.0), but the api is already rich and well-considered.
+
+### architecture and api design
+
+- **`Bot extends Composer`, and types flow through the whole chain.** each method enriches the context
+  and **returns the updated type** — so the chain is always fully typed without manual annotations:
   ```ts
   const bot = new Bot(token)
     .derive("message", async (ctx) => ({ user: await db.getUser(ctx.from!.id) }))
-    .on("message", (ctx) => ctx.send(`Hi, ${ctx.user.name}!`)); // ctx.user типизирован
+    .on("message", (ctx) => ctx.send(`Hi, ${ctx.user.name}!`)); // ctx.user is typed
   ```
-- **Палитра методов Composer** — это, по сути, ядро дизайна:
-  | Метод | Что делает |
+- **`Composer` method palette** — essentially the core of the design:
+  | method | what it does |
   |---|---|
-  | `use(ctx, next)` | сырое middleware |
-  | `derive(fn)` | async-обогащение контекста на каждый запрос |
-  | `decorate(obj)` | статическое обогащение на старте (нулевой per-request оверхед) |
-  | `guard(fn)` | продолжить только если предикат `true` |
-  | `on(event, fn)` | хендлер на тип апдейта |
-  | `extend(composer)` | вмёржить другой композер **вместе с его типами** |
-- **`Composer` как самостоятельный класс.** Продакшн-паттерн: один раз собрать композер с плагинами, потом `.extend()` его в каждом feature-файле — фичи становятся обычными `Composer` без импорта `Bot` и токена, полностью тестируемыми, и при этом видят типы плагинов (`ctx.scene`, `ctx.session`).
-- **Плагины через `.extend()` + система хуков.** Плагины добавляют свойства контекста, регистрируют хендлеры и встраиваются в жизненный цикл (`onStart`, `onStop`, `preRequest`, `onResponse`, `onResponseError`) — всё типизированно. Есть lazy-load плагины.
-- **`format` вместо `parse_mode`.** Форматирование — через tagged template literals, которые сами строят корректные `MessageEntity`:
+  | `use(ctx, next)` | raw middleware |
+  | `derive(fn)` | async context enrichment per request |
+  | `decorate(obj)` | static enrichment at startup (zero per-request overhead) |
+  | `guard(fn)` | continue only if predicate is `true` |
+  | `on(event, fn)` | handler for an update type |
+  | `extend(composer)` | merge another composer **together with its types** |
+- **`Composer` as a standalone class.** production pattern: assemble a composer with plugins once,
+  then `.extend()` it into each feature file — features become plain `Composer` instances with no
+  `Bot` import or token, fully testable, and they see plugin types (`ctx.scene`, `ctx.session`).
+- **plugins via `.extend()` + hook system.** plugins add context properties, register handlers, and
+  hook into the lifecycle (`onStart`, `onStop`, `preRequest`, `onResponse`, `onResponseError`) —
+  all typed. lazy-load plugins are supported.
+- **`format` instead of `parse_mode`.** formatting via tagged template literals that build correct
+  `MessageEntity` arrays:
   ```ts
-  ctx.send(format`${bold`Welcome!`} — ${italic("type-safe")} ${link("GramIO","https://gramio.dev")}`)
+  ctx.send(format`${bold`Welcome!`} — ${italic("type-safe")} ${link("gramio", "https://gramio.dev")}`)
   ```
-  Никаких ручных экранирований MarkdownV2 — большой плюс по надёжности.
-- **Кодоген + авто-публикация типов.** Типы Bot API генерируются и **публикуются на каждый релиз Bot API** (пакет `@gramio/types`) — не ждёшь мейнтейнера. Часть фреймворка тоже кодогенерится.
-- **Keyboards** — fluent chainable API (`new InlineKeyboard().text(...).url(...).row()...`).
-- **Storages** — абстракция хранилищ, общая для session/scenes и т.п.
+  no manual markdownv2 escaping — a significant reliability advantage.
+- **codegen + auto-published types.** Bot API types are generated and **published on every Bot API release**
+  (package `@gramio/types`) — no waiting for a maintainer. parts of the framework are also codegen'd.
+- **keyboards** — fluent chainable api (`new InlineKeyboard().text(...).url(...).row()...`).
+- **storages** — storage abstraction shared across session/scenes etc.
 
-### Экосистема и плагины
-Неожиданно богатая для версии 0.9. Официальные плагины:
-**Scenes, Onboarding, I18n (на Fluent), Session, Autoload, Auto-retry, Auto-answer-callback-query, Media-cache, Media-group, Rate-limiter, Prompt, Views (JSX-рендер сообщений), Split, Pagination, JSX, PostHog, OpenTelemetry, Sentry.**
+### ecosystem and plugins
 
-Отдельно сильный пункт — **DX-тулинг**:
-- `npm create gramio@latest ./bot` — скаффолдер, который сам ставит ORM (Prisma/Drizzle), линтер (Biome/ESLint), Docker + docker-compose, Husky, набор официальных плагинов, hot-reload.
-- Экосистема вокруг: `Wrappergram`, `Crypto Pay API`, `@gramio/schema-parser`, `Jobify` (обёртка над BullMQ).
-- Гайды миграции с grammY, puregram, Telegraf, node-telegram-bot-api.
+surprisingly rich for a 0.9 release. official plugins:
+**scenes, onboarding, i18n (on fluent), session, autoload, auto-retry,
+auto-answer-callback-query, media-cache, media-group, rate-limiter, prompt, views (jsx message render),
+split, pagination, jsx, posthog, opentelemetry, sentry.**
 
-### Производительность
-- `decorate()` для статики = нулевой per-request оверхед (важная архитектурная деталь — разделение «дорогих» derive и «дешёвых» decorate).
-- Мульти-рантайм (Node/Bun/Deno) без изменений кода → можно гнать на Bun ради скорости.
-- 100% TypeScript, MIT.
+strong dx tooling as a separate point:
+- `npm create gramio@latest ./bot` — scaffolder that installs orm (prisma/drizzle), linter (biome/eslint),
+  docker + docker-compose, husky, a set of official plugins, hot-reload.
+- ecosystem around it: `wrappergram`, `crypto pay api`, `@gramio/schema-parser`, `jobify` (bullmq wrapper).
+- migration guides from grammy, puregram, telegraf, node-telegram-bot-api.
 
-### DX и типобезопасность
-- Самый сильный «type-flow»: типы плагинов автоматически доезжают до хендлеров без `Context & A & B`.
-- Лучший онбординг по скорости старта (скаффолдер за минуту).
-- Минусы зрелости: версия `0.9.0` (возможны breaking changes), сообщество и число загрузок пока скромные, меньше боевых кейсов на масштабе, чем у grammY.
+### performance
 
-**Резюме GramIO:** самый современный дизайн. Берём как главный референс по **архитектуре каркаса (chainable Composer с накоплением типов, derive/decorate/guard/extend), авто-генерации и авто-публикации типов, `format`-через-entities и DX-скаффолдингу**.
+- `decorate()` for statics = zero per-request overhead (an important architectural distinction —
+  separating expensive `derive` from cheap `decorate`).
+- multi-runtime (node/bun/deno) with no code changes → can run on bun for speed.
+- 100% typescript, mit.
 
----
+### dx and type safety
 
-## 4. Сравнение по четырём осям
+- the strongest "type-flow": plugin types reach handlers automatically, no `Context & A & B`.
+- best onboarding speed (scaffolder in a minute).
+- maturity downsides: version `0.9.0` (potential breaking changes), community and download count
+  still modest, fewer battle-tested high-scale deployments than grammy.
 
-### Архитектура и API-дизайн
-- **Модель контекста:** grammY — единый `Context` + типовые flavors; puregram — иерархия классов-контекстов + type guards; GramIO — единый контекст, обогащаемый chain-методами с накоплением типов.
-- **Композиция:** у grammY и GramIO `Bot extends Composer`; у puregram — `Telegram` + `updates` + middleware (менее «фреймворковая» модель).
-- **Перехват API-вызовов:** grammY — transformers; puregram — hooks (5 стадий); GramIO — lifecycle-хуки (`preRequest`/`onResponse...`).
-- **Фильтрация апдейтов:** grammY вне конкуренции (filter queries `message:text` и т.п.); у puregram/GramIO — обычный `on(type)` + guard/predicate.
-
-### Экосистема и плагины
-grammY ≫ GramIO > puregram по охвату. У grammY уникальны `conversations`, `menu`, `runner`. GramIO удивляет зрелостью набора (JSX-views, OpenTelemetry, Sentry, PostHog, pagination) и тулингом (скаффолдер, ORM, Jobify). puregram покрывает базу (hear/scenes/session/prompt/callback-data/markup/media-cacher), но экосистема компактнее.
-
-### Производительность
-Все три — тонкий слой над fetch/undici, оверхед фреймворка не является узким местом (узкое место — сеть и Telegram API). Различает:
-- grammY `runner` — конкурентная обработка с backpressure (готовое решение под нагрузку);
-- GramIO — мульти-рантайм (Bun) + `decorate` с нулевым per-request оверхедом;
-- puregram — самый «тонкий» SDK, но без штатного high-load раннера и без заявленного Bun/Deno.
-
-### DX и типобезопасность
-- **Type-flow:** GramIO (chain-накопление) ≥ grammY (filter-query сужение, но ручные flavors) > puregram (guards, но больше ручной типизации в middleware).
-- **Онбординг/доки:** grammY (эталон доков и комьюнити) и GramIO (скаффолдер за минуту) впереди; puregram — приятный, но неформальный и компактнее.
-- **Защита от ошибок форматирования:** GramIO `format` (entities, без экранирования) — самый безопасный подход.
+**gramio summary:** the most modern design. taken as the primary reference for **framework skeleton
+(chainable composer with type accumulation, derive/decorate/guard/extend), type auto-generation and
+auto-publishing, `format`-via-entities, and dx scaffolding**.
 
 ---
 
-## 5. Что заимствовать в «рофлолибу»
+## 4. comparison across four axes
 
-Каркас и принципы — в основном по мотивам **GramIO**, плюс точечно лучшее у двух других.
+### architecture and api design
 
-**Ядро (из GramIO):**
-- `Bot extends Composer`, chainable API с **накоплением типов** через `derive` / `decorate` / `guard` / `extend`. Разделять `derive` (async, per-request) и `decorate` (статика, нулевой оверхед) — это правильная архитектурная развилка.
-- `Composer` как самостоятельный, тестируемый класс → feature-файлы без `Bot`/токена.
-- **Кодоген типов Bot API + авто-публикация** на каждый релиз API. Не привязывать релиз типов к релизу ядра.
-- `format` на tagged templates → `MessageEntity`, без `parse_mode` и ручного экранирования.
-- Скаффолдер `create <lib>` для мгновенного старта (ORM/линтер/Docker/плагины).
+- **context model:** grammy — single `Context` + type flavors; puregram — class hierarchy + type guards;
+  gramio — single context enriched by chain methods with type accumulation.
+- **composition:** grammy and gramio use `Bot extends Composer`; puregram uses `Telegram` + `updates` +
+  middleware (less "framework-y").
+- **api call interception:** grammy — transformers; puregram — hooks (5 stages); gramio — lifecycle hooks
+  (`preRequest`/`onResponse...`).
+- **update filtering:** grammy is unmatched (filter queries `message:text` etc.); puregram/gramio have
+  plain `on(type)` + guard/predicate.
 
-**Фильтрация и API-слой (из grammY):**
-- **Filter queries** — мини-язык `update:subtype:subsubtype` с сужением типов. Это самая полезная фича grammY, аналога нет у конкурентов — сильный дифференциатор.
-- **Transformer-слой** для вызовов API (на нём строятся retry/throttle/hydrate).
-- Готовый **runner с backpressure** для high-load с самого начала.
-- Runtime-agnostic билд (один кодовый корень → Node/Deno/web/edge).
+### ecosystem and plugins
 
-**Контексты и сервис-слой (из puregram):**
-- Опционально — **классы-контексты на типы апдейтов** + `is()/has()/can()` type guards (читаемость; можно совместить с filter-queries как сахар).
-- **Hooks-перехватчики запросов** с возможностью отмены через `AbortController` и упаковки наборов хуков в сторонние пакеты (`useHooks`).
-- Чистые **медиа-абстракции** `MediaSource` / `MediaSourceTo` / `InputMedia`.
-- **Decoupled codegen**: ядро отдельно, сгенерированные типы/методы — отдельный пакет.
-- Паттерн `suppress: true` для подавления ошибок API без try/catch.
+grammy ≫ gramio > puregram in coverage. grammy's unique offerings: `conversations`, `menu`, `runner`.
+gramio surprises with plugin maturity (jsx-views, opentelemetry, sentry, posthog, pagination) and tooling
+(scaffolder, orm, jobify). puregram covers the basics (hear/scenes/session/prompt/callback-data/markup/media-cacher)
+but the ecosystem is more compact.
 
-**Чего избегать:**
-- Не плодить ручные пересечения типов контекста (`Context & A & B & C`) как в grammY — chain-накопление GramIO эргономичнее.
-- Не завязывать порядок middleware неявно (как `session` до `scenes` в puregram) — делать зависимости плагинов явными и проверяемыми типами.
-- Не привязывать выпуск типов Bot API к релизам ядра — иначе будешь «ждать мейнтейнера».
+### performance
+
+all three are thin layers over fetch/undici; framework overhead is not the bottleneck (the bottleneck is
+the network and the telegram api). what differs:
+- grammy `runner` — concurrent processing with backpressure (off-the-shelf high-load solution).
+- gramio — multi-runtime (bun) + `decorate` with zero per-request overhead.
+- puregram — the thinnest sdk, but no built-in high-load runner and no claimed bun/deno support.
+
+### dx and type safety
+
+- **type-flow:** gramio (chain accumulation) ≥ grammy (filter-query narrowing, but manual flavors)
+  > puregram (guards, but more manual typing in middleware).
+- **onboarding/docs:** grammy (reference docs + community) and gramio (scaffolder in a minute) lead;
+  puregram — pleasant, but informal and more compact.
+- **protection from formatting errors:** gramio `format` (entities, no escaping) — the safest approach.
 
 ---
 
-## 6. Факты и цифры (проверено 22.06.2026)
+## 5. what to borrow for yaebal
 
-| Метрика | grammY | puregram | GramIO |
+the skeleton and principles are primarily inspired by **gramio**, plus the best bits from the other two.
+
+**core (from gramio):**
+- `Bot extends Composer`, chainable api with **type accumulation** via `derive` / `decorate` / `guard` / `extend`.
+  separating `derive` (async, per-request) and `decorate` (static, zero overhead) is the correct
+  architectural split.
+- `Composer` as a standalone, testable class → feature files without `Bot`/token.
+- **Bot API type codegen + auto-publishing** on every api release. decouple type releases from core releases.
+- `format` via tagged templates → `MessageEntity`, no `parse_mode` and no manual escaping.
+- `create <lib>` scaffolder for instant start (orm/linter/docker/plugins).
+
+**filtering and api layer (from grammy):**
+- **filter queries** — `update:subtype:subsubtype` mini-language with type narrowing. the most useful
+  grammy feature, with no equivalent in the other two — a strong differentiator.
+- **transformer layer** for api calls (retry/throttle/hydrate are built on this).
+- ready-made **runner with backpressure** for high-load from the start.
+- runtime-agnostic build (single codebase → node/deno/web/edge).
+
+**contexts and service layer (from puregram):**
+- optionally — **context classes per update type** + `is()/has()/can()` type guards
+  (readability; can be combined with filter queries as sugar).
+- **request interceptor hooks** with cancellation via `AbortController` and the ability to package
+  hook sets into third-party modules (`useHooks`).
+- clean **media abstractions** `MediaSource` / `MediaSourceTo` / `InputMedia`.
+- **decoupled codegen**: core separate, generated types/methods in a separate package.
+- `suppress: true` pattern for suppressing api errors without try/catch.
+
+**what to avoid:**
+- don't proliferate manual context type intersections (`Context & A & B & C`) as in grammy —
+  gramio's chain accumulation is more ergonomic.
+- don't tie plugin ordering implicitly (like `session` before `scenes` in puregram) —
+  make plugin dependencies explicit and type-checked.
+- don't tie Bot API type releases to core releases — otherwise you end up waiting for a maintainer.
+
+---
+
+## 6. facts and figures (verified 22.06.2026)
+
+| metric | grammy | puregram | gramio |
 |---|---|---|---|
-| Последняя версия (npm) | 1.43.0 | 3.6.0 | 0.9.0 |
-| Загрузок за месяц (npm) | 15 388 039 | 3 584 | 11 315 |
-| Лицензия | MIT | MPL-2.0 | MIT |
-| Мин. Node | ^12.20 / >=14.13 | >=22 | (Node/Bun/Deno) |
-| Модульность | ESM+CJS, web-бандл | ESM-only | ESM, мульти-рантайм |
-| Автор | KnorpelSenf | starkow / j++ team | kravetsone |
+| latest version (npm) | 1.43.0 | 3.6.0 | 0.9.0 |
+| downloads per month (npm) | 15 388 039 | 3 584 | 11 315 |
+| licence | MIT | MPL-2.0 | MIT |
+| min node | ^12.20 / >=14.13 | >=22 | (node/bun/deno) |
+| modularity | esm+cjs, web bundle | esm-only | esm, multi-runtime |
+| author | KnorpelSenf | starkow / j++ team | kravetsone |
 
-Для контекста рынка: Telegraf за тот же месяц — ~1,98 млн загрузок, т.е. grammY уже кратно обгоняет старого лидера, а puregram/GramIO — нишевые по объёму, но активно развиваются (GramIO — 73 релиза, последний v0.9.0 от 10.04.2026).
+for market context: telegraf over the same month — ~1.98 m downloads, meaning grammy already
+outpaces the old leader by a wide margin; puregram/gramio are niche by volume but actively developed
+(gramio — 73 releases, latest v0.9.0 from 10.04.2026).
 
 ---
 
-## Источники
+## sources
 
-- grammY: [grammy.dev](https://grammy.dev/), [GitHub grammyjs/grammY](https://github.com/grammyjs/grammy), [npm grammy](https://www.npmjs.com/package/grammy)
-- puregram: [GitHub nitreojs/puregram](https://github.com/nitreojs/puregram), [README пакета](https://github.com/nitreojs/puregram/blob/lord/README.md), [npm puregram](https://www.npmjs.com/package/puregram)
-- GramIO: [gramio.dev](https://gramio.dev/), [gramio.dev/get-started](https://gramio.dev/get-started), [GitHub gramiojs/gramio](https://github.com/gramiojs/gramio)
-- Метрики загрузок: [npm downloads API](https://api.npmjs.org/downloads/point/last-month/grammy,gramio,puregram,telegraf)
+- grammy: [grammy.dev](https://grammy.dev/), [github grammyjs/grammY](https://github.com/grammyjs/grammy), [npm grammy](https://www.npmjs.com/package/grammy)
+- puregram: [github nitreojs/puregram](https://github.com/nitreojs/puregram), [readme](https://github.com/nitreojs/puregram/blob/lord/README.md), [npm puregram](https://www.npmjs.com/package/puregram)
+- gramio: [gramio.dev](https://gramio.dev/), [gramio.dev/get-started](https://gramio.dev/get-started), [github gramiojs/gramio](https://github.com/gramiojs/gramio)
+- download metrics: [npm downloads api](https://api.npmjs.org/downloads/point/last-month/grammy,gramio,puregram,telegraf)

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/pagination",
-	"version": "0.0.3",
+	"version": "0.1.0",
 	"description": "yaebal pagination — paginated lists with inline prev/next navigation.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -23,7 +23,8 @@
 		"@yaebal/callback-data": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

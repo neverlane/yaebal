@@ -6,6 +6,11 @@
 		"composite": true,
 		"types": ["node"]
 	},
-	"references": [{ "path": "../core" }, { "path": "../keyboard" }, { "path": "../callback-data" }],
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../keyboard" },
+		{ "path": "../callback-data" },
+		{ "path": "../test" }
+	],
 	"include": ["src/**/*.ts"]
 }

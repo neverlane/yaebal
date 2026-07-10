@@ -192,8 +192,8 @@ core по-прежнему держит свой минимальный ручн
 | Пакет | Что делает | Зависит | Цепляется | Источник |
 |---|---|---|---|---|
 | **`@yaebal/again`** ✅ | awaited retry на 429 `response_parameters.retry_after` + transient 5xx, без парсинга текста ошибки | — | `api.onError` | grammY auto-retry, @gramio/auto-retry |
-| **`@yaebal/session`** ✅ | session — per-chat стейт; `load → next → save` middleware. Несёт `StorageAdapter` + `MemoryStorage` | — | `use` → `ctx.session` | все три |
-| **`@yaebal/sklad`** | storage-адаптеры (file/redis). **Отложен:** `MemoryStorage` пока живёт в `session`; выделить пакет, когда появится первый персистентный адаптер (нужен для `morda` на M2) | — | — | grammY storages |
+| **`@yaebal/session`** ✅ | session v2 — типизированный стейт: dirty-check по снапшоту (без Proxy), `lazySession`, мульти-сессии (`key`), `keyBy` пресеты + композитные ключи, `clearSession`/`saveSession`, `ttl()`-поля, версионные миграции, sliding-ttl через `touch`. Storage-контракт живёт в `sklad` (ре-экспорт для совместимости) | `sklad` | `use` → `ctx.session` | все три + grammY lazy/enhanceStorage |
+| **`@yaebal/sklad`** ✅ | storage-контракт (`StorageAdapter` + `has`/`touch`) и zero-dep адаптеры: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json-файл (`/file`). Клиенты типизируются структурно | — | — | grammY storages |
 | **`@yaebal/keyboard`** ✅ | builder inline/reply-клавиатур (чистый хелпер) | — | export | @gramio/keyboards |
 | **`@yaebal/callback-data`** ✅ | типизированный `callback_data` (pack/unpack + `.pattern` под `callbackQuery`) | — | export | @gramio + @puregram callback-data |
 
@@ -202,7 +202,7 @@ core по-прежнему держит свой минимальный ручн
 |---|---|---|---|
 | **`@yaebal/morda`** ✅ | dialogs: окна → сообщение, callback-роутинг, стек навигации (`start`/`push`/`replace`/`back`), stale-press гейт | `session`, `callback-data`, `keyboard` | @gramio/dialogs |
 | **`@yaebal/morda/jsx`** ✅ | JSX-runtime + хуки (`useState`/`useEffect`/`useNavigation`/`useUser`/`useSession`/`useTranslation`) поверх morda, subpath | `morda` | @gramio/jsx + Templatio-style hooks |
-| **`@yaebal/scenes`** ✅ | step-FSM визард: `enter`/`next`/`leave`, per-chat шаг; `ctx.scene`. Sequential-safe (без suspended promises) | `session` | @gramio/scenes, @puregram/scenes |
+| **`@yaebal/scenes`** ✅ | durable-визарды: firstTime-шаги, типизированные state/params, `ask()` (standard-schema), навигация `go`/`next`/`previous`, sub-сцены, `onEnter`/`onLeave(reason)`, passthrough+passCommands, ttl, self-heal снапшотов. Ключ `chat:user`. Sequential-safe (без suspended promises) | `sklad` | @gramio/scenes, @puregram/scenes |
 | **`@yaebal/prompt`** ✅ | `ctx.prompt(q, handler)` — спросил, хендлер ловит следующее сообщение (callback-style, in-memory) | — | @gramio/prompt, @puregram/prompt |
 | **`@yaebal/files`** ✅ | `ctx.files.info/url/download` + ленивый `FileDownload` (bytes/text/json/blob/stream/toFile), стратегии для local Bot API server (disk/rewrite/url), standalone `createFiles(api)`. Upload — в ядре через `MediaSource` | — | @gramio/files, grammY files |
 | **`@yaebal/file-id`** ✅ | парсер/сериализатор `file_id`/`file_unique_id` (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
@@ -218,7 +218,7 @@ core по-прежнему держит свой минимальный ручн
 | **`@yaebal/ratelimiter`** ✅ | анти-спам входящих: дропает апдейты сверх лимита за окно (per-user) | — | grammY ratelimiter, @gramio/rate-limiter |
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` в именах | — | @gramio/autoload + storona |
 | **`@yaebal/toml`** ✅ | декларативные toml маршруты: commands, hears, message filters, callback queries и handler registry | — | config-driven routing |
-| **`@yaebal/listai`** | пагинация | `keyboard` | @gramio/pagination |
+| **`@yaebal/pagination`** ✅ | пагинация: array/lazy источники (`offset/limit` + опц. `count`), кнопки-элементы с `onSelect`, typed payload, `view`/`edit`/`button`, ownership-фильтр, обработка not-modified/48h/forged data | `keyboard`, `callback-data` | @gramio/pagination |
 | **`@yaebal/narezka`** | резать длинные сообщения на части | — | @gramio/split |
 | **`@yaebal/onboarding`** ✅ | onboarding — декларативные туториалы, `ctx.onboarding.<id>` | `keyboard` | @gramio/onboarding |
 | **`@yaebal/broadcast`** ✅ | typed broadcast jobs: storage adapter, worker, retry, rate limit, skipped recipients, progress, pause/resume/cancel, events | `core`, `types` | native ops plugin |
@@ -334,7 +334,7 @@ bot.chatType("private", h)
 - доспроектировать `Filtered` маппинг под частые queries + shortcut-роутеры (`command`/`hears`/`callbackQuery`)
 
 **M1 — фундамент плагинов**
-- ✅ `session` (session) — `MemoryStorage` внутри; `sklad` отложен до первого персистентного адаптера
+- ✅ `session` (session) — storage-контракт и `MemoryStorage` выделены в ✅ `sklad` (memory/redis/sqlite/cloudflare kv/file), session ре-экспортирует их для обратной совместимости
 - ✅ `keyboard` (keyboard builder) + `callback-data` (typed callback_data, `.pattern` интегрируется с `bot.callbackQuery`)
 - `again` (на `api.onError`) — заодно проверка, что монорепа тащит второй пакет
 - `keyboard` + `callback-data`
@@ -345,7 +345,7 @@ bot.chatType("private", h)
 
 **M3 — мягкие зависимости контекста**
 - ✅ `i18n` → оживляет `useTranslation` (per-chat локаль, fallback, `{placeholder}`-интерполяция)
-- ✅ `scenes` (step-визарды, `ctx.scene.enter/next/leave`) + ✅ `prompt` (`ctx.prompt`, callback-style). Оба не блокируют sequential-loop (в отличие от await-prompt — он требовал бы конкурентного диспатча)
+- ✅ `scenes` (durable-визарды: firstTime-шаги, typed state/params, `ask()`, навигация, sub-сцены, passthrough/passCommands, ttl) + ✅ `prompt` (`ctx.prompt`, callback-style). Оба не блокируют sequential-loop (в отличие от await-prompt — он требовал бы конкурентного диспатча)
 
 **M4 — инфра по запросу (YAGNI до факта)**
 - ✅ `router` · `throttle` · `files` (+ ядро `api.fileUrl`) · `ratelimiter` · `broadcast`

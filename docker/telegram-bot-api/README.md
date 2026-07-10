@@ -25,18 +25,18 @@ docker compose -f docker/telegram-bot-api/compose.yml up -d
 
 ## environment
 
-| variable | default | maps to |
-| --- | --- | --- |
-| `TELEGRAM_API_ID` | required | read by the server itself ([my.telegram.org](https://my.telegram.org)) |
-| `TELEGRAM_API_HASH` | required | read by the server itself |
-| `TELEGRAM_API_ID_FILE` / `TELEGRAM_API_HASH_FILE` | — | read the value from a file (docker/k8s secrets) |
-| `TELEGRAM_LOCAL` | off | `--local` |
-| `TELEGRAM_HTTP_PORT` | `8081` | `--http-port` |
-| `TELEGRAM_STAT_PORT` | `8082` | `--http-stat-port` (always on; used by the healthcheck) |
-| `TELEGRAM_WORK_DIR` | `/var/lib/telegram-bot-api` | `--dir` |
-| `TELEGRAM_TEMP_DIR` | `/tmp/telegram-bot-api` | `--temp-dir` |
-| `TELEGRAM_MAX_WEBHOOK_CONNECTIONS` | server default | `--max-webhook-connections` |
-| `TELEGRAM_VERBOSITY` | server default | `--verbosity` |
+| variable                                          | default                     | maps to                                                                |
+|:--------------------------------------------------|:----------------------------|:-----------------------------------------------------------------------|
+| `TELEGRAM_API_ID`                                 | required                    | read by the server itself ([my.telegram.org](https://my.telegram.org)) |
+| `TELEGRAM_API_HASH`                               | required                    | read by the server itself                                              |
+| `TELEGRAM_API_ID_FILE` / `TELEGRAM_API_HASH_FILE` | —                           | read the value from a file (docker/k8s secrets)                        |
+| `TELEGRAM_LOCAL`                                  | off                         | `--local`                                                              |
+| `TELEGRAM_HTTP_PORT`                              | `8081`                      | `--http-port`                                                          |
+| `TELEGRAM_STAT_PORT`                              | `8082`                      | `--http-stat-port` (always on; used by the healthcheck)                |
+| `TELEGRAM_WORK_DIR`                               | `/var/lib/telegram-bot-api` | `--dir`                                                                |
+| `TELEGRAM_TEMP_DIR`                               | `/tmp/telegram-bot-api`     | `--temp-dir`                                                           |
+| `TELEGRAM_MAX_WEBHOOK_CONNECTIONS`                | server default              | `--max-webhook-connections`                                            |
+| `TELEGRAM_VERBOSITY`                              | server default              | `--verbosity`                                                          |
 
 any extra container args are passed straight to the `telegram-bot-api` binary:
 

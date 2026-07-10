@@ -73,6 +73,8 @@ export function renderKeyboard(
 			} else {
 				kb.switchInline(b.label, b.switchInline);
 			}
+			if (b.style) kb.style(b.style);
+			if (b.icon) kb.icon(b.icon);
 		}
 		kb.row();
 	}

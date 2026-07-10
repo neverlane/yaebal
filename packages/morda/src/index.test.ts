@@ -5,6 +5,7 @@ import { MemoryStorage } from "@yaebal/sklad";
 import {
 	back,
 	button,
+	copy,
 	createDialogs,
 	type DialogDef,
 	type DialogState,
@@ -157,6 +158,37 @@ test("start → push(settings) → back navigates and edits in place", async () 
 		(await storage.get("dlg:1"))?.stack.map((f) => f.w),
 		["main"],
 	);
+});
+
+test("button icon/style are forwarded to the inline keyboard", async () => {
+	const { api, of } = fakeApi();
+	const storage = new MemoryStorage<DialogState>();
+	const styled = {
+		main: () => ({
+			text: "main",
+			keyboard: [
+				[button("ping", { id: "ping", style: "primary", icon: "111" })],
+				[
+					copy("copy", "text", { style: "danger" }),
+					url("site", "https://yaebal.mom", { icon: "222" }),
+				],
+			],
+		}),
+	} satisfies DialogDef;
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(styled, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+	const kb = of("sendMessage")[0]?.params.reply_markup.inline_keyboard;
+
+	assert.equal(kb[0][0].style, "primary");
+	assert.equal(kb[0][0].icon_custom_emoji_id, "111");
+	assert.equal(kb[1][0].style, "danger");
+	assert.equal(kb[1][0].icon_custom_emoji_id, undefined);
+	assert.equal(kb[1][1].icon_custom_emoji_id, "222");
 });
 
 test("onClick runs without navigating; identical re-render is skipped", async () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { InlineKeyboard, Keyboard } from "./index.js";
+import { InlineKeyboard, Keyboard, parseButtonDecoration } from "./index.js";
 
 test("inline keyboard builds rows", () => {
 	const kb = new InlineKeyboard()
@@ -93,6 +93,41 @@ test("style and icon modify the most recently added inline button", () => {
 			],
 		],
 	});
+});
+
+test("the deco param decorates a button inline: object and string shorthand", () => {
+	const kb = new InlineKeyboard()
+		.text("A", "a", { style: "primary", icon: "111" })
+		.text("B", "b", "222:danger")
+		.url("C", "https://yaebal.mom", "success")
+		.webApp("D", "https://yaebal.mom", "333")
+		.build();
+
+	assert.deepEqual(kb, {
+		inline_keyboard: [
+			[
+				{ text: "A", callback_data: "a", style: "primary", icon_custom_emoji_id: "111" },
+				{ text: "B", callback_data: "b", style: "danger", icon_custom_emoji_id: "222" },
+				{ text: "C", url: "https://yaebal.mom", style: "success" },
+				{ text: "D", web_app: { url: "https://yaebal.mom" }, icon_custom_emoji_id: "333" },
+			],
+		],
+	});
+});
+
+test("parseButtonDecoration reads objects and string shorthands", () => {
+	assert.deepEqual(parseButtonDecoration({ style: "primary", icon: "1" }), {
+		style: "primary",
+		icon: "1",
+	});
+	assert.deepEqual(parseButtonDecoration("5368324170671202286:primary"), {
+		style: "primary",
+		icon: "5368324170671202286",
+	});
+	assert.deepEqual(parseButtonDecoration("danger"), { style: "danger" });
+	assert.deepEqual(parseButtonDecoration("5368324170671202286"), { icon: "5368324170671202286" });
+	assert.deepEqual(parseButtonDecoration(":success"), { style: "success", icon: undefined });
+	assert.throws(() => parseButtonDecoration("1:bogus"), /invalid button style/);
 });
 
 test("style() throws when no button was added yet", () => {

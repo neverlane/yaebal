@@ -1,5 +1,8 @@
 import type { Context, FormatResult, MediaSource } from "@yaebal/core";
+import type { ButtonStyle } from "@yaebal/keyboard";
 import type { StorageAdapter } from "@yaebal/sklad";
+
+export type { ButtonStyle } from "@yaebal/keyboard";
 
 /** context inside a dialog: the base context plus the navigation control. */
 export type DialogContext<W extends string = string> = Context & { dialog: DialogControl<W> };
@@ -7,33 +10,41 @@ export type DialogContext<W extends string = string> = Context & { dialog: Dialo
 /** message text: plain string or a `format`/`fmt` result (entities flow to the wire). */
 export type DialogText = string | FormatResult;
 
+/** icon + style shared by every dialog button, forwarded to the inline keyboard. */
+export interface ButtonDecoration {
+	/** custom emoji id shown before the label (`icon_custom_emoji_id`). */
+	icon?: string;
+	/** button style: `"danger" | "success" | "primary"`. */
+	style?: ButtonStyle;
+}
+
 /** a tappable button routed back into the dialog by stable id. */
-export interface CallbackButton {
+export interface CallbackButton extends ButtonDecoration {
 	id: string;
 	label: string;
 	onClick?: (ctx: DialogContext) => unknown;
 }
 
 /** opens a url. */
-export interface UrlButton {
+export interface UrlButton extends ButtonDecoration {
 	label: string;
 	url: string;
 }
 
 /** opens a web app. */
-export interface WebAppButton {
+export interface WebAppButton extends ButtonDecoration {
 	label: string;
 	webApp: string;
 }
 
 /** copies text to the clipboard. */
-export interface CopyButton {
+export interface CopyButton extends ButtonDecoration {
 	label: string;
 	copy: string;
 }
 
 /** starts an inline query in another chat (or the current one). */
-export interface SwitchInlineButton {
+export interface SwitchInlineButton extends ButtonDecoration {
 	label: string;
 	switchInline: string;
 	currentChat?: boolean;

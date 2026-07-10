@@ -305,6 +305,14 @@ await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 		<tr><td><code>switchInline(label, query?, &#123; currentChat? &#125;)</code></td><td>starts an inline query</td></tr>
 	</tbody>
 </table>
+<p>
+	every helper takes optional <code>icon</code> / <code>style</code> — a custom-emoji id and one of
+	<code>"danger" | "success" | "primary"</code> — forwarded to the inline keyboard. pass them in the
+	options object for <code>button</code> / <code>switchInline</code>, or as a trailing
+	<code>{'{ icon, style }'}</code> argument on the others, e.g.
+	<code>button("delete", &#123; id: "del", style: "danger" &#125;)</code> or
+	<code>url("site", "https://…", &#123; icon: "5368324170671202286" &#125;)</code>.
+</p>
 
 <h2>dialogs() options</h2>
 <Code code={options} title="options.ts" />

@@ -92,6 +92,37 @@ bot.hears("reset", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/count" }, { user: "/count" }, { user: "reset" }, { user: "/count" }],
 	},
+	"session-v2": {
+		title: "sessions: per-user keys, ttl fields, clearSession",
+		code: `import { clearSession, createBot, keyBy, session, ttl, unwrapTtl, type TtlValue } from "yaebal";
+
+type Profile = { visits: number; otp?: TtlValue<string> };
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  // one session per *user* (covers groups and inline queries alike)
+  .install(session({
+    getKey: keyBy.user,
+    initial: (): Profile => ({ visits: 0 }),
+  }));
+
+bot.command("me", async (ctx) => {
+  ctx.session.visits += 1; // unchanged sessions are never written — this one is
+  await ctx.reply(\`visit #\${ctx.session.visits}\`);
+});
+
+bot.command("otp", async (ctx) => {
+  ctx.session.otp = ttl("1234", 60_000); // self-expiring field
+  await ctx.reply(\`code \${unwrapTtl(ctx.session.otp)} — valid for a minute\`);
+});
+
+bot.command("reset", async (ctx) => {
+  await clearSession(ctx); // delete from storage + fresh initial()
+  await ctx.reply("state wiped");
+});
+
+bot.start();`,
+		steps: [{ user: "/me" }, { user: "/me" }, { user: "/otp" }, { user: "/reset" }, { user: "/me" }],
+	},
 	"fmt-html": {
 		title: "safe html formatting",
 		code: `import { createBot, html, md } from "yaebal";
@@ -108,6 +139,24 @@ bot.command("md", (ctx) =>
 
 bot.start();`,
 		steps: [{ user: "/start" }, { user: "/md" }],
+	},
+	"split-long": {
+		title: "long messages, split",
+		code: `import { bold, createBot, format } from "yaebal";
+import { splitter } from "@yaebal/split";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.install(splitter({ max: 160 })); // tiny limit so the split is visible here
+
+bot.command("report", (ctx) => {
+  const lines = Array.from({ length: 8 }, (_, i) => \`shard \${i}: ok, queue clear, cache warm\`);
+  // entities survive the split — the heading stays bold in part one
+  return ctx.replyLong(format\`\${bold("nightly report")}\\n\${lines.join("\\n")}\`);
+});
+
+bot.start();`,
+		steps: [{ user: "/report" }],
 	},
 	"reply-keyboard": {
 		title: "reply keyboard",
@@ -365,6 +414,7 @@ const releases = pagination({
   pageSize: 3,
   source: () => changelog,
   line: (entry) => entry,
+  counter: true, // a "N/M" button between ◀ ▶ — pressing it refreshes the page
 });
 
 const bot = createBot(process.env.BOT_TOKEN!)
@@ -374,6 +424,101 @@ bot.command("releases", (ctx) => releases.send(ctx));
 
 bot.start();`,
 		steps: [{ user: "/releases" }, { click: "pg_rel:1", label: "▶" }],
+	},
+	"pagination-select": {
+		title: "items as buttons",
+		code: `import { createBot } from "yaebal";
+import { pagination } from "@yaebal/pagination";
+
+const products = [
+  { id: 11, name: "neon hoodie" },
+  { id: 12, name: "field guide" },
+  { id: 13, name: "keychain" },
+  { id: 14, name: "plugin pass" },
+];
+
+const shop = pagination({
+  id: "shop",
+  pageSize: 2,
+  columns: 2,
+  source: () => products,
+  item: (p) => ({ label: p.name, id: p.id }),
+  onSelect: (ctx, sel) =>
+    ctx.send(\`you picked #\${sel.id} (from page \${sel.page + 1})\`),
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(shop.plugin());
+
+bot.command("shop", (ctx) => shop.send(ctx));
+
+bot.start();`,
+		steps: [
+			{ user: "/shop" },
+			{ click: "pgs_shop:0:2:b", label: "neon hoodie" },
+			{ click: "pg_shop:1", label: "▶" },
+		],
+	},
+	"scenes-wizard": {
+		title: "a typed wizard with validation",
+		code: `import { createBot, type Context } from "yaebal";
+import { ask, defineScene, scenes } from "@yaebal/scenes";
+
+const register = defineScene<Context, { name: string; age: number }>({
+  steps: [
+    ask("name", { question: "what is your name?" }),
+    ask("age", {
+      question: (ctx) => \`nice, \${ctx.scene.state.name}! how old are you?\`,
+      parse: (text) => (/^\\d+$/.test(text) ? Number(text) : undefined),
+      invalid: "age is a number — try again",
+    }),
+  ],
+  onLeave: (ctx, info) =>
+    info.reason === "finish" &&
+    ctx.send(\`saved \${ctx.scene.state.name}, \${ctx.scene.state.age} ✨\`),
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(scenes({ register }));
+
+bot.command("register", (ctx) => ctx.scene.enter("register"));
+
+bot.start();`,
+		steps: [{ user: "/register" }, { user: "linia" }, { user: "twenty" }, { user: "21" }],
+	},
+	"scenes-buttons": {
+		title: "wizard steps over inline buttons",
+		code: `import { createBot, type Context } from "yaebal";
+import { defineScene, scenes } from "@yaebal/scenes";
+
+const quest = defineScene<Context, { klass?: string }>({
+  steps: [
+    {
+      on: ["callback_query:data"], // this step consumes button presses, not text
+      handler: async (ctx) => {
+        if (ctx.scene.firstTime)
+          return ctx.send("choose a class:", {
+            reply_markup: { inline_keyboard: [[
+              { text: "builder", callback_data: "class:builder" },
+              { text: "mage", callback_data: "class:mage" },
+            ]] },
+          });
+        ctx.scene.state.klass = ctx.update.callback_query?.data?.split(":")[1];
+        return ctx.scene.next();
+      },
+    },
+  ],
+  onLeave: (ctx, info) =>
+    info.reason === "finish" && ctx.send(\`class locked: \${ctx.scene.state.klass}\`),
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(scenes({ quest }));
+
+bot.command("quest", (ctx) => ctx.scene.enter("quest"));
+
+bot.start();`,
+		steps: [{ user: "/quest" }, { click: "class:mage", label: "mage" }],
 	},
 	"webhook-ready": {
 		title: "webhook entrypoint",

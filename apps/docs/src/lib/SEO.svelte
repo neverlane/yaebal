@@ -276,7 +276,7 @@
 		"/docs/plugins/pagination": {
 			title: "@yaebal/pagination — paginated telegram bot lists",
 			description:
-				"build paginated telegram bot lists with @yaebal/pagination, inline prev/next controls, page state, and type-safe callbacks.",
+				"build paginated telegram bot lists with @yaebal/pagination: lazy data sources, item buttons with onSelect, typed payloads, and production-grade edit handling.",
 		},
 		"/docs/plugins/panel": {
 			title: "@yaebal/panel — operator panel for telegram bots",
@@ -314,9 +314,14 @@
 				"build multi-step yaebal bot wizards with scenes, typed steps, sessions, validation, navigation, cancellation, and resumable state.",
 		},
 		"/docs/plugins/session": {
-			title: "@yaebal/session — typed per-chat telegram bot state",
+			title: "@yaebal/session — typed telegram bot sessions",
 			description:
-				"store typed yaebal session state per chat, user, or custom key with pluggable storage, initial values, and context-safe access.",
+				"typed yaebal session state per chat, user or custom key: dirty-checked saves, lazy loading, multiple sessions, ttl fields, schema migrations, and any sklad storage adapter.",
+		},
+		"/docs/plugins/sklad": {
+			title: "@yaebal/sklad — storage adapters for telegram bots",
+			description:
+				"zero-dependency storage adapters for yaebal state: memory with ttl and lru, redis, sqlite, cloudflare kv, and json file — one interface for session, scenes, and friends.",
 		},
 		"/docs/plugins/split": {
 			title: "@yaebal/split — split long telegram messages",

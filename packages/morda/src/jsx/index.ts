@@ -157,9 +157,13 @@ export function useEffect(fn: () => unknown, deps?: unknown[]): void {
 	const changed = !ran || slot.d === null || want === null || !depsEqual(slot.d, want);
 
 	if (changed) {
+		// mark at schedule time, not after the run: the engine persists the state between
+		// render and onCommit, so a marker written post-run only survives reference-sharing
+		// storages — with redis/sqlite (or a cloning memory store) the effect would re-fire
+		// on every update. cost: an effect that throws won't re-run (at-most-once).
+		rf.hooks[i] = { d: want };
 		frame.pending.push(async () => {
 			await fn();
-			rf.hooks[i] = { d: want };
 		});
 	}
 }

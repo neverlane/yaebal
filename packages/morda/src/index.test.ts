@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { bold, Composer, Context, format, type Middleware } from "@yaebal/core";
-import { MemoryStorage } from "@yaebal/session";
+import { MemoryStorage } from "@yaebal/sklad";
 import {
 	back,
 	button,

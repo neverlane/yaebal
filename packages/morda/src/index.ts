@@ -1,6 +1,6 @@
 import { callbackData } from "@yaebal/callback-data";
 import { Context, type Plugin } from "@yaebal/core";
-import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
+import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 import { type ApiLike, deliverView, removeMessage } from "./deliver.js";
 import { KeyedLock, MAX_COMMIT_PASSES, MordaError, shortId } from "./internal.js";
 import type {
@@ -514,7 +514,9 @@ function buildEngine(def: DialogDef, options: DialogsOptions): Engine {
 		order,
 		index,
 		cd: makeCd(prefix),
-		storage: options.storage ?? new MemoryStorage<DialogState>(),
+		// clone: false — the engine relies on reference identity of the in-flight DialogState
+		// (jsx hooks stash per-instance bookkeeping in it between reads within one update)
+		storage: options.storage ?? new MemoryStorage<DialogState>({ clone: false }),
 		lock: new KeyedLock(),
 		prefix,
 		getKey: options.getKey ?? defaultGetKey,

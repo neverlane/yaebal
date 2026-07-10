@@ -15,7 +15,7 @@
 		{ "path": "../core" },
 		{ "path": "../keyboard" },
 		{ "path": "../callback-data" },
-		{ "path": "../session" }
+		{ "path": "../sklad" }
 	],
 	"include": ["src/**/*.ts", "src/**/*.tsx"]
 }

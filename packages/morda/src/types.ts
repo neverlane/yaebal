@@ -1,5 +1,5 @@
 import type { Context, FormatResult, MediaSource } from "@yaebal/core";
-import type { StorageAdapter } from "@yaebal/session";
+import type { StorageAdapter } from "@yaebal/sklad";
 
 /** context inside a dialog: the base context plus the navigation control. */
 export type DialogContext<W extends string = string> = Context & { dialog: DialogControl<W> };

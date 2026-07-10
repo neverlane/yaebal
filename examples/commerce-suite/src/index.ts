@@ -89,8 +89,16 @@ const catalog = pagination<Product>({
 	id: "shop",
 	pageSize: 4,
 	source: () => products,
-	header: (page, pages) => `catalog page ${page + 1}/${pages}`,
+	header: (info) => `catalog page ${info.page + 1}/${info.pages}`,
 	line: (item) => `#${item.id} ${item.name} - $${item.price} (${item.tag})`,
+	// each product is also a tappable button — selecting opens its deal card
+	item: (p) => ({ label: `#${p.id} ${p.name}`, id: p.id }),
+	onSelect: (ctx, sel) =>
+		sendDeal(
+			ctx,
+			products.find((p) => p.id === sel.id),
+		),
+	columns: 2,
 });
 
 const bot = createBot(token)

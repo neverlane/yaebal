@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { type Api, type Context, createApi, media } from "@yaebal/core";
-import { MemoryStorage } from "@yaebal/session";
+import { MemoryStorage } from "@yaebal/sklad";
 import { withFetch } from "@yaebal/test";
 import { type MediaCacheEvent, mediaCache } from "./index.js";
 

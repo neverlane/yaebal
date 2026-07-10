@@ -60,7 +60,7 @@ bot.install(i18n({
 }));`;
 
 	const persistStorage = `import { i18n } from "@yaebal/i18n";
-import { type StorageAdapter } from "@yaebal/session";
+import { type StorageAdapter } from "@yaebal/sklad";
 
 // any StorageAdapter<string> keeps locale across restarts
 class RedisLocaleStorage implements StorageAdapter<string> {
@@ -324,7 +324,7 @@ await user.sendCommand("start");
 <h2>persistent storage</h2>
 <p>
 	the default <code>MemoryStorage</code> is lost on restart. pass any
-	<code>StorageAdapter&lt;string&gt;</code> (same interface as <code>@yaebal/session</code>) to
+	<code>StorageAdapter&lt;string&gt;</code> (the <code>@yaebal/sklad</code> contract) to
 	persist locales across restarts. a stored value that no longer matches a configured locale is
 	ignored instead of poisoning the chat.
 </p>

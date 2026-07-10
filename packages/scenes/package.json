@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/scenes",
-	"version": "0.0.3",
-	"description": "yaebal scenes plugin — step-by-step wizards over multiple messages.",
+	"version": "0.1.0",
+	"description": "yaebal scenes plugin — durable step-by-step wizards: typed state, step navigation, sub-scenes, ask() validation, passthrough routing and ttl.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -19,7 +19,7 @@
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*",
-		"@yaebal/session": "workspace:*"
+		"@yaebal/sklad": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",

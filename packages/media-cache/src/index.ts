@@ -8,7 +8,7 @@ import {
 	media,
 	TelegramError,
 } from "@yaebal/core";
-import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
+import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 
 /** a cache observation — wire it to metrics/logging via {@link MediaCacheOptions.onEvent}. */
 export type MediaCacheEvent =

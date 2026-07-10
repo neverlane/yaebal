@@ -1,8 +1,8 @@
 import { conversation, createConversation } from "@yaebal/conversation";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
-import { type SceneDef, scenes } from "@yaebal/scenes";
-import { createBot, session } from "yaebal";
+import { ask, defineScene, scenes } from "@yaebal/scenes";
+import { type Context, createBot, session } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -38,30 +38,38 @@ const support = createConversation("support", async (cv, ctx) => {
 	);
 });
 
-const questScene: SceneDef = {
-	enter: (ctx) => ctx.reply("quest wizard: what is your name? send /cancel to leave."),
+// answers collect in the typed ctx.scene.state bag (no external map needed) and
+// land in ctx.session only on finish. the def's context requires the session
+// plugin, so installing scenes before session would be a compile error. a global
+// /cancel keeps working mid-wizard — commands bypass active scenes by default.
+const questScene = defineScene<
+	Context & { session: Profile },
+	{ name: string; klass: string; goal: string }
+>({
 	steps: [
-		(ctx) => {
-			if (ctx.text === "/cancel")
-				return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
-			getProfile(ctx.chat?.id).name = ctx.text;
-			ctx.scene.next();
-			return ctx.reply(`nice, ${ctx.text}. choose a class: builder, mage, runner.`);
-		},
-		(ctx) => {
-			if (ctx.text === "/cancel")
-				return ctx.scene.leave().then(() => ctx.reply("quest cancelled."));
-			getProfile(ctx.chat?.id).klass = ctx.text;
-			ctx.scene.next();
-			return ctx.reply(`class locked: ${ctx.text}. what is your launch goal?`);
-		},
-		(ctx) => {
-			getProfile(ctx.chat?.id).goal = ctx.text;
-			ctx.scene.leave();
-			return ctx.reply(`quest saved: ${ctx.text}. open /profile to see the current state.`);
-		},
+		ask("name", { question: "quest wizard: what is your name? send /cancel to leave." }),
+		ask("klass", {
+			question: (ctx) => `nice, ${ctx.scene.state.name}. choose a class: builder, mage, runner.`,
+			parse: (text) => {
+				const klass = text.trim().toLowerCase();
+				return ["builder", "mage", "runner"].includes(klass) ? klass : undefined;
+			},
+			invalid: "builder, mage or runner — pick one.",
+		}),
+		ask("goal", {
+			question: (ctx) => `class locked: ${ctx.scene.state.klass}. what is your launch goal?`,
+		}),
 	],
-};
+	onLeave: async (ctx, info) => {
+		if (info.cancelled) return ctx.reply("quest cancelled.");
+		if (info.reason !== "finish") return;
+
+		Object.assign(ctx.session, ctx.scene.state);
+		return ctx.reply(
+			`quest saved: ${ctx.scene.state.goal}. open /profile to see the current state.`,
+		);
+	},
+});
 
 const dialogsByChat = new Map<number, Profile>();
 
@@ -129,7 +137,8 @@ const bot = createBot(token)
 	)
 	.command("profile", (ctx) => ctx.reply(profileLine(ctx.session)))
 	.command("cancel", async (ctx) => {
-		if (ctx.scene.current) await ctx.scene.leave();
+		// reachable mid-wizard: commands pass through active scenes by default
+		if (ctx.scene.active) return ctx.scene.leave({ cancelled: true });
 		if (ctx.conversation.active()) ctx.conversation.leave();
 		return ctx.reply("active flow cancelled.");
 	})

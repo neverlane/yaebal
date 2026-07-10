@@ -1,5 +1,5 @@
 import type { Context, Plugin } from "@yaebal/core";
-import { MemoryStorage, type StorageAdapter } from "@yaebal/session";
+import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 
 // ————————————————————————— dictionary values —————————————————————————
 

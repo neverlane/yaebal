@@ -39,6 +39,8 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [broadcast](./broadcast/) | `@yaebal/example-broadcast` | typed broadcast jobs, pause, resume, cancel, retry, progress | `pnpm --filter @yaebal/example-broadcast dev` |
 | [keyboard](./keyboard/) | `@yaebal/example-keyboard` | inline and reply keyboard builders, every button type, request user/chat/managed bot | `pnpm --filter @yaebal/example-keyboard dev` |
 | [commands](./commands/) | `@yaebal/example-commands` | typed command registry: localized menus, scopes, aliases, hidden commands, diff-based sync | `pnpm --filter @yaebal/example-commands dev` |
+| [pagination](./pagination/) | `@yaebal/example-pagination` | lazy sources (`count` + limit+1 probing), item buttons with `onSelect`, typed payload, `button()` menu morphing and back-navigation, ownership filter | `pnpm --filter @yaebal/example-pagination dev` |
+| [session](./session/) | `@yaebal/example-session` | session v2: dirty-checked saves, file storage, two independent sessions (`key` + `keyBy.user`), `ttl()` fields, `clearSession`, migrations | `pnpm --filter @yaebal/example-session dev` |
 | [simple](./simple/) | `@yaebal/example-simple` | toml route config plus typescript handlers | `pnpm --filter @yaebal/example-simple dev` |
 | [onboarding](./onboarding/) | `@yaebal/example-onboarding` | first-run product tour, force restart, dismiss, opt-out | `pnpm --filter @yaebal/example-onboarding dev` |
 | [rich-messages](./rich-messages/) | `@yaebal/example-rich-messages` | rich blocks, markdown/html builders, fake streaming draft, rich message readback | `pnpm --filter @yaebal/example-rich-messages dev` |
@@ -46,7 +48,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [commerce-suite](./commerce-suite/) | `@yaebal/example-commerce-suite` | shop bot with session cart, i18n, pagination, commands, callback-data, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
 | [dialog-quest](./dialog-quest/) | `@yaebal/example-dialog-quest` | morda cockpit, scene wizard, prompt, conversation, session profile | `pnpm --filter @yaebal/example-dialog-quest dev` |
 | [morda-jsx](./morda-jsx/) | `@yaebal/example-morda-jsx` | jsx screens with hooks: persisted `useState`/`useEffect`, `useDialogData`, widgets (Toggle/Select/Counter/Pagination), `onText` input | `pnpm --filter @yaebal/example-morda-jsx dev` |
-| [media-studio](./media-studio/) | `@yaebal/example-media-studio` | albums, file metadata + links, file_id introspection, media cache, svg previews, long message splitting | `pnpm --filter @yaebal/example-media-studio dev` |
+| [media-studio](./media-studio/) | `@yaebal/example-media-studio` | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware long message splitting + caption strategy | `pnpm --filter @yaebal/example-media-studio dev` |
 | [modular-router](./modular-router/) | `@yaebal/example-modular-router` | file-based routes from `routes/commands` and `routes/on` | `pnpm --filter @yaebal/example-modular-router dev` |
 | [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | fetch webhook handler, local node adapter, `setWebhook`, secret token | `pnpm --filter @yaebal/example-webhook-edge dev` |
 | [runner-workers](./runner-workers/) | `@yaebal/example-runner-workers` | concurrent polling and worker thread offload | `pnpm --filter @yaebal/example-runner-workers dev` |
@@ -75,7 +77,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/media-group`   | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/morda`         | `basic`, `dialog-quest`, `morda-jsx`                                                   | package tests plus example smoke               |
 | `@yaebal/onboarding`    | `onboarding`                                                                           | package tests plus example smoke               |
-| `@yaebal/pagination`    | `commerce-suite`                                                                       | package tests plus example smoke               |
+| `@yaebal/pagination`    | `pagination`, `commerce-suite`                                                         | package tests plus example smoke               |
 | `@yaebal/panel`         | `panel`                                                                                | package tests plus example smoke               |
 | `@yaebal/preview`       | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/prompt`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
@@ -84,7 +86,8 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/router`        | `modular-router`                                                                       | package tests plus example smoke               |
 | `@yaebal/runner`        | `runner-workers`                                                                       | package tests plus example smoke               |
 | `@yaebal/scenes`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
-| `@yaebal/session`       | `basic`, `commands`, `commerce-suite`, `dialog-quest`, `testing-lab`                   | package tests plus actor session assertions    |
+| `@yaebal/session`       | `session`, `basic`, `commands`, `commerce-suite`, `dialog-quest`, `testing-lab`        | package tests plus actor session assertions    |
+| `@yaebal/sklad`         | `session` (file storage); the default memory store wherever sessions appear           | package tests plus example smoke               |
 | `@yaebal/split`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/test`          | `testing-lab`                                                                          | real `node:test` suite                         |
 | `@yaebal/throttle`      | `basic`, `throttle`                                                                    | package tests plus example smoke               |

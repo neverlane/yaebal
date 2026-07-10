@@ -27,7 +27,7 @@ telegram, so the commands below show up in the `/` picker.
 | command     | what it shows                                                        |
 |:------------|:---------------------------------------------------------------------|
 | `/start`    | shop intro with quick inline buttons                                 |
-| `/catalog`  | paginated product list edited in place                               |
+| `/catalog`  | paginated product list edited in place; tapping a product opens its deal card |
 | `/deal`     | featured product with typed add/remove buttons                       |
 | `/cart`     | current per-chat cart and total                                      |
 | `/checkout` | fake checkout summary                                                |

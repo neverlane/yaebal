@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, type Context } from "@yaebal/core";
-import { MemoryStorage } from "@yaebal/session";
+import { MemoryStorage } from "@yaebal/sklad";
 import { createTestEnv } from "@yaebal/test";
 import { createI18n, type Dict, i18n, type LocaleLike } from "./index.js";
 

@@ -51,7 +51,7 @@ await cache.keyFor(media.path("./logo.png"));     // "path:logo.png"
 await cache.keyFor(media.buffer(bytes));          // "sha256:…"`;
 
 	const storage = `const cache = mediaCache({
-  storage: myRedisStorage, // any StorageAdapter<string> from @yaebal/session
+  storage: myRedisStorage, // any StorageAdapter<string> from @yaebal/sklad
   scope: "my-bot",         // keys become "my-bot:path:…" — see multi-bot note below
 });`;
 
@@ -181,7 +181,7 @@ await withFetch(scriptedFetch, async () => {
 <h2>storage & multi-bot</h2>
 <p>
 	defaults to in-memory (<code>MemoryStorage</code>, lost on restart). pass any
-	<code>StorageAdapter&lt;string&gt;</code> from <code>@yaebal/session</code> to persist. set
+	<code>StorageAdapter&lt;string&gt;</code> from <code>@yaebal/sklad</code> to persist. set
 	<code>scope</code> when several bots share one storage — a <code>file_id</code> only works for
 	the bot that uploaded it.
 </p>

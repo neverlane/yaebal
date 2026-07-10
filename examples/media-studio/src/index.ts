@@ -4,7 +4,7 @@ import { mediaCache } from "@yaebal/media-cache";
 import { mediaGroup } from "@yaebal/media-group";
 import { renderChat } from "@yaebal/preview";
 import { splitter } from "@yaebal/split";
-import { createBot, media } from "yaebal";
+import { bold, createBot, format, media } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -39,7 +39,7 @@ bot
 		ctx.reply(
 			[
 				"media studio is ready.",
-				"try /poster, /cache, /preview, /long.",
+				"try /poster, /cache, /preview, /long, /story.",
 				"send a document to get a file link, or send an album to see media-group batching.",
 			].join("\n"),
 		),
@@ -92,7 +92,22 @@ bot
 				`line ${index + 1}: media job shard ${index % 7} ok, cache warm, album queue clear.`,
 		).join("\n");
 
-		return ctx.replyLong(report);
+		// the bold heading survives the split — entities are clipped per part
+		return ctx.replyLong(format`${bold("nightly media report")}\n${report}`, undefined, {
+			delayMs: 250,
+		});
+	})
+	.command("story", (ctx) => {
+		const description = Array.from(
+			{ length: 30 },
+			(_, index) => `chapter ${index + 1}: the pipeline hums, the cache never misses.`,
+		).join("\n");
+
+		// caption strategy: first part becomes the photo caption, the rest are messages
+		return ctx.sendPhotoLong(
+			media.url("https://picsum.photos/seed/yaebal-story/900/600"),
+			format`${bold("studio story")}\n${description}`,
+		);
 	})
 	.on("message:document", async (ctx) => {
 		if (!ctx.document) return;
@@ -132,6 +147,7 @@ bot
 					{ command: "cache", description: "show media cache" },
 					{ command: "preview", description: "send svg preview" },
 					{ command: "long", description: "split a long report" },
+					{ command: "story", description: "long caption via sendPhotoLong" },
 				],
 			})
 			.catch(() => {});

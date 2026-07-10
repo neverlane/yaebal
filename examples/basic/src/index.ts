@@ -1,7 +1,7 @@
 import { autoRetry } from "@yaebal/again";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
-import { type SceneDef, scenes } from "@yaebal/scenes";
+import { ask, defineScene, scenes } from "@yaebal/scenes";
 import { throttle } from "@yaebal/throttle";
 import {
 	and,
@@ -50,20 +50,22 @@ const locales = {
 	ru: { hello: "привет {who}! язык переключён на русский." },
 } as const;
 
-// a step-by-step wizard (scenes): name → age
-const wizard: SceneDef = {
-	enter: (ctx) => ctx.reply("what's your name?"),
+// a step-by-step wizard (scenes): name → age, with typed state and validation.
+// answers land in ctx.scene.state; invalid input re-asks; /help etc. still work
+// mid-wizard because commands bypass an active scene by default.
+const wizard = defineScene<Context, { name: string; age: number }>({
 	steps: [
-		(ctx) => {
-			ctx.scene.next();
-			return ctx.reply(`hi, ${ctx.text}! how old are you?`);
-		},
-		(ctx) => {
-			ctx.scene.leave();
-			return ctx.reply(`${ctx.text} — noted ✨`);
-		},
+		ask("name", { question: "what's your name?" }),
+		ask("age", {
+			question: (ctx) => `hi, ${ctx.scene.state.name}! how old are you?`,
+			parse: (text) => (/^\d+$/.test(text) ? Number(text) : undefined),
+			invalid: "age is a number — try again",
+		}),
 	],
-};
+	onLeave: (ctx, info) =>
+		info.reason === "finish" &&
+		ctx.reply(`${ctx.scene.state.name}, ${ctx.scene.state.age} — noted ✨`),
+});
 
 // a two-window dialog (morda): main ↔ settings, with stack navigation
 const menu: DialogDef = {

@@ -365,8 +365,11 @@ export function createPool<Tasks extends TaskDefinitions = AnyTasks>(
 	};
 
 	const reviveError = (msg: ErrMessage): unknown => {
-		const error = msg.error instanceof Error ? msg.error : new Error(String(msg.error));
-		if (msg.code === "UNKNOWN_TASK") return new UnknownTaskError(error.message);
+		const { name, message, stack } = msg.error;
+		if (msg.code === "UNKNOWN_TASK") return new UnknownTaskError(message);
+		const error = new Error(message);
+		if (name) error.name = name;
+		if (stack) error.stack = stack;
 		return error;
 	};
 

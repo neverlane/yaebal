@@ -5,6 +5,7 @@ import {
 	type OkMessage,
 	type ReadyMessage,
 	type RunMessage,
+	serializeError,
 	unwrapMove,
 } from "./protocol.js";
 import type { AnyTasks, TaskContext, TaskDefinitions, TaskHandlers } from "./types.js";
@@ -78,10 +79,7 @@ export function register<Tasks extends TaskDefinitions = AnyTasks>(
 }
 
 function respondError(port: MessagePort, id: number, error: unknown, code?: string): void {
-	// Error instances survive structured clone (name/message/stack); exotic values may not.
-	try {
-		port.postMessage({ yw: "err", id, error, code } satisfies ErrMessage);
-	} catch {
-		port.postMessage({ yw: "err", id, error: String(error), code } satisfies ErrMessage);
-	}
+	// flatten to plain fields — a live Error/DOMException can degrade to `[object Object]` when
+	// structured-cloned across the thread on some Node versions.
+	port.postMessage({ yw: "err", id, error: serializeError(error), code } satisfies ErrMessage);
 }

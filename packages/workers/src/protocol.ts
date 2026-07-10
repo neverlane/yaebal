@@ -30,13 +30,50 @@ export interface OkMessage {
 	result: unknown;
 }
 
+/**
+ * an error flattened to plain, always-cloneable fields. we never ship the live Error/DOMException
+ * across the thread: on Node 20 a DOMException (e.g. a DataCloneError) silently degrades to
+ * `[object Object]` through structured clone, losing name/message/stack. serialising by hand keeps
+ * the message intact on every supported Node.
+ */
+export interface SerializedError {
+	name: string;
+	message: string;
+	stack?: string;
+}
+
 export interface ErrMessage {
 	yw: "err";
 	id: number;
-	/** the thrown Error (structured clone keeps name/message/stack), or a string for exotic values. */
-	error: unknown;
+	/** the thrown error, flattened to always-cloneable fields — see {@link serializeError}. */
+	error: SerializedError;
 	/** machine-readable marker for protocol-level failures (e.g. "UNKNOWN_TASK"). */
 	code?: string;
+}
+
+/** flatten any thrown value into a cloneable {@link SerializedError}. */
+export function serializeError(value: unknown): SerializedError {
+	if (value instanceof Error || isErrorLike(value)) {
+		return {
+			name: String(value.name ?? "Error"),
+			message: String(value.message ?? ""),
+			stack: typeof value.stack === "string" ? value.stack : undefined,
+		};
+	}
+	return { name: "Error", message: String(value) };
+}
+
+/** covers DOMException and other host error objects that aren't `instanceof Error`. */
+function isErrorLike(
+	value: unknown,
+): value is { name?: unknown; message?: unknown; stack?: unknown } {
+	return (
+		typeof value === "object" &&
+		value !== null &&
+		"message" in value &&
+		"name" in value &&
+		typeof (value as { message?: unknown }).message === "string"
+	);
 }
 
 export type MainToWorker = RunMessage | AbortMessage;

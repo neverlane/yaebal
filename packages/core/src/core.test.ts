@@ -224,6 +224,185 @@ test("webhookCallback dispatches a POSTed update and guards method/secret", asyn
 	assert.equal(wrongSecret.status, 401);
 });
 
+test("webhookCallback enforces the body cap while streaming (spoofed/absent content-length)", async () => {
+	const seen: number[] = [];
+	const sink = { handleUpdate: async (u: { update_id: number }) => void seen.push(u.update_id) };
+	const handler = webhookCallback(sink as never, { maxBodyBytes: 1024 });
+
+	// 8 KiB body streamed with NO content-length header — must still be refused.
+	const big = JSON.stringify({ update_id: 1, junk: "x".repeat(8 * 1024) });
+	const stream = new ReadableStream<Uint8Array>({
+		start(controller) {
+			controller.enqueue(new TextEncoder().encode(big));
+			controller.close();
+		},
+	});
+	const oversize = await handler(
+		new Request("http://x/hook", { method: "POST", body: stream, duplex: "half" } as RequestInit),
+	);
+	assert.equal(oversize.status, 413);
+	assert.deepEqual(seen, []);
+
+	// spoofed tiny content-length can't sneak a big body past the streaming cap.
+	const spoofed = await handler(
+		new Request("http://x/hook", {
+			method: "POST",
+			headers: { "content-length": "5" },
+			body: big,
+		}),
+	);
+	assert.equal(spoofed.status, 413);
+	assert.deepEqual(seen, []);
+});
+
+test("webhookCallback rejects non-update JSON with 400", async () => {
+	const seen: unknown[] = [];
+	const sink = { handleUpdate: async (u: unknown) => void seen.push(u) };
+	const handler = webhookCallback(sink as never);
+
+	for (const bad of ["42", '"hi"', "null", "{}", "[]"]) {
+		const res = await handler(new Request("http://x/hook", { method: "POST", body: bad }));
+		assert.equal(res.status, 400, `body ${bad} should be 400`);
+	}
+	assert.deepEqual(seen, []);
+});
+
+test("webhookCallback honours path + fallback (health checks)", async () => {
+	const sink = { handleUpdate: async () => {} };
+	const handler = webhookCallback(sink as never, {
+		path: "/hook",
+		fallback: (req) =>
+			new Response(new URL(req.url).pathname === "/health" ? "up" : "?", { status: 200 }),
+	});
+
+	const health = await handler(new Request("http://x/health", { method: "GET" }));
+	assert.equal(health.status, 200);
+	assert.equal(await health.text(), "up");
+
+	const ok = await handler(
+		new Request("http://x/hook", { method: "POST", body: JSON.stringify({ update_id: 1 }) }),
+	);
+	assert.equal(ok.status, 200);
+});
+
+test("webhookCallback error policy: fail → 500, ack → 200", async () => {
+	const boom = {
+		handleUpdate: async () =>
+			void (() => {
+				throw new Error("boom");
+			})(),
+	};
+	const body = JSON.stringify({ update_id: 1 });
+
+	const fail = webhookCallback(boom as never, { onError: "fail" });
+	assert.equal((await fail(new Request("http://x/", { method: "POST", body }))).status, 500);
+
+	const ack = webhookCallback(boom as never, { onError: "ack" });
+	assert.equal((await ack(new Request("http://x/", { method: "POST", body }))).status, 200);
+});
+
+test("webhookCallback timeout policy acks a slow update and lets it finish via waitUntil", async () => {
+	let finished = false;
+	const slow = {
+		handleUpdate: async () => {
+			await new Promise((r) => setTimeout(r, 30));
+			finished = true;
+		},
+	};
+	const handler = webhookCallback(slow as never, { timeoutMs: 5 });
+
+	const kept: Promise<unknown>[] = [];
+	const res = await handler(
+		new Request("http://x/", { method: "POST", body: JSON.stringify({ update_id: 1 }) }),
+		{ waitUntil: (p) => kept.push(p) },
+	);
+
+	assert.equal(res.status, 200); // acked immediately
+	assert.equal(finished, false);
+	await Promise.all(kept);
+	assert.equal(finished, true); // background work survived via waitUntil
+});
+
+test("webhookCallback answers with the claimed api call when reply is enabled", async () => {
+	// botInfo skips init()'s getMe, so any fetch below is a leaked (unclaimed) reply.
+	const bot = new Bot("123:abc", {
+		botInfo: { id: 1, is_bot: true, first_name: "b" },
+	}).on("message", (ctx) => ctx.api.call("sendMessage", { chat_id: 1, text: "hi" }));
+	let networkCalls = 0;
+	const realFetch = globalThis.fetch;
+	// if the reply weren't claimed, the real client would try to fetch — count that.
+	globalThis.fetch = (async () => {
+		networkCalls++;
+		return new Response(JSON.stringify({ ok: true, result: true }));
+	}) as typeof fetch;
+
+	try {
+		const handler = webhookCallback(bot, { reply: true });
+		const res = await handler(
+			new Request("http://x/", {
+				method: "POST",
+				body: JSON.stringify({
+					update_id: 1,
+					message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "yo" },
+				}),
+			}),
+		);
+
+		assert.equal(res.headers.get("content-type"), "application/json");
+		assert.deepEqual(await res.json(), { method: "sendMessage", chat_id: 1, text: "hi" });
+		assert.equal(networkCalls, 0); // the call rode the response, not the network
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
+
+test("Bot.init() resolves getMe once and fills ctx.me under webhooks (/cmd@botname addressing)", async () => {
+	const bot = new Bot("123:abc");
+	let getMeCalls = 0;
+	(bot.api as unknown as { getMe: () => Promise<unknown> }).getMe = async () => {
+		getMeCalls++;
+		return { id: 42, is_bot: true, first_name: "T", username: "realbot" };
+	};
+
+	let firedFor = "";
+	let meUsername: string | undefined;
+	bot.command("start", (ctx) => {
+		firedFor = ctx.command;
+		meUsername = ctx.me?.username;
+	});
+
+	const handler = webhookCallback(bot);
+	const send = (text: string) => {
+		const commandLength = (text.split(" ")[0] ?? text).length;
+		return handler(
+			new Request("http://x/", {
+				method: "POST",
+				body: JSON.stringify({
+					update_id: Math.floor(Math.random() * 1e9),
+					message: {
+						message_id: 1,
+						date: 0,
+						chat: { id: 1, type: "group" },
+						text,
+						entities: [{ type: "bot_command", offset: 0, length: commandLength }],
+					},
+				}),
+			}),
+		);
+	};
+
+	await send("/start@realbot");
+	assert.equal(firedFor, "start");
+	assert.equal(meUsername, "realbot");
+
+	// addressed to a different bot — must NOT fire now that ctx.me is known.
+	firedFor = "";
+	await send("/start@otherbot");
+	assert.equal(firedFor, "");
+
+	assert.equal(getMeCalls, 1); // init cached across updates
+});
+
 test("Bot.handleUpdate runs the middleware chain (webhook entry)", async () => {
 	let seen = "";
 	const bot = new Bot("123:abc").on("message:text", (ctx) => {

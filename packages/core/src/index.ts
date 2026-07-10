@@ -61,4 +61,14 @@ export { applyFormatFields } from "./format-hook.js";
 export { isMediaSource, type MediaSource, type MediaStream, media } from "./media.js";
 export type * from "./telegram-types.js";
 export { updateNames } from "./telegram-types.js";
-export { type UpdateSink, type WebhookOptions, webhookCallback } from "./webhook.js";
+export {
+	assertSecretToken,
+	type HandleUpdateOptions,
+	MAX_BODY,
+	type UpdateSink,
+	type WebhookExecutionContext,
+	type WebhookHandler,
+	type WebhookOptions,
+	type WebhookReplyEnvelope,
+	webhookCallback,
+} from "./webhook.js";

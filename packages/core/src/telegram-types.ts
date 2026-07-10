@@ -17,6 +17,7 @@ export type {
 	ResponseParameters,
 	Update,
 	User,
+	WebhookInfo,
 } from "@yaebal/types";
 export { updateNames } from "@yaebal/types";
 

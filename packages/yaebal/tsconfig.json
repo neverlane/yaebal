@@ -13,6 +13,7 @@
 		{ "path": "../callback-data" },
 		{ "path": "../filters" },
 		{ "path": "../fmt" },
+		{ "path": "../sklad" },
 		{ "path": "../session" },
 		{ "path": "../i18n" },
 		{ "path": "../web" }

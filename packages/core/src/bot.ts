@@ -1,7 +1,8 @@
-import { type Api, createApi, type FileReader } from "./api.js";
+import { type Api, createApi, type FileReader, withReplyEnvelope } from "./api.js";
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
 import type { Update, UpdateName, User } from "./telegram-types.js";
+import type { HandleUpdateOptions } from "./webhook.js";
 
 export type BotPlugin<In extends Context = Context, Out extends object = Record<never, never>> = <
 	C extends In,
@@ -26,6 +27,12 @@ export interface BotOptions {
 	 * `me` is the bot's own account when known (long polling fills it after `getMe`).
 	 */
 	contextFactory?: (api: Api, update: Update, updateType: UpdateName, me?: User) => Context;
+	/**
+	 * the bot's own account, if already known — skips the `getMe` that `init()` /
+	 * `start()` would otherwise fire. worth passing on serverless webhooks to
+	 * shave a round trip off the cold start.
+	 */
+	botInfo?: User;
 }
 
 type StartHandler = (info: User) => unknown | Promise<unknown>;
@@ -71,18 +78,43 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		console.error(`[yaebal] getUpdates failed, retrying in ${POLL_RETRY_MS / 1000}s:`, error);
 	};
 	#handle?: Middleware<Context>;
+	#initPromise?: Promise<User>;
 
 	constructor(token: string, options: BotOptions = {}) {
 		super();
 		if (!token) throw new Error("Bot(token): token is required");
 
 		this.#options = options;
+		this.#info = options.botInfo;
 		this.api = createApi(token, { apiRoot: options.apiRoot, readFile: options.readFile });
 	}
 
-	/** bot account info, available after `start()`. */
+	/** bot account info, available after `init()` / `start()` (or via the `botInfo` option). */
 	get info(): User | undefined {
 		return this.#info;
+	}
+
+	/**
+	 * resolve the bot's own account via `getMe` — cached, concurrent calls
+	 * coalesce, and the `botInfo` option skips the request entirely. `start()`
+	 * runs this; webhook handlers run it lazily on the first update so
+	 * `ctx.me` and `/cmd@botname` addressing work without long polling.
+	 */
+	async init(): Promise<User> {
+		if (this.#info) return this.#info;
+
+		this.#initPromise ??= this.api.getMe().then(
+			(me) => {
+				this.#info = me;
+				return me;
+			},
+			(error) => {
+				this.#initPromise = undefined; // a failed probe shouldn't poison later attempts
+				throw error;
+			},
+		);
+
+		return this.#initPromise;
 	}
 
 	override derive<D extends object>(fn: (ctx: C) => D | Promise<D>): Bot<C & D>;
@@ -168,18 +200,27 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	 * the chain is realized (and frozen) on the first call, so register all
 	 * middleware/plugins before the first `handleUpdate` / `start`.
 	 */
-	async handleUpdate(update: Update): Promise<void> {
+	async handleUpdate(update: Update, options?: HandleUpdateOptions): Promise<void> {
 		if (!this.#handle) this.#handle = this.toMiddleware() as unknown as Middleware<Context>;
 
+		const api = options?.replyEnvelope
+			? withReplyEnvelope(this.api, options.replyEnvelope)
+			: this.api;
 		const updateType = detectUpdateType(update);
-		const ctx = this.#options.contextFactory
-			? this.#options.contextFactory(this.api, update, updateType, this.#info)
-			: new Context({ api: this.api, update, updateType, me: this.#info });
+		let ctx: Context | undefined;
 
 		try {
+			ctx = this.#options.contextFactory
+				? this.#options.contextFactory(api, update, updateType, this.#info)
+				: new Context({ api, update, updateType, me: this.#info });
 			await this.#handle(ctx, async () => {});
 		} catch (error) {
-			await this.#errorHandler(error, ctx);
+			// a throwing contextFactory lands here too — hand the error handler a
+			// bare context so it still sees the update.
+			await this.#errorHandler(
+				error,
+				ctx ?? new Context({ api, update, updateType, me: this.#info }),
+			);
 		}
 	}
 
@@ -191,8 +232,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		this.#pollAbort = new AbortController();
 
 		try {
-			this.#info = await this.api.getMe();
-			for (const handler of this.#startHandlers) await handler(this.#info);
+			const info = await this.init();
+			for (const handler of this.#startHandlers) await handler(info);
 
 			while (this.#running) {
 				let updates: Update[];

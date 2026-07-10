@@ -2,6 +2,7 @@ import type { BotApiMethods } from "@yaebal/types";
 import { applyFormatFields } from "./format-hook.js";
 import { isMediaSource, type MediaSource, type MediaStream } from "./media.js";
 import type { ApiResponse, ResponseParameters } from "./telegram-types.js";
+import type { WebhookReplyEnvelope } from "./webhook.js";
 
 /**
  * resolve a local `media.path()` into bytes. runtime-specific (node:fs, Bun.file,
@@ -403,4 +404,47 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	}) as unknown as Api;
 
 	return api;
+}
+
+/**
+ * a per-update view of an api that offers each call to a webhook-reply envelope
+ * first: the one call the envelope claims becomes the webhook's HTTP response
+ * (its promise resolves `true` — telegram doesn't send back a result); everything
+ * else falls through to the real client, hooks and retries included. calls that
+ * carry uploads are never offered — a webhook reply must be plain JSON.
+ */
+export function withReplyEnvelope(api: Api, envelope: WebhookReplyEnvelope): Api {
+	const call = async <T = unknown>(
+		method: string,
+		params?: Record<string, unknown>,
+		callOptions?: CallOptions,
+	): Promise<T> => {
+		// mirror the client's own encoding (fmt fields, media → wire form) so the
+		// claimed params serialize exactly like a normal request body would.
+		const formatted = applyFormatFields(method, params);
+		const uploads: { field: string; source: MediaSource }[] = [];
+		const encoded = extractMedia(formatted, uploads) as Record<string, unknown> | undefined;
+
+		if (uploads.length === 0 && envelope.claim(method, encoded)) return true as T;
+
+		return api.call<T>(method, params, callOptions);
+	};
+
+	const view: Record<string | symbol, unknown> = { call };
+
+	return new Proxy(view, {
+		get(obj, prop) {
+			if (typeof prop === "symbol" || prop === "then") return Reflect.get(obj, prop);
+			if (prop in obj) return obj[prop];
+			// hook registration and fileUrl belong to the underlying client.
+			if (prop === "fileUrl" || prop === "before" || prop === "after" || prop === "onError") {
+				return (api as unknown as Record<string, unknown>)[prop];
+			}
+
+			const method = (params?: Record<string, unknown>) => call(prop, params);
+
+			obj[prop] = method;
+			return method;
+		},
+	}) as unknown as Api;
 }

@@ -311,7 +311,7 @@ assert.equal(storage.get(String(user.chat.id))?.count, 1);`;
 	it does with redis (a <code>clone: false</code> store can't provide it).
 	<br /><br />
 	<strong>races.</strong> long polling processes updates sequentially, and
-	<a href="/docs/plugins/runner">@yaebal/runner</a> sequentializes per chat — matching the default
+	<a href="/docs/runner">@yaebal/runner</a> sequentializes per chat — matching the default
 	per-chat key. webhook deliveries can run concurrently: updates of one chat may then
 	read-modify-write race, like in every session middleware in every framework — keep handlers
 	short or serialize per key upstream.

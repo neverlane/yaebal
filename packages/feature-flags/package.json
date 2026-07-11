@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/feature-flags",
-	"version": "0.0.1",
-	"description": "yaebal feature-flags — ctx.flags.isEnabled(key): percentage/user/date rollout, persisted overrides via @yaebal/sklad, and adapters for external providers (LaunchDarkly, GrowthBook).",
+	"version": "0.1.0",
+	"description": "yaebal feature-flags — ctx.flags.isEnabled(key)/getVariant(key): typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, and adapters for external providers (LaunchDarkly, GrowthBook, env).",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -26,7 +26,7 @@
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "feature-flags", "rollout", "launchdarkly", "growthbook"],
+	"keywords": ["telegram", "telegram-bot", "yaebal", "feature-flags", "rollout", "ab-testing", "launchdarkly", "growthbook"],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

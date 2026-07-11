@@ -229,9 +229,9 @@
 				"memoize telegram bot api calls and arbitrary data with @yaebal/cache: ctx.cache.get/set/wrap, per-key ttl, in-flight dedup for concurrent misses, and any @yaebal/sklad storage adapter.",
 		},
 		"/docs/plugins/feature-flags": {
-			title: "@yaebal/feature-flags — feature flags for telegram bots",
+			title: "@yaebal/feature-flags — typed feature flags for telegram bots",
 			description:
-				"roll out telegram bot features with @yaebal/feature-flags: ctx.flags.isEnabled(key), percentage/user-id/date rollout rules, persisted overrides via @yaebal/sklad, and LaunchDarkly/GrowthBook provider adapters.",
+				"roll out telegram bot features with @yaebal/feature-flags: typed ctx.flags.isEnabled(key)/getVariant(key), telegram-native targeting, global overrides, guard/whenFlag, admin commands, and LaunchDarkly/GrowthBook/env provider adapters.",
 		},
 		"/docs/plugins/callback-data": {
 			title: "@yaebal/callback-data — typed telegram callback data",

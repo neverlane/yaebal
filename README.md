@@ -126,7 +126,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/session](/packages/session/)             | typed sessions: dirty-checked saves, lazy mode, multi-session, ttl fields, migrations |
 | [@yaebal/sklad](/packages/sklad/)                 | zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, file       |
 | [@yaebal/cache](/packages/cache/)                 | `ctx.cache.get/set/wrap` — ttl memoization for api calls and data, dedupes concurrent misses |
-| [@yaebal/feature-flags](/packages/feature-flags/) | `ctx.flags.isEnabled(key)` — percentage/user/date rollout, persisted overrides, LaunchDarkly/GrowthBook adapters |
+| [@yaebal/feature-flags](/packages/feature-flags/) | `ctx.flags.isEnabled(key)`/`getVariant(key)` — typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, LaunchDarkly/GrowthBook/env adapters |
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
 | [@yaebal/payments](/packages/payments/)           | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions |

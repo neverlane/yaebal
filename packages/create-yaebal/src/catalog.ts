@@ -263,7 +263,7 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "feature-flags",
 		dep: "@yaebal/feature-flags",
-		hint: "ctx.flags.isEnabled(key) — percentage/user/date rollout + LaunchDarkly/GrowthBook adapters",
+		hint: "ctx.flags.isEnabled/getVariant(key) — typed rollout + targeting, LaunchDarkly/GrowthBook/env adapters",
 		wire: "install",
 		import: 'import { featureFlags } from "@yaebal/feature-flags";',
 		install:

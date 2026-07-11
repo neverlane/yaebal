@@ -24,7 +24,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/session", "/docs/plugins/session/", "typed sessions: dirty-checked saves, lazy mode, multi-session, ttl fields, migrations"],
 		["@yaebal/sklad", "/docs/plugins/sklad/", "zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, json file"],
 		["@yaebal/cache", "/docs/plugins/cache/", "ctx.cache.get/set/wrap — ttl memoization for api calls and data, dedupes concurrent misses"],
-		["@yaebal/feature-flags", "/docs/plugins/feature-flags/", "ctx.flags.isEnabled(key) — percentage/user/date rollout, persisted overrides, LaunchDarkly/GrowthBook adapters"],
+		["@yaebal/feature-flags", "/docs/plugins/feature-flags/", "ctx.flags.isEnabled(key)/getVariant(key) — typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, LaunchDarkly/GrowthBook/env adapters"],
 		["@yaebal/keyboard", "/docs/plugins/keyboard/", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
 		["@yaebal/payments", "/docs/plugins/payments/", "typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions"],

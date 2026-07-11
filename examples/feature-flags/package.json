@@ -1,0 +1,19 @@
+{
+	"name": "@yaebal/example-feature-flags",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch --experimental-strip-types --env-file=.env src/index.ts",
+		"start": "node --experimental-strip-types --env-file=.env src/index.ts",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "pnpm typecheck"
+	},
+	"dependencies": {
+		"yaebal": "workspace:*",
+		"@yaebal/feature-flags": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	}
+}

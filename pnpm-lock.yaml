@@ -191,6 +191,19 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/feature-flags:
+    dependencies:
+      '@yaebal/feature-flags':
+        specifier: workspace:*
+        version: link:../../packages/feature-flags
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/inline-search:
     dependencies:
       '@yaebal/contexts':

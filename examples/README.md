@@ -43,6 +43,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [session](./session/) | `@yaebal/example-session` | session v2: dirty-checked saves, file storage, two independent sessions (`key` + `keyBy.user`), `ttl()` fields, `clearSession`, migrations | `pnpm --filter @yaebal/example-session dev` |
 | [simple](./simple/) | `@yaebal/example-simple` | toml route config plus typescript handlers | `pnpm --filter @yaebal/example-simple dev` |
 | [onboarding](./onboarding/) | `@yaebal/example-onboarding` | first-run product tour, force restart, dismiss, opt-out | `pnpm --filter @yaebal/example-onboarding dev` |
+| [feature-flags](./feature-flags/) | `@yaebal/example-feature-flags` | percentage rollout, kill-switch rule, chat-type targeting, multivariate (A/B/n) flag, per-bucket + global overrides with ttl, `envProvider`, `whenFlag` branch, `flagsAdmin` ops commands | `pnpm --filter @yaebal/example-feature-flags dev` |
 | [rich-messages](./rich-messages/) | `@yaebal/example-rich-messages` | rich blocks, markdown/html builders, fake streaming draft, rich message readback | `pnpm --filter @yaebal/example-rich-messages dev` |
 | [panel](./panel/) | `@yaebal/example-panel` | operator dashboard, media viewer, callbacks, outgoing replies, realtime events | `pnpm --filter @yaebal/example-panel dev` |
 | [commerce-suite](./commerce-suite/) | `@yaebal/example-commerce-suite` | shop bot with session cart, i18n, pagination, commands, callback-data, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
@@ -69,6 +70,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
 | `@yaebal/commands`      | `commands`, `commerce-suite`                                                           | package tests plus example smoke               |
 | `@yaebal/conversation`  | `dialog-quest`                                                                         | package tests plus example smoke               |
+| `@yaebal/feature-flags` | `feature-flags`                                                                        | package tests plus example smoke               |
 | `@yaebal/file-id`       | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/files`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/filters`       | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |

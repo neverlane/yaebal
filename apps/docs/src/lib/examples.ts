@@ -521,6 +521,39 @@ bot.command("enable", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/feature" }, { user: "/enable" }, { user: "/feature" }],
 	},
+	"feature-flags-variants": {
+		title: "an A/B test, promoted for everyone with a global override",
+		code: `import { createBot } from "yaebal";
+import { featureFlags } from "@yaebal/feature-flags";
+
+const bot = createBot(process.env.BOT_TOKEN!).install(
+  featureFlags({
+    flags: {
+      checkout: {
+        default: "control",
+        // a bucket's variant is picked once, deterministically — the same user always sees the same one
+        variants: [
+          { value: "control", weight: 50 },
+          { value: "v2", weight: 50 },
+        ],
+      },
+    },
+  }),
+);
+
+bot.command("checkout", async (ctx) => {
+  const variant = await ctx.flags.getVariant("checkout");
+  await ctx.reply(\`checkout: \${variant}\`);
+});
+
+bot.command("promote", async (ctx) => {
+  await ctx.flags.setGlobalOverride("checkout", "v2"); // force the winner for every bucket, no redeploy
+  await ctx.reply("checkout: v2 promoted for everyone");
+});
+
+bot.start();`,
+		steps: [{ user: "/checkout" }, { user: "/promote" }, { user: "/checkout" }],
+	},
 	"rich-ai": {
 		title: "streaming-style edits",
 		code: `import { createBot } from "yaebal";

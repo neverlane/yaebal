@@ -127,7 +127,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
 | [@yaebal/payments](/packages/payments/)           | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions |
-| [@yaebal/mini-app](/packages/mini-app/)           | telegram Mini Apps protocol: `ctx.miniApp.validate(initData)`, typed `initData` parser, `web_app_data` helpers, `WebAppInfo`/deep-link url generator |
+| [@yaebal/mini-app](/packages/mini-app/)           | Telegram Mini Apps protocol: `ctx.miniApp.validate(initData)`, typed `initData` parser, `web_app_data` helpers, `WebAppInfo`/deep-link url generator |
 | [@yaebal/link-preview](/packages/link-preview/)   | fluent builder for `link_preview_options`                                             |
 | [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
 | [@yaebal/typing](/packages/typing/)               | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction` |

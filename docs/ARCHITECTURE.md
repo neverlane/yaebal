@@ -221,6 +221,7 @@ source = where the idea came from.
 | **`@yaebal/morda`** ✅ | dialogs: windows → message, callback routing, navigation stack (`start`/`push`/`replace`/`back`), stale-press gate | `session`, `callback-data`, `keyboard` | @gramio/dialogs |
 | **`@yaebal/morda/jsx`** ✅ | jsx runtime + hooks (`useState`/`useEffect`/`useNavigation`/`useUser`/`useSession`/`useTranslation`) on top of morda, subpath export | `morda` | @gramio/jsx + templatio-style hooks |
 | **`@yaebal/scenes`** ✅ | durable wizards: firstTime steps, typed state/params, `ask()` (standard-schema), navigation `go`/`next`/`previous`, sub-scenes, `onEnter`/`onLeave(reason)`, passthrough+passCommands, ttl, snapshot self-heal. key `chat:user`. sequential-safe (no suspended promises) | `sklad` | @gramio/scenes, @puregram/scenes |
+| **`@yaebal/state-machine`** ✅ | declarative finite-state machine: no steps, always active from `initial`, typed events drive transitions (`ctx.machine.send(event)`), guarded/ordered transition candidates, `onEnter`/`onLeave` per state, mutable json-serializable extended-state bag, ttl, snapshot self-heal. key `chat:user`. alternative to `scenes` for strictly finite, event-driven flows | `sklad` | xstate (conceptually), no direct grammy/gramio/puregram equivalent |
 | **`@yaebal/prompt`** ✅ | `ctx.prompt(q, handler)` — ask a question, handler catches the next message (callback-style, in-memory) | — | @gramio/prompt, @puregram/prompt |
 | **`@yaebal/files`** ✅ | `ctx.files.info/url/download` + lazy `FileDownload` (bytes/text/json/blob/stream/toFile), strategies for local Bot API server (disk/rewrite/url), standalone `createFiles(api)`. upload — in core via `MediaSource` | — | @gramio/files, grammy files |
 | **`@yaebal/file-id`** ✅ | `file_id`/`file_unique_id` parser/serialiser (TL + RLE + base64url): dc id, access hash, photo size source, `toUniqueId()`. zero deps, pure js | — | @puregram/file-id, tdlib |
@@ -257,6 +258,7 @@ sklad ─→ session ─→ i18n
      │          ├→ scenes
      │          ├→ onboarding
      │          └→ morda ─→ morda/jsx
+     ├→ state-machine
      ├→ cache
      └→ feature-flags
 callback-data ───────────┘

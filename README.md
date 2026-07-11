@@ -107,6 +107,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [panel](/examples/panel/)                   | operator dashboard with media viewer, keyboards, callbacks and events                                                      | `pnpm --filter @yaebal/example-panel dev`           |
 | [commerce-suite](/examples/commerce-suite/) | shop bot: cart session, i18n, pagination, callback data, command registry, ratelimiter                                     | `pnpm --filter @yaebal/example-commerce-suite dev`  |
 | [dialog-quest](/examples/dialog-quest/)     | morda cockpit, scenes, prompt, conversation and session profile                                                            | `pnpm --filter @yaebal/example-dialog-quest dev`    |
+| [state-machine](/examples/state-machine/)   | typed events driving transitions, a guard you can trip interactively, per-state onEnter hooks, reset()                    | `pnpm --filter @yaebal/example-state-machine dev`   |
 | [morda-jsx](/examples/morda-jsx/)           | jsx dialog screens: persisted hooks, dialog data, widgets, free-text input                                                 | `pnpm --filter @yaebal/example-morda-jsx dev`       |
 | [media-studio](/examples/media-studio/)     | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware splitting                    | `pnpm --filter @yaebal/example-media-studio dev`    |
 | [modular-router](/examples/modular-router/) | file-based routes from `routes/commands` and `routes/on`                                                                   | `pnpm --filter @yaebal/example-modular-router dev`  |
@@ -139,6 +140,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/morda](/packages/morda/)                 | dialogs engine and jsx/hooks for telegram ui                                          |
 | [@yaebal/i18n](/packages/i18n/)                   | typed `ctx.t` (keys + params), Intl plurals, `language_code` detection                |
 | [@yaebal/scenes](/packages/scenes/)               | durable wizards: typed state, `ask()` validation, navigation, sub-scenes, ttl         |
+| [@yaebal/state-machine](/packages/state-machine/) | declarative finite-state machines: typed events, guarded transitions, `onEnter`/`onLeave` hooks |
 | [@yaebal/onboarding](/packages/onboarding/)       | declarative first-run tutorials with inline controls                                  |
 | [@yaebal/conversation](/packages/conversation/)   | await-style multi-step dialogs                                                        |
 | [@yaebal/prompt](/packages/prompt/)               | ask a question, handle the next message                                               |

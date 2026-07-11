@@ -669,6 +669,48 @@ bot.command("quest", (ctx) => ctx.scene.enter("quest"));
 bot.start();`,
 		steps: [{ user: "/quest" }, { click: "class:mage", label: "mage" }],
 	},
+	"state-machine-order": {
+		title: "an order status machine",
+		code: `import { createBot, type Context } from "yaebal";
+import { defineMachine, stateMachine } from "@yaebal/state-machine";
+
+type OrderEvent = { type: "PAY" } | { type: "SHIP" } | { type: "CANCEL" };
+
+const order = defineMachine<Context, OrderEvent>({
+  initial: "created",
+  states: {
+    created: {
+      on: {
+        PAY: { target: "paid" },
+        CANCEL: { target: "cancelled" },
+      },
+    },
+    paid: {
+      onEnter: (ctx) => ctx.send("payment received — shipping soon"),
+      on: {
+        SHIP: { target: "shipped" },
+        CANCEL: { target: "cancelled" },
+      },
+    },
+    shipped: {
+      onEnter: (ctx) => ctx.send("your order shipped 📦"),
+    },
+    cancelled: {
+      onEnter: (ctx) => ctx.send("order cancelled"),
+    },
+  },
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(stateMachine(order));
+
+bot.command("pay", (ctx) => ctx.machine.send({ type: "PAY" }));
+bot.command("ship", (ctx) => ctx.machine.send({ type: "SHIP" }));
+bot.command("status", (ctx) => ctx.reply(\`order is \${ctx.machine.state}\`));
+
+bot.start();`,
+		steps: [{ user: "/status" }, { user: "/pay" }, { user: "/ship" }, { user: "/status" }],
+	},
 	"webhook-ready": {
 		title: "webhook entrypoint",
 		code: `import { createBot, webhook } from "yaebal";

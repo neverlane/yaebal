@@ -1,0 +1,41 @@
+{
+	"name": "@yaebal/state-machine",
+	"version": "0.0.1",
+	"description": "yaebal state-machine plugin — declarative finite-state machines: typed events, guarded transitions, onEnter/onLeave hooks.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/sklad": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": ["telegram", "telegram-bot", "yaebal", "state-machine", "fsm", "finite-state-machine"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/state-machine"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

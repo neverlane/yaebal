@@ -381,6 +381,19 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  examples/state-machine:
+    dependencies:
+      '@yaebal/state-machine':
+        specifier: workspace:*
+        version: link:../../packages/state-machine
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/testing-lab:
     dependencies:
       '@yaebal/test':
@@ -926,6 +939,22 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
+
+  packages/state-machine:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../sklad
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test

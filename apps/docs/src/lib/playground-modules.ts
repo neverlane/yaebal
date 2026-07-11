@@ -42,6 +42,7 @@ import * as scenes from "@yaebal/scenes";
 import * as session from "@yaebal/session";
 import * as sklad from "@yaebal/sklad";
 import * as split from "@yaebal/split";
+import * as stateMachine from "@yaebal/state-machine";
 import * as test from "@yaebal/test";
 import * as throttle from "@yaebal/throttle";
 import * as types from "@yaebal/types";
@@ -81,6 +82,7 @@ export const PLUGIN_MODULES: Record<string, unknown> = {
 	"@yaebal/session": session,
 	"@yaebal/sklad": sklad,
 	"@yaebal/split": split,
+	"@yaebal/state-machine": stateMachine,
 	"@yaebal/test": test,
 	"@yaebal/throttle": throttle,
 	"@yaebal/types": types,

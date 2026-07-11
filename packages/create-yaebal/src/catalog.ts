@@ -382,6 +382,13 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { ask, defineScene, scenes } from "@yaebal/scenes";',
 	},
 	{
+		id: "state-machine",
+		dep: "@yaebal/state-machine",
+		hint: "declarative finite-state machines: typed events, guarded transitions",
+		wire: "dep",
+		import: 'import { defineMachine, stateMachine } from "@yaebal/state-machine";',
+	},
+	{
 		id: "onboarding",
 		dep: "@yaebal/onboarding",
 		hint: "declarative first-run product tours",

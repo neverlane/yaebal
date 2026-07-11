@@ -47,6 +47,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [panel](./panel/) | `@yaebal/example-panel` | operator dashboard, media viewer, callbacks, outgoing replies, realtime events | `pnpm --filter @yaebal/example-panel dev` |
 | [commerce-suite](./commerce-suite/) | `@yaebal/example-commerce-suite` | shop bot with session cart, i18n, pagination, commands, callback-data, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
 | [dialog-quest](./dialog-quest/) | `@yaebal/example-dialog-quest` | morda cockpit, scene wizard, prompt, conversation, session profile | `pnpm --filter @yaebal/example-dialog-quest dev` |
+| [state-machine](./state-machine/) | `@yaebal/example-state-machine` | typed events driving transitions, a guard you can trip interactively, per-state `onEnter` hooks, `reset()` | `pnpm --filter @yaebal/example-state-machine dev` |
 | [morda-jsx](./morda-jsx/) | `@yaebal/example-morda-jsx` | jsx screens with hooks: persisted `useState`/`useEffect`, `useDialogData`, widgets (Toggle/Select/Counter/Pagination), `onText` input | `pnpm --filter @yaebal/example-morda-jsx dev` |
 | [media-studio](./media-studio/) | `@yaebal/example-media-studio` | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware long message splitting + caption strategy | `pnpm --filter @yaebal/example-media-studio dev` |
 | [modular-router](./modular-router/) | `@yaebal/example-modular-router` | file-based routes from `routes/commands` and `routes/on` | `pnpm --filter @yaebal/example-modular-router dev` |
@@ -88,6 +89,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/scenes`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
 | `@yaebal/session`       | `session`, `basic`, `commands`, `commerce-suite`, `dialog-quest`, `testing-lab`        | package tests plus actor session assertions    |
 | `@yaebal/sklad`         | `session` (file storage); the default memory store wherever sessions appear           | package tests plus example smoke               |
+| `@yaebal/state-machine` | `state-machine`                                                                        | package tests plus example smoke               |
 | `@yaebal/split`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/test`          | `testing-lab`                                                                          | real `node:test` suite                         |
 | `@yaebal/throttle`      | `basic`, `throttle`                                                                    | package tests plus example smoke               |
@@ -105,7 +107,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | bare core, no plugins       | `core-echo`                                                                |
 | core + contexts by hand     | `inline-search`                                                            |
 | single-file product demo    | `basic`                                                                    |
-| plugin in isolation         | `again`, `throttle`, `keyboard`, `commands`, `onboarding`, `rich-messages` |
+| plugin in isolation         | `again`, `throttle`, `keyboard`, `commands`, `onboarding`, `rich-messages`, `state-machine` |
 | production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers`                     |
 | business workflow           | `commerce-suite`, `payments-stars`, `inline-search`                        |
 | multi-step ux               | `dialog-quest`, `testing-lab`                                              |

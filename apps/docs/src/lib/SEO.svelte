@@ -363,6 +363,11 @@
 			description:
 				"build multi-step yaebal bot wizards with scenes, typed steps, sessions, validation, navigation, cancellation, and resumable state.",
 		},
+		"/docs/plugins/state-machine": {
+			title: "@yaebal/state-machine — finite-state machines for telegram bots",
+			description:
+				"declarative yaebal finite-state machines: typed events, guarded transitions, onEnter/onLeave hooks, and durable per-key state via any sklad storage adapter.",
+		},
 		"/docs/plugins/session": {
 			title: "@yaebal/session — typed telegram bot sessions",
 			description:

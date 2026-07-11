@@ -36,6 +36,7 @@ const bot = new Bot(token)
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "/docs/plugins/i18n/", "typed ctx.t (keys + params), Intl plurals, language_code detection"],
 		["@yaebal/scenes", "/docs/plugins/scenes/", "durable wizards: typed state, ask() validation, navigation, sub-scenes, ttl"],
+		["@yaebal/state-machine", "/docs/plugins/state-machine/", "declarative finite-state machines: typed events, guarded transitions, onEnter/onLeave hooks"],
 		["@yaebal/onboarding", "/docs/plugins/onboarding/", "declarative first-run tutorials with inline controls"],
 		["@yaebal/conversation", "/docs/plugins/conversation/", "await-style multi-step dialogs (coroutine, no replay)"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, handle the next message"],

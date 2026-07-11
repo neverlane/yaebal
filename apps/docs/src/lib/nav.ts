@@ -69,6 +69,7 @@ export const nav: NavSection[] = [
 			{ label: "feature-flags", href: "/docs/plugins/feature-flags", badge: "new" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
 			{ label: "scenes", href: "/docs/plugins/scenes" },
+			{ label: "state-machine", href: "/docs/plugins/state-machine", badge: "new" },
 			{ label: "onboarding", href: "/docs/plugins/onboarding" },
 			{ label: "conversation", href: "/docs/plugins/conversation" },
 			{ label: "prompt", href: "/docs/plugins/prompt" },

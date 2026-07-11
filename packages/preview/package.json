@@ -1,14 +1,16 @@
 {
 	"name": "@yaebal/preview",
-	"version": "0.0.8",
-	"description": "yaebal preview — render a telegram-style chat from plain objects to an SVG string. zero deps, zero runtime.",
+	"version": "0.1.0",
+	"description": "yaebal preview — render a telegram-style chat (with reply/forward/reactions/link-preview, custom themes, and message grouping) from plain objects to an SVG string. zero deps, zero runtime.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
+	"sideEffects": false,
 	"exports": {
 		".": {
 			"types": "./lib/index.d.ts",
-			"import": "./lib/index.js"
+			"import": "./lib/index.js",
+			"default": "./lib/index.js"
 		}
 	},
 	"files": ["lib", "src"],
@@ -26,7 +28,18 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "preview", "svg", "mockup", "chat"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"preview",
+		"svg",
+		"mockup",
+		"chat",
+		"screenshot",
+		"reactions",
+		"link-preview"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

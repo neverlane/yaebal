@@ -124,6 +124,21 @@ function quote(value: string): string {
 	return `"${value.replaceAll('"', '\\"')}"`;
 }
 
+/** `reply_parameters.quote` is `string | FormattedText` — pull the plain text out either way. */
+function quoteText(q: unknown): string | undefined {
+	if (typeof q === "string") return q;
+	if (typeof q === "object" && q !== null && "text" in q) return String((q as { text?: unknown }).text ?? "");
+	return undefined;
+}
+
+function reactionEmojis(reaction: unknown): string[] {
+	if (!Array.isArray(reaction)) return [];
+
+	return reaction
+		.map((r) => (typeof r === "object" && r !== null ? (r as { emoji?: string }).emoji : undefined))
+		.filter((e): e is string => !!e);
+}
+
 function answerText(params: Record<string, unknown> | undefined): string {
 	if (typeof params?.text === "string") return params.text;
 
@@ -288,6 +303,9 @@ export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 				text: `invoice: ${asText(p.title, "invoice")}\n${asText(p.description)}${invoiceAmount(p.prices)}`,
 				buttons,
 			};
+		case "forwardMessage":
+		case "copyMessage":
+			return { forward: { from: `chat ${String(p.from_chat_id ?? "?")}` }, ...common };
 		case "answerCallbackQuery":
 			return null;
 		case "answerInlineQuery":
@@ -354,6 +372,17 @@ export async function feedSteps(
 				continue;
 			}
 
+			// ctx.react()/setMessageReaction doesn't send a new message — it decorates one already
+			// in the conversation with a reaction pill row.
+			if (c.method === "setMessageReaction") {
+				const targetId = Number(c.params?.message_id);
+				const emojis = reactionEmojis(c.params?.reaction);
+				const target = convo.find((cm) => cm.messageId === targetId);
+
+				if (target) target.reactions = emojis.length ? emojis.map((emoji) => ({ emoji, count: 1, chosen: true })) : undefined;
+				continue;
+			}
+
 			const msg = mapCall(c);
 			if (!msg) continue;
 
@@ -362,12 +391,22 @@ export async function feedSteps(
 			const messageId = edited
 				? Number(params.message_id ?? lastBotMessageId ?? nextMessageId)
 				: nextMessageId++;
-			const replyTo =
-				typeof params.reply_parameters === "object" &&
-				params.reply_parameters !== null &&
-				"message_id" in params.reply_parameters
-					? `, reply_to: ${(params.reply_parameters as { message_id: unknown }).message_id}`
-					: "";
+
+			const replyParams =
+				typeof params.reply_parameters === "object" && params.reply_parameters !== null
+					? (params.reply_parameters as { message_id?: number; quote?: unknown })
+					: undefined;
+			const replyTo = replyParams?.message_id !== undefined ? `, reply_to: ${replyParams.message_id}` : "";
+
+			// ctx.quote()'s reply_parameters.quote is a deliberate, visible quote — render it as a
+			// reply-quote block. a plain ctx.reply() also sets reply_parameters.message_id (so the
+			// thread is real), but without an explicit quote that'd put a redundant quote strip on
+			// every single reply, so it stays in `debug` only.
+			const quoted = replyParams?.message_id !== undefined ? convo.find((cm) => cm.messageId === replyParams.message_id) : undefined;
+			const replyBlock =
+				replyParams?.quote !== undefined
+					? { name: quoted?.from === "user" ? "you" : (quoted?.name ?? "bot"), text: quoteText(replyParams.quote) }
+					: undefined;
 
 			if (!edited) lastBotMessageId = messageId;
 
@@ -375,6 +414,7 @@ export async function feedSteps(
 				from: "bot",
 				name: "bot",
 				...msg,
+				...(replyBlock ? { reply: replyBlock } : {}),
 				messageId,
 				at,
 				debug: edited

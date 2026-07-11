@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/broadcast",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal broadcast — typed broadcast jobs with storage, retry, progress and controls.",
 	"type": "module",
 	"main": "./lib/index.js",

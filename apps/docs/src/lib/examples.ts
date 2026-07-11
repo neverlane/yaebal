@@ -251,6 +251,34 @@ bot.command("launch", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/launch" }],
 	},
+	"quote-react-forward": {
+		title: "quote, react, and forward a message",
+		code: `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.command("start", (ctx) =>
+  ctx.reply("send me anything — I'll quote it, react to it, and forward it back."),
+);
+
+bot.on("message:text", async (ctx) => {
+  // reply_parameters.quote — renders as a real reply-quote block, not just a debug annotation
+  await ctx.quote(ctx.text, "got it — quoting your message back.");
+
+  // setMessageReaction — renders as a reaction pill under the message
+  await ctx.react("🔥");
+
+  // forwardMessage — renders as a "Forwarded from …" header
+  await ctx.api.call("forwardMessage", {
+    chat_id: ctx.chat.id,
+    from_chat_id: ctx.chat.id,
+    message_id: ctx.message_id,
+  });
+});
+
+bot.start();`,
+		steps: [{ user: "yaebal ships reply quotes, reactions, and forwards now" }],
+	},
 	"i18n-switch": {
 		title: "language switch",
 		code: `import { createBot, i18n } from "yaebal";

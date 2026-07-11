@@ -63,6 +63,10 @@ bot
 		});
 	})
 	.command("preview", (ctx) => {
+		// a tour of @yaebal/preview's flagship features: reply quotes, forwarded headers,
+		// reactions, a link-preview card, per-message avatars, message grouping (these two
+		// "yaebal" messages render as one visual group — one avatar, one name label), and a
+		// fully custom palette layered on top of the dark theme.
 		const svg = renderChat(
 			[
 				{ from: "bot", name: "yaebal", text: "media studio preview", time: "13:36" },
@@ -70,12 +74,35 @@ bot
 				{
 					from: "bot",
 					name: "yaebal",
+					forward: { from: "release notes" },
+					text: "media studio now speaks reply quotes, reactions, and link previews.",
+					time: "13:37",
+				},
+				{
+					// same sender + name as the previous message — groups with it (shared avatar,
+					// no repeated name label)
+					from: "bot",
+					name: "yaebal",
+					reply: { name: "yaebal", text: "media studio now speaks reply quotes..." },
 					text: "here is a generated telegram-style svg.",
 					time: "13:37",
+					reactions: [{ emoji: "🔥", count: 3, chosen: true }],
 					buttons: [["cache", "album"], ["files"]],
 				},
+				{
+					from: "bot",
+					avatar: "📚",
+					name: "docs bot",
+					text: "full api + every media type, live:",
+					webpage: {
+						site: "yaebal.mom",
+						title: "@yaebal/preview",
+						description: "render a telegram-style chat to an svg string — zero deps, zero runtime.",
+					},
+					time: "13:38",
+				},
 			],
-			{ theme: "dark" },
+			{ theme: "dark", palette: { out: "#204020" } },
 		);
 
 		return ctx.sendDocument(

@@ -336,7 +336,7 @@
 		"/docs/plugins/preview": {
 			title: "@yaebal/preview — render telegram chat previews",
 			description:
-				"render telegram-style chat previews as svg with @yaebal/preview for docs, tests, screenshots, examples, and ui review workflows.",
+				"render telegram-style chat previews as svg with @yaebal/preview: reply quotes, forwarded headers, reactions, link previews, custom themes, and telegram-style message grouping, for docs, tests, screenshots, examples, and ui review workflows.",
 		},
 		"/docs/plugins/prompt": {
 			title: "@yaebal/prompt — ask and wait for the next message",

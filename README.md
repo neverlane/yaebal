@@ -160,7 +160,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/split](/packages/split/)                 | long text as multiple messages — entity-aware splits, partial-failure reports         |
 | [@yaebal/commands](/packages/commands/)           | one registry for handlers and the `/` menu — localized, scoped, diff-synced           |
 | [@yaebal/pagination](/packages/pagination/)       | paginated lists over any source — lazy fetch, item buttons, typed payload             |
-| [@yaebal/preview](/packages/preview/)             | render telegram-style chats to svg                                                    |
+| [@yaebal/preview](/packages/preview/)             | render telegram-style chats to svg — reply quotes, reactions, link previews, custom themes |
 | [@yaebal/workers](/packages/workers/)             | typed `worker_threads` pool — queueing, timeouts, aborts, crash recovery              |
 
 ### repository map

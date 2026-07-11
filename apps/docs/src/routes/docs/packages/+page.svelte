@@ -54,7 +54,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu — localized, scoped, diff-synced"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists over any source — lazy fetch, item buttons, typed payload"],
 		["@yaebal/media-cache", "/docs/plugins/media-cache/", "upload once, reuse the file_id — self-heals when telegram rejects it"],
-		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to a standalone SVG string (experimental)"],
+		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to a standalone SVG string — reply quotes, reactions, link previews, custom themes (experimental)"],
 	];
 
 	const scaling: [string, string, string][] = [

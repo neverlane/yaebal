@@ -57,7 +57,7 @@ const bot = new Bot(token)
 		["@yaebal/split", "/docs/plugins/split/", "long text as multiple messages — entities survive the split"],
 		["@yaebal/commands", "/docs/plugins/commands/", "one registry for handlers + the / command menu — localized, scoped, diff-synced"],
 		["@yaebal/pagination", "/docs/plugins/pagination/", "paginated lists over any source — lazy fetch, item buttons, typed payload"],
-		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to SVG"],
+		["@yaebal/preview", "/docs/plugins/preview/", "render telegram-style chats to SVG — reply quotes, reactions, link previews, custom themes"],
 		["@yaebal/workers", "/docs/workers/", "worker_threads pool to offload CPU-heavy work"],
 		["@yaebal/test", "/docs/plugins/test/", "testing utilities — mock api with real hooks & error simulation, update factories for every update kind"],
 	];

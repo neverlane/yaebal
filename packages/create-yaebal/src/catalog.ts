@@ -208,6 +208,15 @@ export const PLUGINS: PluginDef[] = [
 		install: "cache({ ttl: 60_000 })",
 	},
 	{
+		id: "feature-flags",
+		dep: "@yaebal/feature-flags",
+		hint: "ctx.flags.isEnabled(key) — percentage/user/date rollout + LaunchDarkly/GrowthBook adapters",
+		wire: "install",
+		import: 'import { featureFlags } from "@yaebal/feature-flags";',
+		install:
+			'featureFlags({ flags: { "new-ui": { default: false, rules: [{ percentage: 25 }] } } })',
+	},
+	{
 		id: "payments",
 		dep: "@yaebal/payments",
 		hint: "typed invoice builder + pre-checkout/successful-payment hooks (stars & subscriptions)",

@@ -468,6 +468,32 @@ bot.command("weather", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/weather" }, { user: "/weather" }],
 	},
+	"feature-flags-override": {
+		title: "roll out a flag, then force it for one user",
+		code: `import { createBot } from "yaebal";
+import { featureFlags } from "@yaebal/feature-flags";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.install(
+  featureFlags({
+    flags: { "new-ui": { default: false, rules: [{ percentage: 0 }] } }, // off for everyone, for now
+  }),
+);
+
+bot.command("feature", async (ctx) => {
+  const on = await ctx.flags.isEnabled("new-ui");
+  await ctx.reply(\`new-ui: \${on ? "on" : "off"}\`);
+});
+
+bot.command("enable", async (ctx) => {
+  await ctx.flags.setOverride("new-ui", true); // wins over the 0% rollout, just for this user
+  await ctx.reply("new-ui enabled for you");
+});
+
+bot.start();`,
+		steps: [{ user: "/feature" }, { user: "/enable" }, { user: "/feature" }],
+	},
 	"rich-ai": {
 		title: "streaming-style edits",
 		code: `import { createBot } from "yaebal";

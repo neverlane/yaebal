@@ -23,6 +23,7 @@
 		{ "path": "./packages/broadcast" },
 		{ "path": "./packages/cron" },
 		{ "path": "./packages/cache" },
+		{ "path": "./packages/feature-flags" },
 		{ "path": "./packages/web" },
 		{ "path": "./packages/panel" },
 		{ "path": "./packages/yaebal" },

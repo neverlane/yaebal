@@ -236,6 +236,7 @@ source = where the idea came from.
 | **`@yaebal/throttle`** ✅ | outbound scheduler: global/private/group buckets, per-method limits, priority queue, shared storage, cancel/abort, metrics, retry_after feedback | — | puregram throttler, grammy transformer-throttler |
 | **`@yaebal/ratelimiter`** ✅ | anti-spam for incoming updates: drops updates over the limit per time window (per-user) | — | grammy ratelimiter, @gramio/rate-limiter |
 | **`@yaebal/cache`** ✅ | `ctx.cache.get/set/wrap` — ttl memoization for api calls and arbitrary data, in-flight dedup for concurrent misses (e.g. `getChat`/`getChatMember`) | `sklad` | — |
+| **`@yaebal/feature-flags`** ✅ | `ctx.flags.isEnabled(key)` — percentage/`userIds`/date-window rollout rules (OR of rules, AND within a rule), deterministic fnv-1a bucketing, per-bucket overrides persisted via `sklad`, `FlagProvider` adapters for LaunchDarkly/GrowthBook (structurally typed, no SDK dep) | `sklad` | — | native ops plugin; cf. unleash/launchdarkly/growthbook sdks |
 | **`@yaebal/router`** ✅ | file-based routing (storona-style): `loadRoutes(bot, dir)`, `commands/` + `on/`, dot→`:` in names | — | @gramio/autoload + storona |
 | **`@yaebal/toml`** ✅ | declarative toml routes: commands, hears, message filters, callback queries and handler registry | — | config-driven routing |
 | **`@yaebal/pagination`** ✅ | pagination: array/lazy sources (`offset/limit` + optional `count`), element buttons with `onSelect`, typed payload, `view`/`edit`/`button`, ownership filter, not-modified/48h/forged data handling | `keyboard`, `callback-data` | @gramio/pagination |
@@ -255,7 +256,8 @@ sklad ─→ session ─→ i18n
      │          ├→ scenes
      │          ├→ onboarding
      │          └→ morda ─→ morda/jsx
-     └→ cache
+     ├→ cache
+     └→ feature-flags
 callback-data ───────────┘
 keyboard ──→ pagination
 throttle ─→ broadcast

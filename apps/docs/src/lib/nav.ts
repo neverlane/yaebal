@@ -66,6 +66,7 @@ export const nav: NavSection[] = [
 			{ label: "session", href: "/docs/plugins/session" },
 			{ label: "sklad (storage)", href: "/docs/plugins/sklad", badge: "new" },
 			{ label: "cache", href: "/docs/plugins/cache", badge: "new" },
+			{ label: "feature-flags", href: "/docs/plugins/feature-flags", badge: "new" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
 			{ label: "scenes", href: "/docs/plugins/scenes" },
 			{ label: "onboarding", href: "/docs/plugins/onboarding" },

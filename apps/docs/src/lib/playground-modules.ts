@@ -21,6 +21,7 @@ import * as commands from "@yaebal/commands";
 import * as contexts from "@yaebal/contexts";
 import * as conversation from "@yaebal/conversation";
 import * as cron from "@yaebal/cron";
+import * as featureFlags from "@yaebal/feature-flags";
 import * as fileId from "@yaebal/file-id";
 import * as files from "@yaebal/files";
 import * as filters from "@yaebal/filters";
@@ -59,6 +60,7 @@ export const PLUGIN_MODULES: Record<string, unknown> = {
 	"@yaebal/contexts": contexts,
 	"@yaebal/conversation": conversation,
 	"@yaebal/cron": cron,
+	"@yaebal/feature-flags": featureFlags,
 	"@yaebal/file-id": fileId,
 	"@yaebal/files": files,
 	"@yaebal/filters": filters,

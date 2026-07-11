@@ -4,8 +4,9 @@ import { esc, hash, round } from "./svg.js";
 import type { Block } from "./text.js";
 import { layoutText } from "./text.js";
 import type { Palette } from "./theme.js";
-import { AVATAR_COLORS, FONT, LH } from "./theme.js";
+import { AVATAR_COLORS, charW, FONT, LH } from "./theme.js";
 import type { ChatMessage, ForwardHeader, Reaction, ReplyQuote } from "./types.js";
+import { textWidthUnits } from "./unicode.js";
 
 /** telegram groups consecutive same-sender messages: only the last bubble gets the tail + avatar, only the first shows the name label, and the vertical gap between them shrinks. */
 export interface GroupInfo {
@@ -69,16 +70,23 @@ export function replyBlock(reply: ReplyQuote, maxW: number, p: Palette): Block {
 	};
 }
 
+const FORWARD_PREFIX = "Forwarded from ";
+
 /** the "Forwarded from …" header line, rendered above the content. */
 export function forwardBlock(fwd: ForwardHeader, p: Palette): Block {
+	// the header must report its real rendered width — an unreported (zero) width let the bubble
+	// shrink-wrap smaller than this text and left it overflowing past the bubble's right edge,
+	// colliding with the time/id meta drawn at that (too-narrow) edge.
+	const prefixW = FORWARD_PREFIX.length * 6.6;
+	const w = Math.ceil(prefixW + textWidthUnits(fwd.from) * charW);
+
 	return {
-		w: 0,
+		w,
 		h: LH,
 		render: (x, y) => {
-			const prefixW = "Forwarded from ".length * 6.6;
 			return (
-				`<text x="${round(x)}" y="${round(y + 13)}" font-size="12.5" font-style="italic" fill="${p.meta}" font-family="${FONT}">Forwarded from</text>` +
-				`<text x="${round(x + prefixW)}" y="${round(y + 13)}" font-size="12.5" font-weight="600" fill="${p.name}" font-family="${FONT}"> ${esc(fwd.from)}</text>`
+				`<text x="${round(x)}" y="${round(y + 13)}" font-size="12.5" font-style="italic" fill="${p.meta}" font-family="${FONT}">${esc(FORWARD_PREFIX)}</text>` +
+				`<text x="${round(x + prefixW)}" y="${round(y + 13)}" font-size="12.5" font-weight="600" fill="${p.name}" font-family="${FONT}">${esc(fwd.from)}</text>`
 			);
 		},
 	};

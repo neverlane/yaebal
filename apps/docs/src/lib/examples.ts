@@ -145,9 +145,8 @@ bot.start();`,
 		code: `import { bold, createBot, format } from "yaebal";
 import { splitter } from "@yaebal/split";
 
-const bot = createBot(process.env.BOT_TOKEN!);
-
-bot.install(splitter({ max: 160 })); // tiny limit so the split is visible here
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(splitter({ max: 160 })); // tiny limit so the split is visible here
 
 bot.command("report", (ctx) => {
   const lines = Array.from({ length: 8 }, (_, i) => \`shard \${i}: ok, queue clear, cache warm\`);
@@ -217,7 +216,7 @@ bot.start();`,
 	},
 	"guards-private": {
 		title: "reusable bot.guard() predicates",
-		code: `import { createBot } from "yaebal";
+		code: `import { createBot, type Context } from "yaebal";
 import { and } from "@yaebal/filters";
 import { isPrivate } from "@yaebal/guards";
 
@@ -227,7 +226,9 @@ bot.guard(isPrivate).command("whoami", (ctx) =>
   ctx.reply(\`private chat — chat.type is narrowed to "\${ctx.chat.type}"\`),
 );
 
-bot.filter(and(isPrivate, (ctx) => (ctx.text?.length ?? 0) > 0), (ctx) =>
+// and()/or() infer a bare predicate's ctx from the tuple element type, not the composer —
+// annotate it explicitly so it isn't inferred as \`never\`
+bot.filter(and(isPrivate, (ctx: Context) => (ctx.text?.length ?? 0) > 0), (ctx) =>
   ctx.reply(\`hey \${ctx.from?.first_name}, guards compose with @yaebal/filters' and/or/not\`),
 );
 
@@ -440,10 +441,9 @@ bot.start();`,
 		code: `import { createBot } from "yaebal";
 import { analytics, consoleAdapter } from "@yaebal/analytics";
 
-const bot = createBot(process.env.BOT_TOKEN!);
-
 // swap consoleAdapter() for postHogAdapter / plausibleAdapter / sqliteAdapter / clickhouseAdapter
-bot.install(analytics({ adapters: [consoleAdapter()] }));
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(analytics({ adapters: [consoleAdapter()] }));
 
 bot.command("start", (ctx) => {
   ctx.track("start", { source: "deeplink" });
@@ -478,8 +478,8 @@ bot.start();`,
 		code: `import { createBot } from "yaebal";
 import { cache } from "@yaebal/cache";
 
-const bot = createBot(process.env.BOT_TOKEN!);
-bot.install(cache({ ttl: 60_000 }));
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(cache({ ttl: 60_000 }));
 
 let calls = 0;
 
@@ -501,13 +501,12 @@ bot.start();`,
 		code: `import { createBot } from "yaebal";
 import { featureFlags } from "@yaebal/feature-flags";
 
-const bot = createBot(process.env.BOT_TOKEN!);
-
-bot.install(
-  featureFlags({
-    flags: { "new-ui": { default: false, rules: [{ percentage: 0 }] } }, // off for everyone, for now
-  }),
-);
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(
+    featureFlags({
+      flags: { "new-ui": { default: false, rules: [{ percentage: 0 }] } }, // off for everyone, for now
+    }),
+  );
 
 bot.command("feature", async (ctx) => {
   const on = await ctx.flags.isEnabled("new-ui");

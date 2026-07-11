@@ -410,6 +410,39 @@ test("forward header shows the original sender", () => {
 	assert.ok(svg.includes("channel news"));
 });
 
+test("a forward-only message (no text/media) reports its real width, so the bubble isn't clamped to the minimum", () => {
+	// forwardBlock used to report w:0 — that shrank the bubble to the 60px floor, which then
+	// overflowed the "Forwarded from …" text past the bubble's right edge, colliding with meta
+	const forwardOnly = renderChat([{ from: "bot", forward: { from: "chat 1" }, messageId: 3 }]);
+	const withText = renderChat([
+		{ from: "bot", forward: { from: "chat 1" }, text: "hi", messageId: 3 },
+	]);
+
+	const bubbleW = (svg: string) => {
+		const m = svg.match(/<path d="M[\d.]+,[\d.]+h([\d.]+)a16,16 0 0 1 16,16/);
+		return m ? Number(m[1]) + 32 : 0;
+	};
+
+	assert.ok(
+		bubbleW(forwardOnly) > 60,
+		"bubble should widen to fit the forward header, not clamp to 60px",
+	);
+	// the trailing "#3" meta must not land inside the forward header's own text run
+	assert.ok(bubbleW(forwardOnly) >= bubbleW(withText) - 40);
+});
+
+test("reactions/reply/forward blocks each report a real, non-zero width", () => {
+	// a regression guard: any decoration block reporting w:0 lets the bubble shrink-wrap under
+	// its actual content, causing the content (or the meta drawn at the bubble's edge) to overflow
+	const svg = renderChat([
+		{ from: "bot", forward: { from: "a" }, reply: { name: "b", text: "c" }, messageId: 1 },
+	]);
+	const path = svg.match(/<path d="M[\d.]+,[\d.]+h([\d.]+)a16,16 0 0 1 16,16/);
+
+	assert.ok(path, "bubble path not found");
+	assert.ok(Number(path[1]) > 40, "bubble should not collapse to the minimum width floor");
+});
+
 test("reactions render as a pill row with the chosen one highlighted", () => {
 	const svg = renderChat([
 		{

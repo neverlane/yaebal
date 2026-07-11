@@ -99,6 +99,18 @@ const cap = (s: string): string => (s.length > 600 ? `${s.slice(0, 600)}…` : s
 
 const asText = (v: unknown, fallback = ""): string => cap(String(v ?? fallback));
 
+/** sendPoll's `options` are `InputPollOption[]` (`{ text: string | FormattedText }`), not plain
+ * strings — a bare `String(o)` on one of those objects renders as "[object Object]". */
+function pollOptionText(o: unknown): string {
+	if (typeof o === "string") return o;
+	if (typeof o === "object" && o !== null && "text" in o) {
+		const t = (o as { text: unknown }).text;
+		if (typeof t === "string") return t;
+		if (typeof t === "object" && t !== null && "text" in t) return String((t as { text: unknown }).text ?? "");
+	}
+	return String(o ?? "");
+}
+
 function buttonText(button: KeyboardBtn): string {
 	return typeof button === "string" ? button : button.text;
 }
@@ -288,7 +300,7 @@ export function mapCall(c: RecordedCall): Partial<ChatMessage> | null {
 					id: "poll",
 					question: String(p.question ?? "poll"),
 					options: Array.isArray(p.options)
-						? p.options.map((o, i) => ({ text: String(o), voter_count: i === 0 ? 1 : 0 }))
+						? p.options.map((o, i) => ({ text: pollOptionText(o), voter_count: i === 0 ? 1 : 0 }))
 						: [],
 					total_voter_count: 1,
 					is_closed: false,

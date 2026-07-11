@@ -184,9 +184,12 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 
 		// build content blocks — reply/forward/webpage decorations first, then media, then text.
 		// they're all plain Blocks, so the bubble-sizing math below treats them uniformly.
-		const blocks: { block: Block; bleed: boolean }[] = [];
+		// `header: true` marks a block that (like text) renders a single tight line that can reach
+		// the bubble's right edge, so it needs the same inline meta-width reservation as text does
+		// — plain reply/webpage cards are deliberately full-width already and never need it.
+		const blocks: { block: Block; bleed: boolean; header?: boolean }[] = [];
 
-		if (m.forward) blocks.push({ block: forwardBlock(m.forward, p), bleed: false });
+		if (m.forward) blocks.push({ block: forwardBlock(m.forward, p), bleed: false, header: true });
 		if (m.reply) blocks.push({ block: replyBlock(m.reply, MW - PADX * 2, p), bleed: false });
 		if (m.webpage)
 			blocks.push({
@@ -354,7 +357,8 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 				Math.max(0, ...blocks.filter((b) => !b.bleed).map((b) => b.block.w)) +
 				(blocks.some((b) => !b.bleed) ? PADX * 2 : 0);
 
-			const lastIsText = !blocks[blocks.length - 1]?.bleed && (!!tText || !!cText);
+			const lastBlockEntry = blocks[blocks.length - 1];
+			const lastIsText = !lastBlockEntry?.bleed && (!!tText || !!cText || !!lastBlockEntry?.header);
 			const metaInline =
 				lastIsText && (time || m.edited) ? metaWidth(time, out, !!m.status, m.edited) + 8 : 0;
 

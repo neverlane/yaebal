@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/payments",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal payments — typed invoice builder, pre-checkout/successful-payment hooks and Telegram Stars subscriptions.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },

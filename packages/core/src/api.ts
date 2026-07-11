@@ -101,6 +101,15 @@ export interface Api extends BotApiMethods {
 	): Promise<T>;
 	/** build the download URL for a `file_path` from `getFile`. contains the bot token — don't log it. */
 	fileUrl(filePath: string): string;
+	/**
+	 * `getFile(fileId)` + a fetch of the result — the file's bytes in one call, no
+	 * runtime-specific filesystem needed. throws if telegram reports no `file_path`
+	 * (the file exceeded the 20MB Bot API download cap) or the download itself fails.
+	 */
+	downloadFile(
+		fileId: string,
+		options?: CallOptions,
+	): Promise<{ filePath: string; bytes: Uint8Array }>;
 	/** register a hook that runs before every request; may rewrite params. */
 	before(hook: BeforeHook): Api;
 	/** register a hook that runs after every successful request; may rewrite the result. */
@@ -113,8 +122,10 @@ export interface ApiOptions {
 	/**
 	 * bare API origin, no trailing slash and no `/bot` — the client appends
 	 * `/bot<token>/<method>` itself. e.g. `"https://api.telegram.org"` or a local
-	 * bot-api server `"http://localhost:8081"`. passing a value that already ends
-	 * in `/bot…` yields a doubled path and 401s. defaults to the public origin.
+	 * bot-api server `"http://localhost:8081"`. a value that already ends in
+	 * `/bot` (a common GramIO-migration habit) is detected and the suffix is
+	 * stripped with a `console.warn`, rather than silently doubling up and 401ing.
+	 * defaults to the public origin.
 	 */
 	apiRoot?: string;
 	/** resolve `media.path()` to bytes. injected per runtime; absent ⇒ path media throws (e.g. edge). */
@@ -294,9 +305,25 @@ export async function encodeRequest(
 	return { body: form };
 }
 
+/**
+ * strips an accidental trailing `/bot` (as GramIO's `apiRoot` convention expects) so a
+ * copy-pasted origin doesn't silently double up into `/bot/bot<token>/…` and 401.
+ */
+function normalizeApiRoot(apiRoot: string): string {
+	const match = /^(.*)\/bot\/?$/.exec(apiRoot);
+	if (!match) return apiRoot.replace(/\/$/, "");
+
+	const stripped = match[1] as string;
+	console.warn(
+		`@yaebal/core: apiRoot "${apiRoot}" ends in "/bot" — yaebal appends "/bot<token>" itself, ` +
+			`so this would double up. Using "${stripped}" instead. Pass the bare origin to silence this warning.`,
+	);
+	return stripped;
+}
+
 /** builds a callable API client with before/after/error hooks. */
 export function createApi(token: string, options: ApiOptions = {}): Api {
-	const apiRoot = options.apiRoot ?? "https://api.telegram.org";
+	const apiRoot = normalizeApiRoot(options.apiRoot ?? "https://api.telegram.org");
 	const beforeHooks: BeforeHook[] = [];
 	const afterHooks: AfterHook[] = [];
 	const errorHooks: ErrorHook[] = [];
@@ -376,9 +403,30 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		}
 	};
 
+	const fileUrl = (filePath: string) => `${apiRoot}/file/bot${token}/${filePath}`;
+
+	const downloadFile = async (
+		fileId: string,
+		callOptions?: CallOptions,
+	): Promise<{ filePath: string; bytes: Uint8Array }> => {
+		const file = await call<{ file_path?: string }>("getFile", { file_id: fileId }, callOptions);
+		if (!file.file_path) {
+			throw new Error(
+				`@yaebal/core: getFile("${fileId}") returned no file_path — the file may exceed the ` +
+					"Bot API's 20MB download cap.",
+			);
+		}
+
+		const res = await fetch(fileUrl(file.file_path), { signal: callOptions?.signal });
+		if (!res.ok) throw new HttpError("downloadFile", res.status, res.statusText);
+
+		return { filePath: file.file_path, bytes: new Uint8Array(await res.arrayBuffer()) };
+	};
+
 	const registrar: Record<string, unknown> = {
 		call,
-		fileUrl: (filePath: string) => `${apiRoot}/file/bot${token}/${filePath}`,
+		fileUrl,
+		downloadFile,
 		before(hook: BeforeHook) {
 			beforeHooks.push(hook);
 			return api;
@@ -442,8 +490,16 @@ export function withReplyEnvelope(api: Api, envelope: WebhookReplyEnvelope): Api
 		get(obj, prop) {
 			if (typeof prop === "symbol" || prop === "then") return Reflect.get(obj, prop);
 			if (prop in obj) return obj[prop];
-			// hook registration and fileUrl belong to the underlying client.
-			if (prop === "fileUrl" || prop === "before" || prop === "after" || prop === "onError") {
+			// hook registration, fileUrl and downloadFile belong to the underlying client —
+			// downloadFile isn't a real Bot API method name, so it must never fall through
+			// to the generic materialiser below (that would `call("downloadFile", …)`).
+			if (
+				prop === "fileUrl" ||
+				prop === "downloadFile" ||
+				prop === "before" ||
+				prop === "after" ||
+				prop === "onError"
+			) {
 				return (api as unknown as Record<string, unknown>)[prop];
 			}
 

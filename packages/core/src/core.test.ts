@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { InputFile } from "@yaebal/types";
-import { createApi, encodeRequest, HttpError, TelegramError } from "./api.js";
+import { createApi, encodeRequest, HttpError, TelegramError, withReplyEnvelope } from "./api.js";
 import { Bot, type BotPlugin } from "./bot.js";
 import { Composer } from "./composer.js";
 import type { Context } from "./context.js";
@@ -175,6 +175,131 @@ test("createApi exposes Telegram response parameters on TelegramError", async ()
 			assert.deepEqual(error.parameters, { retry_after: 7 });
 			return true;
 		});
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("createApi strips a trailing /bot from apiRoot and warns instead of doubling up", async () => {
+	const previousFetch = globalThis.fetch;
+	const previousWarn = console.warn;
+
+	let requestedUrl = "";
+	let warned = "";
+	globalThis.fetch = async (input) => {
+		requestedUrl = String(input);
+		return new Response(JSON.stringify({ ok: true, result: true }), {
+			headers: { "content-type": "application/json" },
+		});
+	};
+	console.warn = (msg: string) => {
+		warned = msg;
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid/bot" });
+		await api.call("getMe");
+
+		assert.equal(requestedUrl, "https://example.invalid/bot123:abc/getMe");
+		assert.match(warned, /ends in "\/bot"/);
+	} finally {
+		globalThis.fetch = previousFetch;
+		console.warn = previousWarn;
+	}
+});
+
+test("createApi leaves a bare apiRoot untouched and silent", async () => {
+	const previousFetch = globalThis.fetch;
+	const previousWarn = console.warn;
+
+	let warned = false;
+	globalThis.fetch = async () =>
+		new Response(JSON.stringify({ ok: true, result: true }), {
+			headers: { "content-type": "application/json" },
+		});
+	console.warn = () => {
+		warned = true;
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid/" });
+		await api.call("getMe");
+
+		assert.equal(warned, false);
+	} finally {
+		globalThis.fetch = previousFetch;
+		console.warn = previousWarn;
+	}
+});
+
+test("downloadFile calls getFile then fetches the resulting file_path", async () => {
+	const previousFetch = globalThis.fetch;
+	const requested: string[] = [];
+
+	globalThis.fetch = async (input, init) => {
+		requested.push(String(input));
+		if (String(input).includes("/getFile")) {
+			return new Response(
+				JSON.stringify({ ok: true, result: { file_id: "f1", file_path: "photos/f1.jpg" } }),
+				{ headers: { "content-type": "application/json" } },
+			);
+		}
+		assert.equal(init?.signal, undefined); // no callOptions passed in this call
+		return new Response(new Uint8Array([1, 2, 3]));
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+		const result = await api.downloadFile("f1");
+
+		assert.equal(requested[0], "https://example.invalid/bot123:abc/getFile");
+		assert.equal(requested[1], "https://example.invalid/file/bot123:abc/photos/f1.jpg");
+		assert.equal(result.filePath, "photos/f1.jpg");
+		assert.deepEqual([...result.bytes], [1, 2, 3]);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("downloadFile throws when getFile reports no file_path (>20MB cap)", async () => {
+	const previousFetch = globalThis.fetch;
+
+	globalThis.fetch = async () =>
+		new Response(JSON.stringify({ ok: true, result: { file_id: "f1" } }), {
+			headers: { "content-type": "application/json" },
+		});
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+		await assert.rejects(() => api.downloadFile("f1"), /no file_path/);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});
+
+test("withReplyEnvelope forwards downloadFile to the underlying client, not a raw call", async () => {
+	const previousFetch = globalThis.fetch;
+	const requested: string[] = [];
+
+	globalThis.fetch = async (input) => {
+		requested.push(String(input));
+		if (String(input).includes("/getFile")) {
+			return new Response(JSON.stringify({ ok: true, result: { file_path: "docs/f1.pdf" } }), {
+				headers: { "content-type": "application/json" },
+			});
+		}
+		return new Response(new Uint8Array([4, 5]));
+	};
+
+	try {
+		const api = createApi("123:abc", { apiRoot: "https://example.invalid" });
+		const wrapped = withReplyEnvelope(api, { claim: () => false });
+
+		const result = await wrapped.downloadFile("f1");
+
+		assert.equal(requested[0], "https://example.invalid/bot123:abc/getFile");
+		assert.equal(requested[1], "https://example.invalid/file/bot123:abc/docs/f1.pdf");
+		assert.deepEqual([...result.bytes], [4, 5]);
 	} finally {
 		globalThis.fetch = previousFetch;
 	}

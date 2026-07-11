@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/router",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "yaebal file-based routing — load handlers from a routes/ directory by convention.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,11 +17,12 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

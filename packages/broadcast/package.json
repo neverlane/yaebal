@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/broadcast",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "yaebal broadcast — typed broadcast jobs with storage, retry, progress and controls.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

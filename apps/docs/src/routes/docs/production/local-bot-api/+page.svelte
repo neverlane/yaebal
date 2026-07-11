@@ -116,6 +116,13 @@ const bytes = await readFile(file.file_path!);`;
 	without local mode <code>bot.api.fileUrl()</code> keeps working the cloud way — but so do the
 	cloud file-size limits.
 </p>
+<div class="note">
+	<strong><code>bot.api.downloadFile()</code> doesn't work in local mode.</strong> it fetches
+	<code>fileUrl(file_path)</code> under the hood, which is exactly the link that stops resolving
+	once <code>file_path</code> becomes a server-disk path — it throws an <code>HttpError</code>
+	rather than silently returning the wrong bytes. use the <code>getFile</code> + <code>readFile</code>
+	pattern above instead.
+</div>
 
 <h2>webhooks</h2>
 <p>

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/toml",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "yaebal toml — declarative toml routes for yaebal bots.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,13 +17,16 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"smol-toml": "^1.7.0",
 		"zod": "^4.4.3"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": {

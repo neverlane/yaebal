@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/session",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal session plugin — typed per-chat/per-user state: dirty-checked saves, lazy loading, multi-session, migrations, ttl fields, pluggable storage.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/sklad": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

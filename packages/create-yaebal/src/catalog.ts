@@ -361,6 +361,13 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { linkPreview } from "@yaebal/link-preview";',
 	},
 	{
+		id: "inline-results",
+		dep: "@yaebal/inline-results",
+		hint: "typed builders for every InlineQueryResult / InputMessageContent variant",
+		wire: "dep",
+		import: 'import { InlineQueryResult, InputMessageContent } from "@yaebal/inline-results";',
+	},
+	{
 		id: "commands",
 		dep: "@yaebal/commands",
 		hint: "command registry + telegram menu",

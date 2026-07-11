@@ -107,7 +107,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [panel](/examples/panel/)                   | operator dashboard with media viewer, keyboards, callbacks and events                                                      | `pnpm --filter @yaebal/example-panel dev`           |
 | [commerce-suite](/examples/commerce-suite/) | shop bot: cart session, i18n, pagination, callback data, command registry, ratelimiter                                     | `pnpm --filter @yaebal/example-commerce-suite dev`  |
 | [dialog-quest](/examples/dialog-quest/)     | morda cockpit, scenes, prompt, conversation and session profile                                                            | `pnpm --filter @yaebal/example-dialog-quest dev`    |
-| [state-machine](/examples/state-machine/)   | typed events driving transitions, a guard you can trip interactively, per-state onEnter hooks, reset()                    | `pnpm --filter @yaebal/example-state-machine dev`   |
+| [state-machine](/examples/state-machine/)   | typed events driving transitions, a guard you can trip interactively, per-state onEnter hooks, reset()                     | `pnpm --filter @yaebal/example-state-machine dev`   |
 | [morda-jsx](/examples/morda-jsx/)           | jsx dialog screens: persisted hooks, dialog data, widgets, free-text input                                                 | `pnpm --filter @yaebal/example-morda-jsx dev`       |
 | [media-studio](/examples/media-studio/)     | albums, file metadata + links, file_id introspection, media cache, svg previews, entity-aware splitting                    | `pnpm --filter @yaebal/example-media-studio dev`    |
 | [modular-router](/examples/modular-router/) | file-based routes from `routes/commands` and `routes/on`                                                                   | `pnpm --filter @yaebal/example-modular-router dev`  |
@@ -120,51 +120,52 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 
 ### plugins
 
-| package                                           | what                                                                                  |
-|:--------------------------------------------------|:--------------------------------------------------------------------------------------|
-| [@yaebal/again](/packages/again/)                 | awaited retry on structured `retry_after` / transient 5xx                             |
-| [@yaebal/session](/packages/session/)             | typed sessions: dirty-checked saves, lazy mode, multi-session, ttl fields, migrations |
-| [@yaebal/sklad](/packages/sklad/)                 | zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, file       |
-| [@yaebal/cache](/packages/cache/)                 | `ctx.cache.get/set/wrap` — ttl memoization for api calls and data, dedupes concurrent misses |
-| [@yaebal/feature-flags](/packages/feature-flags/) | `ctx.flags.isEnabled(key)`/`getVariant(key)` — typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, LaunchDarkly/GrowthBook/env adapters |
-| [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
-| [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
-| [@yaebal/payments](/packages/payments/)           | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions |
-| [@yaebal/mini-app](/packages/mini-app/)           | Telegram Mini Apps server protocol: HMAC + Ed25519 (third-party) `initData` validation, typed parser & test signer, `Authorization: tma` header helper, `answerWebAppQuery`, `WebAppInfo`/deep-link url generator |
-| [@yaebal/link-preview](/packages/link-preview/)   | fluent builder for `link_preview_options`                                             |
-| [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
-| [@yaebal/typing](/packages/typing/)               | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction` |
-| [@yaebal/filters](/packages/filters/)             | composable, type-narrowing update filters: `and`/`or`/`not`, deep links, async        |
-| [@yaebal/guards](/packages/guards/)               | reusable `bot.guard()` predicates: `isAdmin`, `isPrivate`, `isGroup`, `hasMembership`, `hasPermission` |
-| [@yaebal/fmt](/packages/fmt/)                     | `html` / `md` tagged templates with auto-escaping                                     |
-| [@yaebal/rich](/packages/rich/)                   | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts        |
-| [@yaebal/morda](/packages/morda/)                 | dialogs engine and jsx/hooks for telegram ui                                          |
-| [@yaebal/i18n](/packages/i18n/)                   | typed `ctx.t` (keys + params), Intl plurals, `language_code` detection                |
-| [@yaebal/scenes](/packages/scenes/)               | durable wizards: typed state, `ask()` validation, navigation, sub-scenes, ttl         |
-| [@yaebal/state-machine](/packages/state-machine/) | declarative finite-state machines: typed events, guarded transitions, `onEnter`/`onLeave` hooks |
-| [@yaebal/onboarding](/packages/onboarding/)       | declarative first-run tutorials with inline controls                                  |
-| [@yaebal/conversation](/packages/conversation/)   | await-style multi-step dialogs                                                        |
-| [@yaebal/prompt](/packages/prompt/)               | ask a question, handle the next message                                               |
-| [@yaebal/router](/packages/router/)               | file-based routing from a `routes/` directory                                         |
-| [@yaebal/toml](/packages/toml/)                   | declarative toml routes with a handler registry                                       |
-| [@yaebal/throttle](/packages/throttle/)           | priority outbound scheduler with global/private/group buckets                         |
-| [@yaebal/files](/packages/files/)                 | inspect, link, stream and download files; local Bot API server aware                  |
-| [@yaebal/file-id](/packages/file-id/)             | parse and re-serialize `file_id` / `file_unique_id` strings (zero deps)               |
-| [@yaebal/ratelimiter](/packages/ratelimiter/)     | drop updates from users who spam                                                      |
-| [@yaebal/broadcast](/packages/broadcast/)         | typed broadcast jobs with storage, retry, progress and controls                       |
-| [@yaebal/cron](/packages/cron/)                   | typed cron jobs: declarative schedules, overlap control, graceful shutdown            |
-| [@yaebal/panel](/packages/panel/)                 | framework-agnostic operator panel with media, keyboards and event timeline            |
-| [@yaebal/analytics](/packages/analytics/)         | `ctx.track(event, properties)` with pluggable sinks: posthog, plausible, sqlite, clickhouse |
-| [@yaebal/audit-log](/packages/audit-log/)         | structured logging of updates and api calls — sinks, formatters, filters, sampling    |
-| [@yaebal/web](/packages/web/)                     | webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, `sequentialize`, `dedupe`, lifecycle |
-| [@yaebal/runner](/packages/runner/)               | concurrent long-polling for scale                                                     |
-| [@yaebal/media-group](/packages/media-group/)     | collect albums into one handler call or a `ctx.mediaGroup` pass-through               |
-| [@yaebal/media-cache](/packages/media-cache/)     | upload once, reuse the `file_id` — self-heals when telegram rejects it                |
-| [@yaebal/split](/packages/split/)                 | long text as multiple messages — entity-aware splits, partial-failure reports         |
-| [@yaebal/commands](/packages/commands/)           | one registry for handlers and the `/` menu — localized, scoped, diff-synced           |
-| [@yaebal/pagination](/packages/pagination/)       | paginated lists over any source — lazy fetch, item buttons, typed payload             |
-| [@yaebal/preview](/packages/preview/)             | render telegram-style chats to svg — reply quotes, reactions, link previews, custom themes |
-| [@yaebal/workers](/packages/workers/)             | typed `worker_threads` pool — queueing, timeouts, aborts, crash recovery              |
+| package                                             | what                                                                                                                                                                                                              |
+|:----------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [@yaebal/again](/packages/again/)                   | awaited retry on structured `retry_after` / transient 5xx                                                                                                                                                         |
+| [@yaebal/session](/packages/session/)               | typed sessions: dirty-checked saves, lazy mode, multi-session, ttl fields, migrations                                                                                                                             |
+| [@yaebal/sklad](/packages/sklad/)                   | zero-dep storage adapters: memory (ttl/lru), redis, sqlite, cloudflare kv, file                                                                                                                                   |
+| [@yaebal/cache](/packages/cache/)                   | `ctx.cache.get/set/wrap` — ttl memoization for api calls and data, dedupes concurrent misses                                                                                                                      |
+| [@yaebal/feature-flags](/packages/feature-flags/)   | `ctx.flags.isEnabled(key)`/`getVariant(key)` — typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, LaunchDarkly/GrowthBook/env adapters                     |
+| [@yaebal/keyboard](/packages/keyboard/)             | fluent inline and reply keyboard builders                                                                                                                                                                         |
+| [@yaebal/callback-data](/packages/callback-data/)   | typed `callback_data` pack / unpack                                                                                                                                                                               |
+| [@yaebal/payments](/packages/payments/)             | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions                                                                                                   |
+| [@yaebal/mini-app](/packages/mini-app/)             | Telegram Mini Apps server protocol: HMAC + Ed25519 (third-party) `initData` validation, typed parser & test signer, `Authorization: tma` header helper, `answerWebAppQuery`, `WebAppInfo`/deep-link url generator |
+| [@yaebal/link-preview](/packages/link-preview/)     | fluent builder for `link_preview_options`                                                                                                                                                                         |
+| [@yaebal/inline-results](/packages/inline-results/) | typed builders for every `InlineQueryResult` / `InputMessageContent` variant                                                                                                                                      |
+| [@yaebal/auto-answer](/packages/auto-answer/)       | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call                                                                                                                              |
+| [@yaebal/typing](/packages/typing/)                 | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction`                                                                                                             |
+| [@yaebal/filters](/packages/filters/)               | composable, type-narrowing update filters: `and`/`or`/`not`, deep links, async                                                                                                                                    |
+| [@yaebal/guards](/packages/guards/)                 | reusable `bot.guard()` predicates: `isAdmin`, `isPrivate`, `isGroup`, `hasMembership`, `hasPermission`                                                                                                            |
+| [@yaebal/fmt](/packages/fmt/)                       | `html` / `md` tagged templates with auto-escaping                                                                                                                                                                 |
+| [@yaebal/rich](/packages/rich/)                     | `sendRichMessage` / `sendRichMessageDraft`: block builder and streaming drafts                                                                                                                                    |
+| [@yaebal/morda](/packages/morda/)                   | dialogs engine and jsx/hooks for telegram ui                                                                                                                                                                      |
+| [@yaebal/i18n](/packages/i18n/)                     | typed `ctx.t` (keys + params), Intl plurals, `language_code` detection                                                                                                                                            |
+| [@yaebal/scenes](/packages/scenes/)                 | durable wizards: typed state, `ask()` validation, navigation, sub-scenes, ttl                                                                                                                                     |
+| [@yaebal/state-machine](/packages/state-machine/)   | declarative finite-state machines: typed events, guarded transitions, `onEnter`/`onLeave` hooks                                                                                                                   |
+| [@yaebal/onboarding](/packages/onboarding/)         | declarative first-run tutorials with inline controls                                                                                                                                                              |
+| [@yaebal/conversation](/packages/conversation/)     | await-style multi-step dialogs                                                                                                                                                                                    |
+| [@yaebal/prompt](/packages/prompt/)                 | ask a question, handle the next message                                                                                                                                                                           |
+| [@yaebal/router](/packages/router/)                 | file-based routing from a `routes/` directory                                                                                                                                                                     |
+| [@yaebal/toml](/packages/toml/)                     | declarative toml routes with a handler registry                                                                                                                                                                   |
+| [@yaebal/throttle](/packages/throttle/)             | priority outbound scheduler with global/private/group buckets                                                                                                                                                     |
+| [@yaebal/files](/packages/files/)                   | inspect, link, stream and download files; local Bot API server aware                                                                                                                                              |
+| [@yaebal/file-id](/packages/file-id/)               | parse and re-serialize `file_id` / `file_unique_id` strings (zero deps)                                                                                                                                           |
+| [@yaebal/ratelimiter](/packages/ratelimiter/)       | drop updates from users who spam                                                                                                                                                                                  |
+| [@yaebal/broadcast](/packages/broadcast/)           | typed broadcast jobs with storage, retry, progress and controls                                                                                                                                                   |
+| [@yaebal/cron](/packages/cron/)                     | typed cron jobs: declarative schedules, overlap control, graceful shutdown                                                                                                                                        |
+| [@yaebal/panel](/packages/panel/)                   | framework-agnostic operator panel with media, keyboards and event timeline                                                                                                                                        |
+| [@yaebal/analytics](/packages/analytics/)           | `ctx.track(event, properties)` with pluggable sinks: posthog, plausible, sqlite, clickhouse                                                                                                                       |
+| [@yaebal/audit-log](/packages/audit-log/)           | structured logging of updates and api calls — sinks, formatters, filters, sampling                                                                                                                                |
+| [@yaebal/web](/packages/web/)                       | webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, `sequentialize`, `dedupe`, lifecycle                                                                                        |
+| [@yaebal/runner](/packages/runner/)                 | concurrent long-polling for scale                                                                                                                                                                                 |
+| [@yaebal/media-group](/packages/media-group/)       | collect albums into one handler call or a `ctx.mediaGroup` pass-through                                                                                                                                           |
+| [@yaebal/media-cache](/packages/media-cache/)       | upload once, reuse the `file_id` — self-heals when telegram rejects it                                                                                                                                            |
+| [@yaebal/split](/packages/split/)                   | long text as multiple messages — entity-aware splits, partial-failure reports                                                                                                                                     |
+| [@yaebal/commands](/packages/commands/)             | one registry for handlers and the `/` menu — localized, scoped, diff-synced                                                                                                                                       |
+| [@yaebal/pagination](/packages/pagination/)         | paginated lists over any source — lazy fetch, item buttons, typed payload                                                                                                                                         |
+| [@yaebal/preview](/packages/preview/)               | render telegram-style chats to svg — reply quotes, reactions, link previews, custom themes                                                                                                                        |
+| [@yaebal/workers](/packages/workers/)               | typed `worker_threads` pool — queueing, timeouts, aborts, crash recovery                                                                                                                                          |
 
 ### repository map
 

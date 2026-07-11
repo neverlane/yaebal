@@ -82,10 +82,16 @@ bot.install(dialogs({
   }),
 }));`;
 
-	const options = `import { dialogs } from "@yaebal/morda";
+	const options = `import { dialogs, type DialogState } from "@yaebal/morda";
+import { redisStorage } from "@yaebal/sklad";
+import Redis from "ioredis"; // or \`createClient\` from "redis" — both fit structurally
+
+// any @yaebal/sklad StorageAdapter works — redis/sqlite/cloudflare-kv/file survive
+// restarts and share dialog state across horizontally-scaled instances
+const storage = redisStorage<DialogState>(new Redis(), { prefix: "bot:dialog:" });
 
 bot.install(dialogs(def, {
-  storage: redisAdapter,          // default: in-memory (dev only)
+  storage,                        // default: in-memory (dev only)
   prefix: "shop",                 // callback namespace — unique per install
   getKey: (ctx) => \`\${ctx.chat?.id}\`, // default: chat id, chat:user in groups
   access: (ctx) => ctx.from?.id === ADMIN_ID, // gate who may press buttons
@@ -324,8 +330,10 @@ await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 		<tr>
 			<td><code>storage</code></td>
 			<td><code>MemoryStorage</code></td>
-			<td>where dialog state persists — stack, params, data, jsx hook state. use a persistent
-			adapter in production and dialogs survive restarts</td>
+			<td>where dialog state persists — stack, params, data, jsx hook state. any
+			<a href="/docs/plugins/sklad"><code>@yaebal/sklad</code></a> <code>StorageAdapter</code>
+			works — swap in <code>redisStorage()</code> (or sqlite/cloudflare-kv/file) in production
+			and dialogs survive restarts</td>
 		</tr>
 		<tr>
 			<td><code>prefix</code></td>
@@ -465,6 +473,6 @@ await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 <p>
 	<a href="/docs/plugins/scenes">@yaebal/scenes</a> for message-per-step wizards,
 	<a href="/docs/plugins/prompt">@yaebal/prompt</a> for one-off questions,
-	<a href="/docs/plugins/session">@yaebal/session</a> for the storage adapters morda reuses, and
-	the <a href="/docs/examples">dialog-quest example</a> for a running bot.
+	<a href="/docs/plugins/sklad">@yaebal/sklad</a> for the storage adapters morda's <code>storage</code>
+	option takes, and the <a href="/docs/examples">dialog-quest example</a> for a running bot.
 </p>

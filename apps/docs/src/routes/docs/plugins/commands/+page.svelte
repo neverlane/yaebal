@@ -55,6 +55,14 @@ await cmd.register(bot.api);
 // everyone's menu: /start
 // admins' menu:    /start /ban /unban`;
 
+	const shadow = `const cmd = commands().add("start", "start the bot", handler);
+cmd.scoped({ type: "all_private_chats" })
+  .add("start", "start the bot (dm)", dmHandler);
+
+await cmd.register(bot.api);
+// default menu:        /start (generic text)
+// private-chats menu:  /start (dm text)`;
+
 	const extras = `const cmd = commands()
   // ["name", ...aliases] — every name is handled, only the first shows in the menu
   .add(["settings", "prefs"], "open settings", handler)
@@ -158,6 +166,23 @@ env.callsTo("setMyCommands");`;
 	list for users a more specific scope matches.
 </p>
 <Code code={scoped} title="scoped.ts" />
+
+<h2>shadowing an unscoped command in one explicit scope</h2>
+<p>
+	a name may be defined both unscoped and in <em>one</em> explicit scope — the explicit def
+	shadows the unscoped one. that's the escape hatch for targeting the base command's own menu at
+	a scope other than the default (e.g. <code>all_private_chats</code> instead of
+	<code>BotCommandScopeDefault</code>) without losing the auto-repeat into other explicit scopes
+	shown above.
+</p>
+<Code code={shadow} title="shadow.ts" />
+<div class="note">
+	since <code>plugin()</code> wires <code>command()</code> by name alone (no scope awareness at
+	runtime), the explicit def's handler wins globally, not just inside its scope — a menu-only
+	shadow (no handlers) falls back to the unscoped handler instead. two <em>explicit</em> scopes
+	can never share a name: nothing at runtime could pick between two differing handlers, so that
+	stays a <code>duplicate command name</code> error.
+</div>
 
 <h2>aliases, hidden and menu-only commands</h2>
 <Code code={extras} title="extras.ts" />

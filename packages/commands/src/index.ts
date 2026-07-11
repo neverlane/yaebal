@@ -119,7 +119,8 @@ function sameCommands(a: BotCommand[], b: BotCommand[]): boolean {
  */
 export class Commands<C extends Context = Context> {
 	private defs: CommandDef<C>[] = [];
-	private taken = new Set<string>();
+	/** name → scopes it's registered under so far (`undefined` = unscoped). */
+	private taken = new Map<string, Array<BotCommandScope | undefined>>();
 
 	/**
 	 * define a command: menu name (or `[name, ...aliases]` — only the first shows in the
@@ -191,14 +192,27 @@ export class Commands<C extends Context = Context> {
 		return out;
 	}
 
-	/** a plugin that wires every command's (and alias's) handlers — `bot.install(cmd.plugin())`. */
+	/**
+	 * a plugin that wires every command's (and alias's) handlers — `bot.install(cmd.plugin())`.
+	 * for a shadowed name, the explicit-scope handlers win over the unscoped ones (empty
+	 * explicit handlers — a menu-only override — fall back to the unscoped handlers instead).
+	 */
 	plugin(): Plugin<C, Record<never, never>> {
-		const defs = this.defs;
+		const resolved = new Map<string, CommandHandler<C>[]>();
+
+		for (const d of this.defs) {
+			if (d.scope !== undefined) continue;
+			for (const n of d.names) resolved.set(n, d.handlers);
+		}
+		for (const d of this.defs) {
+			if (d.scope === undefined || d.handlers.length === 0) continue;
+			for (const n of d.names) resolved.set(n, d.handlers);
+		}
 
 		return (composer) => {
-			for (const d of defs) {
-				if (d.handlers.length === 0) continue;
-				for (const name of d.names) composer.command(name, ...d.handlers);
+			for (const [name, handlers] of resolved) {
+				if (handlers.length === 0) continue;
+				composer.command(name, ...handlers);
 			}
 			return composer;
 		};
@@ -256,6 +270,35 @@ export class Commands<C extends Context = Context> {
 		return menus;
 	}
 
+	/**
+	 * a name may be reused across an unscoped def and (at most) one explicit-scope def —
+	 * the explicit one shadows the unscoped one, closing the gap where the base command
+	 * set can't also target a specific scope's own menu (see the commands doc). two
+	 * *explicit* scopes sharing a name stay forbidden: `command()` matches on text alone,
+	 * so nothing at runtime could tell which of two differing handlers should fire.
+	 */
+	private checkAvailable(name: string, scope: BotCommandScope | undefined): void {
+		const existing = this.taken.get(name);
+		if (existing === undefined) return;
+
+		if (scope === undefined) {
+			if (existing.some((s) => s === undefined))
+				throw new TypeError(`@yaebal/commands: duplicate command name "${name}"`);
+			return;
+		}
+
+		const key = scopeKey(scope);
+		for (const s of existing) {
+			if (s === undefined) continue;
+			throw new TypeError(
+				scopeKey(s) === key
+					? `@yaebal/commands: duplicate command name "${name}"`
+					: `@yaebal/commands: "${name}" is already defined in another explicit scope — ` +
+							`two explicit scopes can't share a name, only an unscoped def may be shadowed`,
+			);
+		}
+	}
+
 	private define(
 		name: string | string[],
 		description: CommandDescription | undefined,
@@ -272,12 +315,16 @@ export class Commands<C extends Context = Context> {
 				throw new TypeError(
 					`@yaebal/commands: invalid command name "${n}" — 1-32 chars, lowercase a-z, 0-9 and _`,
 				);
-			if (this.taken.has(n)) throw new TypeError(`@yaebal/commands: duplicate command name "${n}"`);
+			this.checkAvailable(n, scope);
 		}
 
 		const normalized = description === undefined ? undefined : normalizeDescription(description);
 
-		for (const n of names) this.taken.add(n);
+		for (const n of names) {
+			const scopes = this.taken.get(n) ?? [];
+			scopes.push(scope);
+			this.taken.set(n, scopes);
+		}
 		this.defs.push({ names: [first, ...names.slice(1)], description: normalized, scope, handlers });
 
 		for (const group of this.scopeGroups()) {
@@ -290,7 +337,8 @@ export class Commands<C extends Context = Context> {
 
 	/**
 	 * visible defs grouped per menu: the unscoped (default) menu first, then one group per
-	 * distinct scope, each repeating the unscoped commands in insertion order.
+	 * distinct scope, each repeating the unscoped commands in insertion order — except a
+	 * name shadowed by that scope's own explicit def, which shows the explicit def instead.
 	 */
 	private scopeGroups(): Array<{ scope?: BotCommandScope; defs: VisibleDef<C>[] }> {
 		const visible = this.defs.filter((d): d is VisibleDef<C> => d.description !== undefined);
@@ -305,9 +353,18 @@ export class Commands<C extends Context = Context> {
 			if (seen.has(key)) continue;
 			seen.add(key);
 
+			const shadowedNames = new Set(
+				visible
+					.filter((v) => v.scope !== undefined && scopeKey(v.scope) === key)
+					.flatMap((v) => v.names),
+			);
+
 			groups.push({
 				scope: d.scope,
-				defs: visible.filter((v) => v.scope === undefined || scopeKey(v.scope) === key),
+				defs: visible.filter((v) => {
+					if (v.scope !== undefined) return scopeKey(v.scope) === key;
+					return !v.names.some((n) => shadowedNames.has(n));
+				}),
 			});
 		}
 

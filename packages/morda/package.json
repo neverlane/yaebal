@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/morda",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "yaebal dialogs engine — declarative windows, callback routing, stack navigation.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -25,14 +25,17 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/keyboard": "workspace:*",
 		"@yaebal/callback-data": "workspace:*",
 		"@yaebal/sklad": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

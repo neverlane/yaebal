@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/contexts",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
 	"sideEffects": false,
@@ -22,12 +22,15 @@
 		"test": "node --test lib/*.test.js",
 		"generate": "node scripts/generate.mjs"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

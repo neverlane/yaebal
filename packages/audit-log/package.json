@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/audit-log",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal audit-log — structured logging of incoming updates and outgoing api calls, with formatters, filters and sampling.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,11 +17,12 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },

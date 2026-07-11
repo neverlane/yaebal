@@ -466,62 +466,55 @@ importers:
         version: 26.1.0
 
   packages/again:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/analytics:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/audit-log:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/auto-answer:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/broadcast:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -529,12 +522,12 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/cache:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/cache:
+    dependencies:
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -542,6 +535,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
@@ -554,9 +550,6 @@ importers:
 
   packages/commands:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -564,15 +557,15 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/contexts:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -580,16 +573,18 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/conversation:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/conversation:
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/core:
     dependencies:
@@ -611,23 +606,19 @@ importers:
         version: 6.0.3
 
   packages/cron:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/feature-flags:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -635,6 +626,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
@@ -647,9 +641,6 @@ importers:
 
   packages/files:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -657,38 +648,36 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/filters:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/fmt:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/guards:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/guards:
+    dependencies:
       '@yaebal/filters':
         specifier: workspace:*
         version: link:../filters
@@ -696,15 +685,15 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/i18n:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -712,9 +701,22 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
+
+  packages/inline-results:
+    dependencies:
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
 
   packages/keyboard:
     dependencies:
@@ -738,9 +740,6 @@ importers:
 
   packages/media-cache:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -748,25 +747,24 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/media-group:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/mini-app:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/mini-app:
+    dependencies:
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -774,6 +772,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
@@ -783,9 +784,6 @@ importers:
       '@yaebal/callback-data':
         specifier: workspace:*
         version: link:../callback-data
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../keyboard
@@ -796,12 +794,12 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/onboarding:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/onboarding:
+    dependencies:
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../keyboard
@@ -809,15 +807,15 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/pagination:
     dependencies:
       '@yaebal/callback-data':
         specifier: workspace:*
         version: link:../callback-data
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../keyboard
@@ -825,25 +823,24 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/panel:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
-
-  packages/payments:
-    dependencies:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/payments:
+    dependencies:
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -851,6 +848,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
@@ -866,30 +866,25 @@ importers:
         version: 26.0.1
 
   packages/prompt:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/ratelimiter:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/rich:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -897,19 +892,21 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.0
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/router:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/runner:
     dependencies:
@@ -923,9 +920,6 @@ importers:
 
   packages/scenes:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -933,15 +927,15 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/session:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -949,6 +943,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/sklad:
     devDependencies:
@@ -957,23 +954,19 @@ importers:
         version: 26.1.1
 
   packages/split:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/state-machine:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
@@ -981,35 +974,33 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/test:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/throttle:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/toml:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       smol-toml:
         specifier: ^1.7.0
         version: 1.7.0
@@ -1020,6 +1011,9 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
@@ -1032,9 +1026,6 @@ importers:
 
   packages/typing:
     dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
       '@yaebal/types':
         specifier: workspace:*
         version: link:../types
@@ -1042,19 +1033,21 @@ importers:
       '@types/node':
         specifier: latest
         version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test
 
   packages/web:
-    dependencies:
-      '@yaebal/core':
-        specifier: workspace:*
-        version: link:../core
     devDependencies:
       '@types/node':
         specifier: latest
         version: 26.0.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
 
   packages/workers:
     devDependencies:

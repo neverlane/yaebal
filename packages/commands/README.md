@@ -82,6 +82,26 @@ await cmd.register(bot.api);
 note: scope only affects the *menu*. handlers still run for anyone — guard them yourself (e.g.
 with `@yaebal/filters`).
 
+### shadowing an unscoped command in one explicit scope
+
+a name may be defined both unscoped and in **one** explicit scope — the explicit def shadows the
+unscoped one. that's the escape hatch for targeting the base command's own menu at a scope other
+than the default (e.g. `all_private_chats` instead of `BotCommandScopeDefault`) without losing the
+auto-repeat into other explicit scopes (like the admin menu above):
+
+```ts
+const cmd = commands().add("start", "start the bot", handler);
+cmd.scoped({ type: "all_private_chats" }).add("start", "start the bot (dm)", dmHandler);
+
+await cmd.register(bot.api);
+// default menu: /start (generic text) — private-chats menu: /start (dm text)
+```
+
+since `plugin()` wires `command()` by name alone (no scope awareness at runtime), the explicit
+def's handler wins globally, not just inside its scope — a menu-only shadow (no handlers) falls
+back to the unscoped handler instead. two *explicit* scopes can never share a name: nothing at
+runtime could pick between two differing handlers, so that stays a `duplicate command name` error.
+
 ### aliases and hidden commands
 
 ```ts

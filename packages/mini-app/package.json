@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/mini-app",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal mini-app — the Telegram Mini Apps server protocol: HMAC + Ed25519 (third-party) initData validation, a typed parser and test signer, an Authorization: tma header helper, answerWebAppQuery, and a WebAppInfo/deep-link url generator.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },

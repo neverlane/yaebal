@@ -30,6 +30,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/payments", "/docs/plugins/payments/", "typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions"],
 		["@yaebal/mini-app", "/docs/plugins/mini-app/", "telegram Mini Apps server protocol — HMAC + Ed25519 (third-party) initData validation, typed parser & test signer, Authorization: tma header helper, answerWebAppQuery, WebAppInfo/deep-link url generator"],
 		["@yaebal/link-preview", "/docs/plugins/link-preview/", "fluent builder for link_preview_options"],
+		["@yaebal/inline-results", "/docs/plugins/inline-results/", "typed builders for every InlineQueryResult / InputMessageContent variant"],
 		["@yaebal/auto-answer", "/docs/plugins/auto-answer/", "auto-clears the callback-query loading spinner, no manual answerCallbackQuery call"],
 		["@yaebal/typing", "/docs/plugins/typing/", "ctx.typing(fn) keeps the \"is typing…\" indicator alive for an async call, no manual sendChatAction"],
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],

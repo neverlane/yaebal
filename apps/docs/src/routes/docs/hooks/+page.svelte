@@ -56,6 +56,10 @@ try {
 const url = bot.api.fileUrl(file.file_path);
 // https://api.telegram.org/file/bot<token>/<file_path>
 //                                  ^^^^^^^ contains the bot token — never log it`;
+
+	const downloadFile = `const { filePath, bytes } = await bot.api.downloadFile(fileId);
+// bytes: Uint8Array — write it with whatever your runtime offers
+// (node:fs, Bun.write, Deno.writeFile, …); filePath keeps the extension`;
 </script>
 
 <svelte:head>
@@ -134,3 +138,14 @@ const url = bot.api.fileUrl(file.file_path);
 	<strong>contains the token.</strong> the file download URL embeds the bot token. never log it,
 	and never hand it to an untrusted client — anyone with it controls the bot.
 </div>
+
+<h2>downloadFile</h2>
+<p>
+	<code>downloadFile(fileId)</code> is <code>getFile</code> + a fetch of the result in one call —
+	no runtime-specific filesystem module needed, so it works the same on node, bun, deno and edge.
+	it throws if Telegram reports no <code>file_path</code> (the file exceeds the Bot API's 20MB
+	download cap) or the download itself fails — including under a
+	<a href="/docs/production/local-bot-api/#files-in-local-mode">local bot api server</a>, where
+	<code>file_path</code> becomes a server-disk path instead of a url.
+</p>
+<Code code={downloadFile} title="downloadFile.ts" />

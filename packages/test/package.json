@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/test",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"description": "yaebal test — an actor-driven test framework for yaebal bots: users/chats that send real updates, a virtual clock, apiError stubs, and satellite-plugin test packs.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,11 +17,12 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/api.test.js lib/clock.test.js lib/env.test.js lib/keyboard.test.js lib/updates.test.js lib/webhook.test.js"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

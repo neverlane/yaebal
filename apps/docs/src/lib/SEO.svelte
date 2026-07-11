@@ -293,6 +293,11 @@
 			description:
 				"build telegram link_preview_options in yaebal with a fluent api: preview url, prefer small/large media, show above text, or disable the preview entirely.",
 		},
+		"/docs/plugins/inline-results": {
+			title: "@yaebal/inline-results — InlineQueryResult builders",
+			description:
+				"typed builders for every telegram InlineQueryResult and InputMessageContent variant in yaebal — article, photo, video, cached file_id results and more, with formatted-text captions.",
+		},
 		"/docs/plugins/media-cache": {
 			title: "@yaebal/media-cache — reuse telegram file ids",
 			description:

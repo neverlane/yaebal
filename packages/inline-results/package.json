@@ -1,7 +1,7 @@
 {
-	"name": "@yaebal/state-machine",
-	"version": "0.0.2",
-	"description": "yaebal state-machine plugin — declarative finite-state machines: typed events, guarded transitions, onEnter/onLeave hooks.",
+	"name": "@yaebal/inline-results",
+	"version": "0.0.1",
+	"description": "yaebal inline-results — typed builders for every InlineQueryResult / InputMessageContent variant.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -17,26 +17,21 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
-	"peerDependencies": {
-		"@yaebal/core": "workspace:*"
-	},
 	"dependencies": {
-		"@yaebal/sklad": "workspace:*"
+		"@yaebal/types": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest",
-		"@yaebal/core": "workspace:*",
-		"@yaebal/test": "workspace:*"
+		"@types/node": "latest"
 	},
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "state-machine", "fsm", "finite-state-machine"],
+	"keywords": ["telegram", "telegram-bot", "yaebal", "inline-query", "inline-mode"],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
-		"directory": "packages/state-machine"
+		"directory": "packages/inline-results"
 	},
 	"publishConfig": {
 		"access": "public"

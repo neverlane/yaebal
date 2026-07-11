@@ -82,6 +82,7 @@ export const nav: NavSection[] = [
 			{ label: "keyboard", href: "/docs/plugins/keyboard" },
 			{ label: "callback-data", href: "/docs/plugins/callback-data" },
 			{ label: "link-preview", href: "/docs/plugins/link-preview", badge: "new" },
+			{ label: "inline-results", href: "/docs/plugins/inline-results", badge: "new" },
 			{ label: "auto-answer", href: "/docs/plugins/auto-answer", badge: "new" },
 			{ label: "typing", href: "/docs/plugins/typing", badge: "new" },
 			{ label: "pagination", href: "/docs/plugins/pagination" },

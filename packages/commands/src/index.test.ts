@@ -235,6 +235,57 @@ test("add() validates names, descriptions, locales and duplicates", () => {
 	assert.throws(() => cmd.add(["other", "start"], "alias clash"), /duplicate command name/);
 });
 
+test("an explicit scope may shadow an unscoped name: own menu text + handler win", async () => {
+	const cmd = commands().add("start", "generic start", (ctx) => ctx.reply("generic"));
+	cmd.scoped({ type: "all_private_chats" }).add("start", "private start", (ctx) => ctx.reply("dm"));
+
+	// menu text: unscoped group keeps the generic description, the shadowing scope its own
+	assert.deepEqual(cmd.list(), [{ command: "start", description: "generic start" }]);
+	assert.deepEqual(cmd.list({ scope: { type: "all_private_chats" } }), [
+		{ command: "start", description: "private start" },
+	]);
+
+	// execution: the explicit-scope handler wins globally (command() has no scope awareness)
+	const env = createTestEnv(new Composer<Context>().install(cmd.plugin()));
+	await env.createUser().sendCommand("start");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "dm");
+});
+
+test("a menu-only explicit shadow (no handlers) falls back to the unscoped handler", async () => {
+	const cmd = commands().add("start", "generic start", (ctx) => ctx.reply("generic"));
+	cmd.scoped({ type: "all_private_chats" }).add("start", "private start");
+
+	const env = createTestEnv(new Composer<Context>().install(cmd.plugin()));
+	await env.createUser().sendCommand("start");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "generic");
+});
+
+test("shadowing is order-independent: explicit-first then unscoped works too", () => {
+	const cmd = commands();
+	cmd.scoped(ADMINS).add("start", "admin start", () => {});
+	cmd.add("start", "generic start", () => {});
+
+	assert.deepEqual(cmd.list({ scope: ADMINS }), [{ command: "start", description: "admin start" }]);
+	assert.deepEqual(cmd.list(), [{ command: "start", description: "generic start" }]);
+});
+
+test("two explicit scopes still can't share a name", () => {
+	const cmd = commands();
+	cmd.scoped(ADMINS).add("start", "admin start", () => {});
+
+	assert.throws(
+		() => cmd.scoped({ type: "all_private_chats" }).add("start", "dm start", () => {}),
+		/already defined in another explicit scope/,
+	);
+});
+
+test("a name still can't be defined unscoped twice, even alongside a shadow", () => {
+	const cmd = commands().add("start", "go", () => {});
+	cmd.scoped(ADMINS).add("start", "admin start", () => {});
+
+	assert.throws(() => cmd.add("start", "again"), /duplicate command name/);
+});
+
 test("a menu cannot exceed 100 commands (scoped menus count repeated ones)", () => {
 	const cmd = commands();
 	for (let i = 1; i <= 100; i++) cmd.add(`c${i}`, "x");

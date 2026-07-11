@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/media-group",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal media-group plugin — collect albums into one handler call or a ctx.mediaGroup pass-through.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,11 +17,12 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/node": "latest"
+		"@types/node": "latest",
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"

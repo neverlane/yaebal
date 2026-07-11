@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/scenes",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal scenes plugin — durable step-by-step wizards: typed state, step navigation, sub-scenes, ask() validation, passthrough routing and ttl.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/sklad": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": {

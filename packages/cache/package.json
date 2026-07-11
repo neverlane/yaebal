@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/cache",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal cache — ttl memoization for api calls and arbitrary data: ctx.cache.get/set/wrap, built on @yaebal/sklad storage adapters.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -17,12 +17,15 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
+	},
 	"dependencies": {
-		"@yaebal/core": "workspace:*",
 		"@yaebal/sklad": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },

@@ -118,6 +118,27 @@ dialogs(def, {
 });
 ```
 
+### persistent storage
+
+`storage` takes any [`@yaebal/sklad`](https://npmx.dev/package/@yaebal/sklad) `StorageAdapter` —
+the default `MemoryStorage` loses every open dialog on restart/redeploy. swap in `redisStorage()`
+(or the sqlite/cloudflare-kv/file adapters) to survive both and to share dialog state across
+horizontally-scaled instances:
+
+```ts
+import { dialogs } from "@yaebal/morda";
+import { redisStorage } from "@yaebal/sklad";
+import type { DialogState } from "@yaebal/morda";
+import Redis from "ioredis"; // or `createClient` from "redis" — both fit structurally
+
+const storage = redisStorage<DialogState>(new Redis(), {
+	prefix: "bot:dialog:",
+	ttl: 24 * 60 * 60_000, // EXPIRE, refreshed on every write and touch
+});
+
+bot.install(dialogs(def, { storage }));
+```
+
 ## background updates
 
 edit an open dialog from a timer, queue worker, or webhook — no incoming update:

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/filters",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal filters — composable, type-narrowing update filters (and/or/not) for ctx.filter().",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -20,11 +20,12 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
-	"dependencies": {
+	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest",
+		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": {

@@ -30,7 +30,7 @@
 		"pagefind": "^1.5.2",
 		"svelte": "^5.56.4",
 		"svelte-check": "^4.7.1",
-		"typescript": "^7.0.2",
+		"typescript": "^6.0.3",
 		"vite": "^8.1.0"
 	}
 }

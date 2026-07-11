@@ -224,6 +224,14 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { payments } from "@yaebal/payments";',
 		install: "payments({ onPreCheckout: () => true })",
 	},
+	{
+		id: "mini-app",
+		dep: "@yaebal/mini-app",
+		hint: "ctx.miniApp.validate(initData) — telegram Mini Apps initData validation + web_app_data helpers",
+		wire: "install",
+		import: 'import { miniApp } from "@yaebal/mini-app";',
+		install: "miniApp({ botToken: process.env.BOT_TOKEN! })",
+	},
 	// ── wired: api transformers applied after build ───────────────────────
 	{
 		id: "again",

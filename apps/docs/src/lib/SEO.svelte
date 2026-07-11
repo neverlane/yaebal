@@ -208,6 +208,11 @@
 			description:
 				"typed, provider-agnostic invoice builder for yaebal (telegram stars or external processors), onPreCheckout/onSuccessfulPayment hooks, and Stars Subscription API helpers.",
 		},
+		"/docs/plugins/mini-app": {
+			title: "@yaebal/mini-app — telegram mini apps initData validation",
+			description:
+				"validate telegram mini apps initData with @yaebal/mini-app: ctx.miniApp.validate(initData), a typed initData parser, web_app_data helpers, and a WebAppInfo/direct-link url generator.",
+		},
 		"/docs/plugins/auto-answer": {
 			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
 			description:

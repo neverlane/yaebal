@@ -28,6 +28,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/keyboard", "/docs/plugins/keyboard/", "fluent inline & reply keyboard builders"],
 		["@yaebal/callback-data", "/docs/plugins/callback-data/", "typed callback_data pack / unpack"],
 		["@yaebal/payments", "/docs/plugins/payments/", "typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions"],
+		["@yaebal/mini-app", "/docs/plugins/mini-app/", "ctx.miniApp.validate(initData) — telegram Mini Apps initData validation, typed parser, web_app_data helpers, WebAppInfo/deep-link url generator"],
 		["@yaebal/link-preview", "/docs/plugins/link-preview/", "fluent builder for link_preview_options"],
 		["@yaebal/auto-answer", "/docs/plugins/auto-answer/", "auto-clears the callback-query loading spinner, no manual answerCallbackQuery call"],
 		["@yaebal/typing", "/docs/plugins/typing/", "ctx.typing(fn) keeps the \"is typing…\" indicator alive for an async call, no manual sendChatAction"],

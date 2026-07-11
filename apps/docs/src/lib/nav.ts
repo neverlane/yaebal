@@ -90,6 +90,7 @@ export const nav: NavSection[] = [
 			{ label: "guards", href: "/docs/plugins/guards", badge: "new" },
 			{ label: "commands", href: "/docs/plugins/commands" },
 			{ label: "payments", href: "/docs/plugins/payments", badge: "new" },
+			{ label: "mini-app", href: "/docs/plugins/mini-app", badge: "new" },
 		],
 	},
 	{

@@ -723,6 +723,22 @@ importers:
         specifier: latest
         version: 26.0.1
 
+  packages/mini-app:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
+
   packages/morda:
     dependencies:
       '@yaebal/callback-data':

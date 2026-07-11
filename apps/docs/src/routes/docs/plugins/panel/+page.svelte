@@ -74,8 +74,8 @@ import { MemoryPanelStore, createPanelApi, panelHandler, recordTelegramUpdate } 
 const telegram = new Telegram({ token: process.env.BOT_TOKEN! });
 const store = new MemoryPanelStore();
 
-telegram.updates.use(async (ctx, next) => {
-  await recordTelegramUpdate(store, ctx.update);
+telegram.use(async (update, next) => {
+  await recordTelegramUpdate(store, update.raw);
   return next();
 });
 

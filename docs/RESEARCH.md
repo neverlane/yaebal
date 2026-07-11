@@ -16,14 +16,14 @@
 | downloads/month (npm) | ~15.4 m | ~3.6 k | ~11.3 k |
 | author | KnorpelSenf | starkow (j++ team) | kravetsone |
 | licence | MIT | MPL-2.0 | MIT |
-| core abstraction | `Composer` + middleware + filter queries | `Telegram` + context classes + hooks | chainable `Composer` with type accumulation |
-| headline feature | huge ecosystem + filter queries | thin honest sdk + request interception | types flow through the whole chain + codegen |
-| best reference for | ecosystem, update filtering, runtime-agnostic build | context classes, request hooks, decoupled codegen | dx, `.derive/.decorate/.extend`, auto-types, `format` |
+| core abstraction | `Composer` + middleware + filter queries | `Telegram` + codegen'd update classes + typed plugins (`.extend()`) + hooks | chainable `Composer` with type accumulation |
+| headline feature | huge ecosystem + filter queries | thin honest sdk + composable filters + request interception | types flow through the whole chain + codegen |
+| best reference for | ecosystem, update filtering, runtime-agnostic build | codegen'd update classes, request hooks, typed plugin dependency resolution | dx, `.derive/.decorate/.extend`, auto-types, `format` |
 
 short version: **grammy** — for maturity and ecosystem; **gramio** — for modern type-safe design and dx;
-**puregram** — for the minimalist sdk approach and clean context/hook model.
+**puregram** — for the minimalist sdk approach and clean update/hook/plugin model.
 for yaebal the sensible move is to take the gramio-style skeleton, the grammy filter-query system,
-and the puregram ideas of decoupled codegen + context classes.
+and the puregram ideas of decoupled codegen + codegen'd update classes + typed plugin dependencies.
 
 ---
 
@@ -93,65 +93,119 @@ transformer-layer api, ecosystem, and runtime-agnostic build**.
 ### what it is
 
 "powerful and modern telegram bot api sdk for node.js and typescript". in spirit — not a heavy
-framework but a **clean sdk/client** with pleasant contexts. the authorial style is deliberately
-informal (lowercase readme, memes); author is starkow under the j++ team. inspired by `vk-io`
-by negezor — visible in the context architecture.
+framework but a **clean sdk/client** with pleasant, codegen'd updates. the authorial style is
+deliberately informal (lowercase readme, memes); author is starkow under the j++ team. inspired by
+`vk-io` by negezor — visible in the update/plugin architecture.
+
+as of **v3** (the current default branch on github — the `lord` branch, which used to track v2, has
+since been overwritten with v3; v2 is frozen, and packages dropped in v3 have had their source
+removed from the tree, though the published `puregram@2.x` npm tarballs stay put) the library was
+substantially rewritten: `Context` is gone, `telegram.updates.on(...)` became per-kind methods
+(`telegram.onMessage`, `telegram.onCallbackQuery`, …), and plugins became a first-class,
+dependency-resolved concept via `.extend()`. the readme is explicit that there is **no migration
+codemod** from v2 — "write the migration by hand". this section describes v3.
 
 ### architecture and api design
 
-- **`Telegram` instance.** entry point: `Telegram.fromToken(token)` or `new Telegram({ token })`.
-  updates via `telegram.updates.on('message', ...)`, polling via `telegram.updates.startPolling()`, or webhook middleware.
-- **contexts as a class hierarchy.** the key difference from grammy: each update type gets its own class
-  (`MessageContext`, `CallbackQueryContext`, `ForumTopicCreatedContext`, …) loaded with getters and shortcuts.
-  type narrowing via **type guards**:
+- **`Telegram` instance.** entry point: `Telegram.fromToken(token)` or `new Telegram({ token, ... })`.
+  updates arrive via `telegram.onMessage(...)` / `telegram.onCallbackQuery(...)` / … (one method per
+  update kind — a nonexistent kind is a compile error) or the catch-all `telegram.onUpdate(...)`;
+  transport is `telegram.startPolling()` or `telegram.startWebhook(...)` / per-framework adapters
+  (express, fastify, koa, hono, h3, elysia, raw `node:http`, `webAdapter` for edge runtimes).
+- **updates are a codegen'd class hierarchy, not "contexts".** v2's `Context` classes are gone
+  entirely. every update kind is now a discriminated subclass of an `Update` union, codegen'd from
+  the bot api schema: primitive fields are direct getters (`message.text`), nested objects are
+  lazy/memoized wrappers (`message.chat`), and per-kind shortcuts are attached as methods
+  (`message.send(...)`, `callbackQuery.answer(...)`). type narrowing is still via type guards:
   ```ts
-  if (context.is('callback_query')) { /* context: CallbackQueryContext */ }
-  if (context.hasText()) { /* context.text: string */ }
+  if (update.is('callback_query')) { /* update: CallbackQueryUpdate */ }
+  if (message.hasText()) { /* message.text: string */ }
   ```
-  all predicate methods `is*/has*/can*` are methods (type guards), not getters — a deliberate choice.
-- **three ways to call the api:** `telegram.api.call('getMe')` (raw, works even before types catch up
-  to a new bot api), `telegram.api.getMe()` (typed), and context shortcuts (`context.send(...)`).
-- **hooks — request interceptors.** five stages (`onBeforeRequest`, `onRequestIntercept`,
-  `onResponseIntercept`, `onAfterRequest`, `onError`): modify params, inject `parse_mode`,
-  cancel via `AbortController`. hooks are applied in bulk via `telegram.useHooks(...)` — easy to
-  package in third-party modules.
-- **middlewares** in the `(context, next)` style — for extending context and instrumentation.
-- **media abstractions.** `MediaSource` (path/stream/buffer/url/fileId) and `MediaSourceTo` for
-  downloading, `InputMedia` for media-group/editMessageMedia — a clean, well-thought-out layer.
-- **decoupled codegen.** Bot API types and methods live in a separate package `@puregram/api`
-  (dependency `~10.1.4`), imported from `puregram/generated`, `puregram/methods`, `puregram/telegram-interfaces`.
-  the core is decoupled from generated types.
+- **filters replace v2's mixins.** a filter is a named, composable, type-guarded predicate over an
+  update (`filters.hasText`, `filters.kind.message`, `command`, `regex`, `chat`, `from`, …), composed
+  with `and`/`or`/`not` (factory form, chained `.and()`/`.or()`, or a raw boolean — all interoperable)
+  and passed as the first arg to `telegram.on<Kind>(filter, handler)` to narrow the handler's
+  argument. custom filters are `defineFilter(name, predicate)`; declaring `kinds: [...]` on one gives
+  the dispatcher a free fast-path.
+- **four ways to call the api:** `telegram.api.sendMessage({...})` (raw, schema-typed, every
+  method), `telegram.send(chatId, text)` (curated positional shortcut), `message.send(...)`
+  (per-update shortcut, chat id auto-filled), and `telegram.api.call('someBetaMethod', {...})`
+  (untyped escape hatch for methods not yet generated). every wrapped accessor still exposes `.raw`
+  for the bare bot-api payload.
+- **hooks — request interceptors, now six stages.** `onBeforeRequest` → `onRequestIntercept` →
+  `onApiCall` (new in v3: an *around* hook wrapping the actual fetch, for timing/tracing/retry,
+  zero-cost when unregistered) → `onResponseIntercept` → `onAfterRequest`, plus `onError`.
+  registered per-stage via `telegram.useHook(stage, fn)` (singular — v2's bulk `useHooks(...)` is
+  gone). `telegram.use(fn)` is sugar for `useHook('onUpdate', fn)` and is priority-aware
+  (`'high'`/`'normal'`/`'low'`) — plugins like `@puregram/flow`'s `waitFor` claim `'high'` to
+  intercept before user handlers.
+- **plugins are first-class, with typed dependency resolution.** `telegram.extend(plugin)` is
+  chainable and narrows `Telegram<Ext>`'s type at every step — no `declare module 'puregram'`
+  augmentation needed. `createPlugin({ name, install, dependsOn? })` defines one; the installer
+  topologically resolves `dependsOn`, throws `PluginCycle`/`PluginMissingDep` on a bad graph, and
+  `PluginConflict` on a duplicate `name`. soft (adapt-if-present) deps use `telegram.has('name')`
+  without widening the type. **this directly fixes v2's implicit plugin-ordering footgun** (see §5).
+- **media abstractions.** `MediaSource` (path/url/fileId/buffer/stream/file/arrayBuffer/bytes/
+  base64/text/json/local) and `InputMedia`/`MediaGroup` factories for single items and whole
+  albums — unchanged in spirit from v2, with more source kinds and a dedicated album helper.
+- **decoupled codegen, now a real workspace.** bot api types/methods live in `@puregram/api`
+  (`workspace:~` inside the `puregram` yarn-workspaces monorepo, not a pinned external semver range
+  like v2's `~10.1.4`) — still importable standalone, still versioned separately from the core.
 
 ### ecosystem and plugins
 
-smaller, but covers the basics. official `@puregram/*`:
-- **hear** — react to text/caption by conditions.
-- **scenes** — middleware scenes (step-by-step scenarios).
-- **session** — sessions.
-- **prompt** — wait for the next message.
-- **callback-data** — validate/serialise callback data.
-- **markup** — markup system.
-- **media-cacher** — `file_id` cache.
-- **utils** — utilities (webapp validation, crypto value conversion).
+official `@puregram/*` (all now plugins installed via `.extend()`, all in the same monorepo):
+- **session** — persistent session plugin.
+- **scenes** — multi-step scene/wizard plugin.
+- **flow** — conversational primitives (`waitFor`, `prompt`, `collectMediaGroup`, persistent flows) —
+  **replaces v2's standalone `prompt` package**.
+- **callback-data** — typed, binary-packed callback-data builder + dispatch-ready filter.
+- **markup** — tagged-template entity-aware text formatting.
+- **rich** — safe html/markdown emission (templates + block builders), no raw string concatenation.
+- **media-cacher** — transparent `file_id` caching.
+- **rate-limit** — per-user fixed-window rate limiting.
+- **file-id** / **inline-message-id** — parse/inspect/serialize the respective opaque telegram ids.
+- **stream** — turns an `AsyncIterable<string>` (e.g. llm output) into animated `sendMessageDraft`
+  previews.
+- **throttler** — outbound rate-limit middleware for telegram's own ~30rps limits.
+- **storage** — shared `KVStorage`/`TtlStorage` interfaces + implementations (in-process, redis, sqlite).
+- **test** — actor-driven test framework for puregram bots.
+- **utils** — small standalone utilities (webapp initData validation, deep links, slot-machine decode).
+- **dropped in v3: `hear`** (now userland — a one-line `if` or a `command`/`regex` filter) **and
+  `prompt`** (folded into `flow.prompt(...)`).
 - unofficial: `nestjs-puregram` for nestjs.
 
-important middleware ordering note: `session()` must be registered **before** `hear`/`scenes`,
-otherwise `Cannot read property '__scene' of undefined`.
+v2's middleware-ordering footgun (`session()` had to run **before** `hear`/`scenes`, otherwise
+`Cannot read property '__scene' of undefined`) is gone in v3 — plugins declare `dependsOn` and the
+installer resolves and validates the order itself, throwing on cycles/missing deps instead of
+failing at runtime with an opaque error.
 
 ### performance
 
-- thin layer over `fetch`/`undici`, no heavy runtime — minimal overhead.
-- esm-only, `node >= 22` — modern baseline but cuts off older environments.
-- no claimed multi-runtime story (bun/deno like gramio) in the readme — focus is on node.js.
+- thin layer over `fetch`/undici, no heavy runtime — minimal overhead.
+- esm-only, `node >= 22` — modern baseline, cuts off older environments (unchanged from v2).
+- still no claimed multi-runtime (bun/deno) story in the readme — focus stays on node.js.
+- new built-in resilience knobs: `retryOnFloodWait` (429 auto-retry, optional exponential backoff on
+  5xx/network too), polling `concurrency` cap + `sequentializeBy` (per-key FIFO dispatch, explicitly
+  grammy-runner-inspired), `dedupeUpdates` (drop recently-seen `update_id`s).
 
 ### dx and type safety
 
-- very pleasant context handling and type guards — code reads well.
-- informal authorial documentation style: fun, but less "corporate-predictable" than grammy/gramio.
-- smaller community and downloads → fewer ready-made recipes on stackoverflow/in chats.
+- codegen'd update classes + filters read at least as well as v2's context/guard model, and the
+  filter system is strictly more composable (`and`/`or`/`not`, chaining, custom `defineFilter`) than
+  v2's fixed mixin set.
+- `Telegram<Ext>` generic + `.extend()` type narrowing means plugin-added properties
+  (`message.session`) are visible with zero manual augmentation — closer to gramio's chain-
+  accumulation story than v2 was.
+- still an informal documentation style; smaller community and downloads than grammy/gramio →
+  fewer ready-made recipes on stackoverflow/in chats.
+- **no migration path from v2** — by the author's own admission, hand-migration only.
 
-**puregram summary:** a beautiful minimalist sdk. taken as the model for **context classes + type guards,
-request hooks, media abstractions (`MediaSource`/`InputMedia`), and decoupled codegen api package**.
+**puregram summary:** v3 is a rewrite, not a patch — `Context` is gone, updates are a codegen'd
+class hierarchy, filters replace mixins, and plugins gained typed dependency resolution. taken as
+the model for **codegen'd per-kind update classes + type guards, request hooks (now with an
+`onApiCall` around-hook), media abstractions (`MediaSource`/`InputMedia`/`MediaGroup`), a decoupled
+codegen package, and a typed, dependency-resolved plugin system**.
 
 ---
 
@@ -235,21 +289,26 @@ auto-publishing, `format`-via-entities, and dx scaffolding**.
 
 ### architecture and api design
 
-- **context model:** grammy — single `Context` + type flavors; puregram — class hierarchy + type guards;
-  gramio — single context enriched by chain methods with type accumulation.
-- **composition:** grammy and gramio use `Bot extends Composer`; puregram uses `Telegram` + `updates` +
-  middleware (less "framework-y").
-- **api call interception:** grammy — transformers; puregram — hooks (5 stages); gramio — lifecycle hooks
-  (`preRequest`/`onResponse...`).
-- **update filtering:** grammy is unmatched (filter queries `message:text` etc.); puregram/gramio have
-  plain `on(type)` + guard/predicate.
+- **context model:** grammy — single `Context` + type flavors; puregram (v3) — codegen'd update-class
+  hierarchy + type guards (v2's `Context` was removed in the v3 rewrite); gramio — single context
+  enriched by chain methods with type accumulation.
+- **composition:** grammy and gramio use `Bot extends Composer`; puregram uses `Telegram` + per-kind
+  `on<Kind>` methods + middleware, plus (new in v3) a typed, dependency-resolved `.extend()` plugin
+  system — still not `Bot extends Composer`, but no longer "just middleware" either.
+- **api call interception:** grammy — transformers; puregram — hooks, six stages as of v3 (added an
+  `onApiCall` around-hook); gramio — lifecycle hooks (`preRequest`/`onResponse...`).
+- **update filtering:** grammy is unmatched (filter queries `message:text` etc.); gramio still has
+  plain `on(type)` + guard/predicate; puregram (v3) gained a real composable filter system
+  (`filters`, `defineFilter`, `and`/`or`/`not`) — narrower than grammy's query mini-language, but no
+  longer just `on(type)` + a bare predicate.
 
 ### ecosystem and plugins
 
 grammy ≫ gramio > puregram in coverage. grammy's unique offerings: `conversations`, `menu`, `runner`.
 gramio surprises with plugin maturity (jsx-views, opentelemetry, sentry, posthog, pagination) and tooling
-(scaffolder, orm, jobify). puregram covers the basics (hear/scenes/session/prompt/callback-data/markup/media-cacher)
-but the ecosystem is more compact.
+(scaffolder, orm, jobify). puregram (v3) covers scenes/session/flow(prompt)/callback-data/markup/rich/
+media-cacher/rate-limit/file-id/throttler/stream/test — broader than v2's list (`hear` and the standalone
+`prompt` package were dropped/folded in), but still more compact than gramio's or grammy's.
 
 ### performance
 
@@ -257,12 +316,14 @@ all three are thin layers over fetch/undici; framework overhead is not the bottl
 the network and the telegram api). what differs:
 - grammy `runner` — concurrent processing with backpressure (off-the-shelf high-load solution).
 - gramio — multi-runtime (bun) + `decorate` with zero per-request overhead.
-- puregram — the thinnest sdk, but no built-in high-load runner and no claimed bun/deno support.
+- puregram — the thinnest sdk; no built-in bun/deno support, but v3 added `concurrency` +
+  `sequentializeBy` (per-key FIFO) knobs on polling, explicitly inspired by grammy's `runner`.
 
 ### dx and type safety
 
 - **type-flow:** gramio (chain accumulation) ≥ grammy (filter-query narrowing, but manual flavors)
-  > puregram (guards, but more manual typing in middleware).
+  ≥ puregram v3 (`.extend()` narrows `Telegram<Ext>` per plugin, closer to gramio than v2's guards
+  + manual middleware typing were).
 - **onboarding/docs:** grammy (reference docs + community) and gramio (scaffolder in a minute) lead;
   puregram — pleasant, but informal and more compact.
 - **protection from formatting errors:** gramio `format` (entities, no escaping) — the safest approach.
@@ -290,19 +351,28 @@ the skeleton and principles are primarily inspired by **gramio**, plus the best 
 - runtime-agnostic build (single codebase → node/deno/web/edge).
 
 **contexts and service layer (from puregram):**
-- optionally — **context classes per update type** + `is()/has()/can()` type guards
-  (readability; can be combined with filter queries as sugar).
-- **request interceptor hooks** with cancellation via `AbortController` and the ability to package
-  hook sets into third-party modules (`useHooks`).
-- clean **media abstractions** `MediaSource` / `MediaSourceTo` / `InputMedia`.
+- optionally — **codegen'd update classes per update type** + `is()/has()/can()` type guards
+  (readability; can be combined with filter queries as sugar). note puregram itself moved *away*
+  from a `Context` class hierarchy in its v3 rewrite, toward this codegen'd-update-union shape —
+  a data point in favor of yaebal's existing single-`Context` design over a class hierarchy.
+- **request interceptor hooks**, staged (before/intercept/around/response/after/error), with
+  cancellation and the ability to package hook sets into third-party modules.
+- clean **media abstractions** `MediaSource` / `InputMedia` / `MediaGroup`.
 - **decoupled codegen**: core separate, generated types/methods in a separate package.
 - `suppress: true` pattern for suppressing api errors without try/catch.
+- **typed, dependency-resolved plugins** (`dependsOn`, cycle/missing-dep/name-conflict errors,
+  `has()` for soft deps) — puregram v3 independently arrived at essentially the same answer yaebal's
+  `Plugin<In, Out>` already gives (see "what to avoid" below); worth treating as external
+  validation of that design, and worth mining for error-shape ideas (`PluginCycle`,
+  `PluginMissingDep`, `PluginConflict`).
 
 **what to avoid:**
 - don't proliferate manual context type intersections (`Context & A & B & C`) as in grammy —
   gramio's chain accumulation is more ergonomic.
-- don't tie plugin ordering implicitly (like `session` before `scenes` in puregram) —
-  make plugin dependencies explicit and type-checked.
+- don't tie plugin ordering implicitly, the way **v2** puregram did (`session` had to run before
+  `hear`/`scenes`, or a runtime `Cannot read property '__scene' of undefined`) — make plugin
+  dependencies explicit and type-checked, the way yaebal's `Plugin<In, Out>` already does and v3
+  puregram's `dependsOn` now also does.
 - don't tie Bot API type releases to core releases — otherwise you end up waiting for a maintainer.
 
 ---
@@ -327,6 +397,6 @@ outpaces the old leader by a wide margin; puregram/gramio are niche by volume bu
 ## sources
 
 - grammy: [grammy.dev](https://grammy.dev/), [github grammyjs/grammY](https://github.com/grammyjs/grammy), [npm grammy](https://www.npmjs.com/package/grammy)
-- puregram: [github nitreojs/puregram](https://github.com/nitreojs/puregram), [readme](https://github.com/nitreojs/puregram/blob/lord/README.md), [npm puregram](https://www.npmjs.com/package/puregram)
+- puregram: [github nitreojs/puregram](https://github.com/nitreojs/puregram), [readme (v3, default branch)](https://github.com/nitreojs/puregram/blob/v3/README.md), [npm puregram](https://www.npmjs.com/package/puregram)
 - gramio: [gramio.dev](https://gramio.dev/), [gramio.dev/get-started](https://gramio.dev/get-started), [github gramiojs/gramio](https://github.com/gramiojs/gramio)
 - download metrics: [npm downloads api](https://api.npmjs.org/downloads/point/last-month/grammy,gramio,puregram,telegraf)

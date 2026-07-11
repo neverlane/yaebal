@@ -49,6 +49,57 @@ test("parseArgs: invalid enum values are ignored, unknown flags collected", () =
 	assert.ok(a.unknown.includes("--frobnicate"));
 });
 
+test("parseArgs: invalid enum value on a known flag warns instead of failing silently", () => {
+	const a = parseArgs(["b", "--runtime", "rust"]);
+
+	assert.equal(a.runtime, undefined);
+	assert.ok(a.warnings.some((w) => w.includes("--runtime") && w.includes("rust")));
+});
+
+test("parseArgs: a value-flag with no value does NOT swallow the next flag", () => {
+	// this used to eat "--yes" entirely: out.yes stayed false, no warning, no trace.
+	const a = parseArgs(["my-bot", "--runtime", "--yes"]);
+
+	assert.equal(a.yes, true);
+	assert.equal(a.runtime, undefined);
+	assert.ok(a.warnings.some((w) => w.includes("--runtime")));
+});
+
+test("parseArgs: a value-flag at the very end of argv doesn't crash or consume", () => {
+	const a = parseArgs(["my-bot", "--template"]);
+
+	assert.equal(a.template, undefined);
+	assert.ok(a.warnings.some((w) => w.includes("--template")));
+});
+
+test("parseArgs: --plugins with no value doesn't swallow the following flag", () => {
+	const a = parseArgs(["b", "--plugins", "--yes"]);
+
+	assert.equal(a.plugins, undefined);
+	assert.equal(a.yes, true);
+	assert.ok(a.warnings.some((w) => w.includes("--plugins")));
+});
+
+test("parseArgs: deploy, ci, config and json flags", () => {
+	const a = parseArgs(["b", "-d", "cloudflare", "--ci", "-c", "my.json", "--yes", "--json"]);
+
+	assert.equal(a.deploy, "cloudflare");
+	assert.equal(a.ci, true);
+	assert.equal(a.configPath, "my.json");
+	assert.equal(a.json, true);
+
+	const disabled = parseArgs(["b", "--no-config", "--no-ci"]);
+	assert.equal(disabled.noConfig, true);
+	assert.equal(disabled.ci, false);
+});
+
+test("parseArgs: invalid deploy target warns", () => {
+	const a = parseArgs(["b", "--deploy", "heroku"]);
+
+	assert.equal(a.deploy, undefined);
+	assert.ok(a.warnings.some((w) => w.includes("--deploy") && w.includes("heroku")));
+});
+
 test("parseArgs: help / version", () => {
 	assert.equal(parseArgs(["--help"]).help, true);
 	assert.equal(parseArgs(["-v"]).version, true);

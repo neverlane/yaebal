@@ -23,6 +23,21 @@ export type TemplateId =
 	| "toml"
 	| "plugin";
 
+/**
+ * where the generated bot ships. orthogonal to `TemplateId` — a deploy target
+ * only adds infra files (and, for the serverless ones, takes over the
+ * bootstrap the way `webhook`/`runner` templates already do). never offered
+ * for `template: "plugin"` (a plugin package has nowhere to deploy).
+ */
+export type DeployTarget =
+	| "none"
+	| "docker"
+	| "compose"
+	| "fly"
+	| "railway"
+	| "cloudflare"
+	| "vercel";
+
 export interface Choice<T extends string> {
 	value: T;
 	label: string;
@@ -75,6 +90,32 @@ export const TEMPLATES: Choice<TemplateId>[] = [
 	},
 ];
 
+export const DEPLOYS: Choice<DeployTarget>[] = [
+	{ value: "none", label: "none", hint: "just the project — deploy it however you like" },
+	{
+		value: "docker",
+		label: "docker",
+		hint: "multi-stage Dockerfile — any host that runs a container",
+	},
+	{
+		value: "compose",
+		label: "docker compose",
+		hint: "Dockerfile + compose.yaml for local/vps runs",
+	},
+	{ value: "fly", label: "fly.io", hint: "Dockerfile + fly.toml — `fly launch` and go" },
+	{
+		value: "railway",
+		label: "railway",
+		hint: "Dockerfile + railway.json — connect the repo and deploy",
+	},
+	{
+		value: "cloudflare",
+		label: "cloudflare workers",
+		hint: "wrangler.jsonc — serverless webhook, no server to run",
+	},
+	{ value: "vercel", label: "vercel", hint: "vercel.json + an edge function — serverless webhook" },
+];
+
 /**
  * how a plugin is wired into the generated `src/index.ts`:
  * - `install` → added to the `new Bot(token).install(expr)` chain
@@ -99,6 +140,13 @@ export interface PluginDef {
 	setup?: string;
 	/** recommended in the default selection */
 	recommended?: boolean;
+	/**
+	 * commented-out alternatives appended right after the install/setup line —
+	 * shows real, importable adapter names for plugins that ship more than one
+	 * backend, without pulling their peer deps in or risking a compile error
+	 * (it's a comment, never live code).
+	 */
+	showcase?: string;
 }
 
 /**
@@ -182,6 +230,11 @@ export const PLUGINS: PluginDef[] = [
 		wire: "install",
 		import: 'import { analytics, consoleAdapter } from "@yaebal/analytics";',
 		install: "analytics({ adapters: [consoleAdapter()] })",
+		showcase: `// swap consoleAdapter() for a real sink — each adapter takes a client instance:
+// import { postHogAdapter } from "@yaebal/analytics";   adapters: [postHogAdapter(posthogClient)]
+// import { plausibleAdapter } from "@yaebal/analytics"; adapters: [plausibleAdapter({ domain: "mybot.example" })]
+// import { sqliteAdapter } from "@yaebal/analytics";    adapters: [sqliteAdapter(db)]
+// import { clickhouseAdapter } from "@yaebal/analytics"; adapters: [clickhouseAdapter(clickhouseClient)]`,
 	},
 	{
 		id: "audit-log",
@@ -215,6 +268,11 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { featureFlags } from "@yaebal/feature-flags";',
 		install:
 			'featureFlags({ flags: { "new-ui": { default: false, rules: [{ percentage: 25 }] } } })',
+		showcase: `// consult a remote provider before the local catalog — providers win, local rules are the fallback:
+// import { launchDarklyAdapter } from "@yaebal/feature-flags";
+// featureFlags({ flags: { ... }, provider: launchDarklyAdapter(ldClient) })
+// import { growthBookAdapter } from "@yaebal/feature-flags";
+// featureFlags({ flags: { ... }, provider: growthBookAdapter(gbClient) })`,
 	},
 	{
 		id: "payments",
@@ -231,6 +289,14 @@ export const PLUGINS: PluginDef[] = [
 		wire: "install",
 		import: 'import { miniApp } from "@yaebal/mini-app";',
 		install: "miniApp({ botToken: process.env.BOT_TOKEN! })",
+	},
+	{
+		id: "split",
+		dep: "@yaebal/split",
+		hint: "ctx.sendLong / ctx.replyLong — long text as multiple messages, entities included",
+		wire: "install",
+		import: 'import { splitter } from "@yaebal/split";',
+		install: "splitter()",
 	},
 	// ── wired: api transformers applied after build ───────────────────────
 	{
@@ -372,14 +438,6 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { Broadcast } from "@yaebal/broadcast";',
 	},
 	{
-		id: "split",
-		dep: "@yaebal/split",
-		hint: "ctx.sendLong / ctx.replyLong — long text as multiple messages, entities included",
-		wire: "install",
-		import: 'import { splitter } from "@yaebal/split";',
-		install: "splitter()",
-	},
-	{
 		id: "toml",
 		dep: "@yaebal/toml",
 		hint: "declarative toml routes + handler registry",
@@ -392,6 +450,14 @@ export const PLUGINS: PluginDef[] = [
 		hint: "concurrent update processing (run())",
 		wire: "dep",
 		import: 'import { run } from "@yaebal/runner";',
+	},
+	{
+		id: "panel",
+		dep: "@yaebal/panel",
+		hint: "operator panel — view chats and reply from the browser, over your own http server",
+		wire: "dep",
+		import:
+			'import { MemoryPanelStore, panelHandler, recorder, recordOutgoing } from "@yaebal/panel";',
 	},
 	{
 		id: "web",
@@ -425,4 +491,8 @@ export function isPackageManager(v: string): v is PackageManager {
 
 export function isTemplate(v: string): v is TemplateId {
 	return TEMPLATES.some((t) => t.value === v);
+}
+
+export function isDeploy(v: string): v is DeployTarget {
+	return DEPLOYS.some((d) => d.value === v);
 }

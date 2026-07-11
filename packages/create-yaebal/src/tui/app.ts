@@ -10,14 +10,23 @@
 
 import process from "node:process";
 import type { ParsedArgs } from "../args.js";
-import { type Choice, PACKAGE_MANAGERS, PLUGINS, RUNTIMES, TEMPLATES } from "../catalog.js";
+import {
+	type Choice,
+	DEPLOYS,
+	PACKAGE_MANAGERS,
+	PLUGINS,
+	RUNTIMES,
+	TEMPLATES,
+} from "../catalog.js";
 import { defaults, type Selections, sanitizePlugins } from "../config.js";
 import { validateProjectName } from "../util.js";
 import { fg, type KeyEvent, moveTo, onKeypress, padTo, screen, style, vlen } from "./ansi.js";
 import { CARD_WIDTH, TAGLINE, TITLE, theme } from "./theme.js";
 
-type StepId = "name" | "runtime" | "pm" | "template" | "plugins" | "review";
-const STEPS: StepId[] = ["name", "runtime", "pm", "template", "plugins", "review"];
+// template comes before runtime/pm so the plugin path — which needs neither a
+// runtime nor a deploy question — can skip them cleanly (see `shouldSkip`).
+type StepId = "name" | "template" | "runtime" | "pm" | "plugins" | "deploy" | "review";
+const STEPS: StepId[] = ["name", "template", "runtime", "pm", "plugins", "deploy", "review"];
 
 /** inner text width: card minus borders (2) minus side padding (2). */
 const TW = CARD_WIDTH - 4;
@@ -26,14 +35,16 @@ interface State {
 	step: number;
 	name: string;
 	nameError?: string;
+	templateIdx: number;
 	runtimeIdx: number;
 	pmIdx: number;
-	templateIdx: number;
 	pluginCursor: number;
 	selected: Set<string>;
+	deployIdx: number;
+	ci: boolean;
 	git: boolean;
 	install: boolean;
-	reviewCursor: number; // 0=git 1=install 2=create
+	reviewCursor: number; // 0=git 1=install 2=ci 3=create
 }
 
 function indexOfValue<T extends { value: string }>(arr: T[], v: string): number {
@@ -65,14 +76,16 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	const state: State = {
 		step: 0,
 		name: args.name ?? "",
+		templateIdx: indexOfValue(TEMPLATES, d.template),
 		runtimeIdx: indexOfValue(RUNTIMES, d.runtime),
 		pmIdx: indexOfValue(PACKAGE_MANAGERS, d.packageManager),
-		templateIdx: indexOfValue(TEMPLATES, d.template),
 		pluginCursor: 0,
 		selected: new Set(d.plugins),
+		deployIdx: indexOfValue(DEPLOYS, d.deploy),
+		ci: d.ci,
 		git: d.git,
 		install: d.install,
-		reviewCursor: 2,
+		reviewCursor: 3,
 	};
 
 	// steps the user already pinned via flags are skipped during navigation.
@@ -81,9 +94,16 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	if (args.packageManager) locked.pm = true;
 	if (args.template) locked.template = true;
 	if (args.plugins) locked.plugins = true;
+	if (args.deploy) locked.deploy = true;
 	const selectedTemplate = () => TEMPLATES[state.templateIdx]?.value ?? "minimal";
-	const shouldSkip = (step: StepId) =>
-		Boolean(locked[step]) || (step === "plugins" && selectedTemplate() === "plugin");
+	const isPluginTemplate = () => selectedTemplate() === "plugin";
+	const shouldSkip = (step: StepId) => {
+		if (locked[step]) return true;
+		if (isPluginTemplate() && (step === "runtime" || step === "plugins" || step === "deploy")) {
+			return true;
+		}
+		return false;
+	};
 
 	const write = (s: string) => output.write(s);
 
@@ -176,19 +196,23 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	}
 
 	function reviewLines(): string[] {
-		const isPluginTemplate = selectedTemplate() === "plugin";
+		const isPlugin = isPluginTemplate();
 		const sel = sanitizePlugins([...state.selected]);
 		const kv = (k: string, v: string) => `${dim(`  ${k.padEnd(9)}`)} ${text(clip(v, TW - 12))}`;
 		return [
 			accent("review & create"),
 			"",
 			kv("name", state.name.trim() || "my-bot"),
-			kv("runtime", RUNTIMES[state.runtimeIdx]?.label ?? "node.js"),
+			kv(
+				"runtime",
+				isPlugin ? "n/a (plugin template)" : (RUNTIMES[state.runtimeIdx]?.label ?? "node.js"),
+			),
 			kv("pkg mgr", PACKAGE_MANAGERS[state.pmIdx]?.label ?? "pnpm"),
 			kv("template", TEMPLATES[state.templateIdx]?.label ?? "minimal"),
+			kv("plugins", isPlugin ? "n/a (plugin template)" : sel.length ? sel.join(", ") : "none"),
 			kv(
-				"plugins",
-				isPluginTemplate ? "n/a (plugin template)" : sel.length ? sel.join(", ") : "none",
+				"deploy",
+				isPlugin ? "n/a (plugin template)" : (DEPLOYS[state.deployIdx]?.label ?? "none"),
 			),
 			"",
 			rowLine(state.reviewCursor === 0, [
@@ -202,8 +226,13 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				{ t: "  run the package manager", fg: theme.border },
 			]),
 			rowLine(state.reviewCursor === 2, [
+				{ t: ` ${state.ci ? "◉" : "◯"} `, fg: state.ci ? theme.accent : theme.dim },
+				{ t: "ci workflow", fg: theme.text },
+				{ t: "  github actions: install + typecheck", fg: theme.border },
+			]),
+			rowLine(state.reviewCursor === 3, [
 				{ t: " » ", fg: theme.accentBright },
-				{ t: "create project", fg: state.reviewCursor === 2 ? theme.accentBright : theme.text },
+				{ t: "create project", fg: state.reviewCursor === 3 ? theme.accentBright : theme.text },
 			]),
 		];
 	}
@@ -222,6 +251,15 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 					],
 					footer: "type to edit · enter next · esc cancel",
 				};
+			case "template":
+				return {
+					body: [
+						accent("pick a starter template"),
+						"",
+						...selectLines(TEMPLATES, state.templateIdx),
+					],
+					footer: "↑/↓ move · enter next · ← back · esc cancel",
+				};
 			case "runtime":
 				return {
 					body: [accent("which runtime?"), "", ...selectLines(RUNTIMES, state.runtimeIdx)],
@@ -236,19 +274,15 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 					],
 					footer: "↑/↓ move · enter next · ← back · esc cancel",
 				};
-			case "template":
-				return {
-					body: [
-						accent("pick a starter template"),
-						"",
-						...selectLines(TEMPLATES, state.templateIdx),
-					],
-					footer: "↑/↓ move · enter next · ← back · esc cancel",
-				};
 			case "plugins":
 				return {
 					body: pluginLines(),
 					footer: "↑/↓ · space toggle · a/n all·none · enter next · ← back",
+				};
+			case "deploy":
+				return {
+					body: [accent("where does it deploy?"), "", ...selectLines(DEPLOYS, state.deployIdx)],
+					footer: "↑/↓ move · enter next · ← back · esc cancel",
 				};
 			default:
 				return {
@@ -291,11 +325,33 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 		let done = false;
 		let cleanup = () => {};
 
+		// last-resort terminal restore if the process dies some way other than
+		// a keypress (SIGTERM from a supervisor, the parent shell closing, …) —
+		// without this the alternate screen / hidden cursor / raw mode could be
+		// left stuck on the user's real terminal.
+		const restoreTerminal = () => {
+			if (isTty) write(screen.showCursor + screen.leave);
+		};
+		const onSignal = () => {
+			restoreTerminal();
+			process.exit(1);
+		};
+		if (isTty) {
+			process.once("SIGTERM", onSignal);
+			process.once("SIGHUP", onSignal);
+			process.once("exit", restoreTerminal);
+		}
+
 		const finish = (result: Selections | undefined) => {
 			if (done) return;
 			done = true;
 			cleanup();
-			if (isTty) write(screen.showCursor + screen.leave);
+			if (isTty) {
+				process.off("SIGTERM", onSignal);
+				process.off("SIGHUP", onSignal);
+				process.off("exit", restoreTerminal);
+			}
+			restoreTerminal();
 			resolve(result);
 		};
 
@@ -305,7 +361,9 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				runtime: RUNTIMES[state.runtimeIdx]?.value ?? "node",
 				packageManager: PACKAGE_MANAGERS[state.pmIdx]?.value ?? "pnpm",
 				template: TEMPLATES[state.templateIdx]?.value ?? "minimal",
-				plugins: selectedTemplate() === "plugin" ? [] : sanitizePlugins([...state.selected]),
+				plugins: isPluginTemplate() ? [] : sanitizePlugins([...state.selected]),
+				deploy: isPluginTemplate() ? "none" : (DEPLOYS[state.deployIdx]?.value ?? "none"),
+				ci: state.ci,
 				git: state.git,
 				install: state.install,
 			});
@@ -356,19 +414,28 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 
 			if (key.name === "left") return prevStep();
 
-			if (step === "runtime" || step === "pm" || step === "template") {
+			if (step === "runtime" || step === "pm" || step === "template" || step === "deploy") {
 				const len =
 					step === "runtime"
 						? RUNTIMES.length
 						: step === "pm"
 							? PACKAGE_MANAGERS.length
-							: TEMPLATES.length;
+							: step === "template"
+								? TEMPLATES.length
+								: DEPLOYS.length;
 				const get = () =>
-					step === "runtime" ? state.runtimeIdx : step === "pm" ? state.pmIdx : state.templateIdx;
+					step === "runtime"
+						? state.runtimeIdx
+						: step === "pm"
+							? state.pmIdx
+							: step === "template"
+								? state.templateIdx
+								: state.deployIdx;
 				const set = (n: number) => {
 					if (step === "runtime") state.runtimeIdx = n;
 					else if (step === "pm") state.pmIdx = n;
-					else state.templateIdx = n;
+					else if (step === "template") state.templateIdx = n;
+					else state.deployIdx = n;
 				};
 				if (key.name === "up") set((get() - 1 + len) % len);
 				else if (key.name === "down") set((get() + 1) % len);
@@ -393,17 +460,30 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 			}
 
 			// review
-			if (key.name === "up") state.reviewCursor = (state.reviewCursor + 2) % 3;
-			else if (key.name === "down") state.reviewCursor = (state.reviewCursor + 1) % 3;
+			if (key.name === "up") state.reviewCursor = (state.reviewCursor + 3) % 4;
+			else if (key.name === "down") state.reviewCursor = (state.reviewCursor + 1) % 4;
 			else if (key.name === "space" || enter) {
 				if (state.reviewCursor === 0) state.git = !state.git;
 				else if (state.reviewCursor === 1) state.install = !state.install;
+				else if (state.reviewCursor === 2) state.ci = !state.ci;
 				else return commit();
 			} else return;
 			return render();
 		};
 
-		cleanup = onKeypress(input, onKey);
+		const onResize = () => render();
+
+		cleanup = (() => {
+			const detachKeys = onKeypress(input, onKey);
+			// no isTty guard: a non-tty stream (pipes, the test harness) simply
+			// never emits "resize" on its own, so registering here is inert.
+			output.on("resize", onResize);
+			return () => {
+				detachKeys();
+				output.off("resize", onResize);
+			};
+		})();
+
 		if (isTty) write(screen.enter + screen.hideCursor);
 		render();
 	});

@@ -203,6 +203,139 @@ test("renderFiles: runtime picks the right scripts", () => {
 	assert.match(deno.scripts.start, /^deno run /);
 });
 
+test("renderFiles: bot templates pin a current toolchain, and gitignore has no stray build dir", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [] });
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+
+	assert.equal(pkg.devDependencies.typescript, "^6.0.3");
+	assert.equal(pkg.devDependencies["@types/node"], "latest");
+	assert.doesNotMatch(f[".gitignore"] ?? "", /^lib$/m); // bot templates never emit to lib/ (noEmit: true)
+});
+
+test("renderFiles: plugin peerDependencies is a real range, not >=0.0.0", () => {
+	const f = renderFiles({ name: "my-plugin", runtime: "node", plugins: [], template: "plugin" });
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+
+	assert.equal(pkg.peerDependencies["@yaebal/core"], ">=0.3.0");
+	assert.equal(pkg.devDependencies.typescript, "^6.0.3");
+});
+
+test("renderFiles: plugin identifiers never collide with the codegen's own bindings", () => {
+	for (const name of ["bot", "test", "assert", "token", "process"]) {
+		const f = renderFiles({ name, runtime: "node", plugins: [], template: "plugin" });
+		const src = f["src/index.ts"] ?? "";
+		const example = f["examples/basic.mjs"] ?? "";
+
+		// the derived export name must never equal the reserved binding itself
+		assert.doesNotMatch(src, new RegExp(`export function ${name}\\(`));
+		assert.doesNotMatch(example, new RegExp(`import \\{ ${name} \\} from`));
+	}
+});
+
+test("renderFiles: scoped plugin names (@org/name) render cleanly", () => {
+	const f = renderFiles({
+		name: "@acme/my-plugin",
+		runtime: "node",
+		plugins: [],
+		template: "plugin",
+	});
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+
+	assert.equal(pkg.name, "@acme/my-plugin");
+	assert.match(f["src/index.ts"] ?? "", /export function myPlugin/);
+});
+
+test("renderFiles: analytics/feature-flags carry a real, importable adapter showcase", () => {
+	const src = renderFiles({
+		name: "b",
+		runtime: "node",
+		plugins: ["analytics", "feature-flags"],
+	})["src/index.ts"] as string;
+
+	assert.match(src, /postHogAdapter/);
+	assert.match(src, /launchDarklyAdapter/);
+	// it's a comment, not live code — must not add a real (uncommented) import
+	assert.doesNotMatch(src, /^import \{ postHogAdapter/m);
+});
+
+test("renderFiles: deploy targets add the right infra files", () => {
+	const docker = renderFiles({ name: "b", runtime: "node", plugins: [], deploy: "docker" });
+	assert.ok(docker.Dockerfile);
+	assert.ok(docker[".dockerignore"]);
+	assert.equal(docker["compose.yaml"], undefined);
+
+	const compose = renderFiles({ name: "b", runtime: "bun", plugins: [], deploy: "compose" });
+	assert.match(compose.Dockerfile ?? "", /oven\/bun/);
+	assert.ok(compose["compose.yaml"]);
+
+	const fly = renderFiles({ name: "b", runtime: "node", plugins: [], deploy: "fly" });
+	assert.match(fly["fly.toml"] ?? "", /app = "b"/);
+
+	const railway = renderFiles({ name: "b", runtime: "node", plugins: [], deploy: "railway" });
+	assert.match(railway["railway.json"] ?? "", /DOCKERFILE/);
+});
+
+test("renderFiles: cloudflare deploy owns the bootstrap and adds SECRET_TOKEN", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [], deploy: "cloudflare" });
+	const src = f["src/index.ts"] ?? "";
+	const pkg = JSON.parse(f["package.json"] ?? "{}");
+
+	assert.match(src, /import \{ cloudflareAdapter \} from "@yaebal\/web";/);
+	assert.match(src, /export default \{/);
+	assert.match(src, /cloudflareAdapter\(bot, \{ secretToken: process\.env\.SECRET_TOKEN \}\)/);
+	assert.doesNotMatch(src, /bot\.start\(\)/);
+	assert.ok(pkg.dependencies["@yaebal/web"]);
+	assert.match(f[".env.example"] ?? "", /SECRET_TOKEN=/);
+	assert.ok(f["wrangler.jsonc"]);
+	assert.ok(f[".dev.vars.example"]);
+});
+
+test("renderFiles: cloudflare deploy overrides even a bootstrap-owning template", () => {
+	// webhook's own serve()-based bootstrap would conflict with cloudflare's
+	// export-default-fetch shape — the deploy target must win.
+	const src = renderFiles({
+		name: "b",
+		runtime: "node",
+		plugins: [],
+		template: "webhook",
+		deploy: "cloudflare",
+	})["src/index.ts"] as string;
+
+	assert.match(src, /cloudflareAdapter\(bot,/);
+	assert.doesNotMatch(src, /await serve\(bot,/);
+});
+
+test("renderFiles: vercel deploy adds a separate api/bot.ts edge entry, leaving src/index.ts as-is", () => {
+	const f = renderFiles({ name: "b", runtime: "node", plugins: [], deploy: "vercel" });
+
+	assert.match(f["src/index.ts"] ?? "", /await bot\.start\(\)/); // unaffected — still a normal polling bot
+	assert.ok(f["vercel.json"]);
+	assert.match(f["api/bot.ts"] ?? "", /import \{ webhook \} from "@yaebal\/web";/);
+	assert.match(f["api/bot.ts"] ?? "", /export const config = \{ runtime: "edge" \};/);
+	assert.match(f["api/bot.ts"] ?? "", /export default webhook\(bot, \{ secretToken/);
+
+	const tsconfig = JSON.parse(f["tsconfig.json"] ?? "{}");
+	assert.deepEqual(tsconfig.include, ["src", "api"]);
+});
+
+test("renderFiles: ci flag adds a github actions workflow for both bot and plugin templates", () => {
+	const bot = renderFiles({ name: "b", runtime: "node", plugins: [], ci: true });
+	assert.match(bot[".github/workflows/ci.yml"] ?? "", /run: pnpm typecheck/);
+
+	const plugin = renderFiles({
+		name: "my-plugin",
+		runtime: "node",
+		packageManager: "pnpm",
+		plugins: [],
+		template: "plugin",
+		ci: true,
+	});
+	assert.match(plugin[".github/workflows/ci.yml"] ?? "", /run: pnpm test/);
+
+	const noCi = renderFiles({ name: "b", runtime: "node", plugins: [] });
+	assert.equal(noCi[".github/workflows/ci.yml"], undefined);
+});
+
 test("commands map to package managers", () => {
 	assert.equal(installCommand("pnpm"), "pnpm install");
 	assert.equal(installCommand("deno"), "deno cache src/index.ts");

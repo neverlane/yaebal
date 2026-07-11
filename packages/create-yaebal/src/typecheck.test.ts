@@ -13,8 +13,8 @@ import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import ts from "typescript";
-import { PLUGIN_IDS, TEMPLATES, type TemplateId } from "./catalog.js";
-import { renderFiles } from "./scaffold.js";
+import { DEPLOYS, PLUGIN_IDS, TEMPLATES, type TemplateId } from "./catalog.js";
+import { renderFiles, type ScaffoldOptions } from "./scaffold.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 
@@ -64,19 +64,55 @@ test("every generated project type-checks against the workspace packages", () =>
 	try {
 		const entries: string[] = [];
 
-		const render = (name: string, template: TemplateId, plugins: string[]) => {
-			const dir = join(root, name);
-			const files = renderFiles({ name, runtime: "node", plugins, template });
+		const renderOpts = (dirLabel: string, opts: ScaffoldOptions) => {
+			const dir = join(root, dirLabel);
+			const files = renderFiles(opts);
 			writeProject(dir, files);
 			for (const path of Object.keys(files)) {
 				if (path.endsWith(".ts")) entries.push(join(dir, path));
 			}
 		};
 
+		const render = (name: string, template: TemplateId, plugins: string[]) =>
+			renderOpts(`gen-${name}`, { name, runtime: "node", plugins, template });
+
 		// every template on its own (the plugin template contributes its test file too)
-		for (const { value } of TEMPLATES) render(`gen-${value}`, value, []);
+		for (const { value } of TEMPLATES) render(value, value, []);
 		// and the whole plugin catalog at once — proves every import/install/setup wiring compiles
-		render("gen-all-plugins", "minimal", [...PLUGIN_IDS]);
+		render("all-plugins", "minimal", [...PLUGIN_IDS]);
+
+		// every deploy target — cloudflare/vercel replace/add a real entry that
+		// imports from @yaebal/web, on top of both a polling and a webhook template.
+		for (const { value: deploy } of DEPLOYS) {
+			if (deploy === "none") continue;
+			renderOpts(`gen-deploy-${deploy}-minimal`, {
+				name: `deploy-${deploy}-minimal`,
+				runtime: "node",
+				plugins: [],
+				template: "minimal",
+				deploy,
+				ci: true,
+			});
+			renderOpts(`gen-deploy-${deploy}-webhook`, {
+				name: `deploy-${deploy}-webhook`,
+				runtime: "node",
+				plugins: [],
+				template: "webhook",
+				deploy,
+			});
+		}
+
+		// project names that collide with identifiers the plugin template's own
+		// files import/declare (bot/test/assert/token/process) used to generate
+		// broken code (TDZ self-reference, duplicate imports, a shadowed global).
+		for (const name of ["bot", "test", "assert", "token", "process", "context"]) {
+			renderOpts(`gen-plugin-collision-${name}`, {
+				name,
+				runtime: "node",
+				plugins: [],
+				template: "plugin",
+			});
+		}
 
 		const program = ts.createProgram(entries, GENERATED_OPTIONS);
 		assert.deepEqual(formatDiagnostics(ts.getPreEmitDiagnostics(program)), []);

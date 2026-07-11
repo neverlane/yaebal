@@ -63,7 +63,8 @@ await bot.start();
 pnpm add yaebal
 ```
 
-or scaffold a fresh bot:
+or scaffold a fresh bot — templates, plugins, a `docker`/`fly`/`railway`/`cloudflare`/`vercel`
+deploy target and a ci workflow are all one flag away (see [create a bot](https://yaebal.mom/docs/scaffolding/)):
 
 ```sh
 pnpm create yaebal

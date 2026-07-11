@@ -9,9 +9,15 @@
  * type-checks against the real `@yaebal/*` apis.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { findPlugin, type PackageManager, type Runtime, type TemplateId } from "./catalog.js";
+import {
+	type DeployTarget,
+	findPlugin,
+	type PackageManager,
+	type Runtime,
+	type TemplateId,
+} from "./catalog.js";
 
 export interface ScaffoldOptions {
 	name: string;
@@ -19,6 +25,10 @@ export interface ScaffoldOptions {
 	plugins: string[];
 	packageManager?: PackageManager;
 	template?: TemplateId;
+	/** where the bot deploys — infra files, and for cloudflare/vercel, the bootstrap itself */
+	deploy?: DeployTarget;
+	/** ship a github actions ci workflow (install → typecheck) */
+	ci?: boolean;
 }
 
 /** codegen recipe for a starter template. */
@@ -44,6 +54,7 @@ interface TemplateSpec {
 interface Scripts {
 	dev: string;
 	start: string;
+	typecheck: string;
 }
 
 type BotTemplateId = Exclude<TemplateId, "plugin">;
@@ -61,11 +72,17 @@ const SCRIPTS: Record<Runtime, Scripts> = {
 	node: {
 		dev: "node --watch --experimental-strip-types src/index.ts",
 		start: "node --experimental-strip-types src/index.ts",
+		typecheck: "tsc --noEmit",
 	},
-	bun: { dev: "bun --watch src/index.ts", start: "bun src/index.ts" },
+	bun: {
+		dev: "bun --watch src/index.ts",
+		start: "bun src/index.ts",
+		typecheck: "tsc --noEmit",
+	},
 	deno: {
 		dev: "deno run --watch --allow-net --allow-env src/index.ts",
 		start: "deno run --allow-net --allow-env src/index.ts",
+		typecheck: "tsc --noEmit",
 	},
 };
 
@@ -343,6 +360,19 @@ const RESERVED_IDENTIFIERS = new Set([
 	"yield",
 ]);
 
+/**
+ * names the plugin template's own generated files import or declare at module
+ * scope: `bot`/`token` (the local const + its initializer arg in
+ * `examples/basic.mjs`), `test`/`assert` (the default imports in
+ * `src/index.test.ts`), `process` (the global `examples/basic.mjs` reads
+ * `process.env`/`process.exit` from). if a plugin's derived identifier landed
+ * on one of these it would shadow or collide with them — a self-referencing
+ * `const bot = new Bot(token).install(bot(...))` (TDZ), a duplicate `test`/
+ * `assert` import, or a shadowed `process` — so they get the same "Plugin"
+ * suffix treatment as a reserved JS keyword.
+ */
+const RESERVED_CODEGEN_BINDINGS = new Set(["bot", "test", "assert", "token", "process"]);
+
 /** default package manager that matches a runtime when the user didn't pick one */
 export function defaultPackageManager(runtime: Runtime): PackageManager {
 	if (runtime === "bun") return "bun";
@@ -375,7 +405,7 @@ function upperFirst(value: string): string {
 function safeIdentifier(value: string): string {
 	let id = value.replace(/[^a-zA-Z0-9_$]/g, "");
 	if (!/^[a-zA-Z_$]/.test(id)) id = `yaebal${upperFirst(id)}`;
-	if (RESERVED_IDENTIFIERS.has(id)) id = `${id}Plugin`;
+	if (RESERVED_IDENTIFIERS.has(id) || RESERVED_CODEGEN_BINDINGS.has(id)) id = `${id}Plugin`;
 	return id;
 }
 
@@ -509,11 +539,14 @@ function renderPluginFiles(opts: ScaffoldOptions): Record<string, string> {
 			example: "tsc -p tsconfig.json && node examples/basic.mjs",
 			prepack: "npm run build",
 		},
-		peerDependencies: { "@yaebal/core": ">=0.0.0" },
+		// pinned to the current core line, not ">=0.0.0" — pre-1.0 @yaebal/core
+		// still makes breaking changes between minors, so an unbounded range would
+		// silently accept a future release the plugin was never checked against.
+		peerDependencies: { "@yaebal/core": ">=0.3.0" },
 		devDependencies: {
-			"@types/node": "^22.0.0",
+			"@types/node": "latest",
 			"@yaebal/core": "latest",
-			typescript: "^5.7.0",
+			typescript: "^6.0.3",
 		},
 		engines: { node: ">=20" },
 		keywords: ["telegram", "telegram-bot", "yaebal", "plugin"],
@@ -580,7 +613,7 @@ ${exampleCmd}
 The sample plugin exports \`${ids.exportName}()\` and adds \`ctx.${ids.contextKey}\`. Rename those identifiers when you replace the sample behavior.
 `;
 
-	return {
+	const files: Record<string, string> = {
 		"package.json": `${JSON.stringify(pkg, null, "\t")}\n`,
 		"tsconfig.json": `${JSON.stringify(tsconfig, null, "\t")}\n`,
 		"src/index.ts": renderPluginSource(opts.name, ids),
@@ -590,6 +623,241 @@ The sample plugin exports \`${ids.exportName}()\` and adds \`ctx.${ids.contextKe
 		".gitignore": "node_modules\nlib\n.env\n*.log\n",
 		"README.md": readme,
 	};
+
+	if (opts.ci) files[".github/workflows/ci.yml"] = pluginCiWorkflow(pm);
+
+	return files;
+}
+
+const DOCKERIGNORE = `node_modules
+.env
+.dev.vars
+*.log
+.git
+.gitignore
+`;
+
+/**
+ * single-stage on purpose: these templates run straight from `.ts` (node's
+ * type-stripping, or bun/deno's native ts support) — there's no build output
+ * to copy out of a separate builder stage.
+ */
+function dockerfile(runtime: Runtime): string {
+	if (runtime === "bun") {
+		return `FROM oven/bun:1-alpine
+WORKDIR /app
+
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
+
+COPY . .
+
+ENV NODE_ENV=production
+CMD ["bun", "src/index.ts"]
+`;
+	}
+
+	if (runtime === "deno") {
+		return `FROM denoland/deno:alpine
+WORKDIR /app
+
+COPY . .
+RUN deno cache src/index.ts
+
+ENV NODE_ENV=production
+CMD ["deno", "run", "--allow-net", "--allow-env", "src/index.ts"]
+`;
+	}
+
+	return `FROM node:22-alpine
+WORKDIR /app
+
+COPY package.json package-lock.json* pnpm-lock.yaml* yarn.lock* ./
+RUN if [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install --prod --frozen-lockfile; \\
+	elif [ -f yarn.lock ]; then corepack enable && yarn install --production --frozen-lockfile; \\
+	else npm install --omit=dev; fi
+
+COPY . .
+
+ENV NODE_ENV=production
+CMD ["node", "--experimental-strip-types", "src/index.ts"]
+`;
+}
+
+function composeYaml(name: string): string {
+	return `services:
+  ${name}:
+    build: .
+    env_file: .env
+    restart: unless-stopped
+`;
+}
+
+function flyToml(name: string): string {
+	return `app = "${name}"
+primary_region = "iad"
+
+[build]
+
+# a long-polling bot has no inbound http to expose — fly just keeps the
+# container's Dockerfile CMD running as a background machine.
+`;
+}
+
+function railwayJson(): string {
+	return `${JSON.stringify(
+		{
+			$schema: "https://railway.app/railway.schema.json",
+			build: { builder: "DOCKERFILE" },
+			deploy: { restartPolicyType: "ON_FAILURE", restartPolicyMaxRetries: 10 },
+		},
+		null,
+		"\t",
+	)}\n`;
+}
+
+function wranglerJsonc(name: string): string {
+	return `{
+	// generated by create-yaebal — https://developers.cloudflare.com/workers/wrangler/configuration/
+	"name": "${name}",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-01-01",
+	// makes \`process.env\` read from vars/secrets, so the generated bot reads
+	// BOT_TOKEN/SECRET_TOKEN exactly the way it does on every other runtime
+	"compatibility_flags": ["nodejs_compat"]
+}
+`;
+}
+
+function vercelJson(): string {
+	return `${JSON.stringify({ $schema: "https://openapi.vercel.sh/vercel.json", framework: null }, null, "\t")}\n`;
+}
+
+function ciSetupStep(pm: PackageManager): string {
+	if (pm === "deno") {
+		return `      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x`;
+	}
+	if (pm === "bun") return `      - uses: oven-sh/setup-bun@v2`;
+
+	const cache = pm === "yarn" ? "yarn" : pm === "pnpm" ? "pnpm" : "npm";
+	return `      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: ${cache}`;
+}
+
+function ciWorkflow(pm: PackageManager): string {
+	const pnpmSetup = pm === "pnpm" ? "      - uses: pnpm/action-setup@v6\n" : "";
+
+	return `name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+${pnpmSetup}${ciSetupStep(pm)}
+      - run: ${installCommand(pm)}
+      - run: ${scriptCommand(pm, "typecheck")}
+`;
+}
+
+/** a plugin package is publishable, so its ci also builds and runs its tests. */
+function pluginCiWorkflow(pm: PackageManager): string {
+	const pnpmSetup = pm === "pnpm" ? "      - uses: pnpm/action-setup@v6\n" : "";
+
+	return `name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+${pnpmSetup}${ciSetupStep(pm)}
+      - run: ${installCommand(pm)}
+      - run: ${scriptCommand(pm, "typecheck")}
+      - run: ${scriptCommand(pm, "test")}
+      - run: ${scriptCommand(pm, "build")}
+`;
+}
+
+/** what a `DeployTarget` adds: infra files, plus (serverless targets only) a bootstrap override. */
+interface DeployOutput {
+	files: Record<string, string>;
+	/** replaces the default bootstrap — cloudflare owns `src/index.ts`'s export the way `webhook`/`runner` templates already replace it */
+	bootstrap?: string;
+	/** real import line(s) the override needs, merged into `src/index.ts`'s imports */
+	imports?: string[];
+	/** extra package.json dependencies the target needs */
+	dependencies?: Record<string, string>;
+	/** env var names (beyond `BOT_TOKEN`) the target expects, added to `.env.example` */
+	envVars?: string[];
+}
+
+function renderDeployFiles(opts: ScaffoldOptions): DeployOutput {
+	switch (opts.deploy ?? "none") {
+		case "none":
+			return { files: {} };
+		case "docker":
+			return { files: { Dockerfile: dockerfile(opts.runtime), ".dockerignore": DOCKERIGNORE } };
+		case "compose":
+			return {
+				files: {
+					Dockerfile: dockerfile(opts.runtime),
+					".dockerignore": DOCKERIGNORE,
+					"compose.yaml": composeYaml(opts.name),
+				},
+			};
+		case "fly":
+			return {
+				files: {
+					Dockerfile: dockerfile(opts.runtime),
+					".dockerignore": DOCKERIGNORE,
+					"fly.toml": flyToml(opts.name),
+				},
+			};
+		case "railway":
+			return {
+				files: {
+					Dockerfile: dockerfile(opts.runtime),
+					".dockerignore": DOCKERIGNORE,
+					"railway.json": railwayJson(),
+				},
+			};
+		case "cloudflare":
+			return {
+				files: {
+					"wrangler.jsonc": wranglerJsonc(opts.name),
+					".dev.vars.example": "BOT_TOKEN=\nSECRET_TOKEN=\n",
+				},
+				bootstrap: `export default {
+	fetch: cloudflareAdapter(bot, { secretToken: process.env.SECRET_TOKEN }),
+};
+`,
+				imports: ['import { cloudflareAdapter } from "@yaebal/web";'],
+				dependencies: { "@yaebal/web": "latest" },
+				envVars: ["SECRET_TOKEN"],
+			};
+		case "vercel":
+			// api/bot.ts (the actual edge entry) is assembled in renderFiles, which
+			// alone has the rest of the generated body to reuse — this only owns
+			// the target's static, body-independent files.
+			return {
+				files: { "vercel.json": vercelJson() },
+				dependencies: { "@yaebal/web": "latest" },
+				envVars: ["SECRET_TOKEN"],
+			};
+	}
 }
 
 /** turn options into a `relative path → file content` map. pure. */
@@ -599,6 +867,8 @@ export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 
 	const spec = BOT_TEMPLATES[templateId];
 	const pm = opts.packageManager ?? defaultPackageManager(opts.runtime);
+	const deployTarget = opts.deploy ?? "none";
+	const deployOut = renderDeployFiles(opts);
 
 	const chosen = opts.plugins.map(findPlugin).filter((p): p is NonNullable<typeof p> => !!p);
 	const templatePlugins = (spec.plugins ?? [])
@@ -614,13 +884,12 @@ export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 	const depOnly = wired.filter((p) => p.wire === "dep");
 
 	// ── imports ──────────────────────────────────────────────────────────
-	const imports = [
+	const baseImports = [
 		'import { Bot } from "@yaebal/core";',
 		...installs.map((p) => p.import),
 		...setups.map((p) => p.import),
 		...(spec.imports ?? []),
 	];
-	const importBlock = [...new Set(imports)].join("\n");
 
 	// dep-only plugins get a commented import — unless the template already
 	// imports that package for real.
@@ -642,6 +911,11 @@ export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 	const installChain =
 		installExprs.length > 0 ? `\n${installExprs.map((e) => `\t.install(${e})`).join("\n")}` : "";
 
+	// showcase comments for plugins that ship more than one backend (analytics
+	// sinks, feature-flags providers) — real, importable names, never live code.
+	const showcases = [...installs, ...setups].map((p) => p.showcase).filter((s): s is string => !!s);
+	const showcaseBlock = showcases.length > 0 ? `\n\n${showcases.join("\n\n")}` : "";
+
 	const setupStatements = [...setups.map((p) => p.setup as string)];
 	if (spec.setup) setupStatements.push(spec.setup);
 	const setupBlock =
@@ -650,19 +924,31 @@ export function renderFiles(opts: ScaffoldOptions): Record<string, string> {
 			: "";
 
 	const pre = spec.pre ? `${spec.pre}\n\n` : "";
-	const bootstrap = spec.bootstrap ?? DEFAULT_BOOTSTRAP;
-
-	const index = `${importBlock}${depHint}
-
-const token = process.env.BOT_TOKEN;
+	const tokenGuard = `const token = process.env.BOT_TOKEN;
 if (!token) {
 \tconsole.error("✗ set BOT_TOKEN in your environment (copy .env.example → .env)");
 \tprocess.exit(1);
-}
+}`;
 
-${pre}const bot = new Bot(token)${installChain};
+	/** everything but the bootstrap — shared between `src/index.ts` and, for vercel, `api/bot.ts`. */
+	const buildBody = (extraImports: string[] = []): string => {
+		const importBlock = [...new Set([...baseImports, ...extraImports])].join("\n");
+		return `${importBlock}${depHint}
 
-${spec.body}${setupBlock}
+${tokenGuard}
+
+${pre}const bot = new Bot(token)${installChain};${showcaseBlock}
+
+${spec.body}${setupBlock}`;
+	};
+
+	// a serverless deploy target owns the bootstrap the same way the `webhook`/
+	// `runner` templates already do — it wins regardless of which bot template
+	// was picked, since there's nowhere else for a `bot.start()` poll loop to run.
+	const bootstrap = deployOut.bootstrap ?? spec.bootstrap ?? DEFAULT_BOOTSTRAP;
+	const indexExtraImports = deployTarget === "cloudflare" ? (deployOut.imports ?? []) : [];
+
+	const index = `${buildBody(indexExtraImports)}
 
 ${bootstrap}
 `;
@@ -670,6 +956,7 @@ ${bootstrap}
 	// ── package.json ──────────────────────────────────────────────────────
 	const dependencies: Record<string, string> = { "@yaebal/core": "latest" };
 	for (const p of [...chosen, ...templatePlugins]) dependencies[p.dep] = "latest";
+	if (deployOut.dependencies) Object.assign(dependencies, deployOut.dependencies);
 
 	const pkg = {
 		name: opts.name,
@@ -678,7 +965,7 @@ ${bootstrap}
 		type: "module",
 		scripts: SCRIPTS[opts.runtime],
 		dependencies,
-		devDependencies: { "@types/node": "^22.0.0", typescript: "^5.7.0" },
+		devDependencies: { "@types/node": "latest", typescript: "^6.0.3" },
 		engines: opts.runtime === "node" ? { node: ">=22.6" } : undefined,
 	};
 
@@ -696,12 +983,18 @@ ${bootstrap}
 			noEmit: true,
 			types: ["node"],
 		},
-		include: ["src"],
+		include: deployTarget === "vercel" ? ["src", "api"] : ["src"],
 	};
 
 	const runCmd = runCommand(pm, "dev");
 	const installCmd = installCommand(pm);
 	const allPlugins = [...new Set([...chosen.map((p) => p.id), ...templateIds])];
+
+	const envVarNames = ["BOT_TOKEN", ...(deployOut.envVars ?? [])];
+	const envExample = `${envVarNames.map((n) => `${n}=`).join("\n")}\n`;
+
+	const deployLine = deployTarget !== "none" ? ` · deploy: ${deployTarget}` : "";
+	const ciLine = opts.ci ? " · ci: github actions" : "";
 
 	const readme = `# ${opts.name}
 
@@ -722,18 +1015,31 @@ ${runCmd}
 
 runtime: **${opts.runtime}** · template: **${templateId}**${
 		allPlugins.length ? ` · plugins: ${allPlugins.join(", ")}` : ""
-	}
+	}${deployLine}${ciLine}
 `;
 
-	return {
+	const files: Record<string, string> = {
 		"package.json": `${JSON.stringify(pkg, null, "\t")}\n`,
 		"tsconfig.json": `${JSON.stringify(tsconfig, null, "\t")}\n`,
 		"src/index.ts": index,
-		".env.example": "BOT_TOKEN=\n",
-		".gitignore": "node_modules\nlib\n.env\n*.log\n",
+		".env.example": envExample,
+		".gitignore": "node_modules\n.env\n*.log\n",
 		"README.md": readme,
 		...(spec.files ?? {}),
+		...deployOut.files,
 	};
+
+	if (deployTarget === "vercel") {
+		files["api/bot.ts"] = `${buildBody(['import { webhook } from "@yaebal/web";'])}
+
+export const config = { runtime: "edge" };
+export default webhook(bot, { secretToken: process.env.SECRET_TOKEN });
+`;
+	}
+
+	if (opts.ci) files[".github/workflows/ci.yml"] = ciWorkflow(pm);
+
+	return files;
 }
 
 /** the install command for a package manager (deno has none) */
@@ -783,13 +1089,42 @@ export function scriptCommand(pm: PackageManager, script: string): string {
 }
 
 /** flush a rendered file map to `targetDir`, creating parent dirs as needed. */
+/**
+ * flush a rendered file map to `targetDir`, but atomically: everything is
+ * written into a sibling temp directory first, then the whole thing is moved
+ * into place with a single `rename`. a mid-write failure (disk full, a
+ * permission error partway through) never leaves a half-written project on
+ * disk for `existsSync(target)` to later mistake for a real, completed one.
+ */
 export async function writeProject(
 	targetDir: string,
 	files: Record<string, string>,
 ): Promise<void> {
-	for (const [rel, content] of Object.entries(files)) {
-		const full = join(targetDir, rel);
-		await mkdir(dirname(full), { recursive: true });
-		await writeFile(full, content);
+	const staging = await mkdtemp(join(dirname(targetDir), ".create-yaebal-"));
+
+	try {
+		for (const [rel, content] of Object.entries(files)) {
+			const full = join(staging, rel);
+			await mkdir(dirname(full), { recursive: true });
+			await writeFile(full, content);
+		}
+
+		try {
+			await rename(staging, targetDir);
+		} catch (err) {
+			// EXDEV: staging and target are on different filesystems/devices —
+			// rename can't work atomically there, so fall back to a plain copy.
+			if ((err as { code?: string }).code !== "EXDEV") throw err;
+			await mkdir(targetDir, { recursive: true });
+			for (const [rel, content] of Object.entries(files)) {
+				const full = join(targetDir, rel);
+				await mkdir(dirname(full), { recursive: true });
+				await writeFile(full, content);
+			}
+			await rm(staging, { recursive: true, force: true });
+		}
+	} catch (err) {
+		await rm(staging, { recursive: true, force: true });
+		throw err;
 	}
 }

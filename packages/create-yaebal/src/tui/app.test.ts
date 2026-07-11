@@ -37,34 +37,41 @@ const DOWN = "\x1b[B";
 const SPACE = " ";
 const CTRL_C = "\x03";
 
-test("tui: full flow resolves the chosen selections", async () => {
+// step order: name → template → runtime → pm → plugins → deploy → review.
+// template comes before runtime/pm/plugins/deploy so the plugin path can skip
+// all four of them cleanly (see `shouldSkip` in app.ts).
+
+test("tui: full flow resolves the chosen selections", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 30, cols: 80 });
 
 	await h.type("testbot");
-	// name → runtime → pm → template → plugins → review → commit
-	for (let i = 0; i < 6; i++) await h.press(ENTER);
+	// name → template → runtime → pm → plugins → deploy → review → commit
+	for (let i = 0; i < 7; i++) await h.press(ENTER);
 
 	const result = await pending;
 	assert.ok(result, "wizard should resolve with selections");
 	assert.equal(result?.name, "testbot");
 	assert.ok(["node", "bun", "deno"].includes(result?.runtime ?? ""));
 	assert.ok(result?.plugins.includes("session"));
+	assert.equal(result?.deploy, "none");
+	assert.equal(result?.ci, false);
 });
 
-test("tui: navigation, toggles and a plugin selection stick", async () => {
+test("tui: navigation, toggles and a plugin selection stick", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 30, cols: 80 });
 
 	await h.type("navbot");
-	await h.press(ENTER); // → runtime
+	await h.press(ENTER); // name → template
+	await h.press(ENTER); // template → runtime (accept "minimal")
 	await h.press(DOWN); // move the runtime cursor
-	await h.press(ENTER); // → pm
-	await h.press(ENTER); // → template
-	await h.press(ENTER); // → plugins
+	await h.press(ENTER); // runtime → pm
+	await h.press(ENTER); // pm → plugins
 	await h.press(DOWN); // move to 2nd plugin
 	await h.press(SPACE); // toggle it
-	await h.press(ENTER); // → review
+	await h.press(ENTER); // plugins → deploy
+	await h.press(ENTER); // deploy → review (accept "none")
 	await h.press(ENTER); // create (cursor defaults to "create project")
 
 	const result = await pending;
@@ -75,7 +82,32 @@ test("tui: navigation, toggles and a plugin selection stick", async () => {
 	assert.ok(["node", "bun", "deno"].includes(result?.runtime ?? ""));
 });
 
-test("tui: plugin template skips bot plugin selection", async () => {
+test("tui: a deploy target pick sticks, and the ci toggle sticks", { timeout: 5000 }, async () => {
+	const h = harness();
+	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 30, cols: 80 });
+
+	await h.type("deploybot");
+	await h.press(ENTER); // name → template
+	await h.press(ENTER); // template → runtime
+	await h.press(ENTER); // runtime → pm
+	await h.press(ENTER); // pm → plugins
+	await h.press(ENTER); // plugins → deploy
+	await h.press(DOWN); // move off "none" to "docker"
+	await h.press(ENTER); // deploy → review (cursor starts on "create project")
+	await h.press(DOWN); // create → git
+	await h.press(DOWN); // git → install
+	await h.press(DOWN); // install → ci
+	await h.press(SPACE); // toggle ci on
+	await h.press(DOWN); // ci → create
+	await h.press(ENTER); // create
+
+	const result = await pending;
+	assert.ok(result);
+	assert.equal(result?.deploy, "docker");
+	assert.equal(result?.ci, true);
+});
+
+test("tui: plugin template skips runtime, plugins and deploy", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs(["--template", "plugin"]), {
 		input: h.input,
@@ -85,18 +117,18 @@ test("tui: plugin template skips bot plugin selection", async () => {
 	});
 
 	await h.type("plugbot");
-	await h.press(ENTER); // name -> runtime
-	await h.press(ENTER); // runtime -> package manager
-	await h.press(ENTER); // package manager -> review (template/plugins are skipped)
+	await h.press(ENTER); // name → pm (template locked; runtime skipped for the plugin template)
+	await h.press(ENTER); // pm → review (plugins/deploy skipped for the plugin template)
 	await h.press(ENTER); // create
 
 	const result = await pending;
 	assert.ok(result);
 	assert.equal(result?.template, "plugin");
 	assert.deepEqual(result?.plugins, []);
+	assert.equal(result?.deploy, "none");
 });
 
-test("tui: renders a centred card with the current step", async () => {
+test("tui: renders a centred card with the current step", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 24, cols: 80 });
 	await h.press(""); // let the first frame flush
@@ -107,9 +139,28 @@ test("tui: renders a centred card with the current step", async () => {
 	await pending;
 });
 
-test("tui: ctrl-c on the first step cancels", async () => {
+test("tui: ctrl-c on the first step cancels", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 24, cols: 80 });
 	await h.press(CTRL_C);
 	assert.equal(await pending, undefined);
+});
+
+test("tui: repaints on a terminal resize", { timeout: 5000 }, async () => {
+	const h = harness();
+	const pending = runTui(parseArgs([]), {
+		input: h.input,
+		output: h.output,
+		rows: 24,
+		cols: 80,
+	});
+	await h.press(""); // flush the first frame
+	const before = h.frame().length;
+
+	(h.output as unknown as PassThrough).emit("resize");
+	await new Promise((r) => setImmediate(r));
+
+	assert.ok(h.frame().length > before, "a resize should trigger another repaint");
+	await h.press(CTRL_C);
+	await pending;
 });

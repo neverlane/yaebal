@@ -53,19 +53,46 @@ export function supportsTui(): boolean {
 	return true;
 }
 
-/** npm package-name rules, scoped down to what a folder can be called. */
+function validateNamePart(part: string, label: string): string | undefined {
+	if (!part) return `${label} can't be empty`;
+	if (!/^[a-z0-9._-]+$/.test(part)) return "use lowercase letters, digits, '.', '_' or '-' only";
+	if (/^[._]/.test(part)) return `${label} can't start with '.' or '_'`;
+
+	return undefined;
+}
+
+/**
+ * npm package-name rules, scoped down to what a folder can be called — plus a
+ * proper npm scope (`@org/name`), which `pluginIdentifiers()` in `scaffold.ts`
+ * already anticipates but this used to reject outright.
+ */
 export function validateProjectName(raw: string): string | undefined {
 	const name = raw.trim();
 
 	if (!name) return "project name is required";
-
 	if (name === "." || name === "..") return "pick a real directory name";
 	if (name.length > 214) return "name is too long (max 214 chars)";
 
-	if (!/^[a-z0-9._-]+$/.test(name)) return "use lowercase letters, digits, '.', '_' or '-' only";
-	if (/^[._]/.test(name)) return "name can't start with '.' or '_'";
+	if (name.startsWith("@")) {
+		const slash = name.indexOf("/");
+		if (slash === -1) return "a scoped name needs a '/', e.g. @org/my-plugin";
 
-	return undefined;
+		const scope = name.slice(1, slash);
+		const rest = name.slice(slash + 1);
+		if (rest.includes("/")) return "only one '/' is allowed (scope/name)";
+
+		return validateNamePart(scope, "scope") ?? validateNamePart(rest, "name");
+	}
+
+	return validateNamePart(name, "name");
+}
+
+/** the directory (and default unscoped) name for a project — strips a leading npm scope. */
+export function projectDirName(name: string): string {
+	const trimmed = name.trim();
+	const slash = trimmed.indexOf("/");
+
+	return trimmed.startsWith("@") && slash !== -1 ? trimmed.slice(slash + 1) : trimmed;
 }
 
 /** spawn a command, inheriting stdio, resolving to its exit code. */

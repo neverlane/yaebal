@@ -10,6 +10,7 @@ import { createInterface } from "node:readline/promises";
 import type { ParsedArgs } from "./args.js";
 import {
 	type Choice,
+	DEPLOYS,
 	PACKAGE_MANAGERS,
 	type PackageManager,
 	PLUGINS,
@@ -73,17 +74,22 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 			name = candidate;
 		}
 
-		const runtime: Runtime = args.runtime ?? (await pickOne(rl, "runtime", RUNTIMES, d.runtime));
+		// template is asked before runtime/pm so the plugin path (which needs
+		// neither a runtime question nor a deploy target) can skip them cleanly.
+		const template: TemplateId =
+			args.template ?? (await pickOne(rl, "template", TEMPLATES, d.template));
+		const isPlugin = template === "plugin";
+
+		const runtime: Runtime = isPlugin
+			? d.runtime
+			: (args.runtime ?? (await pickOne(rl, "runtime", RUNTIMES, d.runtime)));
 
 		const packageManager: PackageManager =
 			args.packageManager ??
 			(await pickOne(rl, "package manager", PACKAGE_MANAGERS, d.packageManager));
 
-		const template: TemplateId =
-			args.template ?? (await pickOne(rl, "template", TEMPLATES, d.template));
-
 		let plugins = args.plugins;
-		if (template === "plugin") {
+		if (isPlugin) {
 			plugins = [];
 		} else if (plugins === undefined) {
 			console.log(`\n${c.bold("plugins")} ${c.dim("(space/comma separated ids, or 'all')")}`);
@@ -104,11 +110,19 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 
 		plugins = sanitizePlugins(plugins);
 
+		const deploy = isPlugin
+			? "none"
+			: (args.deploy ?? (await pickOne(rl, "deploy target", DEPLOYS, d.deploy)));
+
+		const ci = isPlugin
+			? false
+			: (args.ci ?? (await confirm(rl, "add a github actions ci workflow?", d.ci)));
+
 		const git = args.git ?? (await confirm(rl, "initialise a git repository?", d.git));
 
 		const install = args.install ?? (await confirm(rl, "install dependencies now?", d.install));
 
-		return { name, runtime, packageManager, template, plugins, git, install };
+		return { name, runtime, packageManager, template, plugins, deploy, ci, git, install };
 	} catch (err) {
 		// ctrl+c during a question rejects with an AbortError — treat as cancel.
 		if (

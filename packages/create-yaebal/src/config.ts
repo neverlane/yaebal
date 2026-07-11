@@ -5,7 +5,13 @@
  */
 
 import type { ParsedArgs } from "./args.js";
-import { type PackageManager, PLUGIN_IDS, type Runtime, type TemplateId } from "./catalog.js";
+import {
+	type DeployTarget,
+	type PackageManager,
+	PLUGIN_IDS,
+	type Runtime,
+	type TemplateId,
+} from "./catalog.js";
 import { defaultPackageManager } from "./scaffold.js";
 import { detectPackageManager, detectRuntime } from "./util.js";
 
@@ -15,6 +21,9 @@ export interface Selections {
 	packageManager: PackageManager;
 	template: TemplateId;
 	plugins: string[];
+	/** "none" for the plugin template — a plugin package has nowhere to deploy */
+	deploy: DeployTarget;
+	ci: boolean;
 	git: boolean;
 	install: boolean;
 }
@@ -32,6 +41,8 @@ export function defaults(args: ParsedArgs): Selections {
 		packageManager,
 		template,
 		plugins: template === "plugin" ? [] : (args.plugins ?? ["session", "again", "fmt"]),
+		deploy: template === "plugin" ? "none" : (args.deploy ?? "none"),
+		ci: args.ci ?? false,
 		git: args.git ?? true,
 		install: args.install ?? false,
 	};

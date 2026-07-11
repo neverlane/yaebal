@@ -174,7 +174,7 @@ renderChat(messages, { scale: 2 }); // crisp @2x rasterization (viewBox stays 1x
 	</tbody>
 </table>
 
-<h2>media</h2>
+<h2 id="media">media</h2>
 <p>
 	every media field accepts the real <code>@yaebal/types</code> shape (the array/objects you'd get
 	off an <code>Update</code>) <em>or</em> a hand-written partial fixture with just the fields the

@@ -84,7 +84,13 @@ export function forwardBlock(fwd: ForwardHeader, p: Palette): Block {
 	};
 }
 
-const reactionPillWidth = (r: Reaction): number => 16 + `${r.count}`.length * 7 + 16;
+// reserved emoji column + a real gap before the count, so a wide emoji glyph and a multi-digit
+// count never overlap (a plain char-count budget is too tight for emoji, which render wider than
+// their font-size implies)
+const EMOJI_COL = 20;
+const COUNT_GAP = 6;
+const reactionPillWidth = (r: Reaction): number =>
+	12 + EMOJI_COL + COUNT_GAP + `${r.count}`.length * 7 + 12;
 
 /** a row of reaction pills under the bubble; `chosen` reactions render filled in the accent colour. */
 export function reactionsRow(
@@ -103,7 +109,7 @@ export function reactionsRow(
 
 		s += `<rect x="${round(cx)}" y="${round(y)}" width="${round(w)}" height="${H}" rx="12" fill="${filled ? p.link : p.button}" stroke="${filled ? "none" : p.buttonStroke}"/>`;
 		s += `<text x="${round(cx + 12)}" y="${round(y + 16)}" font-size="13">${esc(r.emoji)}</text>`;
-		s += `<text x="${round(cx + w - 10)}" y="${round(y + 16)}" font-size="12" font-weight="600" fill="${filled ? "#fff" : p.buttonText}" text-anchor="end" font-family="${FONT}">${r.count}</text>`;
+		s += `<text x="${round(cx + w - 12)}" y="${round(y + 16)}" font-size="12" font-weight="600" fill="${filled ? "#fff" : p.buttonText}" text-anchor="end" font-family="${FONT}">${r.count}</text>`;
 
 		cx += w + 6;
 	}

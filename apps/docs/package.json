@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/docs",
-	"version": "0.3.9",
+	"version": "0.3.10",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -30,7 +30,7 @@
 		"pagefind": "^1.5.2",
 		"svelte": "^5.56.4",
 		"svelte-check": "^4.7.1",
-		"typescript": "^6.0.3",
+		"typescript": "^7.0.2",
 		"vite": "^8.1.0"
 	}
 }

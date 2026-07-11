@@ -248,6 +248,19 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/mini-app:
+    dependencies:
+      '@yaebal/mini-app':
+        specifier: workspace:*
+        version: link:../../packages/mini-app
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/modular-router:
     dependencies:
       '@yaebal/router':

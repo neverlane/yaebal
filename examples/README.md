@@ -56,6 +56,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [testing-lab](./testing-lab/) | `@yaebal/example-testing-lab` | bot factory plus actor-driven tests | `pnpm --filter @yaebal/example-testing-lab test` |
 | [inline-search](./inline-search/) | `@yaebal/example-inline-search` | core + `@yaebal/contexts` layering: `contextFor`, `inline.answer()`, pagination offset, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |
 | [payments-stars](./payments-stars/) | `@yaebal/example-payments-stars` | telegram stars invoices, pre-checkout approval, successful payment, refund | `pnpm --filter @yaebal/example-payments-stars dev` |
+| [mini-app](./mini-app/) | `@yaebal/example-mini-app` | HMAC + Ed25519 initData validation, `Authorization: tma` backend, `answerWebAppQuery`, `web_app_data`, direct/attachment-menu links | `pnpm --filter @yaebal/example-mini-app dev` |
 
 ## plugin coverage
 
@@ -76,6 +77,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/keyboard`      | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions   |
 | `@yaebal/media-cache`   | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/media-group`   | `media-studio`                                                                         | package tests plus example smoke               |
+| `@yaebal/mini-app`      | `mini-app`                                                                             | package tests plus example smoke               |
 | `@yaebal/morda`         | `basic`, `dialog-quest`, `morda-jsx`                                                   | package tests plus example smoke               |
 | `@yaebal/onboarding`    | `onboarding`                                                                           | package tests plus example smoke               |
 | `@yaebal/pagination`    | `pagination`, `commerce-suite`                                                         | package tests plus example smoke               |

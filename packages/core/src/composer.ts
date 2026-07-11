@@ -20,6 +20,7 @@ import type {
 	Video,
 	VideoNote,
 	Voice,
+	WebAppData,
 } from "./telegram-types.js";
 
 export type NextFn = () => Promise<void>;
@@ -93,6 +94,7 @@ interface MediaField {
 	game: Game;
 	invoice: Invoice;
 	successful_payment: SuccessfulPayment;
+	web_app_data: WebAppData;
 }
 
 /** narrows the context type for known queries so handlers get non-optional fields. */

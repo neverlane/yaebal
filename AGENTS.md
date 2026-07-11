@@ -45,7 +45,7 @@ pnpm workspace globs: `packages/*`, `examples/*`, `apps/*`. Node >= 20.
   `@yaebal/contexts` — generated per-update context classes), the `yaebal` meta package,
   `create-yaebal`, and `@yaebal/test` (actor-driven test framework: `createTestEnv` / `UserActor`
   / `ChatActor`).
-- `examples/*` — 23 runnable bots, doubling as public-API smoke tests; the plugin coverage
+- `examples/*` — 25 runnable bots, doubling as public-API smoke tests; the plugin coverage
   matrix lives in `examples/README.md`.
 - `apps/docs` — the SvelteKit docs site (Cloudflare adapter): guides, plugin pages, the
   playground, and a Bot API reference generated from `packages/types/schema.json`.

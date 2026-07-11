@@ -35,6 +35,7 @@ export type {
 	Video,
 	VideoNote,
 	Voice,
+	WebAppData,
 	WebhookInfo,
 } from "@yaebal/types";
 export { updateNames } from "@yaebal/types";

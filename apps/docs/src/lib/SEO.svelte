@@ -209,9 +209,9 @@
 				"typed, provider-agnostic invoice builder for yaebal (telegram stars or external processors), onPreCheckout/onSuccessfulPayment hooks, and Stars Subscription API helpers.",
 		},
 		"/docs/plugins/mini-app": {
-			title: "@yaebal/mini-app — telegram mini apps initData validation",
+			title: "@yaebal/mini-app — telegram mini apps initData validation (HMAC + Ed25519)",
 			description:
-				"validate telegram mini apps initData with @yaebal/mini-app: ctx.miniApp.validate(initData), a typed initData parser, web_app_data helpers, and a WebAppInfo/direct-link url generator.",
+				"validate telegram mini apps initData with @yaebal/mini-app: HMAC (ctx.miniApp.validate) and Ed25519 third-party validation, a typed initData parser and test signer, an Authorization: tma header helper, answerWebAppQuery, and a WebAppInfo/direct-link url generator.",
 		},
 		"/docs/plugins/auto-answer": {
 			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
@@ -445,7 +445,7 @@
 		"/docs/telegram/mini-apps": {
 			title: "telegram mini apps with yaebal",
 			description:
-				"wire telegram mini apps to yaebal bots with web app buttons, init data validation, callback flows, and secure backend handoff.",
+				"wire telegram mini apps to yaebal bots with web app buttons, @yaebal/mini-app initData validation (HMAC + Ed25519), callback flows, and secure backend handoff via the Authorization: tma header.",
 		},
 	};
 

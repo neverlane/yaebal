@@ -116,6 +116,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [testing-lab](/examples/testing-lab/)       | bot factory with real actor-driven `node:test` coverage                                                                    | `pnpm --filter @yaebal/example-testing-lab test`    |
 | [inline-search](/examples/inline-search/)   | core + `@yaebal/contexts` by hand: `contextFor`, `inline.answer()`, offset pagination, chosen-result analytics             | `pnpm --filter @yaebal/example-inline-search dev`   |
 | [payments-stars](/examples/payments-stars/) | telegram stars invoices, pre-checkout approval, successful payment and refund                                              | `pnpm --filter @yaebal/example-payments-stars dev`  |
+| [mini-app](/examples/mini-app/)             | HMAC + Ed25519 `initData` validation, `Authorization: tma` backend demo, `answerWebAppQuery`, link builders                | `pnpm --filter @yaebal/example-mini-app dev`        |
 
 ### plugins
 
@@ -129,7 +130,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
 | [@yaebal/payments](/packages/payments/)           | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions |
-| [@yaebal/mini-app](/packages/mini-app/)           | Telegram Mini Apps protocol: `ctx.miniApp.validate(initData)`, typed `initData` parser, `web_app_data` helpers, `WebAppInfo`/deep-link url generator |
+| [@yaebal/mini-app](/packages/mini-app/)           | Telegram Mini Apps server protocol: HMAC + Ed25519 (third-party) `initData` validation, typed parser & test signer, `Authorization: tma` header helper, `answerWebAppQuery`, `WebAppInfo`/deep-link url generator |
 | [@yaebal/link-preview](/packages/link-preview/)   | fluent builder for `link_preview_options`                                             |
 | [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
 | [@yaebal/typing](/packages/typing/)               | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction` |

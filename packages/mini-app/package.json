@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/mini-app",
-	"version": "0.0.1",
-	"description": "yaebal mini-app — Telegram Mini Apps protocol: ctx.miniApp.validate(initData), a typed initData parser, web_app_data helpers, and a WebAppInfo/deep-link url generator.",
+	"version": "0.1.0",
+	"description": "yaebal mini-app — the Telegram Mini Apps server protocol: HMAC + Ed25519 (third-party) initData validation, a typed parser and test signer, an Authorization: tma header helper, answerWebAppQuery, and a WebAppInfo/deep-link url generator.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -26,7 +26,17 @@
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "mini-app", "web-app", "webapp", "init-data"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"mini-app",
+		"web-app",
+		"webapp",
+		"init-data",
+		"ed25519",
+		"tma"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

@@ -211,6 +211,7 @@ source = where the idea came from.
 | **`@yaebal/callback-data`** ✅ | typed `callback_data` (pack/unpack + `.pattern` for `callbackQuery`) | — | export | @gramio + @puregram callback-data |
 | **`@yaebal/link-preview`** ✅ | fluent builder for `link_preview_options` (url, prefer small/large media, show above text, disable) | — | export | native ops plugin |
 | **`@yaebal/guards`** ✅ | reusable `bot.guard()` predicates: `isPrivate`/`isGroup` adapted from `filters`, `isAdmin`/`hasMembership`/`hasPermission` via live `getChatMember`; every predicate also fits `Filter<Context>` so it composes with `filters`' `and`/`or`/`not` | `filters` | `guard()` / `filter()` | grammy/gramio hand-rolled admin checks |
+| **`@yaebal/payments`** ✅ | typed, provider-agnostic invoice builder (`.stars()` / `.provider(token, currency)` / `.subscription()`), `onPreCheckout`/`onSuccessfulPayment` hooks that answer `pre_checkout_query` for you, `cancelSubscription`/`reactivateSubscription` over the Stars Subscription API (Bot API 7.6+) | — | `on("pre_checkout_query")` / `on("message:successful_payment")` | grammy/gramio have no dedicated payments plugin — native ops plugin |
 
 ### ux
 
@@ -258,7 +259,7 @@ sklad ─→ session ─→ i18n
 callback-data ───────────┘
 keyboard ──→ pagination
 throttle ─→ broadcast
-again · prompt · files · media-cache · media-group · auto-answer · ratelimiter · runner · analytics · audit-log · cron  (no session dependency)
+again · prompt · files · media-cache · media-group · auto-answer · ratelimiter · runner · analytics · audit-log · cron · payments  (no session dependency)
 ```
 
 ---

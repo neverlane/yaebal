@@ -36,11 +36,11 @@ pnpm workspace globs: `packages/*`, `examples/*`, `apps/*`. Node >= 20.
 
 - `packages/core` — `@yaebal/core`: `Bot`, `Composer`, context, filter queries, media, hooks.
   Entry: `src/index.ts`. Build output: `lib/` (via `tsc`). Every package follows this shape.
-- `packages/*` — the rest of the published `@yaebal/*` scope: ~31 plugins (`again`, `session`,
+- `packages/*` — the rest of the published `@yaebal/*` scope: ~32 plugins (`again`, `session`,
   `sklad`, `keyboard`, `callback-data`, `filters`, `fmt`, `rich`, `morda`, `i18n`, `scenes`,
   `conversation`, `prompt`, `files`, `file-id`, `router`, `toml`, `throttle`, `ratelimiter`,
   `broadcast`, `panel`, `web`, `runner`, `split`, `workers`, `onboarding`, `pagination`,
-  `media-cache`, `media-group`, `commands`, `preview`, …), the codegen packages (`@yaebal/types`
+  `media-cache`, `media-group`, `commands`, `preview`, `payments`, …), the codegen packages (`@yaebal/types`
   — generated Bot API types, with `packages/types/schema.json` as the single source of truth;
   `@yaebal/contexts` — generated per-update context classes), the `yaebal` meta package,
   `create-yaebal`, and `@yaebal/test` (actor-driven test framework: `createTestEnv` / `UserActor`

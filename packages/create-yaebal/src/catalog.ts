@@ -207,6 +207,14 @@ export const PLUGINS: PluginDef[] = [
 		import: 'import { cache } from "@yaebal/cache";',
 		install: "cache({ ttl: 60_000 })",
 	},
+	{
+		id: "payments",
+		dep: "@yaebal/payments",
+		hint: "typed invoice builder + pre-checkout/successful-payment hooks (stars & subscriptions)",
+		wire: "install",
+		import: 'import { payments } from "@yaebal/payments";',
+		install: "payments({ onPreCheckout: () => true })",
+	},
 	// ── wired: api transformers applied after build ───────────────────────
 	{
 		id: "again",

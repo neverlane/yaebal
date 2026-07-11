@@ -88,6 +88,7 @@ export const nav: NavSection[] = [
 			{ label: "filters", href: "/docs/plugins/filters" },
 			{ label: "guards", href: "/docs/plugins/guards", badge: "new" },
 			{ label: "commands", href: "/docs/plugins/commands" },
+			{ label: "payments", href: "/docs/plugins/payments", badge: "new" },
 		],
 	},
 	{

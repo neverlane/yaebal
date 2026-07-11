@@ -48,6 +48,13 @@
 	flows with yaebal.
 </p>
 
+<div class="note">
+	<strong>reach for <a href="/docs/plugins/payments/">@yaebal/payments</a> first.</strong> it wraps
+	the flow below in a typed, provider-agnostic invoice builder plus <code>onPreCheckout</code>/
+	<code>onSuccessfulPayment</code> hooks, and adds Stars Subscription API helpers. this guide stays
+	useful for the underlying protocol and for shipping/paid-media cases the plugin doesn't cover.
+</div>
+
 <h2>the flow</h2>
 <p>
 	telegram payments are a four-step protocol: send an invoice, optionally answer a shipping query,

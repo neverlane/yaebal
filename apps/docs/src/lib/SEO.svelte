@@ -203,6 +203,11 @@
 			description:
 				"retry yaebal telegram bot api calls after flood waits, 429 responses, transient 5xx errors, network failures, and configurable backoff windows.",
 		},
+		"/docs/plugins/payments": {
+			title: "@yaebal/payments — telegram invoices, stars & subscriptions",
+			description:
+				"typed, provider-agnostic invoice builder for yaebal (telegram stars or external processors), onPreCheckout/onSuccessfulPayment hooks, and Stars Subscription API helpers.",
+		},
 		"/docs/plugins/auto-answer": {
 			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
 			description:

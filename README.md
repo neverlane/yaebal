@@ -125,6 +125,7 @@ runnable bots live under [`examples/`](/examples/). clone the repo, drop a token
 | [@yaebal/cache](/packages/cache/)                 | `ctx.cache.get/set/wrap` — ttl memoization for api calls and data, dedupes concurrent misses |
 | [@yaebal/keyboard](/packages/keyboard/)           | fluent inline and reply keyboard builders                                             |
 | [@yaebal/callback-data](/packages/callback-data/) | typed `callback_data` pack / unpack                                                   |
+| [@yaebal/payments](/packages/payments/)           | typed invoice builder (stars / external providers), pre-checkout & successful-payment hooks, star subscriptions |
 | [@yaebal/link-preview](/packages/link-preview/)   | fluent builder for `link_preview_options`                                             |
 | [@yaebal/auto-answer](/packages/auto-answer/)     | auto-clears the callback-query loading spinner, no manual `answerCallbackQuery` call  |
 | [@yaebal/typing](/packages/typing/)               | `ctx.typing(fn)` keeps the "is typing…" indicator alive for an async call, no manual `sendChatAction` |

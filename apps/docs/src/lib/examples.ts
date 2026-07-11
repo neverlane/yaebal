@@ -199,6 +199,22 @@ const bot = createBot(process.env.BOT_TOKEN!)
 bot.start();`,
 		steps: [{ user: "/help" }, { user: "ticket refund" }],
 	},
+	"deeplink-referral": {
+		title: "filter deep links by payload",
+		code: `import { createBot } from "yaebal";
+import { deeplink } from "@yaebal/filters";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  // register before the plain /start handler — filters run in order, and
+  // a catch-all /start below would otherwise swallow every referral too
+  .filter(deeplink(/^ref_(\\d+)$/), (ctx) =>
+    ctx.reply(\`welcome! you were referred by user \${ctx.match[1]}\`),
+  )
+  .command("start", (ctx) => ctx.reply("welcome!"));
+
+bot.start();`,
+		steps: [{ user: "/start ref_67" }, { user: "/start" }],
+	},
 	"guards-private": {
 		title: "reusable bot.guard() predicates",
 		code: `import { createBot } from "yaebal";

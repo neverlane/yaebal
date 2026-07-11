@@ -1,0 +1,37 @@
+{
+	"name": "@yaebal/payments",
+	"version": "0.0.1",
+	"description": "yaebal payments — typed invoice builder, pre-checkout/successful-payment hooks and Telegram Stars subscriptions.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
+	},
+	"engines": { "node": ">=20" },
+	"keywords": ["telegram", "telegram-bot", "yaebal", "payments", "invoice", "stars", "subscriptions"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/payments"
+	},
+	"publishConfig": { "access": "public" }
+}

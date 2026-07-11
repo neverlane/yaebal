@@ -18,7 +18,12 @@ interface CacheEntry<T> {
 }
 
 export interface CacheOptions {
-	/** where entries live. defaults to in-memory (`MemoryStorage`, lost on restart). */
+	/**
+	 * where entries live. defaults to in-memory (`MemoryStorage`, lost on restart).
+	 * keys are stored flat with no plugin prefix, so don't share one store instance
+	 * with another plugin (or another `cache`) unless you give each a distinct
+	 * {@link CacheOptions.scope} — otherwise their keys can collide.
+	 */
 	storage?: StorageAdapter<CacheEntry<unknown>>;
 	/** default ttl in ms for entries that don't pass their own. omit for "never expires". */
 	ttl?: number;

@@ -110,6 +110,12 @@ export interface Api extends BotApiMethods {
 }
 
 export interface ApiOptions {
+	/**
+	 * bare API origin, no trailing slash and no `/bot` — the client appends
+	 * `/bot<token>/<method>` itself. e.g. `"https://api.telegram.org"` or a local
+	 * bot-api server `"http://localhost:8081"`. passing a value that already ends
+	 * in `/bot…` yields a doubled path and 401s. defaults to the public origin.
+	 */
 	apiRoot?: string;
 	/** resolve `media.path()` to bytes. injected per runtime; absent ⇒ path media throws (e.g. edge). */
 	readFile?: FileReader;

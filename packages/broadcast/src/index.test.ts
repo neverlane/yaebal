@@ -38,17 +38,23 @@ test("broadcast sends to every chat and reports a completed job", async () => {
 test("broadcast survives failures and reports them", async () => {
 	const { api, sentTo } = fakeApi([2]);
 	const failures: Array<number | string> = [];
+	const seenStatuses: string[] = [];
 
 	const result = await broadcast(api, [1, 2, 3], "hi", {
 		rateLimit: false,
 		retry: false,
-		onError: (id) => failures.push(id),
+		onError: (id, _error, delivery) => {
+			failures.push(id);
+			seenStatuses.push(delivery.status);
+		},
 	});
 
 	assert.equal(result.sent, 2);
 	assert.equal(result.failed, 1);
 	assert.deepEqual(sentTo, [1, 3]);
 	assert.deepEqual(failures, [2]);
+	// onError must see the terminal status, not the stale "running" it held mid-process
+	assert.deepEqual(seenStatuses, ["failed"]);
 });
 
 test("broadcast merges extra params into every send", async () => {

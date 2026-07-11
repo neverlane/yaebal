@@ -17,7 +17,12 @@ export type MediaCacheEvent =
 	| { type: "evict"; key: string; reason: "invalidated" | "rejected"; method?: string };
 
 export interface MediaCacheOptions {
-	/** where `key → file_id` lives. defaults to in-memory (`MemoryStorage`, lost on restart). */
+	/**
+	 * where `key → file_id` lives. defaults to in-memory (`MemoryStorage`, lost on restart).
+	 * keys are stored flat with no plugin prefix, so don't share one store instance with
+	 * another plugin unless you give each a distinct {@link MediaCacheOptions.scope} —
+	 * otherwise their keys can collide.
+	 */
 	storage?: StorageAdapter<string>;
 	/**
 	 * key namespace, e.g. the bot's id. a `file_id` is only valid for the bot that uploaded

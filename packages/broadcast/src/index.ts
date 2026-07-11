@@ -981,17 +981,19 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 			await this.#finishDelivery(delivery.jobId, { sent: 1 });
 		} catch (error) {
 			if (entry.shouldSkip(error, delivery.args, delivery.attempts)) {
-				await this.storage.patchDelivery(delivery.jobId, delivery.id, {
-					status: "skipped",
+				const patch = {
+					status: "skipped" as const,
 					finishedAt: this.#options.now(),
 					updatedAt: this.#options.now(),
 					lockedBy: undefined,
 					lockUntil: undefined,
 					error: errorInfo(error),
-				});
+				};
+				await this.storage.patchDelivery(delivery.jobId, delivery.id, patch);
+				const patched = { ...delivery, ...patch };
 				this.#counts.skipped++;
-				this.#emit({ type: "delivery_skipped", delivery: cloneDelivery(delivery), error });
-				await safeCall(entry.onError, error, delivery.args, delivery);
+				this.#emit({ type: "delivery_skipped", delivery: cloneDelivery(patched), error });
+				await safeCall(entry.onError, error, patched.args, patched);
 				await this.#finishDelivery(delivery.jobId, { skipped: 1 });
 				return;
 			}
@@ -1023,17 +1025,19 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		error: unknown,
 		entry = this.#types.get(delivery.type),
 	): Promise<void> {
-		await this.storage.patchDelivery(delivery.jobId, delivery.id, {
-			status: "failed",
+		const patch = {
+			status: "failed" as const,
 			finishedAt: this.#options.now(),
 			updatedAt: this.#options.now(),
 			lockedBy: undefined,
 			lockUntil: undefined,
 			error: errorInfo(error),
-		});
+		};
+		await this.storage.patchDelivery(delivery.jobId, delivery.id, patch);
+		const patched = { ...delivery, ...patch };
 		this.#counts.failed++;
-		this.#emit({ type: "delivery_failed", delivery: cloneDelivery(delivery), error });
-		await safeCall(entry?.onError, error, delivery.args, delivery);
+		this.#emit({ type: "delivery_failed", delivery: cloneDelivery(patched), error });
+		await safeCall(entry?.onError, error, patched.args, patched);
 		await this.#finishDelivery(delivery.jobId, { failed: 1 });
 	}
 

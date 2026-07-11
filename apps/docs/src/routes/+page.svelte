@@ -32,7 +32,7 @@ bot.callbackQuery(vibe.pattern, (ctx) => {
   return ctx.answer(\`vibe score: \${ctx.session.fire}\`);
 });
 
-await bot.start();`;
+bot.start();`;
 
 	const features = [
 		{

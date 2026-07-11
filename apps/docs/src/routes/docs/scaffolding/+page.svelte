@@ -1,8 +1,14 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import CodeTabs from "$lib/CodeTabs.svelte";
 
-	const create = `pnpm create yaebal
-# or: npm create yaebal@latest · bun create yaebal · deno run -A npm:create-yaebal`;
+	const createTabs = [
+		{ label: "pnpm", code: "pnpm create yaebal" },
+		{ label: "npm", code: "npm create yaebal@latest" },
+		{ label: "yarn", code: "yarn create yaebal" },
+		{ label: "bun", code: "bun create yaebal" },
+		{ label: "deno", code: "deno run -A npm:create-yaebal@latest" },
+	];
 
 	const flags = `# non-interactive — pass everything up front
 pnpm create yaebal my-bot --runtime bun --template commands --plugins session,again,fmt
@@ -95,7 +101,7 @@ pnpm dev`;
 	run it with your package manager's <code>create</code> shortcut. it works the same under node,
 	bun and deno — the runtime that launches it is just the default, you can pick any target.
 </p>
-<Code code={create} title="terminal" lang="sh" />
+<CodeTabs tabs={createTabs} title="terminal" />
 
 <h2>the interactive ui</h2>
 <p>

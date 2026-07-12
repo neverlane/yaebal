@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/analytics",
-	"version": "0.0.2",
-	"description": "yaebal analytics — ctx.track(event, properties) middleware with pluggable sinks (posthog, plausible, sqlite, clickhouse, console).",
+	"version": "0.1.0",
+	"description": "yaebal analytics — typed ctx.track(event, properties) middleware with pluggable sinks (posthog, plausible, sqlite, clickhouse, http, console), privacy controls, auto-capture, and an in-chat admin surface.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -26,7 +26,18 @@
 		"@yaebal/test": "workspace:*"
 	},
 	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "analytics", "posthog", "plausible"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"analytics",
+		"posthog",
+		"plausible",
+		"sqlite",
+		"clickhouse",
+		"funnel",
+		"gdpr"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

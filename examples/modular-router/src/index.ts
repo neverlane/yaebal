@@ -1,32 +1,38 @@
 import { fileURLToPath } from "node:url";
-import { loadRoutes } from "@yaebal/router";
-import { createBot } from "yaebal";
+import { loadRoutes, type RegisteredRoute, watchRoutes } from "@yaebal/router";
+import { bot } from "./bot.js";
 
-const token = process.env.BOT_TOKEN;
-if (!token) {
-	console.error("set BOT_TOKEN in examples/modular-router/.env first (copy .env.example)");
-	process.exit(1);
+const routesDir = fileURLToPath(new URL("./routes", import.meta.url));
+// `pnpm dev` sets this (see package.json) to demo watchRoutes(); `pnpm start` uses plain
+// loadRoutes() instead — that's the one to reach for in production.
+const watch = process.env.ROUTER_WATCH === "1";
+
+function logRoutes(label: string, routes: RegisteredRoute[]): void {
+	console.log(`${label}: ${routes.map((r) => `${r.kind}:${r.trigger}`).join(", ") || "none"}`);
 }
 
-const bot = createBot(token);
-const routesDir = fileURLToPath(new URL("./routes", import.meta.url));
-const registered = await loadRoutes(bot, routesDir);
+if (watch) {
+	const stop = await watchRoutes(bot, routesDir, {
+		syncCommands: true,
+		onReload: (result) => logRoutes("routes reloaded", result.routes),
+	});
 
-bot.onStart(async (info) => {
-	await bot.api
-		.call("setMyCommands", {
-			commands: [
-				{ command: "start", description: "open modular router demo" },
-				{ command: "help", description: "show loaded routes" },
-			],
-		})
-		.catch(() => {});
+	const shutdown = async () => {
+		await stop();
+		await bot.stop();
+	};
+	process.once("SIGINT", shutdown);
+	process.once("SIGTERM", shutdown);
+} else {
+	const result = await loadRoutes(bot, routesDir, { syncCommands: true });
+	logRoutes("routes loaded", result.routes);
 
-	console.log(`@${info.username} modular router is live`);
-	console.log(`loaded routes: ${registered.join(", ") || "none"}`);
+	process.once("SIGINT", () => bot.stop());
+	process.once("SIGTERM", () => bot.stop());
+}
+
+bot.onStart((info) => {
+	console.log(`@${info.username} modular router is live (${watch ? "watch" : "static"} mode)`);
 });
-
-process.once("SIGINT", () => bot.stop());
-process.once("SIGTERM", () => bot.stop());
 
 await bot.start();

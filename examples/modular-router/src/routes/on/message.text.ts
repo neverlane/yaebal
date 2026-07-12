@@ -1,8 +1,6 @@
-import type { Context, Middleware } from "yaebal";
+import { defineOn } from "../../router.js";
 
-const handler: Middleware<Context & { text: string }> = (ctx) => {
+export default defineOn("message:text", async (ctx) => {
 	if (ctx.text.startsWith("/")) return;
-	return ctx.reply(`message.text route saw: ${ctx.text}`);
-};
-
-export default handler;
+	await ctx.reply(`message.text route saw: ${ctx.text}`);
+});

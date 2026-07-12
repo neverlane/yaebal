@@ -6,6 +6,11 @@
 		"composite": true,
 		"types": ["node"]
 	},
-	"references": [{ "path": "../core" }],
+	"references": [
+		{ "path": "../commands" },
+		{ "path": "../core" },
+		{ "path": "../test" },
+		{ "path": "../types" }
+	],
 	"include": ["src/**/*.ts"]
 }

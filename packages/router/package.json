@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/router",
-	"version": "0.0.4",
-	"description": "yaebal file-based routing — load handlers from a routes/ directory by convention.",
+	"version": "0.1.0",
+	"description": "yaebal file-based routing — typed define*() route files, load-time validation, nested guards, and dev hot-reload.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -17,17 +17,35 @@
 		"typecheck": "tsc -p tsconfig.json --noEmit",
 		"test": "node --test lib/*.test.js"
 	},
+	"dependencies": {
+		"@yaebal/types": "workspace:*"
+	},
 	"peerDependencies": {
-		"@yaebal/core": "workspace:*"
+		"@yaebal/core": "workspace:*",
+		"@yaebal/commands": "workspace:*"
+	},
+	"peerDependenciesMeta": {
+		"@yaebal/commands": {
+			"optional": true
+		}
 	},
 	"devDependencies": {
 		"@types/node": "latest",
-		"@yaebal/core": "workspace:*"
+		"@yaebal/commands": "workspace:*",
+		"@yaebal/core": "workspace:*",
+		"@yaebal/test": "workspace:*"
 	},
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "router", "file-based-routing"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"router",
+		"file-based-routing",
+		"hot-reload"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

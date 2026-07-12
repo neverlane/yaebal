@@ -1,14 +1,19 @@
-import type { Context, Middleware } from "yaebal";
+import { defineCommand } from "../../router.js";
 
-const handler: Middleware<Context> = (ctx) =>
-	ctx.reply(
-		[
-			"loaded from file routes:",
-			"/start -> routes/commands/start.ts",
-			"/help -> routes/commands/help.ts",
-			"text -> routes/on/message.text.ts",
-			"callbacks -> routes/on/callback_query.data.ts",
-		].join("\n"),
-	);
-
-export default handler;
+export default defineCommand(
+	["help", "h"],
+	{ description: "list what's wired up" },
+	async (ctx) => {
+		await ctx.reply(
+			[
+				"loaded from file routes:",
+				"/start -> routes/commands/start.ts",
+				"/help, /h -> routes/commands/help.ts",
+				'"ping" -> routes/hears/ping.ts',
+				"text -> routes/on/message.text.ts",
+				"callbacks -> routes/on/callback_query.data.ts",
+				"/whoami -> routes/commands/admin/whoami.ts (gated by routes/commands/admin/_guard.ts)",
+			].join("\n"),
+		);
+	},
+);

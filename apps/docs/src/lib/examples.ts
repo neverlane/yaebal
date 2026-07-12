@@ -70,6 +70,52 @@ bot.callbackQuery(/^confirm:/, async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/start" }, { click: "confirm:deploy", label: "confirm" }],
 	},
+	"auto-answer-deadline": {
+		title: "no manual answerCallbackQuery call",
+		code: `import { InlineKeyboard, createBot } from "yaebal";
+import { autoAnswer } from "@yaebal/auto-answer";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(autoAnswer());
+
+bot.command("start", (ctx) =>
+  ctx.reply("deploy to production?", {
+    reply_markup: new InlineKeyboard().text("confirm", "confirm:deploy").build(),
+  }),
+);
+
+bot.callbackQuery(/^confirm:/, async (ctx) => {
+  // no ctx.answerCallbackQuery() here — the plugin already clears the spinner,
+  // and would still answer even if this handler took its time or threw.
+  await ctx.reply("confirmed");
+});
+
+bot.start();`,
+		steps: [{ user: "/start" }, { click: "confirm:deploy", label: "confirm" }],
+	},
+	"auto-answer-skip": {
+		title: "opting a handler out with skipAutoAnswer()",
+		code: `import { InlineKeyboard, createBot } from "yaebal";
+import { autoAnswer } from "@yaebal/auto-answer";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(autoAnswer());
+
+bot.command("start", (ctx) =>
+  ctx.reply("archive this chat?", {
+    reply_markup: new InlineKeyboard().text("archive", "archive:go").build(),
+  }),
+);
+
+bot.callbackQuery("archive:go", async (ctx) => {
+  // answering later, from a queued job — tell the plugin not to fill the gap meanwhile.
+  ctx.skipAutoAnswer();
+  await ctx.reply("queued for archiving");
+});
+
+bot.start();`,
+		steps: [{ user: "/start" }, { click: "archive:go", label: "archive" }],
+	},
 	"session-counter": {
 		title: "typed session state",
 		code: `import { createBot, session } from "yaebal";
@@ -411,6 +457,31 @@ bot.on("message:text", async (ctx) => {
 bot.start();`,
 		steps: [{ user: "/name" }, { user: "mira" }],
 	},
+	"conversation-wizard": {
+		title: "a coroutine dialog with typed answers",
+		code: `import { createBot } from "yaebal";
+import { conversation, createConversation } from "@yaebal/conversation";
+
+const support = createConversation(async (cv, ctx) => {
+  await ctx.send("what's the problem?");
+  const topic = await cv.waitFor("message:text"); // topic.text: string, no "?? fallback" needed
+
+  const urgency = await cv.form.choice({
+    question: "how urgent: low, normal, or fire?",
+    choices: ["low", "normal", "fire"] as const,
+  });
+
+  await ctx.send(\`ticket queued: \${topic.text} / \${urgency}\`);
+});
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(conversation({ support }));
+
+bot.command("support", (ctx) => ctx.conversation.enter("support"));
+
+bot.start();`,
+		steps: [{ user: "/support" }, { user: "printer is on fire" }, { user: "fire" }],
+	},
 	"broadcast-queue": {
 		title: "broadcast queue shape",
 		code: `import { createBot } from "yaebal";
@@ -437,26 +508,71 @@ bot.start();`,
 		steps: [{ user: "/join" }, { user: "/broadcast release is live" }],
 	},
 	"analytics-track": {
-		title: "track events from middleware",
+		title: "typed events from middleware",
 		code: `import { createBot } from "yaebal";
-import { analytics, consoleAdapter } from "@yaebal/analytics";
+import { analytics, consoleAdapter, p } from "@yaebal/analytics";
 
 // swap consoleAdapter() for postHogAdapter / plausibleAdapter / sqliteAdapter / clickhouseAdapter
-const bot = createBot(process.env.BOT_TOKEN!)
-  .install(analytics({ adapters: [consoleAdapter()] }));
+const bot = createBot(process.env.BOT_TOKEN!).install(
+  analytics({
+    // event names + properties are checked against this catalog — a typo'd name or a
+    // missing required property is a compile error, not a silent gap in your funnel
+    events: {
+      start: true, // declared, untyped — any properties allowed
+      purchase: { props: p.object({ amount: p.number() }) },
+    },
+    adapters: [consoleAdapter()],
+  }),
+);
 
 bot.command("start", (ctx) => {
   ctx.track("start", { source: "deeplink" });
   return ctx.reply("hello!");
 });
 
-bot.on("message:text", (ctx) => {
-  ctx.track("message_received", { length: ctx.text.length });
-  return ctx.reply(\`you said: \${ctx.text}\`);
+bot.command("buy", (ctx) => {
+  ctx.track("purchase", { amount: 9 });
+  return ctx.reply("thanks!");
 });
 
 bot.start();`,
-		steps: [{ user: "/start" }, { user: "hi there" }],
+		steps: [{ user: "/start" }, { user: "/buy" }],
+	},
+	"analytics-auto-capture": {
+		title: "auto-capture, no manual ctx.track()",
+		code: `import { createBot } from "yaebal";
+import { analytics, consoleAdapter } from "@yaebal/analytics";
+
+// each kind emits a FIXED event name with the dynamic bit as a property —
+// command_used + { command }, message_received + { contentType } — never an
+// event name per command/message, which would blow up your adapters' schemas
+const bot = createBot(process.env.BOT_TOKEN!).install(
+  analytics({ adapters: [consoleAdapter()], autoTrack: ["commands", "messages"] }),
+);
+
+bot.command("start", (ctx) => ctx.reply("hi! no ctx.track() call here — autoTrack did it"));
+bot.on("message:text", (ctx) => ctx.reply(\`you said: \${ctx.text}\`));
+
+bot.start();`,
+		steps: [{ user: "/start" }, { user: "hello" }],
+	},
+	"analytics-admin": {
+		title: "an in-chat /analytics report",
+		code: `import { createBot } from "yaebal";
+import { analytics, analyticsAdmin, memoryAdapter } from "@yaebal/analytics";
+
+// memoryAdapter/sqliteAdapter/clickhouseAdapter all support query() — analyticsAdmin
+// reads through it. posthogAdapter/plausibleAdapter don't (use their own dashboards).
+const store = memoryAdapter();
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(analytics({ adapters: [store], autoTrack: ["commands"] }))
+  .install(analyticsAdmin({ isAdmin: () => true, adapter: store }));
+
+bot.command("start", (ctx) => ctx.reply("hi!"));
+
+bot.start();`,
+		steps: [{ user: "/start" }, { user: "/analytics" }],
 	},
 	"audit-log-basic": {
 		title: "structured logging for updates and api calls",
@@ -484,7 +600,7 @@ const bot = createBot(process.env.BOT_TOKEN!)
 let calls = 0;
 
 bot.command("weather", async (ctx) => {
-  // stands in for a slow api call (e.g. ctx.api.getChat) — wrap caches its result
+  // stands in for a slow api call (e.g. ctx.getChat()) — wrap caches its result
   const forecast = await ctx.cache.wrap("weather:london", async () => {
     calls++;
     return "sunny, 21°C";
@@ -756,5 +872,55 @@ export default {
   fetch: webhook(bot, { secretToken: process.env.WEBHOOK_SECRET ?? "dev" }),
 };`,
 		steps: [{ user: "/start" }],
+	},
+	"cron-digest": {
+		title: "a scheduled job, triggered on demand",
+		code: `import { createBot } from "yaebal";
+import { cron } from "@yaebal/cron";
+
+const bot = createBot(process.env.BOT_TOKEN!).install(
+  cron({
+    tz: "Europe/Moscow", // default zone for every job; UTC if omitted
+    jobs: {
+      digest: {
+        schedule: "0 9 * * *", // every day at 09:00 local — real deploys wait for this
+        task: async (ctx) => {
+          // ctx.attempt is 1 on the first try, 2 on the first retry, ...
+          console.log(\`sending digest (attempt \${ctx.attempt})\`);
+        },
+        retries: 1,
+      },
+    },
+  }),
+);
+
+// the plugin decorates ctx.cron — any handler can trigger/inspect a job directly
+bot.command("run-digest", async (ctx) => {
+  const outcome = await ctx.cron.trigger("digest"); // "ran" | "skipped", bypasses the schedule
+  await ctx.reply(\`digest: \${outcome}\`);
+});
+
+bot.start();`,
+		steps: [{ user: "/run-digest" }],
+	},
+	"cron-admin": {
+		title: "a chat-native /cron ops surface",
+		code: `import { createBot } from "yaebal";
+import { cron, cronAdmin } from "@yaebal/cron";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(
+    cron({
+      jobs: {
+        digest: { schedule: "0 9 * * *", task: () => {} },
+        cleanup: { schedule: 60_000, task: () => {} },
+      },
+    }),
+  )
+  // isAdmin: () => true for the demo — check ctx.from?.id against a real allow-list in production
+  .install(cronAdmin({ isAdmin: () => true }));
+
+bot.start();`,
+		steps: [{ user: "/cron" }, { user: "/cron run cleanup" }, { user: "/cron next digest" }],
 	},
 };

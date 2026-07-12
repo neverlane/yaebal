@@ -12,6 +12,7 @@
 	"dependencies": {
 		"yaebal": "workspace:*",
 		"@yaebal/again": "workspace:*",
+		"@yaebal/cache": "workspace:*",
 		"@yaebal/morda": "workspace:*",
 		"@yaebal/prompt": "workspace:*",
 		"@yaebal/scenes": "workspace:*",

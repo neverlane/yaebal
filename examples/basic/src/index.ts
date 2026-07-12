@@ -1,4 +1,5 @@
 import { autoRetry } from "@yaebal/again";
+import { cache } from "@yaebal/cache";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
 import { ask, defineScene, scenes } from "@yaebal/scenes";
@@ -34,6 +35,7 @@ if (!token) {
 const COMMANDS = [
 	{ command: "start", description: "greeting + an inline keyboard" },
 	{ command: "count", description: "a per-chat counter (session)" },
+	{ command: "whoami", description: "getChat, memoized for a minute (cache)" },
 	{ command: "menu", description: "a two-window dialog (morda)" },
 	{ command: "photo", description: "send a photo by url (media)" },
 	{ command: "lang", description: "toggle the locale (i18n)" },
@@ -94,6 +96,8 @@ const bot = createBot(token)
 	// retry on 429/flood-wait and transient 5xx, and throttle outgoing calls
 	.install(autoRetry())
 	.install(throttle())
+	// ctx.cache.get/set/wrap; ttl memoization for api calls, dedupes concurrent misses
+	.install(cache({ ttl: 60_000 }))
 	// install a plugin; `startedAt` now flows into every handler's context type
 	.install(stamp)
 	// per-chat session; `ctx.session` is now typed { count: number }
@@ -135,6 +139,11 @@ try /help, or tap a button below.`,
 	})
 	// open the morda dialog
 	.command("menu", (ctx) => ctx.dialog.start("main"))
+	// cache: getChat memoized for 60s — a burst of /whoami only calls the api once
+	.command("whoami", async (ctx) => {
+		const chat = await ctx.cache.wrap(`chat:${ctx.chat.id}`, () => ctx.getChat());
+		return ctx.reply(chat.title ?? "just you and me, in a private chat");
+	})
 	// media: send a photo by URL (or media.path(...) / media.buffer(...))
 	.command("photo", (ctx) =>
 		ctx.sendPhoto(media.url("https://picsum.photos/400"), { caption: "a random picture" }),

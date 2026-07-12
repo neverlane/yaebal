@@ -18,24 +18,20 @@ interface Profile {
 	tickets: string[];
 }
 
-const support = createConversation("support", async (cv, ctx) => {
+// waitFor narrows to a fresh text message, so topic.text is a plain string — no "?? fallback"
+// needed. /cancel needs no special-casing here either: passCommands (on by default) routes it
+// straight to the global "cancel" command below, which leaves the conversation for us.
+const support = createConversation(async (cv, ctx) => {
 	await ctx.send("support mode: describe the problem, or send /cancel.");
-	const topic = await cv.wait();
-	if (topic.text === "/cancel") {
-		await topic.send("support flow cancelled.");
-		return;
-	}
+	const topic = await cv.waitFor("message:text");
 
-	await topic.send("how urgent is it: low, normal, or fire?");
-	const urgency = await cv.wait();
-	if (urgency.text === "/cancel") {
-		await urgency.send("support flow cancelled.");
-		return;
-	}
+	const urgency = await cv.form.choice({
+		question: "how urgent is it: low, normal, or fire?",
+		choices: ["low", "normal", "fire"] as const,
+		invalid: "pick one: low, normal, or fire.",
+	});
 
-	await urgency.send(
-		`ticket queued: ${topic.text ?? "no topic"} / urgency ${urgency.text ?? "normal"}`,
-	);
+	await ctx.send(`ticket queued: ${topic.text} / urgency ${urgency}`);
 });
 
 // answers collect in the typed ctx.scene.state bag (no external map needed) and
@@ -120,7 +116,7 @@ const bot = createBot(token)
 	})
 	.install(scenes({ quest: questScene }))
 	.install(prompt())
-	.install(conversation([support]))
+	.install(conversation({ support }))
 	.install(dialogs(cockpit))
 	.command("start", (ctx) => ctx.dialog.start("main"))
 	.command("quest", (ctx) => ctx.scene.enter("quest"))
@@ -137,9 +133,10 @@ const bot = createBot(token)
 	)
 	.command("profile", (ctx) => ctx.reply(profileLine(ctx.session)))
 	.command("cancel", async (ctx) => {
-		// reachable mid-wizard: commands pass through active scenes by default
+		// reachable mid-wizard: commands pass through both an active scene and an active
+		// conversation by default (scenes' passCommands, conversation's passCommands)
 		if (ctx.scene.active) return ctx.scene.leave({ cancelled: true });
-		if (ctx.conversation.active()) ctx.conversation.leave();
+		if (ctx.conversation.active) await ctx.conversation.leave();
 		return ctx.reply("active flow cancelled.");
 	})
 	.on("message:text", (ctx) => ctx.reply("open /start, /quest, /support or /rename."))

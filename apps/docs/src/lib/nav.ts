@@ -64,7 +64,7 @@ export const nav: NavSection[] = [
 			{ label: "overview", href: "/docs/plugins" },
 			{ label: "authoring", href: "/docs/plugins/authoring" },
 			{ label: "session", href: "/docs/plugins/session" },
-			{ label: "sklad (storage)", href: "/docs/plugins/sklad", badge: "new" },
+			{ label: "sklad (storage)", href: "/docs/plugins/sklad" },
 			{ label: "cache", href: "/docs/plugins/cache", badge: "new" },
 			{ label: "feature-flags", href: "/docs/plugins/feature-flags", badge: "new" },
 			{ label: "i18n", href: "/docs/plugins/i18n" },
@@ -99,7 +99,7 @@ export const nav: NavSection[] = [
 		title: "plugins / media",
 		items: [
 			{ label: "files", href: "/docs/plugins/files" },
-			{ label: "file-id", href: "/docs/plugins/file-id", badge: "new" },
+			{ label: "file-id", href: "/docs/plugins/file-id" },
 			{ label: "media-cache", href: "/docs/plugins/media-cache" },
 			{ label: "media-group", href: "/docs/plugins/media-group" },
 			{ label: "split", href: "/docs/plugins/split" },

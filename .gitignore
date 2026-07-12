@@ -16,6 +16,9 @@ apps/docs/**/build
 packages/**/lib
 !packages/**/scripts/lib
 examples/**/lib
+# runtime state examples write locally (e.g. session's fileStorage sessions/profiles, cron's
+# catch-up store) — never meant to be committed.
+examples/**/data/
 
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*

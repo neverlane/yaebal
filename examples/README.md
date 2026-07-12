@@ -33,17 +33,22 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | example | package | focus | run |
 |:--|:--|:--|:--|
 | [core-echo](./core-echo/) | `@yaebal/example-core-echo` | bare `@yaebal/core`: middleware, filter narrowing, `format`, raw typed `api.call` | `pnpm --filter @yaebal/example-core-echo dev` |
-| [basic](./basic/) | `@yaebal/example-basic` | whole-stack tour on `yaebal`: session, keyboard, callback-data, morda, i18n, scenes, prompt, filters, fmt, retry, throttle | `pnpm --filter @yaebal/example-basic dev` |
+| [basic](./basic/) | `@yaebal/example-basic` | whole-stack tour on `yaebal`: session, keyboard, callback-data, morda, i18n, scenes, prompt, filters, fmt, retry, throttle, cache | `pnpm --filter @yaebal/example-basic dev` |
 | [again](./again/) | `@yaebal/example-again` | awaited retry, `retry_after`, transient failures, retry metrics | `pnpm --filter @yaebal/example-again dev` |
 | [throttle](./throttle/) | `@yaebal/example-throttle` | outbound buckets, priorities, cancellation, scheduler metrics | `pnpm --filter @yaebal/example-throttle dev` |
 | [broadcast](./broadcast/) | `@yaebal/example-broadcast` | typed broadcast jobs, pause, resume, cancel, retry, progress | `pnpm --filter @yaebal/example-broadcast dev` |
+| [cron](./cron/) | `@yaebal/example-cron` | intervals, cron expressions with per-job tz, retries + backoff, `timeoutMs`, `overlap: "wait"`, catch-up via a persisted store, `ctx.cron`, `cronAdmin` ops commands | `pnpm --filter @yaebal/example-cron dev` |
 | [keyboard](./keyboard/) | `@yaebal/example-keyboard` | inline and reply keyboard builders, every button type, request user/chat/managed bot | `pnpm --filter @yaebal/example-keyboard dev` |
+| [auto-answer](./auto-answer/) | `@yaebal/example-auto-answer` | `"deadline"` default racing a handler's own alert, fallback ack on a forgotten handler, `skipAutoAnswer()`, `filter()` | `pnpm --filter @yaebal/example-auto-answer dev` |
+| [guards](./guards/) | `@yaebal/example-guards` | safe `guard`+`getChatMember` pattern, `membership()` caching, `guardOr` answering a denial, bot's own permission check, anonymous admin/owner | `pnpm --filter @yaebal/example-guards dev` |
 | [commands](./commands/) | `@yaebal/example-commands` | typed command registry: localized menus, scopes, aliases, hidden commands, diff-based sync | `pnpm --filter @yaebal/example-commands dev` |
 | [pagination](./pagination/) | `@yaebal/example-pagination` | lazy sources (`count` + limit+1 probing), item buttons with `onSelect`, typed payload, `button()` menu morphing and back-navigation, ownership filter | `pnpm --filter @yaebal/example-pagination dev` |
 | [session](./session/) | `@yaebal/example-session` | session v2: dirty-checked saves, file storage, two independent sessions (`key` + `keyBy.user`), `ttl()` fields, `clearSession`, migrations | `pnpm --filter @yaebal/example-session dev` |
 | [simple](./simple/) | `@yaebal/example-simple` | toml route config plus typescript handlers | `pnpm --filter @yaebal/example-simple dev` |
 | [onboarding](./onboarding/) | `@yaebal/example-onboarding` | first-run product tour, force restart, dismiss, opt-out | `pnpm --filter @yaebal/example-onboarding dev` |
 | [feature-flags](./feature-flags/) | `@yaebal/example-feature-flags` | percentage rollout, kill-switch rule, chat-type targeting, multivariate (A/B/n) flag, per-bucket + global overrides with ttl, `envProvider`, `whenFlag` branch, `flagsAdmin` ops commands | `pnpm --filter @yaebal/example-feature-flags dev` |
+| [audit-log](./audit-log/) | `@yaebal/example-audit-log` | correlated, redacted-by-default structured logging, `applyRedaction`, `memorySink`, `chatSink`, `auditAdmin` ops commands | `pnpm --filter @yaebal/example-audit-log dev` |
+| [analytics](./analytics/) | `@yaebal/example-analytics` | typed event catalog, `autoTrack` (commands/callbacks/messages), `ctx.identify`, `context()` enricher, multiple adapters, `analyticsAdmin` ops commands | `pnpm --filter @yaebal/example-analytics dev` |
 | [rich-messages](./rich-messages/) | `@yaebal/example-rich-messages` | rich blocks, markdown/html builders, fake streaming draft, rich message readback | `pnpm --filter @yaebal/example-rich-messages dev` |
 | [panel](./panel/) | `@yaebal/example-panel` | operator dashboard, media viewer, callbacks, outgoing replies, realtime events | `pnpm --filter @yaebal/example-panel dev` |
 | [commerce-suite](./commerce-suite/) | `@yaebal/example-commerce-suite` | shop bot with session cart, i18n, pagination, commands, callback-data, ratelimiter | `pnpm --filter @yaebal/example-commerce-suite dev` |
@@ -66,15 +71,21 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/core`          | directly: `core-echo`, `inline-search`, `runner-workers`, `webhook-edge`; via `yaebal` everywhere else | all example `test` scripts    |
 | `yaebal`                | every other example (`createBot` + re-exported plugins), docs playground examples     | all example `test` scripts, docs health        |
 | `@yaebal/again`         | `basic`, `again`, `throttle`, `panel`                                                  | package tests plus example smoke               |
+| `@yaebal/analytics`     | `analytics`, docs playground examples                                                 | package tests plus example smoke               |
+| `@yaebal/audit-log`     | `audit-log`                                                                            | package tests plus example smoke               |
+| `@yaebal/auto-answer`   | `auto-answer`, docs playground examples                                               | package tests plus example smoke               |
 | `@yaebal/broadcast`     | `broadcast`                                                                            | package tests plus example smoke               |
+| `@yaebal/cache`         | `basic`                                                                                | package tests plus example smoke               |
 | `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
 | `@yaebal/commands`      | `commands`, `commerce-suite`                                                           | package tests plus example smoke               |
 | `@yaebal/conversation`  | `dialog-quest`                                                                         | package tests plus example smoke               |
+| `@yaebal/cron`          | `cron`                                                                                 | package tests plus example smoke               |
 | `@yaebal/feature-flags` | `feature-flags`                                                                        | package tests plus example smoke               |
 | `@yaebal/file-id`       | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/files`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/filters`       | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
 | `@yaebal/fmt`           | `basic`, `commerce-suite`, `inline-search`                                             | package tests plus example smoke               |
+| `@yaebal/guards`        | `guards`                                                                               | package tests plus example smoke               |
 | `@yaebal/i18n`          | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
 | `@yaebal/keyboard`      | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions   |
 | `@yaebal/media-cache`   | `media-studio`                                                                         | package tests plus example smoke               |
@@ -111,7 +122,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | bare core, no plugins       | `core-echo`                                                                |
 | core + contexts by hand     | `inline-search`                                                            |
 | single-file product demo    | `basic`                                                                    |
-| plugin in isolation         | `again`, `throttle`, `keyboard`, `commands`, `onboarding`, `rich-messages`, `state-machine` |
+| plugin in isolation         | `again`, `throttle`, `keyboard`, `auto-answer`, `guards`, `commands`, `onboarding`, `rich-messages`, `state-machine` |
 | production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers`                     |
 | business workflow           | `commerce-suite`, `payments-stars`, `inline-search`                        |
 | multi-step ux               | `dialog-quest`, `testing-lab`                                              |

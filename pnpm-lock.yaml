@@ -89,11 +89,53 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/analytics:
+    dependencies:
+      '@yaebal/analytics':
+        specifier: workspace:*
+        version: link:../../packages/analytics
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
+  examples/audit-log:
+    dependencies:
+      '@yaebal/audit-log':
+        specifier: workspace:*
+        version: link:../../packages/audit-log
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
+  examples/auto-answer:
+    dependencies:
+      '@yaebal/auto-answer':
+        specifier: workspace:*
+        version: link:../../packages/auto-answer
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/basic:
     dependencies:
       '@yaebal/again':
         specifier: workspace:*
         version: link:../../packages/again
+      '@yaebal/cache':
+        specifier: workspace:*
+        version: link:../../packages/cache
       '@yaebal/morda':
         specifier: workspace:*
         version: link:../../packages/morda
@@ -169,6 +211,22 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/cron:
+    dependencies:
+      '@yaebal/cron':
+        specifier: workspace:*
+        version: link:../../packages/cron
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../../packages/sklad
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/dialog-quest:
     dependencies:
       '@yaebal/conversation':
@@ -196,6 +254,19 @@ importers:
       '@yaebal/feature-flags':
         specifier: workspace:*
         version: link:../../packages/feature-flags
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
+  examples/guards:
+    dependencies:
+      '@yaebal/guards':
+        specifier: workspace:*
+        version: link:../../packages/guards
       yaebal:
         specifier: workspace:*
         version: link:../../packages/yaebal
@@ -578,6 +649,10 @@ importers:
         version: link:../core
 
   packages/conversation:
+    dependencies:
+      '@yaebal/sklad':
+        specifier: workspace:*
+        version: link:../sklad
     devDependencies:
       '@types/node':
         specifier: latest
@@ -585,6 +660,9 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
 
   packages/core:
     dependencies:
@@ -678,6 +756,9 @@ importers:
 
   packages/guards:
     dependencies:
+      '@yaebal/cache':
+        specifier: workspace:*
+        version: link:../cache
       '@yaebal/filters':
         specifier: workspace:*
         version: link:../filters

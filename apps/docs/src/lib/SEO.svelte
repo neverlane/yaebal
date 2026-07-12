@@ -216,7 +216,7 @@
 		"/docs/plugins/auto-answer": {
 			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
 			description:
-				"automatically answer telegram callback_query updates to clear the client's loading spinner, with immediate or deferred modes, filters, dynamic params, and no manual answerCallbackQuery calls.",
+				"automatically answer telegram callback_query updates to clear the client's loading spinner, with a deadline mode that races a timer against your handler's own alert, deferred/immediate modes, per-update skipAutoAnswer(), filters, dynamic params, and no double-answers.",
 		},
 		"/docs/plugins/broadcast": {
 			title: "@yaebal/broadcast — typed telegram broadcast jobs",
@@ -241,7 +241,7 @@
 		"/docs/plugins/cron": {
 			title: "@yaebal/cron — typed telegram bot cron jobs",
 			description:
-				"schedule typed periodic tasks for yaebal telegram bots with @yaebal/cron: cron expressions, fixed intervals, overlap control, cooperative timeouts, and graceful bot.onStart/onStop shutdown.",
+				"schedule typed periodic tasks for yaebal telegram bots with @yaebal/cron: cron expressions with timezones, retries with backoff, overlap control, catch-up after downtime, distributed locks, and a chat-native /cron admin surface.",
 		},
 		"/docs/plugins/commands": {
 			title: "@yaebal/commands — telegram command registry and menu",
@@ -251,7 +251,7 @@
 		"/docs/plugins/conversation": {
 			title: "@yaebal/conversation — await-style telegram bot dialogs",
 			description:
-				"build multi-step yaebal telegram bot conversations with await-style flows, typed context, cancellation, validation, and no replay engine.",
+				"build multi-step yaebal telegram bot conversations with await-style flows, typed waitFor/waitUntil narrowing, form validation, cancellation and timeouts, and an optional durable replay engine for restart-safe dialogs.",
 		},
 		"/docs/plugins/files": {
 			title: "@yaebal/files — inspect, stream and download telegram files",
@@ -329,14 +329,14 @@
 				"run a framework-agnostic operator panel for yaebal bots with media previews, chats, keyboards, callbacks, avatars, and event timelines.",
 		},
 		"/docs/plugins/analytics": {
-			title: "@yaebal/analytics — telegram bot event tracking",
+			title: "@yaebal/analytics — typed telegram bot event tracking",
 			description:
-				"track events and funnels from yaebal bot middleware with ctx.track, and forward them to posthog, plausible, sqlite, clickhouse, or a console sink.",
+				"typed ctx.track events and funnels from yaebal bot middleware, with auto-capture, privacy controls, an in-chat admin surface, and adapters for posthog, plausible, sqlite, clickhouse, http, or a console sink.",
 		},
 		"/docs/plugins/audit-log": {
-			title: "@yaebal/audit-log — structured audit logging for telegram bots",
+			title: "@yaebal/audit-log — correlated, redacted audit logging for telegram bots",
 			description:
-				"log every incoming update and outgoing telegram api call as structured events, with configurable formatters, filters, sampling and pluggable sinks for production monitoring.",
+				"log every incoming update and outgoing telegram api call as structured, correlated events — redacted of secrets by default — with formatters, filters, sampling, and telegram-native sinks (chatSink, auditAdmin) for production monitoring.",
 		},
 		"/docs/plugins/preview": {
 			title: "@yaebal/preview — render telegram chat previews",

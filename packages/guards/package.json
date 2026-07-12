@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/guards",
-	"version": "0.0.2",
+	"version": "0.1.0",
 	"description": "yaebal guards — reusable bot.guard() predicates: isAdmin, isPrivate, isGroup, hasMembership, hasPermission.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -21,6 +21,7 @@
 		"@yaebal/core": "workspace:*"
 	},
 	"dependencies": {
+		"@yaebal/cache": "workspace:*",
 		"@yaebal/filters": "workspace:*"
 	},
 	"devDependencies": {

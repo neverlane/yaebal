@@ -6,6 +6,11 @@
 		"composite": true,
 		"types": ["node"]
 	},
-	"references": [{ "path": "../core" }, { "path": "../filters" }, { "path": "../test" }],
+	"references": [
+		{ "path": "../cache" },
+		{ "path": "../core" },
+		{ "path": "../filters" },
+		{ "path": "../test" }
+	],
 	"include": ["src/**/*.ts"]
 }

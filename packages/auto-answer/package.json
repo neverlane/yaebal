@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/auto-answer",
-	"version": "0.0.2",
+	"version": "0.1.0",
 	"description": "yaebal auto-answer — clears the callback-query loading spinner automatically, no manual answerCallbackQuery call.",
 	"type": "module",
 	"main": "./lib/index.js",

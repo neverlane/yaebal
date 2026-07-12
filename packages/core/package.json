@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/core",
-	"version": "0.3.4",
+	"version": "0.3.5",
 	"description": "yaebal core — type-safe, chainable Telegram Bot API framework.",
 	"type": "module",
 	"sideEffects": false,

@@ -167,6 +167,21 @@ export class Context {
 		);
 	}
 
+	/**
+	 * the chat that sent this update's message on the user's behalf, if any — an anonymous
+	 * admin/owner posting as the group, or an automatic forward from a linked channel. equal
+	 * to `ctx.chat.id` for the former, different for the latter (see `@yaebal/guards`'
+	 * `isAnonymousAdmin`/`fromLinkedChannel`, which key off this).
+	 */
+	get senderChat(): Chat | undefined {
+		const cbMessage = this.callbackQuery?.message;
+
+		return (
+			this.message?.sender_chat ??
+			(cbMessage && "sender_chat" in cbMessage ? cbMessage.sender_chat : undefined)
+		);
+	}
+
 	get text(): string | undefined {
 		return this.message?.text ?? this.message?.caption;
 	}

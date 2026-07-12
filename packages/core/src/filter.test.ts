@@ -43,6 +43,40 @@ async function run(composer: Composer, ctx: Context): Promise<void> {
 	await composer.toMiddleware()(ctx, async () => {});
 }
 
+test("ctx.senderChat reads sender_chat off a message, undefined when absent", () => {
+	const anon = makeCtx({
+		update_id: 3,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: -1, type: "supergroup" as const },
+			sender_chat: { id: -1, type: "supergroup" as const },
+		},
+	} as unknown as Update);
+	assert.equal(anon.senderChat?.id, -1);
+
+	assert.equal(makeMessageCtx("hi").senderChat, undefined);
+});
+
+test("ctx.senderChat reads sender_chat off a callback_query's message", () => {
+	const ctx = makeCtx({
+		update_id: 4,
+		callback_query: {
+			id: "q1",
+			from: { id: 99, is_bot: false, first_name: "U" },
+			chat_instance: "ci",
+			message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: -1, type: "supergroup" as const },
+				sender_chat: { id: -2, type: "channel" as const },
+			},
+		},
+	} as unknown as Update);
+
+	assert.equal(ctx.senderChat?.id, -2);
+});
+
 test("filter: runs handlers when the filter returns true", async () => {
 	let called = false;
 	const composer = new Composer().filter(

@@ -1,7 +1,7 @@
 {
 	"name": "@yaebal/panel",
-	"version": "0.0.7",
-	"description": "yaebal panel — an operator panel: view chats and reply from the browser.",
+	"version": "0.1.0",
+	"description": "yaebal panel — an operator panel: view chats, handoff, reply and search from the browser.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
@@ -17,6 +17,10 @@
 		"./sqlite": {
 			"types": "./lib/sqlite.d.ts",
 			"import": "./lib/sqlite.js"
+		},
+		"./sklad": {
+			"types": "./lib/sklad.d.ts",
+			"import": "./lib/sklad.js"
 		}
 	},
 	"files": ["lib", "src"],
@@ -35,7 +39,16 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "panel", "dashboard", "live-chat"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"panel",
+		"dashboard",
+		"live-chat",
+		"handoff",
+		"helpdesk"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

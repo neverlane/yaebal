@@ -1,14 +1,28 @@
 import { autoRetry } from "@yaebal/again";
-import { MemoryPanelStore, panelHandler, recorder, recordOutgoing } from "@yaebal/panel";
+import {
+	type CannedResponse,
+	handoff,
+	MemoryPanelStore,
+	type PanelOperator,
+	panelHandler,
+	recorder,
+	recordOutgoing,
+} from "@yaebal/panel";
 import { serve } from "@yaebal/panel/serve";
 import { createBot, type UpdateName } from "yaebal";
 
-// a full tour of @yaebal/panel: live operator dashboard with media in both directions.
+// the full tour of @yaebal/panel: live operator dashboard with handoff, multi-operator
+// login + audit trail, reply/edit/delete, search, canned responses, export, a typing
+// indicator, admin notifications, and media in both directions.
 //
-//  pnpm --filter @yaebal/example-panel dev (needs BOT_TOKEN + PANEL_TOKEN in .env)
-//  open http://localhost:3000 and paste PANEL_TOKEN on the login screen
+//  pnpm --filter @yaebal/example-panel dev
+//    needs BOT_TOKEN + PANEL_TOKEN in .env
+//    optional: ALICE_TOKEN + BOB_TOKEN instead of PANEL_TOKEN -> multi-operator login
+//    optional: ADMIN_CHAT_ID -> your own DM, pinged when a message arrives with no panel open
+//  open http://localhost:3000 and log in
 const allowedUpdates: UpdateName[] = [
 	"message",
+	"edited_message",
 	"callback_query",
 	"message_reaction",
 	"message_reaction_count",
@@ -19,19 +33,32 @@ const allowedUpdates: UpdateName[] = [
 
 const bot = createBot(process.env.BOT_TOKEN ?? "", { allowedUpdates });
 
-// in-memory store (lost on restart). swap for the persistent sqlite one:
+// in-memory store (lost on restart). swap for a persistent one:
+//
 //  import { SqlitePanelStore } from "@yaebal/panel/sqlite";
-//  const store = new SqlitePanelStore({ path: "./panel.db" });
+//  const store = new SqlitePanelStore({ path: "./panel.db" }); // fast, FTS5 search, node 22.5+
+//
+//  import { MemoryStorage } from "@yaebal/sklad"; // or redisStorage/kvStorage/sqliteStorage
+//  import { skladPanelStore } from "@yaebal/panel/sklad";
+//  const store = skladPanelStore(new MemoryStorage()); // any sklad adapter — redis, kv, edge
 const store = new MemoryPanelStore();
 
 autoRetry(bot.api);
 
 // 1. record INCOMING private updates: messages, media, callbacks, reactions and poll answers.
+//  widen to group/channel chats with `recorder(store, { chats: "all" })` or a predicate.
 bot.install(recorder(store));
 
-// 2. record OUTGOING replies the bot sends from its own handlers (so they appear too).
+// 2. once an operator marks a chat "handled" in the panel, mute the bot's own handlers for
+//  it until they release it back to "open" (or archive it) — must come before the handlers
+//  registered below, since it's a guard that short-circuits the middleware chain.
+bot.install(handoff(store));
+
+// 3. record OUTGOING replies the bot sends from its own handlers (so they appear too).
 //  pairs with recordSends:false below to avoid double-logging panel replies.
-recordOutgoing(bot.api, store);
+recordOutgoing(bot.api, store, {
+	onError: (error, context) => console.error(`[panel:${context}]`, error),
+});
 
 const demoKeyboard = {
 	inline_keyboard: [
@@ -43,12 +70,32 @@ const demoKeyboard = {
 	],
 };
 
+// a reply keyboard whose buttons ask telegram to attach the user's contact/location — the
+// panel renders both as `[contact]`/`[location]` placeholders in the timeline.
+const shareKeyboard = {
+	keyboard: [
+		[{ text: "share my location", request_location: true }],
+		[{ text: "share my contact", request_contact: true }],
+	],
+	resize_keyboard: true,
+	one_time_keyboard: true,
+};
+
 bot.command("start", (ctx) =>
 	ctx.reply(
 		[
 			"panel demo is running.",
-			"try text, photos, documents, voice notes, videos, albums, reactions and the buttons below.",
-			"open the browser panel to see avatars, keyboard previews, media cards and event rows.",
+			"",
+			"try text, photos, documents, voice notes, videos, albums, reactions, polls and the",
+			"buttons below — everything shows up in the panel, in real time.",
+			"",
+			"in the panel you can: hand this chat off from the bot to yourself (status pill),",
+			"assign it, pin it, reply to a specific message, edit or delete something you sent,",
+			"search across every conversation, export this one, and pick a canned response from",
+			"the composer's quick-reply menu.",
+			"",
+			"edit a message you just sent — the panel patches it in place instead of duplicating it.",
+			"try /demo for polls, dice and location/contact sharing.",
 		].join("\n"),
 		{ reply_markup: demoKeyboard },
 	),
@@ -58,11 +105,15 @@ bot.command("demo", async (ctx) => {
 	await ctx.reply("Inline keyboard and callback preview", { reply_markup: demoKeyboard });
 
 	await ctx.sendPoll(
-		"which panel card should you inspect first?",
-		["media viewer", "voice style", "callback event"],
+		"which panel feature should you try first?",
+		["handoff", "search", "canned responses", "reply/edit/delete"],
 		{ is_anonymous: false },
 	);
 	await ctx.sendDice();
+
+	await ctx.reply("share your location or contact — both render as previews in the panel:", {
+		reply_markup: shareKeyboard,
+	});
 });
 
 bot.on("callback_query:data", async (ctx) => {
@@ -79,7 +130,25 @@ bot.on("callback_query:data", async (ctx) => {
 	await ctx.send(`callback data: ${data}`);
 });
 
-bot.on("message:text", (ctx) => ctx.reply(`echo: ${ctx.text}`));
+// echo replies AS a reply to the original message, so the panel's "replying to ..." strip
+// shows up in the timeline too.
+bot.on("message:text", (ctx) =>
+	ctx.reply(`echo: ${ctx.text}`, {
+		reply_parameters: { message_id: ctx.message?.message_id ?? 0 },
+	}),
+);
+
+bot.on("message:location", (ctx) =>
+	ctx.reply(`got it — ${ctx.message?.location?.latitude}, ${ctx.message?.location?.longitude}`, {
+		reply_markup: { remove_keyboard: true },
+	}),
+);
+
+bot.on("message:contact", (ctx) =>
+	ctx.reply(`thanks, ${ctx.message?.contact?.first_name ?? "friend"}!`, {
+		reply_markup: { remove_keyboard: true },
+	}),
+);
 
 // echo a photo straight back by file_id; shows up both ways in the panel.
 bot.on("message:photo", (ctx) => {
@@ -101,15 +170,43 @@ bot.on("message:document", (ctx) =>
 	ctx.reply("document stored in the panel with file name and mime preview"),
 );
 
-// 3. serve the panel — login page, realtime SSE, media proxy, file uploads
+// 4. multi-operator login: set ALICE_TOKEN + BOB_TOKEN to demo named logins and the audit
+//  trail (every panel-sent message records who sent it). falls back to a single shared
+//  PANEL_TOKEN when those aren't set.
+const operators: PanelOperator[] | undefined =
+	process.env.ALICE_TOKEN && process.env.BOB_TOKEN
+		? [
+				{ name: "alice", token: process.env.ALICE_TOKEN },
+				{ name: "bob", token: process.env.BOB_TOKEN },
+			]
+		: undefined;
+
+const cannedResponses: CannedResponse[] = [
+	{ label: "Greeting", text: "Hey! Thanks for reaching out — how can I help?" },
+	{ label: "Hours", text: "We're online 9am-6pm UTC, Monday to Friday." },
+	{ label: "Closing", text: "Glad that's sorted — reach out anytime!" },
+];
+
+// 5. serve the panel — login, realtime SSE, handoff, search, export, media proxy, uploads.
 const handler = panelHandler(bot.api, store, {
-	token: process.env.PANEL_TOKEN ?? "",
+	...(operators ? { operators } : { token: process.env.PANEL_TOKEN ?? "" }),
 	recordSends: false, // recordOutgoing already logs panel replies
+	cannedResponses,
+	// ping your own DM when a message arrives and nobody has the panel open — set this to
+	// your telegram user/chat id to try it.
+	...(process.env.ADMIN_CHAT_ID ? { notifyChatId: process.env.ADMIN_CHAT_ID } : {}),
+	rateLimit: { max: 10, windowMs: 60_000 },
+	maxUploadBytes: 25 * 1024 * 1024,
+	sessionTtlMs: 12 * 60 * 60 * 1000,
+	onError: (error, context) => console.error(`[panel:${context}]`, error),
 });
 
 serve(handler, {
 	port: 3000,
-	onListen: ({ port }) => console.log(`panel: http://localhost:${port} (token = PANEL_TOKEN)`),
+	onListen: ({ port }) => {
+		const mode = operators ? `${operators.length} operators` : "single PANEL_TOKEN";
+		console.log(`panel: http://localhost:${port} (${mode})`);
+	},
 });
 
 bot.onStart((info) =>

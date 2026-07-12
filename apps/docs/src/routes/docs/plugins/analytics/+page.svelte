@@ -308,7 +308,7 @@ await createTestEnv(bot).createUser().sendCommand("start");
 <p>
 	<code>memoryAdapter()</code> replaces hand-rolling a
 	<code>{'{ track: (e) => events.push(e) }'}</code> fake in every test. drive the bot with
-	<a href="/docs/testing/"><code>@yaebal/test</code></a> as usual.
+	<a href="/docs/plugins/test/"><code>@yaebal/test</code></a> as usual.
 </p>
 <Code code={testing} title="analytics.test.ts" />
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { EXAMPLES_CATALOG, PATTERN_CATALOG } from "$lib/examples-catalog";
 	import Code from "$lib/Code.svelte";
 	import Try from "$lib/Try.svelte";
 
@@ -19,130 +20,27 @@ pnpm -r --filter "./examples/*" run test
 # run the actor-driven test example only
 pnpm --filter @yaebal/example-testing-lab test`;
 
-	const examples = [
-		{
-			name: "basic",
-			focus: "whole-stack plugin tour",
-			plugins: "again, callback-data, filters, fmt, i18n, keyboard, morda, prompt, scenes, session, throttle",
-			run: "pnpm --filter @yaebal/example-basic dev",
-		},
-		{
-			name: "again",
-			focus: "awaited retry and retry metrics",
-			plugins: "again",
-			run: "pnpm --filter @yaebal/example-again dev",
-		},
-		{
-			name: "throttle",
-			focus: "outbound buckets, priorities, cancellation",
-			plugins: "again, throttle",
-			run: "pnpm --filter @yaebal/example-throttle dev",
-		},
-		{
-			name: "broadcast",
-			focus: "typed delivery jobs and controls",
-			plugins: "broadcast",
-			run: "pnpm --filter @yaebal/example-broadcast dev",
-		},
-		{
-			name: "keyboard",
-			focus: "every inline and reply keyboard feature",
-			plugins: "keyboard",
-			run: "pnpm --filter @yaebal/example-keyboard dev",
-		},
-		{
-			name: "commands",
-			focus: "typed command registry: localized menus, scopes, hidden commands, diff sync",
-			plugins: "commands, session",
-			run: "pnpm --filter @yaebal/example-commands dev",
-		},
-		{
-			name: "simple",
-			focus: "toml routes plus handler registry",
-			plugins: "toml",
-			run: "pnpm --filter @yaebal/example-simple dev",
-		},
-		{
-			name: "onboarding",
-			focus: "first-run tour, dismiss, opt-out",
-			plugins: "onboarding",
-			run: "pnpm --filter @yaebal/example-onboarding dev",
-		},
-		{
-			name: "rich-messages",
-			focus: "rich blocks and draft streaming",
-			plugins: "rich",
-			run: "pnpm --filter @yaebal/example-rich-messages dev",
-		},
-		{
-			name: "panel",
-			focus: "operator dashboard and media timeline",
-			plugins: "again, panel",
-			run: "pnpm --filter @yaebal/example-panel dev",
-		},
-		{
-			name: "commerce-suite",
-			focus: "shop bot with cart, catalog and locale",
-			plugins: "callback-data, commands, filters, fmt, i18n, keyboard, pagination, ratelimiter, session",
-			run: "pnpm --filter @yaebal/example-commerce-suite dev",
-		},
-		{
-			name: "dialog-quest",
-			focus: "cockpit menu, wizard, prompt and support flow",
-			plugins: "conversation, morda, prompt, scenes, session",
-			run: "pnpm --filter @yaebal/example-dialog-quest dev",
-		},
-		{
-			name: "media-studio",
-			focus: "albums, files, cache, previews and long reports",
-			plugins: "files, media-cache, media-group, preview, split",
-			run: "pnpm --filter @yaebal/example-media-studio dev",
-		},
-		{
-			name: "modular-router",
-			focus: "file-based routes for larger bots",
-			plugins: "keyboard, router",
-			run: "pnpm --filter @yaebal/example-modular-router dev",
-		},
-		{
-			name: "webhook-edge",
-			focus: "fetch webhook handler and local node adapter",
-			plugins: "keyboard, web",
-			run: "pnpm --filter @yaebal/example-webhook-edge dev",
-		},
-		{
-			name: "runner-workers",
-			focus: "concurrent polling and worker offload",
-			plugins: "runner, workers",
-			run: "pnpm --filter @yaebal/example-runner-workers dev",
-		},
-		{
-			name: "testing-lab",
-			focus: "bot factory with actor-driven tests",
-			plugins: "callback-data, keyboard, session, test",
-			run: "pnpm --filter @yaebal/example-testing-lab test",
-		},
-		{
-			name: "inline-search",
-			focus: "inline query results and chosen-result analytics",
-			plugins: "fmt",
-			run: "pnpm --filter @yaebal/example-inline-search dev",
-		},
-		{
-			name: "payments-stars",
-			focus: "stars invoices, pre-checkout, refund",
-			plugins: "callback-data, keyboard",
-			run: "pnpm --filter @yaebal/example-payments-stars dev",
-		},
-	];
-
-	const packs = [
-		["state and ui", "basic, commerce-suite, dialog-quest, testing-lab"],
-		["media", "media-studio, rich-messages, keyboard"],
-		["ops", "again, throttle, broadcast, panel, runner-workers, webhook-edge"],
-		["telegram surface", "inline-search, payments-stars, onboarding, commands"],
-		["large project layout", "modular-router, simple"],
-	];
+	// playground <Try> ids that map cleanly onto one example bot's topic — curated by
+	// hand (the README table doesn't carry this), kept small and only where the match
+	// is genuinely tight. the full try-id registry lives in $lib/examples.ts.
+	const TRY_LINKS: Record<string, string[]> = {
+		broadcast: ["broadcast-queue"],
+		cron: ["cron-admin", "cron-digest"],
+		keyboard: ["keyboard-callback", "reply-keyboard"],
+		"auto-answer": ["auto-answer-deadline", "auto-answer-skip"],
+		guards: ["guards-private"],
+		pagination: ["pagination-list", "pagination-select"],
+		session: ["session-counter", "session-v2"],
+		"feature-flags": ["feature-flags-override", "feature-flags-variants"],
+		"audit-log": ["audit-log-basic"],
+		analytics: ["analytics-admin", "analytics-auto-capture", "analytics-track"],
+		"rich-messages": ["rich-ai"],
+		"dialog-quest": ["wizard-form", "conversation-prompt", "conversation-wizard", "scenes-buttons", "scenes-wizard"],
+		"state-machine": ["state-machine-order"],
+		"webhook-edge": ["webhook-ready"],
+		"inline-search": ["inline-mode"],
+		"payments-stars": ["payments-stars"],
+	};
 </script>
 
 <svelte:head>
@@ -151,14 +49,16 @@ pnpm --filter @yaebal/example-testing-lab test`;
 
 <h1>examples</h1>
 <p class="lead">
-	runnable bots in the <a href={GH}>monorepo</a> under <code>examples/</code>. each one is a private
-	workspace package wired to local source, so it doubles as a live public api smoke test.
+	{EXAMPLES_CATALOG.length} runnable bots in the <a href={GH}>monorepo</a> under
+	<code>examples/</code>. each one is a private workspace package wired to local source, so it
+	doubles as a live public api smoke test. the table below is generated straight from
+	<a href={`${GH}/README.md`}>examples/README.md</a> — it can't drift out of sync with the repo.
 </p>
 
 <Code code={run} lang="sh" title="terminal" />
 
 <div class="note">
-	for a complete plugin coverage matrix, see <a href={`${GH}/README.md`}>examples/readme.md</a>.
+	for the full plugin coverage matrix, see <a href={`${GH}/README.md`}>examples/readme.md</a>.
 	for a standalone project, use <a href="/docs/scaffolding/">create-yaebal</a>.
 </div>
 
@@ -169,30 +69,45 @@ pnpm --filter @yaebal/example-testing-lab test`;
 <Try id="media-poll" title="media-poll.ts" />
 
 <h2>example catalog</h2>
+<p>
+	roughly ordered simple → advanced: a bare-core echo bot first, single-plugin demos in the
+	middle, multi-plugin product bots last.
+</p>
+<div class="table-scroll">
 <table>
 	<thead>
-		<tr><th>example</th><th>focus</th><th>plugins</th><th>run</th></tr>
+		<tr><th>example</th><th>package</th><th>focus</th><th>run</th><th>try it</th></tr>
 	</thead>
 	<tbody>
-		{#each examples as item}
+		{#each EXAMPLES_CATALOG as item}
 			<tr>
 				<td><a href={`${GH}/${item.name}`}>{item.name}</a></td>
+				<td><code>{item.package}</code></td>
 				<td>{item.focus}</td>
-				<td>{item.plugins}</td>
 				<td><code>{item.run}</code></td>
+				<td>
+					{#if TRY_LINKS[item.name]}
+						{#each TRY_LINKS[item.name] as id, i}
+							{#if i > 0}, {/if}<a href="/playground?ex={id}">{id}</a>
+						{/each}
+					{:else}
+						—
+					{/if}
+				</td>
 			</tr>
 		{/each}
 	</tbody>
 </table>
+</div>
 
-<h2>recipe packs</h2>
+<h2>patterns to copy</h2>
 <table>
 	<thead>
-		<tr><th>need</th><th>copy from</th></tr>
+		<tr><th>pattern</th><th>copy from</th></tr>
 	</thead>
 	<tbody>
-		{#each packs as [need, names]}
-			<tr><td>{need}</td><td>{names}</td></tr>
+		{#each PATTERN_CATALOG as p}
+			<tr><td>{p.pattern}</td><td>{p.copyFrom}</td></tr>
 		{/each}
 	</tbody>
 </table>
@@ -212,5 +127,8 @@ pnpm --filter @yaebal/example-testing-lab test`;
 <style>
 	td code {
 		white-space: nowrap;
+	}
+	.table-scroll {
+		overflow-x: auto;
 	}
 </style>

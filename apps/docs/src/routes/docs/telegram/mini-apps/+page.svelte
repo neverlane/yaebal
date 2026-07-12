@@ -1,23 +1,28 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
-	const button = `import { webAppUrl } from "@yaebal/mini-app";
-import { InlineKeyboard } from "@yaebal/keyboard";
+	const button = `import { createBot, InlineKeyboard } from "yaebal";
+import { webAppUrl } from "@yaebal/mini-app";
 
-await ctx.reply("open the app", {
-  reply_markup: new InlineKeyboard().webApp("open", webAppUrl("https://app.example.com")),
-});`;
+const bot = createBot(process.env.BOT_TOKEN!);
 
-	const validateInHandler = `import { miniApp } from "@yaebal/mini-app";
+bot.command("app", (ctx) =>
+  ctx.reply("open the app", {
+    reply_markup: new InlineKeyboard().webApp("open", webAppUrl("https://app.example.com")),
+  }),
+);`;
 
-bot.install(miniApp({ botToken: process.env.BOT_TOKEN! }));
+	const validateInHandler = `import { createBot } from "yaebal";
+import { miniApp } from "@yaebal/mini-app";
+
+const bot = createBot(process.env.BOT_TOKEN!).install(miniApp({ botToken: process.env.BOT_TOKEN! }));
 
 bot.command("check", async (ctx) => {
   const initData = ctx.message?.text?.split(" ").slice(1).join(" ") ?? "";
   const result = await ctx.miniApp.validate(initData);
-  if (!result.ok) return ctx.reply(\`rejected: \${result.reason}\`);
+  if (!result.ok) return ctx.reply("rejected: " + result.reason);
 
-  await ctx.reply(\`hi \${result.data.user?.first_name}!\`);
+  await ctx.reply("hi " + result.data.user?.first_name + "!");
 });`;
 
 	const validateInBackend = `// your mini app's own http backend — not a bot update
@@ -28,11 +33,15 @@ export default {
     const result = await validateAuthHeader(req.headers.get("authorization"), process.env.BOT_TOKEN!);
     if (!result.ok) return new Response("unauthorized", { status: 401 });
 
-    return new Response(\`hi \${result.data.user?.first_name}\`);
+    return new Response("hi " + result.data.user?.first_name);
   },
 };`;
 
-	const data = `bot.on("message:web_app_data", async (ctx) => {
+	const data = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("message:web_app_data", async (ctx) => {
   await ctx.reply("mini app sent: " + ctx.message.web_app_data.data);
 });`;
 </script>

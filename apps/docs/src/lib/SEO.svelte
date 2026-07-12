@@ -326,7 +326,7 @@
 		"/docs/plugins/panel": {
 			title: "@yaebal/panel — operator panel for telegram bots",
 			description:
-				"run a framework-agnostic operator panel for yaebal bots with media previews, chats, keyboards, callbacks, avatars, and event timelines.",
+				"run a framework-agnostic operator panel for yaebal bots: multi-operator cookie login, handoff, reply/edit/delete, full-text search, media previews, and sklad or sqlite persistence.",
 		},
 		"/docs/plugins/analytics": {
 			title: "@yaebal/analytics — typed telegram bot event tracking",
@@ -361,7 +361,7 @@
 		"/docs/plugins/router": {
 			title: "@yaebal/router — file-based routing for telegram bots",
 			description:
-				"organize yaebal telegram bot handlers with file-based routes, typed modules, route loading, feature folders, and composer integration.",
+				"typed define*() route files, load-time validation with did-you-mean errors, nested _guard.ts directories, an optional @yaebal/commands menu bridge, and dev hot-reload via watchRoutes.",
 		},
 		"/docs/plugins/scenes": {
 			title: "@yaebal/scenes — step-by-step telegram bot wizards",

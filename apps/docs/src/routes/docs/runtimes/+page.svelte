@@ -5,10 +5,20 @@
 import { Bot } from "@yaebal/core";
 import { webhook } from "@yaebal/web";
 
-const bot = new Bot(env.BOT_TOKEN);
-bot.command("start", (ctx) => ctx.reply("hi from the edge"));
+interface Env {
+  BOT_TOKEN: string;
+}
 
-export default { fetch: webhook(bot) };`;
+export default {
+  fetch(request: Request, env: Env) {
+    // create the bot per-request: Workers give you "env" only inside fetch(),
+    // never at module scope.
+    const bot = new Bot(env.BOT_TOKEN);
+    bot.command("start", (ctx) => ctx.reply("hi from the edge"));
+
+    return webhook(bot)(request);
+  },
+};`;
 
 	const bunServe = `// Bun — built-in HTTP server
 import { Bot } from "@yaebal/core";
@@ -22,6 +32,11 @@ Bun.serve({ port: 8080, fetch: webhook(bot) });`;
 	const denoServe = `// Deno — built-in HTTP server
 import { Bot } from "@yaebal/core";
 import { webhook } from "@yaebal/web";
+
+declare const Deno: {
+  env: { get(key: string): string | undefined };
+  serve(options: { port: number }, handler: (request: Request) => Response | Promise<Response>): unknown;
+};
 
 const bot = new Bot(Deno.env.get("BOT_TOKEN")!);
 bot.on("message:text", (ctx) => ctx.reply(ctx.text));
@@ -52,11 +67,25 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 	</thead>
 	<tbody>
 		<tr>
+			<td>minimum version</td>
+			<td>≥20 (18+ for fetch, but the repo targets 20)</td>
+			<td>latest</td>
+			<td>latest</td>
+			<td>n/a — managed by the platform</td>
+		</tr>
+		<tr>
 			<td><code>@yaebal/core</code> + most plugins</td>
 			<td>✅</td>
 			<td>✅</td>
 			<td>✅</td>
 			<td>✅</td>
+		</tr>
+		<tr>
+			<td><code>media.path()</code> (local files)</td>
+			<td>✅</td>
+			<td>✅</td>
+			<td>✅ (needs <code>--allow-read</code>)</td>
+			<td>❌ no filesystem — use <code>media.url()</code> / <code>media.buffer()</code></td>
 		</tr>
 		<tr>
 			<td><code>@yaebal/web</code> — <code>webhook()</code></td>
@@ -73,6 +102,13 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 			<td>❌ no node:http</td>
 		</tr>
 		<tr>
+			<td><code>@yaebal/sklad</code> storage adapters</td>
+			<td>✅ all</td>
+			<td>✅ all</td>
+			<td>✅ all</td>
+			<td>✅ memory/KV-backed only — anything wrapping <code>node:fs</code> needs a custom adapter</td>
+		</tr>
+		<tr>
 			<td><code>@yaebal/panel</code> main handler</td>
 			<td>✅</td>
 			<td>✅</td>
@@ -87,6 +123,13 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 			<td>❌</td>
 		</tr>
 		<tr>
+			<td><code>@yaebal/panel/sklad</code> (<code>skladPanelStore</code>)</td>
+			<td>✅ any adapter</td>
+			<td>✅ any adapter</td>
+			<td>✅ any adapter</td>
+			<td>✅ with an edge-safe adapter (<code>kvStorage</code>, <code>redisStorage</code>, <code>MemoryStorage</code>) — <code>sqliteStorage</code> still needs <code>node:sqlite</code></td>
+		</tr>
+		<tr>
 			<td><code>@yaebal/router</code> (file-based)</td>
 			<td>✅</td>
 			<td>✅</td>
@@ -99,6 +142,13 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 			<td>✅</td>
 			<td>⚠️ limited</td>
 			<td>❌ no worker_threads</td>
+		</tr>
+		<tr>
+			<td><code>@yaebal/cron</code> persisted store</td>
+			<td>✅ any <code>@yaebal/sklad</code> adapter</td>
+			<td>✅</td>
+			<td>✅</td>
+			<td>✅ with a KV-backed store; timers still run only while the isolate is alive</td>
 		</tr>
 		<tr>
 			<td><code>create-yaebal</code> (CLI)</td>
@@ -117,13 +167,15 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 	<code>(req, res)</code>, yaebal adapters work everywhere without shims.
 </div>
 
-<h2>Cloudflare Workers</h2>
+<h2 id="cloudflare-workers">Cloudflare Workers</h2>
 <p>
-	<code>webhook()</code> from <code>@yaebal/web</code> returns a standard fetch handler, so you
-	can drop it directly into a Workers export. No adapter needed, no Node compatibility flag
-	required.
+	<code>webhook()</code> from <code>@yaebal/web</code> returns a standard fetch handler. Workers
+	only give you <code>env</code> inside the <code>fetch()</code> export, so construct the bot
+	there rather than at module scope — a top-level <code>new Bot(env.BOT_TOKEN)</code> throws
+	because <code>env</code> doesn't exist yet when the module loads.
 </p>
 <Code code={cfWorkers} title="worker.ts" />
+<p>Deno Deploy and Vercel Edge follow the same shape: a fetch handler, no Node globals.</p>
 
 <h2>Bun</h2>
 <p>
@@ -147,9 +199,15 @@ Deno.serve({ port: 8080 }, webhook(bot));`;
 </p>
 <ul>
 	<li>
+		<code>media.path()</code> — reads local files off disk; use <code>media.url()</code> for a
+		public URL or <code>media.buffer()</code> for in-memory bytes instead. See
+		<a href="/docs/media/">media &amp; files</a>.
+	</li>
+	<li>
 		<code>@yaebal/panel/sqlite</code> — optional SQLite store; uses <code>node:sqlite</code> and
-		requires Node ≥22.5. the main <code>@yaebal/panel</code> fetch handler can run on edge with a
-		compatible store.
+		requires Node ≥22.5. the main <code>@yaebal/panel</code> fetch handler runs fine on edge —
+		pair it with <code>skladPanelStore</code> from <code>@yaebal/panel/sklad</code> and a
+		KV/Redis/memory <a href="/docs/plugins/sklad/">sklad</a> adapter instead of sqlite.
 	</li>
 	<li>
 		<code>@yaebal/router</code> — discovers handler files at startup; needs

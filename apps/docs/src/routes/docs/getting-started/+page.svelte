@@ -27,8 +27,17 @@
 		{ label: "deno", code: "BOT_TOKEN=123:abc deno run --allow-env --allow-net bot.ts" },
 	];
 
+	const runTabsWindows = [
+		{ label: "powershell", code: '$env:BOT_TOKEN="123:abc"; pnpm tsx bot.ts' },
+		{ label: "cmd", code: "set BOT_TOKEN=123:abc && pnpm tsx bot.ts" },
+	];
+
 	const env = `BOT_TOKEN=123456789:replace_me
 WEBHOOK_SECRET=change_this_before_deploy`;
+
+	const envLoad = `# bun and deno load .env automatically. node needs an explicit flag:
+node --env-file=.env dist/bot.js
+tsx --env-file=.env bot.ts`;
 
 	const testInstallTabs = [
 		{ label: "pnpm", code: "pnpm add -D @yaebal/test vitest" },
@@ -37,6 +46,21 @@ WEBHOOK_SECRET=change_this_before_deploy`;
 		{ label: "bun", code: "bun add -d @yaebal/test vitest" },
 		{ label: "deno", code: "deno add -D npm:@yaebal/test npm:vitest" },
 	];
+
+	const split = `// bot.ts — export the bot, but don't call start() here. that keeps this
+// module import-safe: tests (and any other tool) can load it without opening
+// a real connection to Telegram.
+import { createBot } from "yaebal";
+
+export const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.command("start", (ctx) => ctx.reply("hello from yaebal"));
+bot.on("message:text", (ctx) => ctx.reply("you said: " + ctx.text));`;
+
+	const main = `// main.ts — the entrypoint you actually run.
+import { bot } from "./bot.js";
+
+await bot.start();`;
 
 	const test = `import { createTestEnv } from "@yaebal/test";
 import { expect, test } from "vitest";
@@ -48,21 +72,22 @@ test("/start replies", async () => {
 
   await user.sendCommand("start");
 
-  expect(env.lastApiCall("sendMessage")?.params?.text).toContain("pick one");
+  expect(env.lastApiCall("sendMessage")?.params?.text).toBe("hello from yaebal");
 });`;
 
-	const webhook = `import { webhookCallback } from "@yaebal/core";
+	const webhook = `import { webhook } from "yaebal";
+import { bot } from "./bot.js";
 
 // any fetch-style runtime: bun, deno, cloudflare workers, vercel edge.
 export default {
-	  fetch: webhookCallback(bot, { secretToken: process.env.WEBHOOK_SECRET }),
+  fetch: webhook(bot, { secretToken: process.env.WEBHOOK_SECRET }),
 };`;
 
 	const deployTabs = [
-		{ label: "node", code: "pnpm build\nBOT_TOKEN=123:abc node dist/bot.js" },
-		{ label: "bun", code: "BOT_TOKEN=123:abc bun bot.ts" },
-		{ label: "deno", code: "BOT_TOKEN=123:abc deno run --allow-env --allow-net bot.ts" },
-		{ label: "cloudflare", code: "pnpm --filter @yaebal/docs wrangler deploy" },
+		{ label: "node", code: "pnpm build\nBOT_TOKEN=123:abc node dist/main.js" },
+		{ label: "bun", code: "BOT_TOKEN=123:abc bun main.ts" },
+		{ label: "deno", code: "BOT_TOKEN=123:abc deno run --allow-env --allow-net main.ts" },
+		{ label: "cloudflare", code: "wrangler deploy" },
 		{ label: "docker", code: "docker build -t my-bot .\ndocker run --env-file .env my-bot" },
 	];
 </script>
@@ -88,6 +113,13 @@ export default {
 <h2>3. set environment variables</h2>
 <p>use your runtime or host secret store. locally, a plain <code>.env</code> is enough.</p>
 <Code code={env} title=".env" lang="dotenv" />
+<div class="note">
+	<strong>loading <code>.env</code>.</strong> bun and deno read it automatically. node needs an
+	explicit flag (or a package like <code>dotenv</code>) — see below. the run commands in step 5
+	instead pass <code>BOT_TOKEN</code> straight on the command line, which needs no loader at all;
+	either approach works, pick one per project.
+</div>
+<Code code={envLoad} title="terminal" lang="sh" />
 
 <h2>4. your first bot</h2>
 <p>
@@ -95,6 +127,10 @@ export default {
 	<code>yaebal</code>, so handlers get generated context shortcuts.
 </p>
 <Try id="getting-started" title="bot.ts" />
+<p>
+	running it locally should print <code>bot ready</code> to the console once <code>getMe()</code>
+	succeeds, and any message you send the bot gets echoed back as <code>you said: …</code>.
+</p>
 
 <div class="note">
 	<strong>esm only.</strong> yaebal is <code>"type": "module"</code>. use explicit
@@ -103,6 +139,8 @@ export default {
 
 <h2>5. run it</h2>
 <CodeTabs tabs={runTabs} title="run" />
+<p>on Windows, set the variable in its own step first:</p>
+<CodeTabs tabs={runTabsWindows} title="run (windows)" />
 
 <h2>6. add a button</h2>
 <p>
@@ -119,6 +157,13 @@ export default {
 <Try id="session-counter" title="session.ts" />
 
 <h2>8. test before deploy</h2>
+<p>
+	as a bot grows past a single file, split the bot's definition from the entrypoint that starts it:
+	a module that calls <code>bot.start()</code> as a side effect can't be safely <code>import</code>ed
+	by a test.
+</p>
+<Code code={split} title="bot.ts" />
+<Code code={main} title="main.ts" />
 <p>
 	<code>@yaebal/test</code> drives your real bot with virtual users and records outgoing api calls.
 	no telegram token is used in ci.

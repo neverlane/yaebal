@@ -5,7 +5,12 @@
 	const link = `const payload = "ref_67";
 const url = "https://t.me/my_bot?start=" + encodeURIComponent(payload);`;
 
-	const parse = `bot.command("start", async (ctx) => {
+	const parse = `import { createBot } from "yaebal";
+
+const saveReferral = async (userId: number, code: string) => {};
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.command("start", async (ctx) => {
   // ctx.payload is the raw trimmed remainder after "/start " — exactly what
   // telegram passed as the start parameter. ctx.args is the same thing split
   // on whitespace, for commands that take multiple tokens.
@@ -21,14 +26,17 @@ const url = "https://t.me/my_bot?start=" + encodeURIComponent(payload);`;
 	const group = `const url = "https://t.me/my_bot?startgroup=" + encodeURIComponent("team_67");
 const channelUrl = "https://t.me/my_bot?startchannel=" + encodeURIComponent("team_67");`;
 
-	const filterCombo = `import { and, isChannel, command } from "@yaebal/filters";
+	const filterCombo = `import { createBot } from "yaebal";
+import { and, command, isChannel } from "@yaebal/filters";
+
+const bot = createBot(process.env.BOT_TOKEN!);
 
 // there's no ready-made "startchannel" export — compose one from the filters
 // that already exist. a channel deep link arrives as a channel_post, not a
 // private message, so command("start") still matches it.
 bot.filter(and(isChannel, command("start")), (ctx) => {
   // ctx.chat.type is narrowed to "channel" here
-  return ctx.reply(\`channel setup: \${ctx.payload}\`);
+  return ctx.reply("channel setup: " + ctx.payload);
 });`;
 </script>
 

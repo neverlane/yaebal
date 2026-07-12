@@ -20,6 +20,7 @@ pnpm --filter @yaebal/example-testing-lab test`;
 // validate init data on your backend before trusting the user id.`;
 
 	const recipes = [
+		["bare-core bot", "core-echo", "middleware, filter narrowing, format, raw typed api.call — no generated contexts"],
 		["shop bot", "commerce-suite", "session cart, i18n, pagination, typed callbacks, command menu, inbound ratelimit"],
 		["wizard and support bot", "dialog-quest", "morda cockpit, scenes wizard, prompt and await-style conversation"],
 		["media studio bot", "media-studio", "album batching, file links, media cache, svg previews, long reports"],
@@ -32,6 +33,14 @@ pnpm --filter @yaebal/example-testing-lab test`;
 		["admin panel bot", "panel", "live support dashboard with media viewer and outgoing replies"],
 		["broadcast bot", "broadcast", "typed jobs, pause, resume, cancel, retry and progress"],
 		["ai rich streaming bot", "rich-messages", "rich document blocks and draft streaming"],
+		["mini app bot", "mini-app", "HMAC + Ed25519 initData validation, Authorization: tma backend, answerWebAppQuery"],
+		["scheduled jobs bot", "cron", "cron expressions with per-job tz, retries, catch-up via a persisted store, ops commands"],
+		["product analytics bot", "analytics", "typed event catalog, autoTrack, ctx.identify, multiple adapters, ops commands"],
+		["gradual rollout bot", "feature-flags", "percentage rollout, kill-switch, chat-type targeting, multivariate flags, ops commands"],
+		["stateful order bot", "state-machine", "typed events driving transitions, guards, per-state onEnter hooks"],
+		["admin-only bot", "guards", "safe guard + getChatMember pattern, membership caching, anonymous admin/owner checks"],
+		["session-backed bot", "session", "dirty-checked saves, file storage, ttl fields, migrations"],
+		["paginated list bot", "pagination", "lazy sources, item buttons with onSelect, menu morphing and back-navigation"],
 	];
 </script>
 
@@ -57,6 +66,14 @@ pnpm --filter @yaebal/example-testing-lab test`;
 		{/each}
 	</tbody>
 </table>
+
+<h2>bare-core bot</h2>
+<p>
+	use <a href={`${GH}/core-echo`}>core-echo</a> when you want the honest, unassisted style:
+	<code>@yaebal/core</code> with no generated contexts, raw typed <code>api.call</code>, and
+	filter-narrowed middleware. it's the example that mirrors <a href="/docs/core/">core concepts</a>
+	most closely.
+</p>
 
 <h2>shop bot</h2>
 <p>
@@ -135,8 +152,67 @@ pnpm --filter @yaebal/example-testing-lab test`;
 <p>pair <a href="/docs/plugins/rich/">@yaebal/rich</a> with <a href="/docs/llms/">llm guidance</a>.</p>
 
 <h2>mini app bot</h2>
-<p>web app buttons, init-data validation, backend handoff and callback confirmation.</p>
+<p>
+	use <a href={`${GH}/mini-app`}>mini-app</a> for telegram mini apps: HMAC and Ed25519 initData
+	validation, an <code>Authorization: tma</code> backend, <code>answerWebAppQuery</code>, and both
+	direct-link and attachment-menu launch flows.
+</p>
 <Code code={mini} title="mini-app.ts" />
 <p>see <a href="/docs/telegram/mini-apps/">mini apps</a>.</p>
+
+<h2>scheduled jobs bot</h2>
+<p>
+	use <a href={`${GH}/cron`}>cron</a> for anything time-driven: intervals, 6-field cron expressions
+	with per-job timezones, retries with backoff, and catch-up runs after downtime via a persisted
+	store.
+</p>
+<Try id="cron-digest" title="cron-digest.ts" />
+<Try id="cron-admin" title="cron-admin.ts" />
+
+<h2>product analytics bot</h2>
+<p>
+	use <a href={`${GH}/analytics`}>analytics</a> for a typed event catalog, automatic
+	command/callback/message tracking, and pluggable adapters for wherever the events end up.
+</p>
+<Try id="analytics-track" title="analytics-track.ts" />
+<Try id="analytics-admin" title="analytics-admin.ts" />
+
+<h2>gradual rollout bot</h2>
+<p>
+	use <a href={`${GH}/feature-flags`}>feature-flags</a> for percentage rollouts, kill switches,
+	chat-type targeting and multivariate (A/B/n) flags with per-bucket overrides.
+</p>
+<Try id="feature-flags-variants" title="feature-flags.ts" />
+
+<h2>stateful order bot</h2>
+<p>
+	use <a href={`${GH}/state-machine`}>state-machine</a> when a bot's flow is best modeled as typed
+	events driving transitions, with a guard you can trip interactively and per-state hooks.
+</p>
+<Try id="state-machine-order" title="state-machine.ts" />
+
+<h2>admin-only bot</h2>
+<p>
+	use <a href={`${GH}/guards`}>guards</a> for the safe pattern: <code>guard</code> +
+	<code>getChatMember</code>, cached membership checks, and telling anonymous admins/owners apart
+	from regular members.
+</p>
+<Try id="guards-private" title="guards.ts" />
+
+<h2>session-backed bot</h2>
+<p>
+	use <a href={`${GH}/session`}>session</a> for session v2 in depth: dirty-checked saves so
+	untouched state costs nothing, file storage, independent sessions keyed by chat vs. user, ttl
+	fields and migrations.
+</p>
+<Try id="session-v2" title="session.ts" />
+
+<h2>paginated list bot</h2>
+<p>
+	use <a href={`${GH}/pagination`}>pagination</a> for lazy-loaded lists: a count + limit+1 probe
+	instead of loading everything, item buttons with typed <code>onSelect</code> payloads, and
+	back-navigation that morphs the same message.
+</p>
+<Try id="pagination-list" title="pagination.ts" />
 
 <p>the full runnable example list lives on <a href="/docs/examples/">examples</a>.</p>

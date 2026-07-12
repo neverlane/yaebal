@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
 
 	const install = `pnpm add yaebal`;
 
@@ -13,6 +14,8 @@ await bot.start();`;
 
 	const botVsCreate = `import { Bot, createBot, richContext } from "yaebal";
 
+const token = process.env.BOT_TOKEN!;
+
 // recommended for app code: rich generated contexts at runtime.
 const bot = createBot(token);
 
@@ -23,14 +26,17 @@ const custom = new Bot(token, { contextFactory: richContext });
 // but does not graft generated context methods at runtime unless you pass
 // contextFactory or use createBot().`;
 
-	const rich = `const bot = createBot(process.env.BOT_TOKEN!);
+	const rich = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
 
 bot.on("message:text", (ctx) => ctx.react("🔥"));          // MessageContext
 bot.on("callback_query:data", (ctx) => ctx.answer("ok")); // CallbackQueryContext`;
 
-	const callbacks = `import { InlineKeyboard, callbackData } from "yaebal";
+	const callbacks = `import { createBot, InlineKeyboard, callbackData } from "yaebal";
 
 const vote = callbackData("vote", { id: Number });
+const bot = createBot(process.env.BOT_TOKEN!);
 
 bot.command("poll", (ctx) =>
   ctx.send("pick one", {
@@ -46,9 +52,9 @@ bot.callbackQuery(vote.pattern, (ctx) => {
   if (data) return ctx.answer("voted " + data.id);
 });`;
 
-	const stateful = `import { session, i18n } from "yaebal";
+	const stateful = `import { createBot, session, i18n } from "yaebal";
 
-bot
+const bot = createBot(process.env.BOT_TOKEN!)
   .install(session({ initial: () => ({ count: 0 }) }))
   .install(i18n({
     defaultLocale: "en",
@@ -57,7 +63,9 @@ bot
   .command("count", (ctx) => ctx.reply("#" + ++ctx.session.count))
   .command("start", (ctx) => ctx.reply(ctx.t("hi")));`;
 
-	const media = `import { media } from "yaebal";
+	const media = `import { createBot, media } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
 
 bot.command("pic", (ctx) => ctx.sendPhoto(media.path("./cat.jpg"))); // node/bun/deno
 // on edge, send media.url(...) / media.buffer(...) instead`;
@@ -83,7 +91,9 @@ export default {
 	the batteries-included entry point — the <a href="/docs/core/">core engine</a>, the auto-generated
 	per-update contexts, and the most-used plugins behind a <strong>single import</strong>.
 	<code>media.path()</code> works on node, bun and deno, and the same bot can run behind long polling
-	or a fetch webhook. for a minimal build, use <a href="/docs/core/">@yaebal/core</a> directly.
+	or a fetch webhook. for a minimal build, use <a href="/docs/core/">@yaebal/core</a> directly — the
+	meta package adds the generated context layer, the formatting/keyboard/callback-data helpers and
+	a handful of the most-used plugins on top; nothing in core changes underneath it.
 </p>
 
 <h2>install</h2>
@@ -95,6 +105,7 @@ export default {
 	use <code>createBot()</code> for normal app code: it wires runtime rich contexts, so generated
 	shortcut methods like <code>ctx.react()</code> are both typed and actually present when handlers run.
 </p>
+<Try id="getting-started" title="try it — bot.ts" />
 
 <h2>Bot vs createBot</h2>
 <Code code={botVsCreate} title="bot-vs-createbot.ts" />
@@ -129,9 +140,16 @@ export default {
 		<tr><td><a href="/docs/plugins/callback-data/">callback-data</a></td><td><code>callbackData</code></td><td>typed <code>callback_data</code> pack / unpack</td></tr>
 		<tr><td><a href="/docs/plugins/session/">session</a></td><td><code>session</code></td><td>per-chat state, pluggable storage</td></tr>
 		<tr><td><a href="/docs/plugins/i18n/">i18n</a></td><td><code>i18n</code></td><td>per-chat locale, <code>ctx.t</code></td></tr>
-		<tr><td><a href="/docs/plugins/web/">web</a></td><td><code>webhook</code>, <code>serve</code>, <code>setWebhook</code>, <code>deleteWebhook</code></td><td>fetch/webhook helpers for web runtimes</td></tr>
+		<tr><td><a href="/docs/plugins/sklad/">sklad</a></td><td><code>MemoryStorage</code>, <code>StorageAdapter</code></td><td>the pluggable storage interface session (and other stateful plugins) build on</td></tr>
+		<tr><td><a href="/docs/plugins/web/">web</a></td><td><code>webhook</code>, <code>serve</code>, <code>setWebhook</code>, <code>deleteWebhook</code>, <code>getWebhookInfo</code>, <code>dedupe</code>, <code>expressAdapter</code>, <code>fastifyAdapter</code>, <code>elysiaAdapter</code>, <code>awsLambdaAdapter</code>, <code>azureAdapter</code>, <code>gcfAdapter</code>, <code>cloudflareAdapter</code></td><td>fetch/webhook helpers plus adapters for the most common node http frameworks and serverless platforms</td></tr>
 	</tbody>
 </table>
+<div class="note">
+	<strong>not re-exported here.</strong> stateful/UI packages with their own dependency footprint —
+	<code>@yaebal/scenes</code>, <code>@yaebal/conversation</code>, <code>@yaebal/prompt</code>,
+	<code>@yaebal/morda</code>, <code>@yaebal/router</code> and others — stay outside the meta
+	package on purpose. import them directly; see <a href="/docs/plugins/">the plugin catalog</a>.
+</div>
 
 <h2>a quick tour</h2>
 <p>keyboards + typed callback data:</p>

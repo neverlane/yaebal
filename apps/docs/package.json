@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/docs",
-	"version": "0.3.12",
+	"version": "0.4.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -10,7 +10,8 @@
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"health": "node scripts/check-docs-health.mjs",
 		"check:all": "pnpm run health && pnpm run check",
-		"generate:api": "node scripts/generate-api-reference.mjs"
+		"generate:api": "node scripts/generate-api-reference.mjs",
+		"generate:examples": "node scripts/generate-examples-catalog.mjs"
 	},
 	"dependencies": {
 		"@yaebal/preview": "workspace:*",

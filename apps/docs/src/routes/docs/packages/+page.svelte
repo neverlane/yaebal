@@ -39,7 +39,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/state-machine", "/docs/plugins/state-machine/", "declarative finite-state machines: typed events, guarded transitions, onEnter/onLeave hooks"],
 		["@yaebal/onboarding", "/docs/plugins/onboarding/", "declarative first-run tutorials with inline controls"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, await the next message as the answer"],
-		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
+		["@yaebal/router", "/docs/plugins/router/", "typed file-based routing — define*() routes, nested guards, watchRoutes hot-reload"],
 		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a typescript handler registry"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "priority outbound scheduler with global/private/group buckets"],
 		["@yaebal/files", "/docs/plugins/files/", "inspect, link, stream and download Telegram files"],

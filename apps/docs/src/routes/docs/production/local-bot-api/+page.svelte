@@ -12,12 +12,20 @@
     volumes:
       - telegram-bot-api-data:/var/lib/telegram-bot-api
     ports:
-      - "8081:8081"
+      # bind to localhost only — the server has no auth of its own beyond the
+      # bot token embedded in the request path. if the bot container shares
+      # this compose network, drop the ports mapping entirely and reach it as
+      # http://telegram-bot-api:8081 instead.
+      - "127.0.0.1:8081:8081"
+      - "127.0.0.1:8082:8082" # stats — also keep private
 
 volumes:
   telegram-bot-api-data:`;
 
-	const logout = `// while apiRoot still points at the cloud api:
+	const logout = `import { createBot } from "yaebal";
+
+// while apiRoot still points at the cloud api:
+const bot = createBot(process.env.BOT_TOKEN!);
 await bot.api.call("logOut", {});
 // the local server accepts the token immediately. going back to the
 // cloud api is locked for 10 minutes after logOut.`;
@@ -28,7 +36,18 @@ const bot = createBot(process.env.BOT_TOKEN!, {
   apiRoot: "http://localhost:8081",
 });`;
 
+	const migrateBack = `import { createBot } from "yaebal";
+
+// while apiRoot still points at the local server:
+const bot = createBot(process.env.BOT_TOKEN!, { apiRoot: "http://localhost:8081" });
+await bot.api.call("logOut", {});
+// wait 10 minutes, then point apiRoot back at the cloud default (or omit it).`;
+
 	const localFile = `import { readFile } from "node:fs/promises";
+import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!, { apiRoot: "http://localhost:8081" });
+const fileId = "AgACAgIAAx...";
 
 const file = await bot.api.call<{ file_path?: string }>("getFile", { file_id: fileId });
 // with TELEGRAM_LOCAL=1 file_path is an absolute path on the server's disk —
@@ -65,6 +84,12 @@ const bytes = await readFile(file.file_path!);`;
 	limits. local mode also changes how you receive files; see
 	<a href="#files-in-local-mode">files in local mode</a>.
 </p>
+<div class="note">
+	<strong>it's another service to run.</strong> tdlib (what the server is built on) keeps an
+	in-memory cache proportional to traffic and chat count — budget at least 512 MB–1 GB of RAM for
+	a small-to-medium bot, more under heavy media traffic, plus disk for
+	<code>/var/lib/telegram-bot-api</code> (downloaded files accumulate there; see production notes).
+</div>
 
 <h2>credentials</h2>
 <p>
@@ -103,6 +128,14 @@ const bytes = await readFile(file.file_path!);`;
 	changes — polling and handlers work as before.
 </p>
 <Code code={connect} title="bot.ts" />
+
+<h2>moving back to the cloud api</h2>
+<p>
+	the same <code>logOut</code> call works in reverse — call it while <code>apiRoot</code> still
+	points at your server, wait out the 10-minute lock, then point <code>apiRoot</code> back at the
+	cloud default (or drop the option entirely).
+</p>
+<Code code={migrateBack} title="migrate-back.ts" />
 
 <h2 id="files-in-local-mode">files in local mode</h2>
 <p>

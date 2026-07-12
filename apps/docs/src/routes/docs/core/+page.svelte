@@ -1,8 +1,11 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
 
 	const composer = `import { Bot } from "@yaebal/core";
 import { session } from "@yaebal/session";
+
+const loadUser = async (id: number) => ({ id, name: "somebody" });
 
 const bot = new Bot(process.env.BOT_TOKEN!)
   .install(session({ initial: () => ({ count: 0 }) }))
@@ -15,15 +18,25 @@ const bot = new Bot(process.env.BOT_TOKEN!)
     ctx.text;          // narrowed by on("message:text")
   });`;
 
-	const routing = `bot.command("start", (ctx) => ctx.reply("hi"));
-bot.hears(/buy (.+)/, (ctx) => ctx.reply("match: " + ctx.match[1]));
+	const routing = `import { Bot } from "@yaebal/core";
+
+const ADMIN_ID = 12345;
+const bot = new Bot(process.env.BOT_TOKEN!);
+
+bot.command("start", (ctx) => ctx.reply("hi"));
+bot.hears(/buy (.+)/, (ctx) => ctx.reply(\`match: \${ctx.match[1] ?? ""}\`));
 bot.callbackQuery(/^page:(\\d+)$/, (ctx) => ctx.answerCallbackQuery());
-bot.guard((ctx) => ctx.from?.id === ADMIN_ID).command("admin", adminHandler);
+bot.guard((ctx) => ctx.from?.id === ADMIN_ID).command("admin", (ctx) => ctx.reply("admin only"));
 
 bot.on("message:text", (ctx) => ctx.text);        // ctx.text: string
 bot.on("callback_query:data", (ctx) => ctx.callbackQuery.data);`;
 
-	const derive = `// unscoped: runs for every update
+	const derive = `import { Bot } from "@yaebal/core";
+
+const db = { users: { find: async (id: number) => ({ id }) } };
+const bot = new Bot(process.env.BOT_TOKEN!);
+
+// unscoped: runs for every update
 bot.derive(async (ctx) => ({ requestId: crypto.randomUUID() }));
 
 // scoped: runs only for listed update types; typed as Partial<D> downstream
@@ -31,7 +44,18 @@ bot.derive(["message", "edited_message"], async (ctx) => ({
   user: await db.users.find(ctx.from!.id),
 }));`;
 
-	const plugin = `import type { BotPlugin, Context, Plugin } from "@yaebal/core";
+	const deriveScoped = `import { Bot } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!)
+  .derive(["message", "edited_message"], async (ctx) => ({ user: { id: 1 } }))
+  .on("message", (ctx) => {
+    ctx.user; // { id: number } | undefined — Partial<D>: this handler also
+              // sees update types the derive never ran for, so TypeScript
+              // can't promise the field is there.
+    if (ctx.user) ctx.user.id; // narrowed after the check
+  });`;
+
+	const plugin = `import { Bot, type BotPlugin, type Context, type Plugin } from "@yaebal/core";
 
 type Clock = { now: () => Date };
 
@@ -42,14 +66,41 @@ const lifecycle: BotPlugin = (bot) =>
   bot.onStart((info) => console.log("started @" + info.username))
      .onStop(() => console.log("stopped"));
 
+const bot = new Bot(process.env.BOT_TOKEN!);
+
 bot.install(clock).install(lifecycle).command("time", (ctx) => {
   return ctx.reply(String(ctx.clock.now()));
 });`;
 
-	const lowLevel = `import { compose, matchQuery, type Middleware } from "@yaebal/core";
+	const errorHandling = `import { Bot, TelegramError } from "@yaebal/core";
+
+const bot = new Bot(process.env.BOT_TOKEN!);
+
+bot.command("risky", () => {
+  throw new Error("boom"); // thrown anywhere in the chain — sync, async, or a rejected promise
+});
+
+// one handler for every uncaught error. the default just console.errors and
+// moves on; replacing it does not change that isolation — a throw here still
+// only aborts the update that triggered it.
+bot.onError((error, ctx) => {
+  if (error instanceof TelegramError) {
+    // a failed Bot API call: error.method, error.code, error.description
+    console.error(\`[telegram] \${error.method} -> \${error.code}: \${error.description}\`);
+    return;
+  }
+
+  console.error(\`[update \${ctx.update.update_id}]\`, error);
+});`;
+
+	const lowLevel = `import { compose, matchQuery, type Context, type Middleware } from "@yaebal/core";
+
+declare const one: Middleware<Context>;
+declare const two: Middleware<Context>;
+declare const ctx: Context;
 
 const stack = compose<Context>([one, two] satisfies Middleware<Context>[]);
-await stack(ctx);
+await stack(ctx, async () => {});
 
 if (matchQuery(ctx, "message:text")) {
   // runtime check used by Composer.on()
@@ -72,6 +123,43 @@ if (matchQuery(ctx, "message:text")) {
 	see exactly what was installed before them.
 </p>
 <Code code={composer} title="composer.ts" />
+<Try id="filters-router" title="try it — feature routes" />
+
+<h2>execution order</h2>
+<p>
+	an update goes through the same four stops every time, and the first three only ever run once
+	per update, before routing decides which handler fires:
+</p>
+<ol>
+	<li>
+		<strong>context construction.</strong> <code>contextFactory</code> (or the default
+		<code>new Context(...)</code> when none is set) builds <code>ctx</code> from the raw update.
+	</li>
+	<li>
+		<strong><code>decorate</code> values are assigned.</strong> every <code>decorate()</code> call
+		anywhere in the chain is collected once, when the chain is first realized, and merged onto
+		<code>ctx</code> before any middleware runs — so a field added by <code>decorate()</code> is
+		visible even to a handler registered <em>before</em> the <code>decorate()</code> call. this is
+		the one place registration order doesn't matter; see the note below.
+	</li>
+	<li>
+		<strong>middleware runs in registration order.</strong> <code>use</code>, <code>derive</code>,
+		<code>on</code>, <code>command</code>, <code>hears</code>, <code>guard</code>,
+		<code>filter</code> and merged <code>extend</code>ed composers are all ordinary entries in the
+		same list — whichever was chained first runs first. a handler only sees a <code>derive</code>d
+		or plugin-added field if that call happened earlier in the chain.
+	</li>
+	<li><strong>the matched handler runs</strong> — the first routing method whose query/predicate matches.</li>
+</ol>
+<div class="note">
+	<strong><code>decorate</code> is chain-wide, <code>derive</code> is positional.</strong>
+	<code>bot.on("x", (ctx) =&gt; ctx.version)</code> sees a later
+	<code>{'bot.decorate({ version: "1.0.0" })'}</code>
+	just fine — decorations apply once, up front. the same handler would
+	<em>not</em> see a later <code>bot.derive(...)</code> field, because derive is a middleware hop
+	that has to run first. when in doubt, put both before the handlers that use them; only rely on
+	decorate's chain-wide visibility once you understand why it works.
+</div>
 
 <h2>routing methods</h2>
 <p>
@@ -104,6 +192,14 @@ if (matchQuery(ctx, "message:text")) {
 	</tbody>
 </table>
 <Code code={derive} title="derive.ts" />
+<p>
+	the scoped form's fields come back typed as <code>Partial&lt;D&gt;</code>, not <code>D</code>:
+	a handler further downstream can see update types the scoped <code>derive</code> never ran for
+	(nothing stops <code>on("message", ...)</code> from also matching after a <code>derive</code>
+	scoped to <code>["edited_message"]</code>, for instance), so TypeScript can't promise the field
+	is always there — you narrow it with a plain <code>if</code>, same as any other optional field.
+</p>
+<Code code={deriveScoped} title="derive-scoped.ts" />
 
 <h2>plugins</h2>
 <p>
@@ -113,6 +209,23 @@ if (matchQuery(ctx, "message:text")) {
 	bot-only features such as <code>bot.api</code>, <code>onStart()</code>, or <code>onStop()</code>.
 </p>
 <Code code={plugin} title="plugin.ts" />
+
+<h2 id="error-handling">error handling</h2>
+<p>
+	a throw anywhere in the chain — sync, async, or a rejected promise — is caught by
+	<code>handleUpdate</code> and handed to a single error handler. it does not crash the bot and it
+	does not affect other updates: only the update that triggered the error stops processing.
+</p>
+<Code code={errorHandling} title="errors.ts" />
+<table>
+	<thead><tr><th>surface</th><th>what it catches</th></tr></thead>
+	<tbody>
+		<tr><td><code>bot.onError(handler)</code></td><td>anything thrown by middleware/handlers for one update. default: <code>console.error</code>.</td></tr>
+		<tr><td><code>TelegramError</code></td><td>a failed Bot API call — <code>method</code>, <code>code</code>, <code>description</code>, optional <code>parameters</code> (e.g. <code>retry_after</code>).</td></tr>
+		<tr><td><code>bot.onPollingError(handler)</code></td><td>a failed <code>getUpdates</code> long-poll call — unrelated to any single update. polling retries either way.</td></tr>
+		<tr><td><code>bot.api.onError(hook)</code></td><td>per-call retry hook on the API client itself — can return <code>{"{ retry, delayMs }"}</code> to retry the same call. see <a href="/docs/hooks/">hooks &amp; errors</a> and <a href="/docs/plugins/again/">@yaebal/again</a>.</td></tr>
+	</tbody>
+</table>
 
 <h2>bot lifecycle</h2>
 <table>

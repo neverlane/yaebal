@@ -2,7 +2,9 @@
 	import Code from "$lib/Code.svelte";
 	import Try from "$lib/Try.svelte";
 
-	const envCheck = `const token = process.env.BOT_TOKEN;
+	const envCheck = `import { createBot } from "yaebal";
+
+const token = process.env.BOT_TOKEN;
 
 if (!token) {
   throw new Error("BOT_TOKEN is missing");
@@ -10,13 +12,21 @@ if (!token) {
 
 const bot = createBot(token);`;
 
-	const pollingConflict = `// if polling gets 409 conflict, make sure no webhook is set
+	const pollingConflict = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+// if polling gets 409 conflict, make sure no webhook is set
 await bot.api.call("deleteWebhook", { drop_pending_updates: true });
 
 // then start exactly one polling process
 await bot.start();`;
 
-	const allowedUpdates = `const bot = new Bot(token, {
+	const allowedUpdates = `import { Bot } from "@yaebal/core";
+
+const token = process.env.BOT_TOKEN!;
+
+const bot = new Bot(token, {
   allowedUpdates: [
     "message",
     "callback_query",
@@ -26,16 +36,47 @@ await bot.start();`;
   ],
 });`;
 
-	const mediaUpload = `import { media } from "@yaebal/core";
+	const mediaUpload = `import { createBot, media } from "yaebal";
 
-await ctx.sendPhoto(media.url("https://example.com/cat.jpg"));
-await ctx.sendDocument(media.path("./report.pdf"));
-await ctx.sendPhoto("AgACAgIAAx..."); // existing file_id also works`;
+const bot = createBot(process.env.BOT_TOKEN!);
 
-	const webhookCheck = `import type { WebhookInfo } from "@yaebal/types";
+bot.command("send", async (ctx) => {
+  await ctx.sendPhoto(media.url("https://example.com/cat.jpg"));
+  await ctx.sendDocument(media.path("./report.pdf"));
+  await ctx.sendPhoto("AgACAgIAAx..."); // existing file_id also works
+});`;
+
+	const webhookCheck = `import { createBot } from "yaebal";
+import type { WebhookInfo } from "@yaebal/types";
+
+const bot = createBot(process.env.BOT_TOKEN!);
 
 const info = await bot.api.call<WebhookInfo>("getWebhookInfo");
 console.log(info.url, info.last_error_message);`;
+
+	const usersFile = `export const loadUser = async (id: number) => ({ id });`;
+
+	const esmImport = `// @ts-expect-error — ERR_MODULE_NOT_FOUND at runtime: node's esm resolver
+// does not add extensions for you, so this fails to resolve even though
+// users.ts sits right next to this file.
+import { loadUser } from "./users";
+
+// ✅ write .js even though the source file is users.ts — nodenext rewrites
+// nothing at compile time; this is what actually ends up on disk.
+import { loadUser as loadUserFixed } from "./users.js";
+
+await loadUserFixed(1);`;
+
+	const errorTable = [
+		["message is not modified", "editing a message with identical text/markup", "skip the edit, or diff before calling editText/editMessageText"],
+		["can't parse entities: …", "malformed HTML/Markdown passed straight to parse_mode", "build the text with html\`…\`/md\`…\` from @yaebal/fmt instead of raw markup strings"],
+		["query is too old and response timeout expired", "answered a callback query more than ~15s after it arrived", "call answerCallbackQuery() first, before any awaits that can be slow"],
+		["QUERY_ID_INVALID", "reused or already-answered callback_query id", "answer each callback query exactly once"],
+		["chat not found", "wrong/stale chat_id, or the bot was never in that chat", "verify the id; a user must have started the bot or share a chat with it first"],
+		["bot was blocked by the user", "403 on send — the user blocked the bot", "catch and drop this recipient; don't retry it in a broadcast"],
+		["not enough rights to …", "the bot lacks the specific admin permission for that action", "check getChatMember for the bot itself before attempting the action"],
+		["message to delete not found", "deleting a message already deleted or older than 48h", "treat as success — the end state (message gone) is already true"],
+	];
 </script>
 
 <svelte:head>
@@ -47,6 +88,17 @@ console.log(info.url, info.last_error_message);`;
 	symptom-driven fixes for the telegram failures users hit most often in real bots.
 </p>
 
+<h2>error text → cause → fix</h2>
+<p>search this table for the exact wording Telegram (or Node) gave you:</p>
+<table>
+	<thead><tr><th>error text</th><th>cause</th><th>fix</th></tr></thead>
+	<tbody>
+		{#each errorTable as [text, cause, fix]}
+			<tr><td><code>{text}</code></td><td>{cause}</td><td>{fix}</td></tr>
+		{/each}
+	</tbody>
+</table>
+
 <h2>bot does not start</h2>
 <table>
 	<thead><tr><th>symptom</th><th>likely cause</th><th>fix</th></tr></thead>
@@ -57,6 +109,15 @@ console.log(info.url, info.last_error_message);`;
 	</tbody>
 </table>
 <Code code={envCheck} title="env.ts" />
+
+<h2><code>ERR_MODULE_NOT_FOUND</code> / esm import errors</h2>
+<p>
+	yaebal is <code>"type": "module"</code>. Node's ESM resolver does not add extensions for you —
+	a local import needs the <code>.js</code> specifier that the compiled output will actually have,
+	even while editing the <code>.ts</code> source.
+</p>
+<Code code={usersFile} title="users.ts" />
+<Code code={esmImport} title="esm.ts" />
 
 <h2>polling receives no updates</h2>
 <p>
@@ -143,6 +204,20 @@ console.log(info.url, info.last_error_message);`;
 	generated runtime contexts. a bare <code>new Bot(token)</code> from <code>@yaebal/core</code>
 	intentionally exposes the small base context unless you provide a custom context factory.
 </p>
+
+<h2>bot feels slow / updates pile up</h2>
+<p>
+	sequential long polling processes one update at a time by design — a slow handler (a database
+	call, an outbound http request) blocks everything behind it in the same chat and others besides.
+</p>
+<table>
+	<thead><tr><th>symptom</th><th>fix</th></tr></thead>
+	<tbody>
+		<tr><td>updates visibly queue up under load</td><td><a href="/docs/runner/">@yaebal/runner</a> — concurrent polling with per-chat ordering preserved</td></tr>
+		<tr><td>outbound sends get 429'd</td><td><a href="/docs/plugins/throttle/">@yaebal/throttle</a> — buckets outgoing calls under Telegram's own limits</td></tr>
+		<tr><td>calls fail transiently (5xx, network blips)</td><td><a href="/docs/plugins/again/">@yaebal/again</a> — retry with backoff instead of failing the update</td></tr>
+	</tbody>
+</table>
 
 <h2>still stuck</h2>
 <ul>

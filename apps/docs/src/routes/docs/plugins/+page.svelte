@@ -41,7 +41,7 @@ const bot = new Bot(token)
 		["@yaebal/onboarding", "/docs/plugins/onboarding/", "declarative first-run tutorials with inline controls"],
 		["@yaebal/conversation", "/docs/plugins/conversation/", "await-style multi-step dialogs — coroutine by default, durable replay engine opt-in"],
 		["@yaebal/prompt", "/docs/plugins/prompt/", "ask a question, handle the next message"],
-		["@yaebal/router", "/docs/plugins/router/", "file-based routing from a routes/ directory"],
+		["@yaebal/router", "/docs/plugins/router/", "typed file-based routing — define*() routes, nested guards, watchRoutes hot-reload"],
 		["@yaebal/toml", "/docs/plugins/toml/", "declarative toml routes with a handler registry"],
 		["@yaebal/throttle", "/docs/plugins/throttle/", "priority outbound scheduler with Telegram buckets"],
 		["@yaebal/files", "/docs/plugins/files/", "inspect, link, stream and download telegram files"],

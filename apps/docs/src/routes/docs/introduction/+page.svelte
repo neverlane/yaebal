@@ -1,11 +1,15 @@
 <script lang="ts">
+	import { BOT_API_VERSION } from "$lib/api/data.generated";
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
 
 	const chain = `import { Bot, bold, format } from "@yaebal/core";
 
+const loadUser = async (id: number) => ({ id, name: "somebody" });
+
 const bot = new Bot(process.env.BOT_TOKEN!)
-  .derive((ctx) => ({ user: loadUser(ctx.from!.id) }))  // async, per-request
-  .decorate({ version: "1.0.0" })                        // static, zero cost
+  .derive(async (ctx) => ({ user: await loadUser(ctx.from!.id) })) // async, per-request
+  .decorate({ version: "1.0.0" })                                  // static, zero cost
   .command("start", (ctx) => ctx.reply("hello 👋"))
   .on("message:text", (ctx) => {
     ctx.user;     // ✅ added by derive, fully typed
@@ -13,20 +17,24 @@ const bot = new Bot(process.env.BOT_TOKEN!)
     ctx.text;     // ✅ narrowed to string by the filter query
   });
 
-bot.start();`;
+await bot.start();`;
 
-	const invariant = `// Bot extends Composer — there is no separate router.
+	const invariant = `import { Composer, type Context } from "@yaebal/core";
+
+// Bot extends Composer — there is no separate router.
 // derive / decorate / install / extend all return the augmented Bot,
 // so the context type accumulates as you chain.
 
-class Bot<C extends Context> extends Composer<C> { /* … */ }`;
+class Bot<C extends Context> extends Composer<C> {}`;
 </script>
 
 <svelte:head>
 	<title>introduction — yaebal</title>
 </svelte:head>
 
-<h1>introduction</h1>
+<h1 data-pagefind-meta="title">
+	introduction <span class="badge">Bot API {BOT_API_VERSION}</span>
+</h1>
 <p class="lead">
 	yaebal is a type-safe, extensible Telegram Bot API framework where the context type accumulates
 	through a single chainable middleware engine.
@@ -40,6 +48,16 @@ class Bot<C extends Context> extends Composer<C> { /* … */ }`;
 	manual casting and no widening to <code>any</code> in the public surface.
 </p>
 <Code code={chain} title="bot.ts" />
+<Try id="getting-started" title="try it — your first bot" />
+
+<h2>what it costs</h2>
+<p>
+	core has <strong>zero runtime dependencies</strong> and is fetch-first: it runs unmodified on
+	Node 20+, Bun, Deno and edge runtimes like Cloudflare Workers — no shims, no adapter package to
+	pick just to get started. see <a href="/docs/runtimes/">runtime support</a> for the full matrix
+	and <a href="/docs/comparison/">comparison</a> for how that stacks up against grammY, gramio,
+	puregram and telegraf.
+</p>
 
 <h2>the design, borrowed deliberately</h2>
 <p>
@@ -67,6 +85,9 @@ class Bot<C extends Context> extends Composer<C> { /* … */ }`;
 		</tr>
 	</tbody>
 </table>
+<p>
+	see <a href="/docs/comparison/">comparison</a> for a full feature matrix against all four.
+</p>
 
 <h2>the core invariants</h2>
 <p>these are the rules the framework is built to preserve:</p>
@@ -121,4 +142,21 @@ class Bot<C extends Context> extends Composer<C> { /* … */ }`;
 <ul>
 	<li><a href="/docs/getting-started/">getting started</a> — a bot from zero in about a minute</li>
 	<li><a href="/docs/core/">core concepts</a> — the composer, derive/decorate, filter queries</li>
+	<li><a href="/docs/comparison/">comparison</a> — how yaebal stacks up against grammY, gramio, puregram and telegraf</li>
 </ul>
+
+<style>
+	.badge {
+		display: inline-block;
+		vertical-align: middle;
+		margin-left: 10px;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.6px;
+		padding: 4px 9px;
+		border-radius: 8px;
+		background: var(--blue);
+		color: var(--white);
+		font-family: "JetBrains Mono", monospace;
+	}
+</style>

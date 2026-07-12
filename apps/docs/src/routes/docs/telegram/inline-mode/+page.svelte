@@ -1,12 +1,17 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
-	const answer = `bot.on("inline_query", async (ctx) => {
+	const answer = `import { createBot } from "yaebal";
+
+const search = async (query: string) => [{ id: "1", title: "result", text: "text" }];
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("inline_query", async (ctx) => {
   const results = await search(ctx.query);
 
   await ctx.answer(
     results.map((item) => ({
-      type: "article",
+      type: "article" as const,
       id: item.id,
       title: item.title,
       input_message_content: { message_text: item.text },
@@ -15,7 +20,29 @@
   );
 });`;
 
-	const chosen = `bot.on("chosen_inline_result", async (ctx) => {
+	const builderSnippet = `import { createBot } from "yaebal";
+import { InlineQueryResult, InputMessageContent } from "@yaebal/inline-results";
+
+const search = async (query: string) => [{ id: "1", title: "result", url: "https://example.com" }];
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("inline_query", async (ctx) => {
+  const items = await search(ctx.query);
+
+  await ctx.answer(
+    items.map((item) =>
+      InlineQueryResult.article(item.id, item.title, InputMessageContent.text(item.url)),
+    ),
+    { cache_time: 10 },
+  );
+});`;
+
+	const chosen = `import { createBot } from "yaebal";
+
+declare const analytics: { track(event: string, props: Record<string, unknown>): Promise<void> };
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("chosen_inline_result", async (ctx) => {
   await analytics.track("inline_chosen", {
     resultId: ctx.result_id,
     userId: ctx.from.id,
@@ -23,10 +50,13 @@
   });
 });`;
 
-	const keyboard = `new InlineKeyboard()
+	const keyboard = `import { InlineKeyboard } from "yaebal";
+
+new InlineKeyboard()
   .switchInline("share", "product:42")
   .row()
-  .switchInlineCurrentChat("search here", "cats");`;
+  .switchInlineCurrentChat("search here", "cats")
+  .build();`;
 </script>
 
 <svelte:head>
@@ -42,8 +72,19 @@
 <p>
 	inline query handlers must answer with a list of results. keep the response fast, cache where
 	possible, and use <code>is_personal</code> when results depend on the current user.
+	<code>ctx.answer()</code> takes the results array positionally, plus an options object for
+	<code>cache_time</code>/<code>is_personal</code>/<code>next_offset</code>.
 </p>
 <Code code={answer} title="inline-query.ts" />
+
+<h2>build results without hand-rolled objects</h2>
+<p>
+	<a href="/docs/plugins/inline-results/">@yaebal/inline-results</a> ships one typed factory per
+	<code>InlineQueryResult</code>/<code>InputMessageContent</code> variant — required fields are
+	positional, everything else is a trailing options object, so a result reads as data instead of
+	an object literal that can silently drift from the schema.
+</p>
+<Code code={builderSnippet} title="inline-query-builder.ts" />
 
 <h2>track chosen results</h2>
 <p>

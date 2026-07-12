@@ -147,14 +147,14 @@ bot.callbackQuery(vote, async (ctx) => {
 	conversation: {
 		plugins: ["conversation"],
 		imports: ['import { conversation, createConversation } from "@yaebal/conversation";'],
-		pre: `const greet = createConversation("greet", async (cv, ctx) => {
+		pre: `const greet = createConversation(async (cv, ctx) => {
 \tawait ctx.reply("what's your name?");
-\tconst name = await cv.wait();
+\tconst name = await cv.waitFor("message:text");
 \tawait name.reply(\`hi, \${name.text}! how old are you?\`);
-\tconst age = await cv.wait();
+\tconst age = await cv.waitFor("message:text");
 \tawait age.reply(\`\${age.text} — nice to meet you ✨\`);
 });`,
-		install: ["conversation([greet])"],
+		install: ["conversation({ greet })"],
 		body: `bot.command("start", (ctx) => ctx.reply("type /greet to start a short chat"));
 bot.command("greet", (ctx) => ctx.conversation.enter("greet"));`,
 	},

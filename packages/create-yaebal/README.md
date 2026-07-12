@@ -138,8 +138,8 @@ that installs and typechecks on every push — plugin packages get one too, plus
   `throttle`, `ratelimiter`, `auto-answer`, `i18n`, `files`, `prompt`, `split`, …) drop straight into
   the bot chain; the rest are added to `package.json` with a commented import so the starter always
   type-checks. `analytics` and `feature-flags` also leave a commented-out showcase of their other
-  real adapters (posthog/plausible/sqlite/clickhouse; launchdarkly/growthbook) right next to the
-  wired default, so you know they exist without pulling their peer deps in.
+  real adapters (posthog/plausible/sqlite/clickhouse/http; launchdarkly/growthbook) right next to
+  the wired default, so you know they exist without pulling their peer deps in.
 
 ## what you get
 

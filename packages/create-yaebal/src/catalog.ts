@@ -226,20 +226,25 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "analytics",
 		dep: "@yaebal/analytics",
-		hint: "ctx.track(event, properties) — posthog/plausible/sqlite/clickhouse sinks",
+		hint: "ctx.track(event, properties) — typed catalog, auto-capture, privacy controls, posthog/plausible/sqlite/clickhouse/http sinks",
 		wire: "install",
-		import: 'import { analytics, consoleAdapter } from "@yaebal/analytics";',
-		install: "analytics({ adapters: [consoleAdapter()] })",
+		import: 'import { analytics, consoleAdapter, p } from "@yaebal/analytics";',
+		install:
+			'analytics({ events: { start: true, purchase: { props: p.object({ amount: p.number() }) } }, adapters: [consoleAdapter()], autoTrack: ["commands"] })',
 		showcase: `// swap consoleAdapter() for a real sink — each adapter takes a client instance:
-// import { postHogAdapter } from "@yaebal/analytics";   adapters: [postHogAdapter(posthogClient)]
-// import { plausibleAdapter } from "@yaebal/analytics"; adapters: [plausibleAdapter({ domain: "mybot.example" })]
-// import { sqliteAdapter } from "@yaebal/analytics";    adapters: [sqliteAdapter(db)]
-// import { clickhouseAdapter } from "@yaebal/analytics"; adapters: [clickhouseAdapter(clickhouseClient)]`,
+// import { postHogAdapter } from "@yaebal/analytics";    adapters: [postHogAdapter(posthogClient)]
+// import { plausibleAdapter } from "@yaebal/analytics";  adapters: [plausibleAdapter({ domain: "mybot.example" })]
+// import { sqliteAdapter } from "@yaebal/analytics";     adapters: [sqliteAdapter(db)]
+// import { clickhouseAdapter } from "@yaebal/analytics"; adapters: [clickhouseAdapter(clickhouseClient)]
+// import { httpAdapter } from "@yaebal/analytics";       adapters: [httpAdapter("https://collector.example/events")]
+// an in-chat /analytics ops surface, reading through a query()-able adapter (memory/sqlite/clickhouse):
+// import { analyticsAdmin, memoryAdapter } from "@yaebal/analytics";
+// const store = memoryAdapter(); bot.install(analytics({ adapters: [store] })).install(analyticsAdmin({ isAdmin, adapter: store }))`,
 	},
 	{
 		id: "audit-log",
 		dep: "@yaebal/audit-log",
-		hint: "structured logging of updates & api calls — formatters, filters, sampling",
+		hint: "correlated, redacted-by-default audit logging — sinks, filters, sampling",
 		wire: "install",
 		import: 'import { auditLog } from "@yaebal/audit-log";',
 		install: "auditLog()",
@@ -247,18 +252,29 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "cron",
 		dep: "@yaebal/cron",
-		hint: "typed cron jobs — declarative schedule, graceful shutdown",
+		hint: "typed cron jobs — timezones, retries, catch-up, distributed locks, /cron admin",
 		wire: "install",
 		import: 'import { cron } from "@yaebal/cron";',
 		install: 'cron({ jobs: { heartbeat: { schedule: 60_000, task: () => console.log("tick") } } })',
+		showcase: `// gate a chat-native /cron ops surface — list/run/pause/resume/preview any job:
+// import { cronAdmin } from "@yaebal/cron";
+// bot.install(cronAdmin({ isAdmin: (ctx) => ctx.from?.id === OWNER_ID }))
+// per-job timezone + retries + a distributed lock for multi-instance deployments:
+// cron({ tz: "Europe/Moscow", jobs: { digest: { schedule: "0 9 * * *", task: sendDigest, retries: 2, acquireLock } } })`,
 	},
 	{
 		id: "cache",
 		dep: "@yaebal/cache",
-		hint: "ctx.cache.get/set/wrap — ttl memoization for api calls and data",
+		hint: "ctx.cache.get/set/wrap — ttl memoization, stale-while-revalidate, sliding expiry, invalidation",
 		wire: "install",
 		import: 'import { cache } from "@yaebal/cache";',
 		install: "cache({ ttl: 60_000 })",
+		showcase: `// stale-while-revalidate: keep serving a value past ttl while one background call refreshes it
+// ctx.cache.wrap("chat:1", fetchChat, { ttl: 60_000, staleTtl: 300_000 })
+// sliding expiry: "expires 5 minutes after the *last* read", not after the write
+// ctx.cache.set("session:1", data, { ttl: 300_000, sliding: true })
+// bulk invalidation (needs a storage adapter that can enumerate keys — MemoryStorage always can):
+// ctx.cache.invalidatePrefix("chat:")`,
 	},
 	{
 		id: "feature-flags",
@@ -342,9 +358,9 @@ export const PLUGINS: PluginDef[] = [
 	{
 		id: "guards",
 		dep: "@yaebal/guards",
-		hint: "reusable bot.guard() predicates: isAdmin, isPrivate, isGroup, hasMembership, hasPermission",
+		hint: "reusable bot.guard() predicates: isAdmin, hasPermission, cached membership(), guardOr, anonymous-admin aware",
 		wire: "dep",
-		import: 'import { hasPermission, isAdmin, isGroup, isPrivate } from "@yaebal/guards";',
+		import: 'import { guardOr, hasPermission, isAdmin, membership } from "@yaebal/guards";',
 	},
 	{
 		id: "callback-data",

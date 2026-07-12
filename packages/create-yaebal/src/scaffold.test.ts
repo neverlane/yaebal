@@ -104,7 +104,7 @@ test("renderFiles: rich templates pull in plugins, imports and wiring", () => {
 			"src/index.ts"
 		] ?? "";
 	assert.match(conv, /const greet = createConversation\(/);
-	assert.match(conv, /\.install\(conversation\(\[greet\]\)\)/);
+	assert.match(conv, /\.install\(conversation\(\{ greet \}\)\)/);
 });
 
 test("renderFiles: rich-message template wires ctx.sendRichMessage/richMessageDraft", () => {

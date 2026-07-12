@@ -1,10 +1,11 @@
 {
 	"name": "@yaebal/cron",
-	"version": "0.0.2",
-	"description": "yaebal cron — typed cron jobs with declarative schedules, overlap control and graceful shutdown.",
+	"version": "0.1.0",
+	"description": "yaebal cron — typed cron jobs with timezones, retries, catch-up, distributed locks, and a chat-native admin surface.",
 	"type": "module",
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
+	"sideEffects": false,
 	"exports": {
 		".": {
 			"types": "./lib/index.d.ts",

@@ -1,8 +1,9 @@
 {
 	"name": "@yaebal/audit-log",
-	"version": "0.0.2",
-	"description": "yaebal audit-log — structured logging of incoming updates and outgoing api calls, with formatters, filters and sampling.",
+	"version": "0.1.0",
+	"description": "yaebal audit-log — correlated, redacted-by-default structured logging of incoming updates and outgoing api calls, with formatters, filters, sampling, and telegram-native sinks.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {

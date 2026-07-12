@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/sklad",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "yaebal sklad — the shared storage contract and zero-dependency adapters: memory (ttl/lru/clone), redis, sqlite, cloudflare kv, json file.",
 	"type": "module",
 	"main": "./lib/index.js",

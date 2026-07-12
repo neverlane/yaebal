@@ -61,6 +61,28 @@ test("fileStorage hands out detached copies", async () => {
 	assert.equal((await s.get("k"))?.n, 1);
 });
 
+test("fileStorage keys/clear list live keys by prefix and wipe the document", async () => {
+	const path = await tmpPath("keys.json");
+	let t = 0;
+	const s = fileStorage<number>(path, { ttl: 100, now: () => t });
+
+	await s.set("chat:1", 1);
+	await s.set("chat:2", 2);
+	await s.set("user:1", 3);
+
+	assert.deepEqual(new Set(await s.keys?.()), new Set(["chat:1", "chat:2", "user:1"]));
+	assert.deepEqual(new Set(await s.keys?.("chat:")), new Set(["chat:1", "chat:2"]));
+
+	t = 200; // everything expired
+	assert.deepEqual(await s.keys?.(), []);
+
+	t = 0;
+	await s.set("a", 1);
+	await s.clear?.();
+	assert.deepEqual(await s.keys?.(), []);
+	assert.equal(await s.get("a"), undefined);
+});
+
 test("fileStorage serializes concurrent writes into a consistent document", async () => {
 	const path = await tmpPath("concurrent.json");
 	const s = fileStorage<number>(path);

@@ -101,6 +101,20 @@ export function fileStorage<T>(path: string, options: FileStorageOptions = {}): 
 		has(key) {
 			return run(async () => live(await load(), key) !== undefined);
 		},
+		keys(prefix = "") {
+			return run(async () => {
+				const doc = await load();
+				return Object.keys(doc).filter(
+					(key) => key.startsWith(prefix) && live(doc, key) !== undefined,
+				);
+			});
+		},
+		clear() {
+			return run(async () => {
+				data = {};
+				await flush(data);
+			});
+		},
 	};
 
 	if (ttl !== undefined) {

@@ -20,6 +20,13 @@ export interface StorageAdapter<T> {
 	has?(key: string): MaybePromise<boolean>;
 	/** refresh the key's ttl without rewriting the value (sliding expiry). */
 	touch?(key: string): MaybePromise<unknown>;
+	/**
+	 * list keys, optionally filtered to a prefix — enables bulk invalidation. optional:
+	 * not every backing store can enumerate its keyspace cheaply (or at all).
+	 */
+	keys?(prefix?: string): MaybePromise<string[]>;
+	/** drop every key. optional for the same reason as {@link StorageAdapter.keys}. */
+	clear?(): MaybePromise<unknown>;
 }
 
 /** how persistent adapters turn values into strings. defaults to `JSON`. */
@@ -126,6 +133,15 @@ export class MemoryStorage<T> implements StorageAdapter<T> {
 		if (entry !== undefined) entry.at = this.#now();
 	}
 
+	/** live keys, optionally filtered to a prefix. doesn't disturb lru recency. */
+	keys(prefix = ""): string[] {
+		const result: string[] = [];
+		for (const key of [...this.#map.keys()]) {
+			if (key.startsWith(prefix) && this.#live(key) !== undefined) result.push(key);
+		}
+		return result;
+	}
+
 	clear(): void {
 		this.#map.clear();
 	}
@@ -140,6 +156,13 @@ export interface RedisLike {
 	set(key: string, value: string): Promise<unknown>;
 	del(key: string): Promise<unknown>;
 	expire(key: string, seconds: number): Promise<unknown>;
+	/**
+	 * optional: powers `keys()`/`clear()` on the adapter. matches the `KEYS` command as exposed,
+	 * with an identical signature, by both `ioredis` and node-redis v4+ — no driver-specific scan
+	 * cursor handling needed. `KEYS` walks the whole keyspace and blocks the redis server while it
+	 * does; fine for admin/cache-invalidation calls, avoid on a hot path against a large keyspace.
+	 */
+	keys?(pattern: string): Promise<string[]>;
 }
 
 export interface RedisStorageOptions<T> {
@@ -182,12 +205,27 @@ export function redisStorage<T>(
 	// advertise sliding expiry only when a ttl is configured
 	if (seconds !== undefined) adapter.touch = (key) => client.expire(k(key), seconds);
 
+	// advertise enumeration only when the client exposes KEYS
+	if (client.keys) {
+		const scanKeys = client.keys.bind(client);
+		adapter.keys = async (subPrefix = "") => {
+			const raw = await scanKeys(`${k(subPrefix)}*`);
+			return prefix ? raw.map((key) => key.slice(prefix.length)) : raw;
+		};
+		adapter.clear = async () => {
+			const raw = await scanKeys(`${prefix}*`);
+			await Promise.all(raw.map((key) => client.del(key)));
+		};
+	}
+
 	return adapter;
 }
 
 export interface SqliteStatementLike {
 	get(...params: unknown[]): unknown;
 	run(...params: unknown[]): unknown;
+	/** optional: powers `keys()` — both `node:sqlite` and `better-sqlite3` implement it. */
+	all?(...params: unknown[]): unknown[];
 }
 
 /**
@@ -208,6 +246,11 @@ export interface SqliteStorageOptions<T> {
 	serializer?: Serializer<T>;
 	/** clock override, mainly for tests. */
 	now?: () => number;
+}
+
+/** escapes `LIKE` wildcards in a prefix so `keys()` matches it literally, then appends `%`. */
+function likePattern(prefix: string): string {
+	return `${prefix.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`;
 }
 
 /** back storage with sqlite (`node:sqlite`'s `DatabaseSync`, `better-sqlite3`, or anything `SqliteLike`). */
@@ -235,6 +278,10 @@ export function sqliteStorage<T>(
 	);
 	const remove = db.prepare(`DELETE FROM ${table} WHERE "key" = ?`);
 	const refresh = db.prepare(`UPDATE ${table} SET "expires_at" = ? WHERE "key" = ?`);
+	const listKeys = db.prepare(
+		`SELECT "key" FROM ${table} WHERE "key" LIKE ? ESCAPE '\\' AND ("expires_at" IS NULL OR "expires_at" > ?)`,
+	);
+	const deleteAll = db.prepare(`DELETE FROM ${table}`);
 
 	const liveRow = (key: string): { value: string } | undefined => {
 		const row = select.get(key) as { value: string; expires_at: number | null } | undefined;
@@ -266,6 +313,13 @@ export function sqliteStorage<T>(
 
 	if (ttl !== undefined) adapter.touch = (key) => refresh.run(now() + ttl, key);
 
+	// advertise enumeration only when the driver's statements support .all()
+	if (typeof listKeys.all === "function") {
+		adapter.keys = (prefix = "") =>
+			(listKeys.all?.(likePattern(prefix), now()) as { key: string }[]).map((row) => row.key);
+	}
+	adapter.clear = () => deleteAll.run();
+
 	return adapter;
 }
 
@@ -277,6 +331,11 @@ export interface KVNamespaceLike {
 	get(key: string, type: "text"): Promise<string | null>;
 	put(key: string, value: string, options?: { expirationTtl?: number }): Promise<unknown>;
 	delete(key: string): Promise<unknown>;
+	/** optional: powers `keys()`/`clear()` on the adapter — matches the real `KVNamespace.list()`. */
+	list?(options?: {
+		prefix?: string;
+		cursor?: string;
+	}): Promise<{ keys: { name: string }[]; list_complete: boolean; cursor?: string }>;
 }
 
 export interface KvStorageOptions<T> {
@@ -302,7 +361,7 @@ export function kvStorage<T>(
 		options.ttl === undefined ? undefined : Math.max(60, Math.ceil(options.ttl / 1000));
 	const k = (key: string) => prefix + key;
 
-	return {
+	const adapter: StorageAdapter<T> = {
 		async get(key) {
 			const raw = await kv.get(k(key), "text");
 			return raw === null ? undefined : serializer.parse(raw);
@@ -321,4 +380,31 @@ export function kvStorage<T>(
 			return (await kv.get(k(key), "text")) !== null;
 		},
 	};
+
+	// advertise enumeration only when the binding exposes list()
+	if (kv.list) {
+		const list = kv.list.bind(kv);
+		const namesUnder = async (listPrefix: string): Promise<string[]> => {
+			const names: string[] = [];
+			let cursor: string | undefined;
+			for (;;) {
+				const page = await list({ prefix: listPrefix, cursor });
+				names.push(...page.keys.map((entry) => entry.name));
+				if (page.list_complete || page.cursor === undefined) break;
+				cursor = page.cursor;
+			}
+			return names;
+		};
+
+		adapter.keys = async (subPrefix = "") => {
+			const raw = await namesUnder(k(subPrefix));
+			return prefix ? raw.map((name) => name.slice(prefix.length)) : raw;
+		};
+		adapter.clear = async () => {
+			const raw = await namesUnder(prefix);
+			await Promise.all(raw.map((name) => kv.delete(name)));
+		};
+	}
+
+	return adapter;
 }

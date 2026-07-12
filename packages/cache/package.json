@@ -1,8 +1,9 @@
 {
 	"name": "@yaebal/cache",
-	"version": "0.0.3",
-	"description": "yaebal cache — ttl memoization for api calls and arbitrary data: ctx.cache.get/set/wrap, built on @yaebal/sklad storage adapters.",
+	"version": "0.1.0",
+	"description": "yaebal cache — ctx.cache.get/set/wrap with stale-while-revalidate, sliding expiry, negative caching, prefix invalidation, namespaces, and an optional typed key catalog, built on @yaebal/sklad storage adapters.",
 	"type": "module",
+	"sideEffects": false,
 	"main": "./lib/index.js",
 	"types": "./lib/index.d.ts",
 	"exports": {

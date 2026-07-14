@@ -266,7 +266,9 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 		const idArgs = args.filter((a) => ID_FILLABLE.includes(a.name)).map((a) => a.name);
 		const hasFromChat = idArgs.includes("from_chat_id");
 		const fills = idArgs.filter(
-			(n) => providers[n] !== undefined && !(hasFromChat && n === "chat_id"),
+			(n) => providers[n] !== undefined && 
+				!(hasFromChat && n === "chat_id") &&
+				!(n === "callback_query_id" && m.name !== "answerCallbackQuery")
 		);
 
 		if (fills.length === 0) continue;

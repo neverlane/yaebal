@@ -26,7 +26,7 @@ const nameByLower = new Map([...allNames].map((n) => [n.toLowerCase(), n]));
 
 function extractApiShortcuts() {
 	const text = readFileSync(new URL("packages/core/src/api.ts", repoRoot), "utf8");
-	const ifaceMatch = text.match(/export interface Api \{([\s\S]*?)\n\}/);
+	const ifaceMatch = text.match(/export interface Api(?: extends [^{]+)? \{([\s\S]*?)\n\}/);
 	if (!ifaceMatch) throw new Error("generate-api-reference: couldn't find `interface Api` in api.ts");
 
 	const excluded = new Set(["call", "before", "after", "onError", "fileUrl"]);

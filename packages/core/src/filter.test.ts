@@ -77,6 +77,36 @@ test("ctx.senderChat reads sender_chat off a callback_query's message", () => {
 	assert.equal(ctx.senderChat?.id, -2);
 });
 
+test("ctx.entities reads message.entities, falls back to caption_entities, undefined when neither", () => {
+	const entity = { type: "bold" as const, offset: 0, length: 2 };
+
+	const fromText = makeCtx({
+		update_id: 5,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			text: "hi",
+			entities: [entity],
+		},
+	} as Update);
+	assert.deepEqual(fromText.entities, [entity]);
+
+	const fromCaption = makeCtx({
+		update_id: 6,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			caption: "pic",
+			caption_entities: [entity],
+		},
+	} as Update);
+	assert.deepEqual(fromCaption.entities, [entity]);
+
+	assert.equal(makeMessageCtx("hi").entities, undefined);
+});
+
 test("filter: runs handlers when the filter returns true", async () => {
 	let called = false;
 	const composer = new Composer().filter(

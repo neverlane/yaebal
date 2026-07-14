@@ -7,15 +7,15 @@ it describes where we are going, not only what is already built. implemented ite
 ## 0. dna: what came from where
 
 | idea | source | status |
-|---|---|---|
-| chainable `Composer`, context type accumulates through the chain (`derive`/`decorate`/`extend`) | gramio | ✅ done |
-| filter queries `on("message:text")` with context type narrowing | grammy | ✅ partial |
-| shortcut routers (`command`/`hears`/`callbackQuery`) on top of queries | grammy + gramio | planned |
-| `api.call(method, params)` passthrough for not-yet-typed methods | puregram | ✅ done |
-| `ctx.is("callback_query")` narrowing | puregram | ✅ done |
-| request hooks `api.before/after` (retry, throttle, media-cache attach here) | puregram | ✅ done |
-| media abstraction `MediaSource` (path/url/buffer/fileId) | puregram | ✅ done |
-| decoupled type codegen from Bot API schema | puregram | ✅ `@yaebal/types` (359 objects + 180 methods) |
+|:------------------------------------------------------------------------------------------------|:----------------|:-----------------------------------------------|
+| chainable `Composer`, context type accumulates through the chain (`derive`/`decorate`/`extend`) | gramio          | ✅ done                                        |
+| filter queries `on("message:text")` with context type narrowing                                 | grammy          | ✅ partial                                     |
+| shortcut routers (`command`/`hears`/`callbackQuery`) on top of queries                          | grammy + gramio | planned                                        |
+| `api.call(method, params)` passthrough for not-yet-typed methods                                | puregram        | ✅ done                                        |
+| `ctx.is("callback_query")` narrowing                                                            | puregram        | ✅ done                                        |
+| request hooks `api.before/after` (retry, throttle, media-cache attach here)                     | puregram        | ✅ done                                        |
+| media abstraction `MediaSource` (path/url/buffer/fileId)                                        | puregram        | ✅ done                                        |
+| decoupled type codegen from Bot API schema                                                      | puregram        | ✅ `@yaebal/types` (359 objects + 180 methods) |
 
 invariants (never break):
 
@@ -41,7 +41,7 @@ added: **`install(plugin)`** — see §1.6.
 
 grammy-style syntax `L1:L2:L3`. the beloved `message:text` is `L1:L2`.
 
-```
+```text
 L1  update type     message · edited_message · channel_post · callback_query ·
                     inline_query · poll · poll_answer · my_chat_member ·
                     chat_member · chat_join_request · message_reaction · ...
@@ -55,6 +55,7 @@ L3  sub-content     on message:entities:  url · mention · hashtag · bot_comma
 ```
 
 shortcuts:
+
 - `:text` — any update with text (`message` / `edited_message` / `channel_post`).
 - `::url` — any update containing a `url` entity.
 - array: `on(["message:text", "edited_message:text"], handler)`.
@@ -62,12 +63,12 @@ shortcuts:
 **type narrowing.** `Filtered<C, Q>` writes non-optional fields into the context per query:
 
 | query | context receives |
-|---|---|
-| `…:text` / `…:caption` | `text: string` |
-| `…:data` / `callback_query` | `callbackQuery: CallbackQuery` |
-| `…:photo` | `message: Message & { photo: PhotoSize[] }` |
-| `…:video` / `…:sticker` / `…:audio` / `…:voice` / `…:document` / `…:animation` / `…:contact` / `…:location` / `…:poll` / `…:dice` / `…:venue` / `…:video_note` / `…:game` / `…:invoice` / `…:successful_payment` | `message: Message & { <field>: <type> }` |
-| `…:entities:url` | `entities: MessageEntity[]` |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------|
+| `…:text` / `…:caption`                                                                                                                                                                                           | `text: string`                              |
+| `…:data` / `callback_query`                                                                                                                                                                                      | `callbackQuery: CallbackQuery`              |
+| `…:photo`                                                                                                                                                                                                        | `message: Message & { photo: PhotoSize[] }` |
+| `…:video` / `…:sticker` / `…:audio` / `…:voice` / `…:document` / `…:animation` / `…:contact` / `…:location` / `…:poll` / `…:dice` / `…:venue` / `…:video_note` / `…:game` / `…:invoice` / `…:successful_payment` | `message: Message & { <field>: <type> }`    |
+| `…:entities:url`                                                                                                                                                                                                 | `entities: MessageEntity[]`                 |
 
 ✅ `text`/`caption`/`data`/media content fields (photo, video, sticker, …) are implemented now.
 **lazy default for anything else: an unknown query doesn't narrow the type (returns `C`) but still
@@ -80,14 +81,14 @@ tail `text` is checked via `checkField`. ✅
 
 thin wrappers; each simply pushes middleware with a `matchQuery` check. not a new subsystem.
 
-| method | equivalent query | adds to ctx | source |
-|---|---|---|---|
-| `command("start", h)` | `message:text` where text starts with `/start` | `ctx.command`, `ctx.args` | grammy + gramio |
-| `hears(/rx/ \| "str", h)` | `message:text\|caption` + match | `ctx.match` | puregram hear + grammy |
-| `callbackQuery(data \| /rx/ \| CallbackData, h)` | `callback_query:data` + match | `ctx.match` | grammy + gramio |
-| `reaction("👍", h)` | `message_reaction` | — | grammy |
-| `chatType("private", h)` | guard on `ctx.chat.type` | — | grammy |
-| `inlineQuery(/rx/, h)` | `inline_query:query` + match | `ctx.match` | grammy |
+| method                                           | equivalent query                               | adds to ctx               | source                 |
+|:-------------------------------------------------|:-----------------------------------------------|:--------------------------|:-----------------------|
+| `command("start", h)`                            | `message:text` where text starts with `/start` | `ctx.command`, `ctx.args` | grammy + gramio        |
+| `hears(/rx/ \| "str", h)`                        | `message:text\|caption` + match                | `ctx.match`               | puregram hear + grammy |
+| `callbackQuery(data \| /rx/ \| CallbackData, h)` | `callback_query:data` + match                  | `ctx.match`               | grammy + gramio        |
+| `reaction("👍", h)`                              | `message_reaction`                             | —                         | grammy                 |
+| `chatType("private", h)`                         | guard on `ctx.chat.type`                       | —                         | grammy                 |
+| `inlineQuery(/rx/, h)`                           | `inline_query:query` + match                   | `ctx.match`               | grammy                 |
 
 `hear` from puregram is **not** a separate plugin — it's `bot.hears` in core.
 
@@ -109,19 +110,23 @@ transparently (puregram idea — a new Bot API method works before types are reg
 added (critical — half the plugin catalog depends on this):
 
 **request hooks** (puregram):
+
 ```ts
 api.before((method, params) => params | void)   // throttle, media-cache, media upload rewrite
 api.after((method, result) => result | void)     // hydrate
 api.onError((method, error, retry) => ...)        // again (auto-retry), logging
 ```
+
 implementation — arrays of interceptors inside `createApi`, run around `call`.
 without this, `again`/`throttle`/`media-cache` would have to be baked into core one by one —
 instead they are just subscribers.
 
 **media abstraction** `MediaSource` (puregram) — discriminated union:
+
 ```ts
 MediaSource.path("./a.jpg") | .url("https://…") | .buffer(buf) | .fileId("AgAC…") | .stream(rs)
 ```
+
 the api layer knows how to turn each variant into `multipart/form-data` or a string
 (`file_id`/url). `@yaebal/files` (upload) and `@yaebal/media-cache` (cache) are built on this.
 
@@ -145,6 +150,7 @@ install<Out extends object>(plugin: BotPlugin<C, Out>): Bot<C & Out>;
 ```
 
 the compiler catches missing dependencies:
+
 ```ts
 const session:  Plugin<Context, { session: Session }>;
 const tolmach: Plugin<Context & { session: Session }, { t: TFn; changeLanguage(l): void }>;
@@ -254,7 +260,7 @@ source = where the idea came from.
 
 ### dependency graph (core)
 
-```
+```text
 sklad ─→ session ─→ i18n
      │          ├→ scenes
      │          ├→ onboarding
@@ -365,29 +371,29 @@ bot.chatType("private", h)
 
 ## 5. build order
 
-**m0 — core (extend existing)**
+### m0 — core (extend existing)
 
 - request hooks `api.before/after/onError` in `createApi`
 - `install(plugin)` + `Plugin` type
 - complete `Filtered` mapping for common queries + shortcut routers (`command`/`hears`/`callbackQuery`)
 
-**m1 — plugin foundation**
+### m1 — plugin foundation
 
 - ✅ `session` — storage contract and `MemoryStorage` extracted into ✅ `sklad` (memory/redis/sqlite/cloudflare kv/file), session re-exports them for backwards compatibility
 - ✅ `keyboard` (keyboard builder) + `callback-data` (typed callback_data, `.pattern` integrates with `bot.callbackQuery`)
 - `again` (on `api.onError`) — also verifies the monorepo pulls in a second package correctly
 
-**m2 — ux flagship**
+### m2 — ux flagship
 
 - ✅ **m2a** `morda` (builder api): windows + render + callback routing + navigation stack + stale-press gate. `button`/`switchTo`/`back` helpers, `ctx.dialog`
 - ✅ **m2b** `morda/jsx`: jsx runtime + hooks. "one screen = one message → no reconciler"; `setState` → `editMessageText` in place; hook state in frame slots, evicted on screen close; component navigation (`push(HomeScreen)`). screen example works.
 
-**m3 — soft context dependencies**
+### m3 — soft context dependencies
 
 - ✅ `i18n` → activates `useTranslation` (per-chat locale, fallback, `{placeholder}` interpolation)
 - ✅ `scenes` (durable wizards: firstTime steps, typed state/params, `ask()`, navigation, sub-scenes, passthrough/passCommands, ttl) + ✅ `prompt` (`ctx.prompt`, callback-style). both don't block the sequential loop (unlike await-prompt which would require concurrent dispatch)
 
-**m4 — infra on demand (yagni until needed)**
+### m4 — infra on demand (yagni until needed)
 
 - ✅ `router` · `throttle` · `files` (+ core `api.fileUrl`) · `ratelimiter` · `broadcast`
 - ✅ `web` — operator panel (view chats / reply from the browser): `recorder` plugin + `PanelStore` + `panelHandler` (fetch). webhooks moved to core (`webhookCallback`)

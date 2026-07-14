@@ -1,7 +1,15 @@
 import type { Api } from "./api.js";
 import { type FormatResult, isFormatResult } from "./format.js";
 import { isMediaSource, type MediaSource } from "./media.js";
-import type { CallbackQuery, Chat, Message, Update, UpdateName, User } from "./telegram-types.js";
+import type {
+	CallbackQuery,
+	Chat,
+	Message,
+	MessageEntity,
+	Update,
+	UpdateName,
+	User,
+} from "./telegram-types.js";
 
 export interface ContextOptions {
 	api: Api;
@@ -184,6 +192,11 @@ export class Context {
 
 	get text(): string | undefined {
 		return this.message?.text ?? this.message?.caption;
+	}
+
+	/** entities of `text` — `message.entities` falling back to `message.caption_entities`. */
+	get entities(): MessageEntity[] | undefined {
+		return this.message?.entities ?? this.message?.caption_entities;
 	}
 
 	/** narrowing helper in the puregram spirit: `if (ctx.is("callback_query"))`. */

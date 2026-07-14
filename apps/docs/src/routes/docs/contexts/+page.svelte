@@ -1,5 +1,29 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
+	import Try from "$lib/Try.svelte";
+
+	const howToGetThem = `// 1. createBot() (the "yaebal" meta package) — the rich contexts by default
+import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+bot.on("message:text", (ctx) => ctx.react("🔥")); // ✅ typed and present at runtime
+
+// 2. bare @yaebal/core Bot — only the small base Context, no autogen shortcuts
+import { Bot as CoreBot } from "@yaebal/core";
+
+const bare = new CoreBot(process.env.BOT_TOKEN!);
+// bare.on("message:text", (ctx) => ctx.react("🔥"));
+//                                      ^^^^^ Property 'react' does not exist
+
+// 3. yaebal's Bot with your own contextFactory — override what createBot() wires
+// by default (e.g. to wrap richContext with your own instrumentation), and stay
+// fully typed since it's still yaebal's Bot subclass underneath
+import { Bot, richContext } from "yaebal";
+
+const wired = new Bot(process.env.BOT_TOKEN!, {
+  contextFactory: (api, update, updateType, me) => richContext(api, update, updateType, me),
+});
+wired.on("message:text", (ctx) => ctx.react("🔥")); // ✅ same as createBot()`;
 
 	const pipeline = `Telegram Bot API (HTML)
         │  our own parser (scripts/lib/parse-schema.mjs) → machine-readable JSON
@@ -22,7 +46,8 @@ from            →  user_id      = this.from.id
 CallbackQuery   →  callback_query_id = this.id
                    chat_id / message_id from this.message`;
 
-	const generated = `// generated/message.ts — derived, never hand-written
+	const generated = `// generated/message.ts — one shortcut per method whose id-arguments this
+// context's providers cover; the omitted keys are filled in for you:
 react(params: Omit<SetMessageReactionParams, "chat_id" | "message_id">) {
   return this.api.call<boolean>("setMessageReaction", {
     chat_id: this.chat.id,
@@ -43,29 +68,15 @@ react(params: Omit<SetMessageReactionParams, "chat_id" | "message_id">) {
 # → ctx.react() now exists on every Message-based context.
 #   gramio would need a maintainer to hand-write it.`;
 
-	const sugar = `// src/sugar/message.ts — thin hand-written layer (a "mixin")
-export class MessageContext extends MessageContextBase {
-  override send(text: string, params?: SendExtra): Promise<Message>;
-  override send(params: Omit<SendMessageParams, "chat_id">): Promise<Message>;
-  override send(a, b?) {
-    return super.send(typeof a === "string" ? { text: a, ...b } : a);
-  }
-}`;
+	const positional = `import { createBot } from "yaebal";
+import { InlineKeyboard } from "@yaebal/keyboard";
 
-	const usage = `bot.on("message:text", (ctx) => {
-  ctx.send("hi");                  // positional sugar
-  ctx.reply("yo", { parse_mode: "HTML" });
-  ctx.react("🔥");                  // auto-generated, no chat_id/message_id
-  ctx.editText("edited");
-});`;
+const bot = createBot(process.env.BOT_TOKEN!);
 
-	const positional = `// generated positional overloads — the params-object form always still works
+// generated positional overloads — the params-object form always still works
 bot.on("message", async (ctx) => {
-  await ctx.sendPhoto(media.path("cat.jpg"), { caption: "мяу" });
-  await ctx.sendPhoto("https://cataas.com/cat");        // url / file_id string
-  await ctx.sendDocument(media.buffer(buf, "report.pdf"));
-
-  await ctx.forward(ADMIN_CHAT_ID);                     // target chat, positional
+  await ctx.sendPhoto("https://cataas.com/cat", { caption: "мяу" });
+  await ctx.forward(123456789);                         // target chat, positional
   await ctx.copy("@archive", { disable_notification: true });
 
   await ctx.sendPoll("tabs or spaces?", ["tabs", "spaces"], { is_anonymous: false });
@@ -79,19 +90,36 @@ bot.on("callback_query", async (ctx) => {
   await ctx.editReplyMarkup();                          // no arg = remove keyboard
 });`;
 
-	const mixinExtra = `// hand-written mixin sugar (MessageSugar) — logic a schema can't express
+	const usage = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("message:text", (ctx) => {
+  ctx.send("hi");                  // positional sugar
+  ctx.reply("yo", { parse_mode: "HTML" });
+  ctx.react("🔥");                  // auto-generated, no chat_id/message_id
+  ctx.editText("edited");
+});`;
+
+	const mixinExtra = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
 bot.on("message", async (ctx) => {
   await ctx.typing();               // sendChatAction "typing" (any action: ctx.typing("upload_photo"))
   await ctx.quote("deal", "noted"); // reply quoting a piece of this message
 
   // moderation — target defaults to the sender of this message
   await ctx.ban();                  // banChatMember(ctx.from.id)
-  await ctx.unban(userId);
+  await ctx.unban(123456789);
   await ctx.mute(3600);             // restrict all sending for an hour
-  await ctx.restrict({ can_send_messages: false }, { user_id });
+  await ctx.restrict({ can_send_messages: false }, { user_id: 123456789 }); // explicit target
 });`;
 
-	const getters = `// camel-case getters generated on EVERY context that has the field
+	const getters = `import { createBot } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
 bot.on("message:text", (ctx) => {
   ctx.senderId;   // number | undefined
   ctx.chatId;     // number
@@ -99,26 +127,72 @@ bot.on("message:text", (ctx) => {
   ctx.isPM;       // boolean   (also isGroup, messageId)
 });`;
 
-	const shortcuts = `ctx.react("🔥");                          // emoji
-ctx.react("🔥", "<custom_emoji_id>");     // custom emoji (+ fallback)
-ctx.react([{ emoji: "👍" }, { custom_emoji_id: "1" }]);   // many
-ctx.react();                              // clear all
+	const shortcuts = `import { createBot } from "yaebal";
 
-callbackCtx.answer("saved");              // CallbackQueryContext
-inlineCtx.answer([...results]);           // InlineQueryContext
-joinCtx.approve();   joinCtx.decline();   // ChatJoinRequestContext
-shippingCtx.answer(true);                 // ShippingQueryContext`;
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.on("message", async (ctx) => {
+  await ctx.react("🔥");                          // emoji
+  await ctx.react("🔥", "<custom_emoji_id>");     // custom emoji (+ fallback)
+  await ctx.react([{ emoji: "👍" }, { custom_emoji_id: "1" }]);   // many
+  await ctx.react();                              // clear all
+});
+
+bot.on("callback_query", (callbackCtx) => callbackCtx.answer("saved"));
+bot.on("inline_query", (inlineCtx) => inlineCtx.answer([]));
+bot.on("chat_join_request", (joinCtx) => joinCtx.approve());   // or joinCtx.decline()
+bot.on("shipping_query", (shippingCtx) => shippingCtx.answer(true));`;
+
+	const contextTable: [string, string][] = [
+		["message", "MessageContext"],
+		["edited_message", "EditedMessageContext"],
+		["channel_post", "ChannelPostContext"],
+		["edited_channel_post", "EditedChannelPostContext"],
+		["business_connection", "BusinessConnectionContext"],
+		["business_message", "BusinessMessageContext"],
+		["edited_business_message", "EditedBusinessMessageContext"],
+		["deleted_business_messages", "DeletedBusinessMessagesContext"],
+		["guest_message", "GuestMessageContext"],
+		["message_reaction", "MessageReactionContext"],
+		["message_reaction_count", "MessageReactionCountContext"],
+		["inline_query", "InlineQueryContext"],
+		["chosen_inline_result", "ChosenInlineResultContext"],
+		["callback_query", "CallbackQueryContext"],
+		["shipping_query", "ShippingQueryContext"],
+		["pre_checkout_query", "PreCheckoutQueryContext"],
+		["purchased_paid_media", "PurchasedPaidMediaContext"],
+		["poll", "PollContext"],
+		["poll_answer", "PollAnswerContext"],
+		["my_chat_member", "MyChatMemberContext"],
+		["chat_member", "ChatMemberContext"],
+		["chat_join_request", "ChatJoinRequestContext"],
+		["chat_boost", "ChatBoostContext"],
+		["removed_chat_boost", "RemovedChatBoostContext"],
+		["managed_bot", "ManagedBotContext"],
+	];
 </script>
 
 <svelte:head>
 	<title>contexts — yaebal</title>
 </svelte:head>
 
-<h1>contexts <span class="badge">killer feature</span></h1>
+<h1 data-pagefind-meta="title">contexts <span class="badge">killer feature</span></h1>
 <p class="lead">
 	gramio-style per-update context classes — except the shortcut methods aren't hand-written.
 	they're generated from the Bot API schema, so they're always complete and never lag a version.
 </p>
+
+<h2>how to get them</h2>
+<p>
+	rich contexts aren't automatic on a bare <code>@yaebal/core</code> <code>Bot</code> — they're
+	wired in by a <code>contextFactory</code>. the batteries-included <code>yaebal</code> meta
+	package's <code>createBot()</code> sets that factory for you; <code>new Bot()</code> from
+	plain <code>@yaebal/core</code> gives you the small base <a href="/docs/context"
+		><code>Context</code></a
+	> with no <code>ctx.react</code>/<code>ctx.editText</code>/etc. every example on this page uses
+	<code>createBot()</code>.
+</p>
+<Code code={howToGetThem} title="setup.ts" />
 
 <h2>how it's built</h2>
 <p>
@@ -134,12 +208,12 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 </p>
 <Code code={providers} title="providers" lang="text" />
 <p>
-	<strong>2. matching</strong> — for each of the 180 Bot API methods, it collects the id-arguments
-	(<code>chat_id</code>, <code>message_id</code>, <code>user_id</code>, query ids). if the
-	context's providers cover the required ones, it emits a shortcut with those keys
-	<code>Omit</code>-ted from the params:
+	<strong>2. matching</strong> — for each of the Bot API's methods (180 as of this Bot API
+	version), it collects the id-arguments (<code>chat_id</code>, <code>message_id</code>,
+	<code>user_id</code>, query ids). if the context's providers cover the required ones, it emits
+	a shortcut with those keys <code>Omit</code>-ted from the params:
 </p>
-<Code code={generated} title="generated/message.ts" />
+<Code code={generated} title="generated/message.ts" lang="text" />
 
 <h2>adding a feature is free</h2>
 <p>
@@ -175,28 +249,26 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 	every message-based context — <code>message</code>, <code>channel_post</code>, the
 	<code>edited_*</code>, <code>business_*</code> and <code>guest_message</code> ones — because a
 	TS class can't inherit from two bases: the generated <code>*Base</code> class provides the api
-	surface, the mixin function wraps it with overloads. it adds:
+	surface, the mixin function wraps it with overloads. it adds positional-string
+	<code>send</code>/<code>reply</code>/<code>editText</code>/<code>editCaption</code>, a
+	five-shape <code>react</code>, and:
 </p>
+<Code code={usage} title="handler.ts" />
+<Code code={mixinExtra} title="mixin-extra.ts" />
+<Try id="quote-react-forward" title="try it — quote, react, and forward" />
 <ul>
-	<li>
-		positional-string <code>send</code> / <code>reply</code> / <code>editText</code> /
-		<code>editCaption</code>, and <code>react</code> with five call shapes (emoji, custom emoji,
-		shorthand objects, arrays, raw params);
-	</li>
 	<li><code>typing(action?)</code> — <code>sendChatAction</code>, defaults to <code>"typing"</code>;</li>
 	<li><code>quote(quoteText, text)</code> — reply quoting a piece of this message;</li>
 	<li>
 		moderation with the sender as the default target: <code>ban(userId?)</code>,
-		<code>unban(userId?)</code>, <code>restrict(permissions)</code>, <code>mute(seconds?)</code>;
+		<code>unban(userId?)</code>, <code>restrict(permissions, params?)</code>,
+		<code>mute(seconds?)</code> — <code>params.user_id</code> overrides the target;
 	</li>
 	<li>
 		business/topic routing on every one of them — <code>business_connection_id</code>,
 		<code>message_thread_id</code> and the direct-messages topic are carried automatically.
 	</li>
 </ul>
-<Code code={sugar} title="sugar/message.ts" />
-<Code code={usage} title="handler.ts" />
-<Code code={mixinExtra} title="mixin-extra.ts" />
 
 <h2>convenience getters</h2>
 <p>
@@ -207,15 +279,24 @@ shippingCtx.answer(true);                 // ShippingQueryContext`;
 </p>
 <Code code={getters} title="getters.ts" />
 
-<h2>per-context shortcuts</h2>
+<h2>query contexts get their own shortcuts too</h2>
 <p>
-	one <code>MessageSugar</code> mixin gives every message-based context (<code>message</code>,
-	<code>channel_post</code>, the <code>edited_*</code> and <code>business_*</code> ones) the positional
-	<code>send</code> / <code>reply</code> / <code>react</code> / <code>editText</code> plus
-	<code>typing</code> / <code>quote</code> / <code>ban</code> / <code>mute</code>; query contexts
-	get a positional <code>answer</code>; join requests get <code>approve</code> / <code>decline</code>.
+	the mixin above is message-only; other update kinds get a smaller, matching set — a positional
+	<code>answer</code> on every query context, <code>approve</code>/<code>decline</code> on join
+	requests:
 </p>
 <Code code={shortcuts} title="shortcuts.ts" />
+
+<h2>all 25 contexts</h2>
+<p>one class per <code>Update</code> field — <code>on(query)</code> types the handler to the matching one:</p>
+<table>
+	<thead><tr><th>filter query head</th><th>context class</th></tr></thead>
+	<tbody>
+		{#each contextTable as [head, cls] (head)}
+			<tr><td><code>{head}</code></td><td><code>{cls}</code></td></tr>
+		{/each}
+	</tbody>
+</table>
 
 <table>
 	<thead>

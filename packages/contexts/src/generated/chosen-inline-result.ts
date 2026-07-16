@@ -31,7 +31,7 @@ export class ChosenInlineResultContext {
 	setUserEmojiStatus(params: Omit<t.SetUserEmojiStatusParams, "user_id">) {
 		return this.api.call<boolean>("setUserEmojiStatus", { user_id: this.from.id, ...params });
 	}
-	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
+	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
 	getUserPersonalChatMessages(params: Omit<t.GetUserPersonalChatMessagesParams, "user_id">) {
 		return this.api.call<t.Message[]>("getUserPersonalChatMessages", { user_id: this.from.id, ...params });
 	}

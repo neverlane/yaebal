@@ -26,6 +26,7 @@ import { ChatJoinRequestContext } from "../sugar/chat-join-request.js";
 import { ChatBoostContext } from "./chat-boost.js";
 import { RemovedChatBoostContext } from "./removed-chat-boost.js";
 import { ManagedBotContext } from "./managed-bot.js";
+import { SubscriptionContext } from "./subscription.js";
 
 export { MessageContext } from "../sugar/message.js";
 export { MessageContextBase } from "./message.js";
@@ -64,6 +65,7 @@ export { ChatJoinRequestContextBase } from "./chat-join-request.js";
 export { ChatBoostContext } from "./chat-boost.js";
 export { RemovedChatBoostContext } from "./removed-chat-boost.js";
 export { ManagedBotContext } from "./managed-bot.js";
+export { SubscriptionContext } from "./subscription.js";
 
 /** maps an update type to its context class. */
 export interface ContextByType {
@@ -92,6 +94,7 @@ export interface ContextByType {
 	chat_boost: ChatBoostContext;
 	removed_chat_boost: RemovedChatBoostContext;
 	managed_bot: ManagedBotContext;
+	subscription: SubscriptionContext;
 }
 
 const CONTEXTS = {
@@ -120,6 +123,7 @@ const CONTEXTS = {
 	chat_boost: ChatBoostContext,
 	removed_chat_boost: RemovedChatBoostContext,
 	managed_bot: ManagedBotContext,
+	subscription: SubscriptionContext,
 } satisfies { [K in keyof ContextByType]: new (api: Api, update: t.Update) => ContextByType[K] };
 
 /** build the right context for an update. */

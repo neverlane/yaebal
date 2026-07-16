@@ -26,13 +26,22 @@ const nameByLower = new Map([...allNames].map((n) => [n.toLowerCase(), n]));
 
 function extractApiShortcuts() {
 	const text = readFileSync(new URL("packages/core/src/api.ts", repoRoot), "utf8");
-	const ifaceMatch = text.match(/export interface Api(?: extends [^{]+)? \{([\s\S]*?)\n\}/);
+	const ifaceMatch = text.match(/export interface Api(?: extends ([^{]+))? \{([\s\S]*?)\n\}/);
 	if (!ifaceMatch) throw new Error("generate-api-reference: couldn't find `interface Api` in api.ts");
 
 	const excluded = new Set(["call", "before", "after", "onError", "fileUrl"]);
 	const names = new Set();
 
-	for (const m of ifaceMatch[1].matchAll(/\n\t(\w+)\(/g)) {
+	// `Api extends BotApiMethods` proxies every Telegram Bot API method onto Api directly
+	// (packages/types' generator emits one BotApiMethods member per schema method) — so if
+	// that's in the extends clause, every schema method is a direct shortcut, not just the
+	// ones written out in Api's own body.
+	const extendsClause = ifaceMatch[1] ?? "";
+	if (/\bBotApiMethods\b/.test(extendsClause)) {
+		for (const m of schema.methods) names.add(m.name);
+	}
+
+	for (const m of ifaceMatch[2].matchAll(/\n\t(\w+)\(/g)) {
 		if (!excluded.has(m[1])) names.add(m[1]);
 	}
 
@@ -53,17 +62,25 @@ const methodNameSet = new Set(schema.methods.map((m) => m.name));
 
 function extractShortcutsFromSource(text) {
 	const out = [];
-	const methodRe = /\/\*\*([\s\S]*?)\*\/\n\t(\w+)\(([^)]*)\)(?:\s*:\s*[^{]+)?\s*\{/g;
+	// `(get\s+)?` must be explicit: without it, a jsdoc'd getter (`get senderId(): T { ... }`)
+	// fails to match here (no "(" right after "get"), and the lazy `[\s\S]*?` backtracks past
+	// it — silently merging the getter's source, and any getters after it, into the jsdoc of
+	// whatever method eventually matches next.
+	const methodRe = /\/\*\*([\s\S]*?)\*\/\n\t(get\s+)?(\w+)\(([^)]*)\)(?:\s*:\s*[^{]+)?\s*\{/g;
 	let m = methodRe.exec(text);
 
 	while (m !== null) {
+		if (m[2]) {
+			m = methodRe.exec(text);
+			continue;
+		}
 		const jsdoc = m[1]
 			.split("\n")
 			.map((line) => line.replace(/^[ \t]*\*?[ \t]?/, "").trim())
 			.filter(Boolean)
 			.join(" ");
-		const name = m[2];
-		const paramsSrc = m[3].replace(/\bt\./g, "");
+		const name = m[3];
+		const paramsSrc = m[4].replace(/\bt\./g, "");
 
 		let depth = 1;
 		let i = m.index + m[0].length;

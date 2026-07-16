@@ -96,7 +96,7 @@ export class CallbackQueryContextBase {
 	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id"> & { chat_id?: number | string }) {
 		return this.api.call<t.Message>("sendPaidMedia", { ...(((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined) ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "sendPaidMedia") }), ...(((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined) ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...(((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined) ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
-	/** Use this method to send a group of photos, live photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects that were sent is returned. */
+	/** Use this method to send a group of photos, live photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects that were sent is returned. */
 	sendMediaGroup(params: Omit<t.SendMediaGroupParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id"> & { chat_id?: number | string }) {
 		return this.api.call<t.Message[]>("sendMediaGroup", { ...(((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined) ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "sendMediaGroup") }), ...(((this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined) === undefined) ? {} : { message_thread_id: this.message && "message_thread_id" in this.message ? this.message.message_thread_id : undefined }), ...(((this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined) === undefined) ? {} : { direct_messages_topic_id: this.message && "direct_messages_topic" in this.message ? this.message.direct_messages_topic?.topic_id : undefined }), ...params });
 	}
@@ -269,7 +269,7 @@ export class CallbackQueryContextBase {
 	getChatAdministrators(params: Omit<t.GetChatAdministratorsParams, "chat_id"> & { chat_id?: number | string }) {
 		return this.api.call<t.ChatMember[]>("getChatAdministrators", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "getChatAdministrators") }), ...params });
 	}
-	/** Use this method to get the number of members in a chat. Returns *Int* on success. */
+	/** Use this method to get the number of members in a chat. Returns *Integer* on success. */
 	getChatMemberCount(params?: Omit<t.GetChatMemberCountParams, "chat_id"> & { chat_id?: number | string }) {
 		return this.api.call<number>("getChatMemberCount", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "getChatMemberCount") }), ...params });
 	}
@@ -277,7 +277,7 @@ export class CallbackQueryContextBase {
 	getChatMember(params?: Omit<t.GetChatMemberParams, "chat_id" | "user_id"> & { chat_id?: number | string }) {
 		return this.api.call<t.ChatMember>("getChatMember", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "getChatMember") }), user_id: this.from.id, ...params });
 	}
-	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
+	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
 	getUserPersonalChatMessages(params: Omit<t.GetUserPersonalChatMessagesParams, "user_id">) {
 		return this.api.call<t.Message[]>("getUserPersonalChatMessages", { user_id: this.from.id, ...params });
 	}
@@ -450,6 +450,22 @@ export class CallbackQueryContextBase {
 	stopPoll(params: Omit<t.StopPollParams, "business_connection_id" | "chat_id" | "message_id"> & { chat_id?: number | string; message_id?: number }) {
 		return this.api.call<t.Poll>("stopPoll", { ...(((this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined) === undefined) ? {} : { business_connection_id: this.message && "business_connection_id" in this.message ? this.message.business_connection_id : undefined }), ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "stopPoll") }), ...(params?.message_id !== undefined ? {} : { message_id: requiredId(this.message?.message_id, "message_id", "stopPoll") }), ...params });
 	}
+	/** Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	editEphemeralMessageText(params: Omit<t.EditEphemeralMessageTextParams, "chat_id"> & { chat_id?: number | string }) {
+		return this.api.call<boolean>("editEphemeralMessageText", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "editEphemeralMessageText") }), ...params });
+	}
+	/** Use this method to edit the media of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	editEphemeralMessageMedia(params: Omit<t.EditEphemeralMessageMediaParams, "chat_id"> & { chat_id?: number | string }) {
+		return this.api.call<boolean>("editEphemeralMessageMedia", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "editEphemeralMessageMedia") }), ...params });
+	}
+	/** Use this method to edit the caption of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	editEphemeralMessageCaption(params: Omit<t.EditEphemeralMessageCaptionParams, "chat_id"> & { chat_id?: number | string }) {
+		return this.api.call<boolean>("editEphemeralMessageCaption", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "editEphemeralMessageCaption") }), ...params });
+	}
+	/** Use this method to edit only the reply markup of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	editEphemeralMessageReplyMarkup(params: Omit<t.EditEphemeralMessageReplyMarkupParams, "chat_id"> & { chat_id?: number | string }) {
+		return this.api.call<boolean>("editEphemeralMessageReplyMarkup", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "editEphemeralMessageReplyMarkup") }), ...params });
+	}
 	/** Use this method to approve a suggested post in a direct messages chat. The bot must have the 'can_post_messages' administrator right in the corresponding channel chat. Returns *True* on success. */
 	approveSuggestedPost(params: Omit<t.ApproveSuggestedPostParams, "chat_id" | "message_id"> & { chat_id?: number; message_id?: number }) {
 		return this.api.call<boolean>("approveSuggestedPost", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "approveSuggestedPost") }), ...(params?.message_id !== undefined ? {} : { message_id: requiredId(this.message?.message_id, "message_id", "approveSuggestedPost") }), ...params });
@@ -465,6 +481,10 @@ export class CallbackQueryContextBase {
 	/** Use this method to delete multiple messages simultaneously. If some of the specified messages can't be found, they are skipped. Returns *True* on success. */
 	deleteMessages(params: Omit<t.DeleteMessagesParams, "chat_id"> & { chat_id?: number | string }) {
 		return this.api.call<boolean>("deleteMessages", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "deleteMessages") }), ...params });
+	}
+	/** Use this method to delete an ephemeral message. Note that it is not guaranteed that the user will receive the message deletion event, especially if they are offline. Returns *True* on success. */
+	deleteEphemeralMessage(params: Omit<t.DeleteEphemeralMessageParams, "chat_id"> & { chat_id?: number | string }) {
+		return this.api.call<boolean>("deleteEphemeralMessage", { ...(params?.chat_id !== undefined ? {} : { chat_id: requiredId(this.message?.chat.id, "chat_id", "deleteEphemeralMessage") }), ...params });
 	}
 	/** Use this method to remove a reaction from a message in a group or a supergroup chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success. */
 	deleteMessageReaction(params: Omit<t.DeleteMessageReactionParams, "chat_id" | "message_id" | "user_id"> & { chat_id?: number | string; message_id?: number }) {

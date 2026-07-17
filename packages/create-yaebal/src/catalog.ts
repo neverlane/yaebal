@@ -206,6 +206,14 @@ export const PLUGINS: PluginDef[] = [
 		install: "typing()",
 	},
 	{
+		id: "ephemeral",
+		dep: "@yaebal/ephemeral",
+		hint: "ctx.replyEphemeral — group replies only the asker sees",
+		wire: "install",
+		import: 'import { ephemeral } from "@yaebal/ephemeral";',
+		install: "ephemeral()",
+	},
+	{
 		id: "files",
 		dep: "@yaebal/files",
 		hint: "ctx.files: inspect, stream & download telegram files",

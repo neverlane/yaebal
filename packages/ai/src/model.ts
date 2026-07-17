@@ -289,13 +289,17 @@ interface AiSdkModule {
 export function aiSdk(model: AiSdkLanguageModel): AiModel {
 	let module: Promise<AiSdkModule> | undefined;
 	const load = (): Promise<AiSdkModule> => {
-		module ??= (import("ai" as string) as Promise<AiSdkModule>).catch((cause: unknown) => {
-			module = undefined;
-			throw new AiError(
-				'ai: the vercel ai sdk bridge needs the "ai" package — install it with `pnpm add ai`',
-				{ cause },
-			);
-		});
+		// @vite-ignore keeps bundlers (the docs playground) from trying to resolve the
+		// optional peer at build time — it stays a plain runtime dynamic import.
+		module ??= (import(/* @vite-ignore */ "ai" as string) as Promise<AiSdkModule>).catch(
+			(cause: unknown) => {
+				module = undefined;
+				throw new AiError(
+					'ai: the vercel ai sdk bridge needs the "ai" package — install it with `pnpm add ai`',
+					{ cause },
+				);
+			},
+		);
 		return module;
 	};
 

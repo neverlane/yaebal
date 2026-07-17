@@ -156,9 +156,9 @@
 				"type-focused yaebal examples showing how derive, decorate, filters, sessions, plugins, and generated contexts flow through the composer chain without casting.",
 		},
 		"/docs/llms": {
-			title: "yaebal for ai assistants and llms",
+			title: "yaebal ai tooling — agent installer, mcp server, llms.txt",
 			description:
-				"llm-friendly entry points for yaebal documentation, including llms.txt, canonical snippets, and guidance for ai coding assistants using the framework.",
+				"set up ai coding assistants for yaebal: the npx @yaebal/ai installer for claude code, cursor, codex, opencode and friends, the yaebal mcp server with the exact bot api schema, shipped agent skills, llms.txt entry points, and hallucination-prevention rules.",
 		},
 		"/docs/runner": {
 			title: "@yaebal/runner — concurrent telegram bot long polling",
@@ -197,6 +197,11 @@
 			title: "authoring yaebal plugins — typed context dependencies",
 			description:
 				"write yaebal plugins with explicit context requirements, type-safe installation, derived state, decorators, middleware, and reusable composers.",
+		},
+		"/docs/plugins/ai": {
+			title: "@yaebal/ai — streamed llm replies for telegram bots",
+			description:
+				"add llm replies to yaebal bots with ctx.ai.replyStream: telegram draft streaming in private chats, throttled edits in groups, provider-agnostic model adapters (openai-compatible, anthropic, vercel ai sdk, custom), conversation memory, and per-user rate limits.",
 		},
 		"/docs/plugins/again": {
 			title: "@yaebal/again — retry telegram bot api calls",

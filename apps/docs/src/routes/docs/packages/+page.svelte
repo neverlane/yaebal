@@ -33,6 +33,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/inline-results", "/docs/plugins/inline-results/", "typed builders for every InlineQueryResult / InputMessageContent variant"],
 		["@yaebal/auto-answer", "/docs/plugins/auto-answer/", "auto-clears the callback-query loading spinner, no manual answerCallbackQuery call"],
 		["@yaebal/typing", "/docs/plugins/typing/", "ctx.typing(fn) keeps the \"is typing…\" indicator alive for an async call, no manual sendChatAction"],
+		["@yaebal/ai", "/docs/plugins/ai/", "ctx.ai.replyStream() — llm answers streamed via telegram drafts / throttled edits, model adapters (openai-compatible, anthropic, ai sdk, custom), conversation memory, per-user limits — plus the ai dev tooling (mcp server + agent installer)"],
 		["@yaebal/morda", "/docs/plugins/morda/", "dialogs engine + jsx/hooks (react-for-telegram)"],
 		["@yaebal/i18n", "/docs/plugins/i18n/", "typed ctx.t (keys + params), Intl plurals, language_code detection"],
 		["@yaebal/scenes", "/docs/plugins/scenes/", "durable wizards: typed state, ask() validation, navigation, sub-scenes, ttl"],

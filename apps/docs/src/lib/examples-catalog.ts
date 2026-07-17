@@ -29,6 +29,12 @@ export const EXAMPLES_CATALOG: readonly ExampleCatalogEntry[] = [
 		"run": "pnpm --filter @yaebal/example-again dev"
 	},
 	{
+		"name": "ai-chat",
+		"package": "@yaebal/example-ai-chat",
+		"focus": "@yaebal/ai: streamed replies (drafts in private, edits in groups), conversation memory, AiLimitError handling",
+		"run": "pnpm --filter @yaebal/example-ai-chat dev"
+	},
+	{
 		"name": "throttle",
 		"package": "@yaebal/example-throttle",
 		"focus": "outbound buckets, priorities, cancellation, scheduler metrics",
@@ -157,7 +163,7 @@ export const EXAMPLES_CATALOG: readonly ExampleCatalogEntry[] = [
 	{
 		"name": "modular-router",
 		"package": "@yaebal/example-modular-router",
-		"focus": "file-based routes from routes/commands and routes/on",
+		"focus": "typed define*() file-based routes (commands/on/hears/use), a nested _guard.ts, syncCommands, watchRoutes hot-reload",
 		"run": "pnpm --filter @yaebal/example-modular-router dev"
 	},
 	{

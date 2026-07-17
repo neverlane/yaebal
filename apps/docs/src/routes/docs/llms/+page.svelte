@@ -1,6 +1,27 @@
 <script lang="ts">
 	import Code from "$lib/Code.svelte";
 
+	const installer = `# interactive — detects which agents live in your project and preselects them
+npx @yaebal/ai
+
+# non-interactive — pick agents explicitly (ci, dotfiles, scripts)
+npx @yaebal/ai install --agents claude,cursor`;
+
+	const marketplace = `claude plugin marketplace add neverlane/yaebal
+claude plugin install yaebal`;
+
+	const mcp = `# stdio launch — what the installer writes into .mcp.json and friends
+npx -y @yaebal/ai mcp`;
+
+	const mcpJson = `{
+	"mcpServers": {
+		"yaebal": {
+			"command": "npx",
+			"args": ["-y", "@yaebal/ai", "mcp"]
+		}
+	}
+}`;
+
 	const files = `https://yaebal.mom/llms.txt
 https://yaebal.mom/llms-full.txt`;
 
@@ -21,13 +42,96 @@ use @yaebal/test for tests instead of hitting telegram in ci.`;
 </script>
 
 <svelte:head>
-	<title>llms — yaebal</title>
+	<title>ai tooling — yaebal</title>
 </svelte:head>
 
-<h1>llms</h1>
+<h1>ai tooling</h1>
 <p class="lead">
-	llm-friendly entry points for ai coding assistants working with yaebal projects.
+	<code>@yaebal/ai</code> ships the dev tooling that makes ai coding assistants good at yaebal: a
+	one-command installer that teaches your agents the framework, an mcp server with the exact bot
+	api schema, and agent playbooks for the recurring bot-building tasks. the same package also
+	contains the <a href="/docs/plugins/ai/">runtime plugin</a> (<code>ctx.ai</code>, streamed llm
+	replies) — that side has its own page.
 </p>
+
+<h2>one-command setup</h2>
+<p>
+	run the installer in your bot project. it detects which agents you use (from
+	<code>.claude/</code>, <code>.cursor/</code>, <code>AGENTS.md</code>, …), lets you pick, and
+	writes the right rules files and mcp config for each:
+</p>
+<Code code={installer} lang="sh" title="terminal" />
+
+<h2>supported agents</h2>
+<p>nine targets; each gets the files its ecosystem expects:</p>
+<table>
+	<thead>
+		<tr><th>agent</th><th><code>--agents</code> id</th><th>what the installer writes</th></tr>
+	</thead>
+	<tbody>
+		<tr><td>claude code</td><td><code>claude</code></td><td>skills into <code>.claude/skills/&lt;name&gt;/SKILL.md</code> + a <code>yaebal</code> server in <code>.mcp.json</code></td></tr>
+		<tr><td>cursor</td><td><code>cursor</code></td><td><code>.cursor/rules/yaebal.mdc</code> (always-apply) + <code>.cursor/mcp.json</code></td></tr>
+		<tr><td>codex</td><td><code>codex</code></td><td>yaebal section in <code>AGENTS.md</code>; mcp is global — a note shows the <code>~/.codex/config.toml</code> entry</td></tr>
+		<tr><td>opencode</td><td><code>opencode</code></td><td>yaebal section in <code>AGENTS.md</code> + <code>opencode.json</code> mcp entry</td></tr>
+		<tr><td>github copilot</td><td><code>copilot</code></td><td><code>.github/copilot-instructions.md</code> + <code>.vscode/mcp.json</code></td></tr>
+		<tr><td>windsurf</td><td><code>windsurf</code></td><td><code>.windsurf/rules/yaebal.md</code>; mcp is global — a note shows the cascade settings entry</td></tr>
+		<tr><td>zed</td><td><code>zed</code></td><td>yaebal section in <code>.rules</code>; a note shows the <code>context_servers</code> settings entry</td></tr>
+		<tr><td>gemini cli</td><td><code>gemini</code></td><td>yaebal section in <code>GEMINI.md</code> + <code>.gemini/settings.json</code> mcp entry</td></tr>
+		<tr><td>anything else</td><td><code>agents-md</code></td><td>yaebal section in a generic <code>AGENTS.md</code></td></tr>
+	</tbody>
+</table>
+<p>
+	existing files are merged, never clobbered: markdown gets an upserted yaebal section, json
+	configs get a <code>yaebal</code> entry with everything else preserved (an unparseable config is
+	left alone with a manual note instead).
+</p>
+
+<h3>claude code marketplace</h3>
+<p>
+	claude code users can skip the installer entirely — the plugin marketplace delivers the skills
+	and the mcp server as one managed, updatable plugin:
+</p>
+<Code code={marketplace} lang="sh" title="terminal" />
+
+<h2>the mcp server</h2>
+<p>
+	the mcp server gives agents exact answers instead of guesses — the full bot api schema (the same
+	<code>schema.json</code> that generates <code>@yaebal/types</code>), the plugin catalog, docs
+	search and runnable examples. it runs over stdio:
+</p>
+<Code code={mcp} lang="sh" title="terminal" />
+<Code code={mcpJson} lang="json" title=".mcp.json" />
+<table>
+	<thead>
+		<tr><th>tool</th><th>what it answers</th></tr>
+	</thead>
+	<tbody>
+		<tr><td><code>get_api_method</code></td><td>exact signature of a bot api method — parameters, required flags, return type</td></tr>
+		<tr><td><code>get_api_type</code></td><td>exact shape of a bot api object, e.g. <code>Message</code>, <code>InlineKeyboardMarkup</code></td></tr>
+		<tr><td><code>list_plugins</code></td><td>the full <code>@yaebal/*</code> plugin catalog with one-line descriptions</td></tr>
+		<tr><td><code>get_plugin_doc</code></td><td>full readme of a <code>@yaebal/*</code> package — usage, options, what lands on ctx</td></tr>
+		<tr><td><code>search_docs</code></td><td>full-text search over the docs, plugin readmes and agent playbooks</td></tr>
+		<tr><td><code>get_example</code></td><td>complete runnable example bots from the repo — list all, or fetch one by name</td></tr>
+	</tbody>
+</table>
+
+<h2>shipped skills</h2>
+<p>
+	nine playbooks travel with the installer — verbatim claude code skills, converted into cursor
+	rules and <code>AGENTS.md</code> sections for the others. each teaches one recurring task in a
+	bot project:
+</p>
+<ul>
+	<li><code>yaebal-write-bot</code> — bot setup, handlers, filter queries, commands, context typing</li>
+	<li><code>yaebal-pick-plugin</code> — which <code>@yaebal/*</code> package solves a given problem</li>
+	<li><code>yaebal-keyboards-and-callbacks</code> — keyboard builders and typed callback payloads</li>
+	<li><code>yaebal-flows</code> — choosing between scenes, conversation, and prompt, and wiring persistence</li>
+	<li><code>yaebal-ai-features</code> — adding llm features with the <a href="/docs/plugins/ai/"><code>@yaebal/ai</code></a> runtime plugin</li>
+	<li><code>yaebal-test-bot</code> — <code>@yaebal/test</code> actors, api-call assertions, the virtual clock</li>
+	<li><code>yaebal-deploy</code> — long polling vs webhooks, graceful shutdown, error handling</li>
+	<li><code>yaebal-debug</code> — install-order type errors, esm specifier errors, telegram 400/409/429</li>
+	<li><code>yaebal-author-plugin</code> — the <code>Plugin&lt;In, Out&gt;</code> contract and typed dependencies</li>
+</ul>
 
 <h2>machine-readable docs</h2>
 <p>
@@ -44,8 +148,8 @@ use @yaebal/test for tests instead of hitting telegram in ci.`;
 
 <h2>agent prompt</h2>
 <p>
-	if you are using an assistant that accepts project instructions, give it this baseline before it
-	writes yaebal code:
+	if you are using an assistant that accepts project instructions but can't run the installer,
+	give it this baseline before it writes yaebal code:
 </p>
 <Code code={prompt} title="assistant-instructions.txt" lang="text" />
 
@@ -63,7 +167,10 @@ use @yaebal/test for tests instead of hitting telegram in ci.`;
 </ul>
 
 <div class="note">
-	<strong>for maintainers.</strong> when public apis change, update <code>/llms.txt</code>,
-	<code>/llms-full.txt</code>, and the examples linked here in the same pr. if llm guidance drifts,
-	assistants will confidently generate wrong code.
+	<strong>for maintainers.</strong> the agent playbooks live in <code>packages/ai/skills/</code> —
+	that directory is the source of truth, and the installer artifacts (bundled skills, rules
+	digest, mcp corpus, claude code plugin) regenerate via
+	<code>pnpm --filter @yaebal/ai generate</code>. when public apis change, update
+	<code>/llms.txt</code>, <code>/llms-full.txt</code>, the skills, and the examples linked here in
+	the same pr. if llm guidance drifts, assistants will confidently generate wrong code.
 </div>

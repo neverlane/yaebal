@@ -55,6 +55,14 @@ yaebal is built around one invariant: the context type accumulates through the c
 - `@yaebal/types`: generated telegram bot api types.
 - `@yaebal/contexts`: generated per-update contexts and shortcuts.
 - `@yaebal/test`: in-process bot testing with virtual users and intercepted api calls.
+- `@yaebal/ai`: llm replies for bots (`ctx.ai.replyStream`, model adapters, memory, limits) plus the ai dev tooling below.
+
+## ai tooling
+
+- one-command agent setup: `npx @yaebal/ai` (interactive) or `npx @yaebal/ai install --agents claude,cursor` — writes rules files and mcp config for claude code, cursor, codex, opencode, copilot, windsurf, zed, gemini cli, and generic AGENTS.md.
+- mcp server with the exact bot api schema, plugin catalog, docs search and examples: `npx -y @yaebal/ai mcp` (stdio).
+- claude code marketplace: `claude plugin marketplace add neverlane/yaebal` then `claude plugin install yaebal`.
+- docs: https://yaebal.mom/docs/llms/ (tooling) and https://yaebal.mom/docs/plugins/ai/ (runtime plugin).
 
 ## primary site routes
 
@@ -77,6 +85,7 @@ yaebal is built around one invariant: the context type accumulates through the c
 - https://yaebal.mom/docs/packages/
 - https://yaebal.mom/docs/plugins/
 - https://yaebal.mom/docs/plugins/again/
+- https://yaebal.mom/docs/plugins/ai/
 - https://yaebal.mom/docs/plugins/authoring/
 - https://yaebal.mom/docs/plugins/broadcast/
 - https://yaebal.mom/docs/plugins/callback-data/

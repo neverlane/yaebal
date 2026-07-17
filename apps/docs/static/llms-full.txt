@@ -59,6 +59,22 @@ const bot = createBot(token)
   .command("count", (ctx) => ctx.reply(String(++ctx.session.count)));
 ```
 
+## ai
+
+`@yaebal/ai` adds llm replies to bots and ships the yaebal ai dev tooling.
+
+```ts
+import { ai, openaiCompatible } from "@yaebal/ai";
+
+const bot = createBot(token).install(
+  ai({ model: openaiCompatible({ model: "gpt-4o-mini", apiKey }), limits: { perUser: "20/h" } }),
+);
+bot.on("message:text", (ctx) => ctx.ai.replyStream(ctx.text));
+```
+
+- `ctx.ai.replyStream()` streams via telegram drafts in private chats, throttled edits elsewhere; conversation memory and `AiLimitError` rate limits built in. docs: https://yaebal.mom/docs/plugins/ai/
+- dev tooling: `npx @yaebal/ai` installs yaebal rules + mcp config for coding agents (claude code, cursor, codex, opencode, copilot, windsurf, zed, gemini cli, AGENTS.md); `npx -y @yaebal/ai mcp` runs the mcp server (exact bot api schema, plugin catalog, docs search, examples). docs: https://yaebal.mom/docs/llms/
+
 ## media
 
 ```ts
@@ -142,6 +158,7 @@ env.lastApiCall("sendMessage")?.params?.text;
 - https://yaebal.mom/docs/packages/
 - https://yaebal.mom/docs/plugins/
 - https://yaebal.mom/docs/plugins/again/
+- https://yaebal.mom/docs/plugins/ai/
 - https://yaebal.mom/docs/plugins/authoring/
 - https://yaebal.mom/docs/plugins/broadcast/
 - https://yaebal.mom/docs/plugins/callback-data/

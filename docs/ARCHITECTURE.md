@@ -237,6 +237,7 @@ source = where the idea came from.
 | **`@yaebal/media-group`** | media group — collect an album from a batch of updates | — | | @gramio/media-group |
 | **`@yaebal/auto-answer`** ✅ | auto-clears the callback-query spinner: immediate (fire on arrival, non-blocking) or deferred (fallback only if nothing answered) mode, filter, dynamic per-update params, `onAnswer`/`onError` — never double-answers, never throws | — | `on("callback_query")` | @gramio/auto-answer-cbq |
 | **`@yaebal/typing`** ✅ | `ctx.typing(fn, opts?)` keeps `sendChatAction` alive on an interval for the duration of an async call (LLM/API latency), clears on settle; overloads the existing `ctx.typing(action?)` one-off sugar so both forms compose | — | `derive` | native ops plugin |
+| **`@yaebal/ephemeral`** ✅ | `ctx.replyEphemeral()`/`ctx.sendEphemeral(userId, …)` over bot api 10.2 ephemeral messages: typed handle hides the `chat_id`+`receiver_user_id`+`ephemeral_message_id` addressing (`message_id` is 0), private-chat fallback to a normal message, `onExpired` throw/ignore/resend policies, `wrapEphemeralMessage` for raw sends. pairs with `commands`' `ephemeral()` (`is_ephemeral` menu flag) | — | `derive` | no prior art (bot api 10.2) |
 
 ### i18n / infra (yagni until needed)
 

@@ -1,0 +1,28 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": [
+			"DOM"
+		],
+		"types": [
+			"node"
+		]
+	},
+	"references": [
+		{
+			"path": "../../packages/yaebal"
+		},
+		{
+			"path": "../../packages/commands"
+		},
+		{
+			"path": "../../packages/ephemeral"
+		}
+	],
+	"include": [
+		"src/**/*.ts"
+	]
+}

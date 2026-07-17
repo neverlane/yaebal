@@ -43,6 +43,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [auto-answer](./auto-answer/) | `@yaebal/example-auto-answer` | `"deadline"` default racing a handler's own alert, fallback ack on a forgotten handler, `skipAutoAnswer()`, `filter()` | `pnpm --filter @yaebal/example-auto-answer dev` |
 | [guards](./guards/) | `@yaebal/example-guards` | safe `guard`+`getChatMember` pattern, `membership()` caching, `guardOr` answering a denial, bot's own permission check, anonymous admin/owner | `pnpm --filter @yaebal/example-guards dev` |
 | [commands](./commands/) | `@yaebal/example-commands` | typed command registry: localized menus, scopes, aliases, hidden commands, diff-based sync | `pnpm --filter @yaebal/example-commands dev` |
+| [ephemeral](./ephemeral/) | `@yaebal/example-ephemeral` | ephemeral menu commands (`is_ephemeral`), `ctx.replyEphemeral()` in groups, handle edits/deletes, `wrapEphemeralMessage` from a callback, private-chat fallback | `pnpm --filter @yaebal/example-ephemeral dev` |
 | [pagination](./pagination/) | `@yaebal/example-pagination` | lazy sources (`count` + limit+1 probing), item buttons with `onSelect`, typed payload, `button()` menu morphing and back-navigation, ownership filter | `pnpm --filter @yaebal/example-pagination dev` |
 | [session](./session/) | `@yaebal/example-session` | session v2: dirty-checked saves, file storage, two independent sessions (`key` + `keyBy.user`), `ttl()` fields, `clearSession`, migrations | `pnpm --filter @yaebal/example-session dev` |
 | [simple](./simple/) | `@yaebal/example-simple` | toml route config plus typescript handlers | `pnpm --filter @yaebal/example-simple dev` |
@@ -79,7 +80,8 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/broadcast`     | `broadcast`                                                                            | package tests plus example smoke               |
 | `@yaebal/cache`         | `basic`                                                                                | package tests plus example smoke               |
 | `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
-| `@yaebal/commands`      | `commands`, `commerce-suite`                                                           | package tests plus example smoke               |
+| `@yaebal/commands`      | `commands`, `commerce-suite`, `ephemeral`                                              | package tests plus example smoke               |
+| `@yaebal/ephemeral`     | `ephemeral`                                                                            | package tests plus example smoke               |
 | `@yaebal/conversation`  | `dialog-quest`                                                                         | package tests plus example smoke               |
 | `@yaebal/cron`          | `cron`                                                                                 | package tests plus example smoke               |
 | `@yaebal/feature-flags` | `feature-flags`                                                                        | package tests plus example smoke               |
@@ -124,7 +126,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | bare core, no plugins       | `core-echo`                                                                |
 | core + contexts by hand     | `inline-search`                                                            |
 | single-file product demo    | `basic`                                                                    |
-| plugin in isolation         | `again`, `throttle`, `keyboard`, `auto-answer`, `guards`, `commands`, `onboarding`, `rich-messages`, `state-machine` |
+| plugin in isolation         | `again`, `throttle`, `keyboard`, `auto-answer`, `guards`, `commands`, `ephemeral`, `onboarding`, `rich-messages`, `state-machine` |
 | production operator tooling | `broadcast`, `panel`, `webhook-edge`, `runner-workers`                     |
 | business workflow           | `commerce-suite`, `payments-stars`, `inline-search`                        |
 | multi-step ux               | `dialog-quest`, `testing-lab`                                              |

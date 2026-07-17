@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/types",
-	"version": "10.2.0",
+	"version": "10.2.1",
 	"description": "yaebal types — full Telegram Bot API types, code-generated from the schema.",
 	"type": "module",
 	"sideEffects": false,
@@ -10,11 +10,13 @@
 		".": {
 			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
-		}
+		},
+		"./schema.json": "./schema.json"
 	},
 	"files": [
 		"lib",
-		"src"
+		"src",
+		"schema.json"
 	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",

@@ -1,0 +1,12 @@
+{
+	"mcpServers": {
+		"yaebal": {
+			"command": "npx",
+			"args": [
+				"-y",
+				"@yaebal/ai",
+				"mcp"
+			]
+		}
+	}
+}

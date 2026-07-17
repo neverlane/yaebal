@@ -36,16 +36,26 @@ pnpm workspace globs: `packages/*`, `examples/*`, `apps/*`. Node >= 20.
 
 - `packages/core` — `@yaebal/core`: `Bot`, `Composer`, context, filter queries, media, hooks.
   Entry: `src/index.ts`. Build output: `lib/` (via `tsc`). Every package follows this shape.
-- `packages/*` — the rest of the published `@yaebal/*` scope: ~32 plugins (`again`, `session`,
-  `sklad`, `keyboard`, `callback-data`, `filters`, `fmt`, `rich`, `morda`, `i18n`, `scenes`,
-  `conversation`, `prompt`, `files`, `file-id`, `router`, `toml`, `throttle`, `ratelimiter`,
-  `broadcast`, `panel`, `web`, `runner`, `split`, `workers`, `onboarding`, `pagination`,
-  `media-cache`, `media-group`, `commands`, `preview`, `payments`, …), the codegen packages (`@yaebal/types`
-  — generated Bot API types, with `packages/types/schema.json` as the single source of truth;
+- `packages/*` — the rest of the published `@yaebal/*` scope: ~33 plugins (`again`, `ai`,
+  `session`, `sklad`, `keyboard`, `callback-data`, `filters`, `fmt`, `rich`, `morda`, `i18n`,
+  `scenes`, `conversation`, `prompt`, `files`, `file-id`, `router`, `toml`, `throttle`,
+  `ratelimiter`, `broadcast`, `panel`, `web`, `runner`, `split`, `workers`, `onboarding`,
+  `pagination`, `media-cache`, `media-group`, `commands`, `preview`, `payments`, …), the codegen
+  packages (`@yaebal/types` — generated Bot API types, with `packages/types/schema.json` as the
+  single source of truth, also exported as `@yaebal/types/schema.json`;
   `@yaebal/contexts` — generated per-update context classes), the `yaebal` meta package,
   `create-yaebal`, and `@yaebal/test` (actor-driven test framework: `createTestEnv` / `UserActor`
   / `ChatActor`).
-- `examples/*` — 25 runnable bots, doubling as public-API smoke tests; the plugin coverage
+- `packages/ai` — `@yaebal/ai` is double-duty: the `ctx.ai` LLM runtime plugin AND the ai dev
+  tooling (MCP server, `npx @yaebal/ai` agent installer, the 9 agent skills in
+  `packages/ai/skills/` — the source of truth). `pnpm --filter @yaebal/ai generate` rebuilds its
+  generated artifacts: `packages/ai/data/*.json` (MCP corpus) and `packages/ai/claude-plugin/`
+  (+ root `.claude-plugin/marketplace.json`). Drift is test-enforced. See `docs/AI.md` for the
+  full state + roadmap of this package.
+- `.claude-plugin/marketplace.json` — Claude Code marketplace manifest (must live at the repo
+  root); the plugin it points to is the generated `packages/ai/claude-plugin/`. Not to be
+  confused with `.claude/` (this repo's own dev config).
+- `examples/*` — 26 runnable bots, doubling as public-API smoke tests; the plugin coverage
   matrix lives in `examples/README.md`.
 - `apps/docs` — the SvelteKit docs site (Cloudflare adapter): guides, plugin pages, the
   playground, and a Bot API reference generated from `packages/types/schema.json`.
@@ -81,7 +91,9 @@ pnpm changeset        # record a release note; versions are bumped by changesets
 - Generated code is changed via its generator, never edited in place:
   `packages/types/src/telegram.ts` and `packages/contexts/src/generated/` are codegen output
   (excluded from Biome). Extend the existing parser/generators under `packages/types/scripts`
-  instead of writing parallel ones.
+  instead of writing parallel ones. Same rule for `packages/ai/data/`,
+  `packages/ai/claude-plugin/` and `.claude-plugin/marketplace.json` — regenerate with
+  `pnpm --filter @yaebal/ai generate` (drift-guard tests fail otherwise).
 - Docs-site prose and package READMEs are lowercase; code identifiers, package names, and API
   method names stay exact.
 - Before finishing any change, run `pnpm typecheck`.

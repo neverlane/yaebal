@@ -1,0 +1,14 @@
+{
+	"name": "yaebal",
+	"owner": {
+		"name": "neverlane",
+		"url": "https://github.com/neverlane"
+	},
+	"plugins": [
+		{
+			"name": "yaebal",
+			"source": "./packages/ai/claude-plugin",
+			"description": "telegram bot development with yaebal: framework skills + an mcp server with the exact bot api schema, plugin catalog, docs search and runnable examples."
+		}
+	]
+}

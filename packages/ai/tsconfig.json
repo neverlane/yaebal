@@ -1,0 +1,17 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"composite": true,
+		"types": ["node"]
+	},
+	"references": [
+		{ "path": "../core" },
+		{ "path": "../sklad" },
+		{ "path": "../split" },
+		{ "path": "../test" },
+		{ "path": "../types" }
+	],
+	"include": ["src/**/*.ts"]
+}

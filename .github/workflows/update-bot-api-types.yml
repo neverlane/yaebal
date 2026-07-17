@@ -34,7 +34,7 @@ jobs:
       - id: update
         run: node packages/types/scripts/update-schema.mjs
 
-      - name: check for changes
+      - name: Check for changes
         id: diff
         run: |
           if git diff --quiet; then

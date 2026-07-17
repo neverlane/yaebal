@@ -1,0 +1,18 @@
+{
+	"name": "yaebal",
+	"version": "0.0.1",
+	"description": "telegram bot development with the yaebal framework: skills for bots, plugins, testing and deployment, plus an mcp server with the exact bot api schema.",
+	"author": {
+		"name": "neverlane",
+		"url": "https://github.com/neverlane"
+	},
+	"homepage": "https://yaebal.mom",
+	"repository": "https://github.com/neverlane/yaebal",
+	"license": "MIT",
+	"keywords": [
+		"telegram",
+		"bot",
+		"yaebal",
+		"mcp"
+	]
+}

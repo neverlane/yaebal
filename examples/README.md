@@ -35,6 +35,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [core-echo](./core-echo/) | `@yaebal/example-core-echo` | bare `@yaebal/core`: middleware, filter narrowing, `format`, raw typed `api.call` | `pnpm --filter @yaebal/example-core-echo dev` |
 | [basic](./basic/) | `@yaebal/example-basic` | whole-stack tour on `yaebal`: session, keyboard, callback-data, morda, i18n, scenes, prompt, filters, fmt, retry, throttle, cache | `pnpm --filter @yaebal/example-basic dev` |
 | [again](./again/) | `@yaebal/example-again` | awaited retry, `retry_after`, transient failures, retry metrics | `pnpm --filter @yaebal/example-again dev` |
+| [ai-chat](./ai-chat/) | `@yaebal/example-ai-chat` | `@yaebal/ai`: streamed replies (drafts in private, edits in groups), conversation memory, `AiLimitError` handling | `pnpm --filter @yaebal/example-ai-chat dev` |
 | [throttle](./throttle/) | `@yaebal/example-throttle` | outbound buckets, priorities, cancellation, scheduler metrics | `pnpm --filter @yaebal/example-throttle dev` |
 | [broadcast](./broadcast/) | `@yaebal/example-broadcast` | typed broadcast jobs, pause, resume, cancel, retry, progress | `pnpm --filter @yaebal/example-broadcast dev` |
 | [cron](./cron/) | `@yaebal/example-cron` | intervals, cron expressions with per-job tz, retries + backoff, `timeoutMs`, `overlap: "wait"`, catch-up via a persisted store, `ctx.cron`, `cronAdmin` ops commands | `pnpm --filter @yaebal/example-cron dev` |
@@ -69,11 +70,12 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | package                 | examples                                                                               | test signal                                    |
 |:------------------------|:---------------------------------------------------------------------------------------|:-----------------------------------------------|
 | `@yaebal/core`          | directly: `core-echo`, `inline-search`, `runner-workers`, `webhook-edge`; via `yaebal` everywhere else | all example `test` scripts    |
-| `yaebal`                | every other example (`createBot` + re-exported plugins), docs playground examples     | all example `test` scripts, docs health        |
+| `yaebal`                | every other example (`createBot` + re-exported plugins), docs playground examples      | all example `test` scripts, docs health        |
 | `@yaebal/again`         | `basic`, `again`, `throttle`, `panel`                                                  | package tests plus example smoke               |
-| `@yaebal/analytics`     | `analytics`, docs playground examples                                                 | package tests plus example smoke               |
+| `@yaebal/ai`            | `ai-chat`                                                                              | package tests plus example smoke               |
+| `@yaebal/analytics`     | `analytics`, docs playground examples                                                  | package tests plus example smoke               |
 | `@yaebal/audit-log`     | `audit-log`                                                                            | package tests plus example smoke               |
-| `@yaebal/auto-answer`   | `auto-answer`, docs playground examples                                               | package tests plus example smoke               |
+| `@yaebal/auto-answer`   | `auto-answer`, docs playground examples                                                | package tests plus example smoke               |
 | `@yaebal/broadcast`     | `broadcast`                                                                            | package tests plus example smoke               |
 | `@yaebal/cache`         | `basic`                                                                                | package tests plus example smoke               |
 | `@yaebal/callback-data` | `basic`, `commerce-suite`, `testing-lab`, `payments-stars`                             | package tests plus actor test in `testing-lab` |
@@ -103,7 +105,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/runner`        | `runner-workers`                                                                       | package tests plus example smoke               |
 | `@yaebal/scenes`        | `basic`, `dialog-quest`                                                                | package tests plus example smoke               |
 | `@yaebal/session`       | `session`, `basic`, `commands`, `commerce-suite`, `dialog-quest`, `testing-lab`        | package tests plus actor session assertions    |
-| `@yaebal/sklad`         | `session` (file storage); the default memory store wherever sessions appear           | package tests plus example smoke               |
+| `@yaebal/sklad`         | `session` (file storage); the default memory store wherever sessions appear            | package tests plus example smoke               |
 | `@yaebal/state-machine` | `state-machine`                                                                        | package tests plus example smoke               |
 | `@yaebal/split`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/test`          | `testing-lab`                                                                          | real `node:test` suite                         |

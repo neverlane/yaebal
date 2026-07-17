@@ -1,0 +1,70 @@
+{
+	"name": "@yaebal/ai",
+	"version": "0.0.1",
+	"description": "yaebal ai — llm superpowers for telegram bots: streamed replies (drafts + edits), conversation memory, provider-agnostic models, plus an mcp server and agent installer for ai-assisted development.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		},
+		"./mcp": {
+			"types": "./lib/mcp/index.d.ts",
+			"import": "./lib/mcp/index.js"
+		},
+		"./installers": {
+			"types": "./lib/installers/targets.d.ts",
+			"import": "./lib/installers/targets.js"
+		}
+	},
+	"bin": {
+		"yaebal-ai": "./lib/cli.js"
+	},
+	"files": [
+		"lib",
+		"src",
+		"data",
+		"skills"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --test lib/*.test.js",
+		"generate": "node scripts/build-data.mjs && node scripts/build-plugin.mjs"
+	},
+	"dependencies": {
+		"@modelcontextprotocol/sdk": "^1.29.0",
+		"zod": "^4.4.3",
+		"@yaebal/core": "workspace:*",
+		"@yaebal/sklad": "workspace:*",
+		"@yaebal/split": "workspace:*",
+		"@yaebal/types": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"@yaebal/test": "workspace:*"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"ai",
+		"llm",
+		"mcp",
+		"streaming"
+	],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/ai"
+	},
+	"publishConfig": {
+		"access": "public"
+	}
+}

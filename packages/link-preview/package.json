@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/link-preview",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal link-preview — fluent builder for LinkPreviewOptions (url, small/large media, above-text placement, disable).",
 	"type": "module",
 	"main": "./lib/index.js",

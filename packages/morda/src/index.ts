@@ -4,16 +4,19 @@ import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 import { type ApiLike, deliverView, removeMessage } from "./deliver.js";
 import { KeyedLock, MAX_COMMIT_PASSES, MordaError, shortId } from "./internal.js";
 import type {
+	AnyDialogDef,
 	ButtonDecoration,
 	CallbackButton,
 	CopyButton,
 	DialogContext,
 	DialogControl,
 	DialogDef,
+	DialogDefContext,
 	DialogEvents,
 	DialogFrame,
 	DialogState,
 	DialogsOptions,
+	DialogTyped,
 	RenderFrame,
 	StartOptions,
 	SwitchInlineButton,
@@ -35,10 +38,10 @@ export type Button = CallbackButton;
 // ── button helpers ───────────────────────────────────────────────────────────
 
 /** A plain action button. */
-export function button(
+export function button<C extends Context = Context>(
 	label: string,
-	opts: { id: string; onClick?: (ctx: DialogContext) => unknown } & ButtonDecoration,
-): CallbackButton {
+	opts: { id: string; onClick?: (ctx: DialogContext<string, C>) => unknown } & ButtonDecoration,
+): CallbackButton<C> {
 	return { id: opts.id, label, onClick: opts.onClick, icon: opts.icon, style: opts.style };
 }
 
@@ -505,7 +508,7 @@ async function handleText(
 
 // ── construction ─────────────────────────────────────────────────────────────
 
-function buildEngine(def: DialogDef, options: DialogsOptions): Engine {
+function buildEngine(def: AnyDialogDef, options: DialogsOptions): Engine {
 	const order = Object.keys(def);
 	if (order.length === 0) throw new MordaError("dialogs() needs at least one window");
 
@@ -556,19 +559,37 @@ function buildEngine(def: DialogDef, options: DialogsOptions): Engine {
  * Returns the plugin plus a `background` handle for editing a dialog from
  * outside an update (timers, queues, webhooks).
  */
+export function createDialogs<const D extends DialogTyped<Context>>(
+	def: D,
+	options?: DialogsOptions<DialogDefContext<D>>,
+): {
+	plugin: Plugin<DialogDefContext<D>, { dialog: DialogControl<WindowIds<D>> }>;
+	background: (api: ApiLike, key: string) => Promise<DialogControl<WindowIds<D>> | undefined>;
+};
 export function createDialogs<const D extends DialogDef>(
 	def: D,
-	options: DialogsOptions = {},
+	options?: DialogsOptions,
 ): {
 	plugin: Plugin<Context, { dialog: DialogControl<WindowIds<D>> }>;
 	background: (api: ApiLike, key: string) => Promise<DialogControl<WindowIds<D>> | undefined>;
+};
+export function createDialogs(
+	def: AnyDialogDef,
+	options: DialogsOptions = {},
+): {
+	plugin: Plugin<Context, { dialog: DialogControl<string> }>;
+	background: (api: ApiLike, key: string) => Promise<DialogControl<string> | undefined>;
 } {
 	const engine = buildEngine(def, options);
 
-	const plugin: Plugin<Context, { dialog: DialogControl<WindowIds<D>> }> = (composer) =>
+	// built against the bare Context (the runtime needs nothing more); the typed
+	// overload narrows the returned plugin to the declared ambient context — the
+	// same shape scenes() uses. sound: the plugin only *adds* `dialog` and never
+	// relies on that context's extra fields.
+	const plugin: Plugin<Context, { dialog: DialogControl<string> }> = (composer) =>
 		composer
 			.derive((ctx) => ({
-				dialog: makeControl(engine, ctx.api, ctx) as DialogControl<WindowIds<D>>,
+				dialog: makeControl(engine, ctx.api, ctx) as DialogControl<string>,
 			}))
 			.use(async (ctx, next) => {
 				const dctx = ctx as unknown as DialogContext;
@@ -582,10 +603,7 @@ export function createDialogs<const D extends DialogDef>(
 	 * when that key has no open dialog. renders run with a synthetic context:
 	 * `ctx.chat` carries the stored chat id, `ctx.from` is undefined.
 	 */
-	async function background(
-		api: ApiLike,
-		key: string,
-	): Promise<DialogControl<WindowIds<D>> | undefined> {
+	async function background(api: ApiLike, key: string): Promise<DialogControl<string> | undefined> {
 		const st = await load(engine, key);
 		if (!st) return undefined;
 
@@ -600,16 +618,52 @@ export function createDialogs<const D extends DialogDef>(
 		});
 		const control = makeControl(engine, api, ctx, key);
 		(ctx as DialogContext).dialog = control;
-		return control as DialogControl<WindowIds<D>>;
+		return control;
 	}
 
 	return { plugin, background };
 }
 
 /** {@link createDialogs} without the background handle. */
+export function dialogs<const D extends DialogTyped<Context>>(
+	def: D,
+	options?: DialogsOptions<DialogDefContext<D>>,
+): Plugin<DialogDefContext<D>, { dialog: DialogControl<WindowIds<D>> }>;
 export function dialogs<const D extends DialogDef>(
 	def: D,
+	options?: DialogsOptions,
+): Plugin<Context, { dialog: DialogControl<WindowIds<D>> }>;
+export function dialogs(
+	def: AnyDialogDef,
 	options: DialogsOptions = {},
-): Plugin<Context, { dialog: DialogControl<WindowIds<D>> }> {
+): Plugin<Context, { dialog: DialogControl<string> }> {
 	return createDialogs(def, options).plugin;
+}
+
+/**
+ * declare the ambient context a dialog's windows are written against. curried so the
+ * window map keeps its literal ids while `C` stays explicit:
+ *
+ * ```ts
+ * type MyContext = Context & { session: { count: number } };
+ *
+ * const def = defineDialog<MyContext>()({
+ *   start: {
+ *     render: (ctx) => ({ text: `count: ${ctx.session.count}` }), // typed — no casts
+ *     onText: (ctx) => void ctx.session.count++,
+ *   },
+ * });
+ *
+ * bot.install(session({ initial: () => ({ count: 0 }) })).install(dialogs(def));
+ * // installing dialogs(def) on a bot that lacks MyContext is a compile error
+ * ```
+ *
+ * on a `createBot()` bot the runtime context inside windows is the rich per-update
+ * class, so `C` may include it (e.g. `MessageContext & { session: ... }`) — then
+ * shortcuts like `ctx.delete()` type-check inside `onText`/`onClick` too.
+ */
+export function defineDialog<C extends Context = Context>(): <const D extends DialogDef<C>>(
+	def: D,
+) => D & DialogTyped<C> {
+	return (def) => def as typeof def & DialogTyped<C>;
 }

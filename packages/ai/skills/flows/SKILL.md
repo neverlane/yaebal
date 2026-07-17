@@ -3,9 +3,9 @@ name: yaebal-flows
 description: Use when building multi-step dialogs in a yaebal bot — choosing between scenes, conversation, and prompt, and wiring their persistence.
 ---
 
-# multi-step dialogs: scenes vs conversation vs prompt
+# multi-step dialogs: scenes vs conversation vs prompt vs morda
 
-three first-party options, by shape of the flow:
+four first-party options, by shape of the flow:
 
 - **`@yaebal/prompt`** — one-off question: "ask, handle the next message". in-memory, lost on
   restart. reach for it first; escalate only when the flow grows.
@@ -14,6 +14,9 @@ three first-party options, by shape of the flow:
 - **`@yaebal/scenes`** — declarative step machines. each step re-asks on its own, so wizards
   navigate (`next`/`previous`/`go`), nest, validate per step, and resume mid-flow after a
   restart. best for long registration/checkout wizards that must survive deploys.
+- **`@yaebal/morda`** — keyboard-first dialogs: declarative windows rendered into ONE
+  editable message, callback routing by button id, a persisted navigation stack. best for
+  menus/settings/cockpits where the user taps buttons instead of typing.
 
 ## prompt — one question
 
@@ -73,6 +76,42 @@ bot.command("register", (ctx) => ctx.scene.enter("register"));
 bot.command("cancel", (ctx) => ctx.scene.leave({ cancelled: true }));
 ```
 
+## morda — keyboard-driven windows
+
+```typescript
+import { back, button, defineDialog, dialogs, switchTo } from "@yaebal/morda";
+
+type BotContext = Context & { session: { dark: boolean } };
+
+// declare the ambient context with defineDialog (curried — window ids stay literal):
+// window callbacks then see plugin fields typed, and install order is compiler-checked.
+// NEVER take ctx as `unknown` and cast inside a window — declare the context here instead.
+const def = defineDialog<BotContext>()({
+	main: () => ({ text: "cockpit", keyboard: [[switchTo("settings →", "settings")]] }),
+	settings: {
+		render: (ctx) => ({
+			text: `dark: ${ctx.session.dark ? "on" : "off"}`,
+			keyboard: [[button<BotContext>("toggle", {
+				id: "t",
+				onClick: async (c) => {
+					c.session.dark = !c.session.dark; // typed — session comes from BotContext
+					await c.dialog.rerender();
+				},
+			})], [back()]],
+		}),
+	},
+});
+
+const bot = createBot(token)
+	.install(session({ initial: () => ({ dark: false }) }))
+	.install(dialogs(def, { storage }));
+bot.command("start", (ctx) => ctx.dialog.start("main"));
+```
+
+on a `createBot()` bot the runtime context inside windows is the rich per-update class —
+include it in the declared context (`MessageContext & { session: … }`) and shortcuts like
+`ctx.delete()` type-check inside `onText` too.
+
 ## rules
 
 - none of the three require `@yaebal/session` — persistence goes through a `@yaebal/sklad`
@@ -92,3 +131,4 @@ bot.command("cancel", (ctx) => ctx.scene.leave({ cancelled: true }));
 - https://yaebal.mom/docs/plugins/scenes/
 - https://yaebal.mom/docs/plugins/conversation/
 - https://yaebal.mom/docs/plugins/prompt/
+- https://yaebal.mom/docs/plugins/morda/

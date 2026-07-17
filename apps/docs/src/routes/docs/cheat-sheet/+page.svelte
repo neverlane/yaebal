@@ -66,6 +66,24 @@ bot.callbackQuery(/^refresh$/, async (ctx) => {
 
 bot.command("cleanup", (ctx) => ctx.delete());`;
 
+	const helperTyping = `import type { MessageContext } from "yaebal";
+
+// types flow only inside the chain — a helper extracted into its own function
+// names its context type explicitly. handler contexts are structural supertypes
+// of the per-update class, so ctx passes in with no casts.
+async function eatMessage(ctx: MessageContext) {
+  try {
+    await ctx.delete();
+  } catch {
+    /* no rights or older than 48h — fine */
+  }
+}
+
+// needs plugin-added fields? intersect them:
+function greet(ctx: MessageContext & { session: { count: number } }) {
+  return ctx.reply(\`hi #\${++ctx.session.count}\`);
+}`;
+
 	const rawApi = `import { createBot } from "yaebal";
 
 const bot = createBot(process.env.BOT_TOKEN!);
@@ -195,6 +213,15 @@ test("start", async () => {
 
 <h2>edit, delete, answer</h2>
 <Code code={editDelete} title="edit.ts" />
+
+<h2>typing a helper outside the chain</h2>
+<Code code={helperTyping} title="helpers.ts" />
+<p>
+	never type a helper as <code>ctx: unknown</code> and poke it with a structural cast
+	(<code>(ctx as &#123; delete?: () =&gt; ... &#125;).delete?.()</code>) — the optional call
+	silently no-ops on the wrong update kind, hiding exactly the bugs the named type catches at
+	compile time.
+</p>
 
 <h2>raw api calls</h2>
 <Code code={rawApi} title="raw.ts" />

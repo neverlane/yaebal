@@ -82,6 +82,27 @@ bot.install(dialogs({
   }),
 }));`;
 
+	const typedContext = `import { defineDialog, dialogs } from "@yaebal/morda";
+import { session } from "@yaebal/session";
+import type { Context } from "@yaebal/core";
+
+type BotContext = Context & { session: { name: string } };
+
+// curried, so the window map keeps its literal ids while the context stays explicit
+const def = defineDialog<BotContext>()({
+  profile: {
+    render: (ctx) => ({ text: \`hi \${ctx.session.name}\` }), // typed — no casts
+    onText: (ctx) => {
+      ctx.session.name = ctx.text;
+      return ctx.dialog.rerender();
+    },
+  },
+});
+
+bot
+  .install(session({ initial: () => ({ name: "anon" }) }))
+  .install(dialogs(def)); // installing where session is missing = compile error`;
+
 	const options = `import { dialogs, type DialogState } from "@yaebal/morda";
 import { redisStorage } from "@yaebal/sklad";
 import Redis from "ioredis"; // or \`createClient\` from "redis" — both fit structurally
@@ -318,6 +339,22 @@ await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 	<code>{'{ icon, style }'}</code> argument on the others, e.g.
 	<code>button("delete", &#123; id: "del", style: "danger" &#125;)</code> or
 	<code>url("site", "https://…", &#123; icon: "5368324170671202286" &#125;)</code>.
+</p>
+
+<h2>typed ambient context</h2>
+<p>
+	window callbacks see the bare <code>Context</code> by default. declare the context your bot
+	accumulates with <code>defineDialog</code> and <code>render</code> / <code>onText</code> /
+	lifecycle hooks see plugin-added fields — and the install order is compiler-checked:
+</p>
+<Code code={typedContext} title="typed.ts" />
+<p>
+	on a <code>createBot()</code> bot the runtime context inside windows is the rich per-update
+	class — include it in the declared context (e.g.
+	<code>MessageContext &amp; &#123; session: … &#125;</code>) and generated shortcuts like
+	<code>ctx.delete()</code> type-check inside <code>onText</code> too.
+	<code>button&lt;C&gt;()</code> accepts the same context for a helper-built button's
+	<code>onClick</code>.
 </p>
 
 <h2>dialogs() options</h2>

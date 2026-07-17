@@ -1,6 +1,6 @@
 {
 	"name": "yaebal",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"description": "telegram bot development with the yaebal framework: skills for bots, plugins, testing and deployment, plus an mcp server with the exact bot api schema.",
 	"author": {
 		"name": "neverlane",

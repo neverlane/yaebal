@@ -45,6 +45,38 @@ bot.command("help", (ctx) => ctx.reply(ctx.payload));         // ctx.command / c
 bot.hears(/hello/i, (ctx) => ctx.reply("hey")); // text/caption match; ctx.match: string | RegExpMatchArray
 ```
 
+## context shortcuts & helpers outside the chain
+
+rich contexts (what `createBot` handlers receive) carry generated per-update shortcut methods
+with the ids prefilled: `ctx.delete()` (deletes the triggering message; business-chat aware),
+`ctx.react(...)`, `ctx.editText(...)`, `ctx.forward(...)`, `ctx.pin(...)` on messages,
+`ctx.answer(...)` on callback queries — one scoped method per applicable Bot API call. before
+assuming a method does NOT exist, check the plugin docs / `get_api_method` — it usually does.
+
+types flow only *inside* the chain. a helper extracted into its own function must name its
+context type — import the per-update class from `"yaebal"`:
+
+```typescript
+import type { MessageContext } from "yaebal";
+
+async function eatMessage(ctx: MessageContext) {
+	try {
+		await ctx.delete();
+	} catch {
+		/* no rights or older than 48h — fine */
+	}
+}
+```
+
+accumulated handler contexts are structural supertypes of the per-update class, so handlers pass
+`ctx` in with no casts. a helper that needs plugin-added fields intersects them:
+`function greet(ctx: MessageContext & { session: { count: number } })`.
+
+NEVER type a helper as `ctx: unknown`/`any` and poke it with a structural cast like
+`(ctx as { delete?: () => Promise<unknown> }).delete?.()` — the optional call silently no-ops
+when the method is missing (wrong update kind), hiding exactly the bugs the named type would
+have caught at compile time.
+
 ## rules
 
 - import from `"yaebal"` (the batteries-included meta package) in application code; it re-exports

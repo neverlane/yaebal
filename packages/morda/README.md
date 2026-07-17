@@ -65,6 +65,36 @@ text accepts `format` results (entities flow to the wire), windows can carry
 delete + resend), and buttons come in callback / url / webApp / copy /
 switchInline flavors.
 
+## typed ambient context
+
+window callbacks see the bare `Context` by default. declare the context your bot actually
+accumulates with `defineDialog` (curried, so window ids stay literal) — `render` /
+`onText` / lifecycle hooks then see plugin fields with no casts, and installing the
+dialog on a bot that lacks them is a compile error, not a runtime surprise:
+
+```ts
+import { defineDialog, dialogs } from "@yaebal/morda";
+
+type BotContext = Context & { session: { name: string } };
+
+const def = defineDialog<BotContext>()({
+	profile: {
+		render: (ctx) => ({ text: `hi ${ctx.session.name}` }),
+		onText: (ctx) => {
+			ctx.session.name = ctx.text; // typed — session comes from BotContext
+			return ctx.dialog.rerender();
+		},
+	},
+});
+
+bot.install(session({ initial: () => ({ name: "anon" }) })).install(dialogs(def));
+```
+
+on a `createBot()` bot the runtime context inside windows is the rich per-update class —
+include it in the declared context (e.g. `MessageContext & { session: … }`) and generated
+shortcuts like `ctx.delete()` type-check inside `onText` too. `button<C>()` accepts the
+same context for a helper-built button's `onClick`.
+
 ## jsx + hooks
 
 ```tsx

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/ai",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal ai — llm superpowers for telegram bots: streamed replies (drafts + edits), conversation memory, provider-agnostic models, plus an mcp server and agent installer for ai-assisted development.",
 	"type": "module",
 	"main": "./lib/index.js",

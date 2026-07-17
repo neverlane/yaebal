@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/ephemeral",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal ephemeral — reply in a group so only one user sees it: ctx.replyEphemeral() with a typed edit/delete handle and a private-chat fallback.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -24,6 +24,9 @@
 		"@types/node": "latest",
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
+	},
+	"peerDependencies": {
+		"@yaebal/core": "workspace:*"
 	},
 	"engines": { "node": ">=20" },
 	"keywords": ["telegram", "telegram-bot", "yaebal", "ephemeral"],

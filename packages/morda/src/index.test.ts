@@ -9,10 +9,12 @@ import {
 	createDialogs,
 	type DialogDef,
 	type DialogState,
+	defineDialog,
 	dialogs,
 	MordaError,
 	switchTo,
 	url,
+	type WindowIds,
 } from "./index.js";
 
 const noop = async () => {};
@@ -738,4 +740,79 @@ test("stale-press protection under concurrent updates (double-tap)", async () =>
 		(await storage.get("dlg:1"))?.stack.map((f) => f.w),
 		["main", "settings"],
 	);
+});
+
+// ── typed ambient context (defineDialog) ─────────────────────────────────────
+
+test("defineDialog<C>: window callbacks see plugin-added fields, fully typed", async () => {
+	type Ctx = Context & { greeting: string };
+
+	const typedDef = defineDialog<Ctx>()({
+		hello: {
+			// ctx.greeting type-checks here — on the bare Context it would not compile
+			render: (ctx) => ({
+				text: `${ctx.greeting}!`,
+				keyboard: [
+					[
+						button<Ctx>("shout", {
+							id: "shout",
+							onClick: (c) => c.answerCallbackQuery({ text: c.greeting.toUpperCase() }),
+						}),
+					],
+				],
+			}),
+			onText: (ctx) => void ctx.greeting.toUpperCase(),
+		},
+	});
+
+	// the def's window-id union stays literal (the symbol-keyed carrier is not an id)
+	type Ids = WindowIds<typeof typedDef>;
+	const _idCheck: Ids = "hello";
+	// @ts-expect-error only declared windows are ids
+	const _badId: Ids = "settings";
+
+	const { api, of } = fakeApi();
+	const mw = entry(
+		new Composer<Context>()
+			.decorate({ greeting: "hey" })
+			.install(dialogs(typedDef))
+			.command("go", (ctx) => ctx.dialog.start("hello")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+	assert.equal(of("sendMessage")[0]?.params.text, "hey!");
+});
+
+test("defineDialog<C>: installing where C is missing is a compile error", async () => {
+	type Ctx = Context & { greeting: string };
+	const typedDef = defineDialog<Ctx>()({ solo: () => ({ text: "solo" }) });
+	const plugin = dialogs(typedDef);
+
+	// @ts-expect-error — this composer does not provide `greeting`
+	new Composer<Context>().install(plugin);
+
+	// with the field provided the same plugin installs — and still runs
+	const { api, of } = fakeApi();
+	const mw = entry(
+		new Composer<Context>()
+			.decorate({ greeting: "hi" })
+			.install(plugin)
+			.command("go", (ctx) => ctx.dialog.start("solo")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+	assert.equal(of("sendMessage")[0]?.params.text, "solo");
+});
+
+test("bare defs stay exactly as before — no annotations required", async () => {
+	// the pre-generic shape: a plain object literal, C defaults to Context
+	const bare = { only: () => ({ text: "plain" }) } satisfies DialogDef;
+
+	const { api, of } = fakeApi();
+	const mw = entry(
+		new Composer<Context>().install(dialogs(bare)).command("go", (ctx) => ctx.dialog.start("only")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+	assert.equal(of("sendMessage")[0]?.params.text, "plain");
 });

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { parseArgs } from "./args.js";
-import { PLUGIN_IDS } from "./catalog.js";
+import { AI_AGENT_IDS, PLUGIN_IDS } from "./catalog.js";
 
 test("parseArgs: positional name + short flags", () => {
 	const a = parseArgs(["my-bot", "-r", "bun", "-t", "commands", "-p", "session,again"]);
@@ -78,6 +78,27 @@ test("parseArgs: --plugins with no value doesn't swallow the following flag", ()
 	assert.equal(a.plugins, undefined);
 	assert.equal(a.yes, true);
 	assert.ok(a.warnings.some((w) => w.includes("--plugins")));
+});
+
+test("parseArgs: --ai takes a comma list of agent ids", () => {
+	const a = parseArgs(["b", "--ai", "claude,cursor"]);
+
+	assert.deepEqual(a.ai, ["claude", "cursor"]);
+});
+
+test("parseArgs: --ai all / none", () => {
+	assert.deepEqual(parseArgs(["b", "--ai", "all"]).ai, [...AI_AGENT_IDS]);
+	assert.deepEqual(parseArgs(["b", "--ai", "none"]).ai, []);
+
+	assert.equal(parseArgs(["b"]).ai, undefined); // not provided
+});
+
+test("parseArgs: --ai with no value doesn't swallow the following flag", () => {
+	const a = parseArgs(["b", "--ai", "--yes"]);
+
+	assert.equal(a.ai, undefined);
+	assert.equal(a.yes, true);
+	assert.ok(a.warnings.some((w) => w.includes("--ai")));
 });
 
 test("parseArgs: deploy, ci, config and json flags", () => {

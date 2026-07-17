@@ -4,7 +4,13 @@
  *
  * this module is pure data + a couple of tiny lookups. both the tui and the
  * plain prompt fallback read from here, so the two front-ends can never drift.
+ *
+ * the one exception to "pure data": the ai-agent axis is sourced from
+ * `@yaebal/ai` (the package that actually writes the rules files / mcp
+ * configs), so the offered list can never drift from what installs.
  */
+
+import { AGENT_TARGETS } from "@yaebal/ai/installers";
 
 export type Runtime = "node" | "bun" | "deno";
 export type PackageManager = "npm" | "pnpm" | "yarn" | "bun" | "deno";
@@ -503,6 +509,13 @@ export const PLUGINS: PluginDef[] = [
 		wire: "dep",
 		import: 'import { createPool } from "@yaebal/workers";',
 	},
+	{
+		id: "ai",
+		dep: "@yaebal/ai",
+		hint: "ctx.ai — streamed llm replies (drafts + edits), memory, provider-agnostic models",
+		wire: "dep",
+		import: 'import { ai, anthropicModel } from "@yaebal/ai";',
+	},
 ];
 
 export const PLUGIN_IDS: string[] = PLUGINS.map((p) => p.id);
@@ -525,4 +538,16 @@ export function isTemplate(v: string): v is TemplateId {
 
 export function isDeploy(v: string): v is DeployTarget {
 	return DEPLOYS.some((d) => d.value === v);
+}
+
+/**
+ * ai coding agents the scaffolder can pre-configure (rules files + mcp
+ * configs), straight from `@yaebal/ai` — the package that does the installing.
+ */
+export { AGENT_TARGETS } from "@yaebal/ai/installers";
+
+export const AI_AGENT_IDS: string[] = AGENT_TARGETS.map((t) => t.id);
+
+export function isAiAgent(v: string): boolean {
+	return AGENT_TARGETS.some((t) => t.id === v);
 }

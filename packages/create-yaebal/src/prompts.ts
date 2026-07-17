@@ -9,6 +9,7 @@ import process from "node:process";
 import { createInterface } from "node:readline/promises";
 import type { ParsedArgs } from "./args.js";
 import {
+	AGENT_TARGETS,
 	type Choice,
 	DEPLOYS,
 	PACKAGE_MANAGERS,
@@ -19,7 +20,7 @@ import {
 	TEMPLATES,
 	type TemplateId,
 } from "./catalog.js";
-import { defaults, type Selections, sanitizePlugins } from "./config.js";
+import { defaults, type Selections, sanitizeAgents, sanitizePlugins } from "./config.js";
 import { validateProjectName } from "./util.js";
 
 const c = {
@@ -114,6 +115,25 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 			? "none"
 			: (args.deploy ?? (await pickOne(rl, "deploy target", DEPLOYS, d.deploy)));
 
+		let ai = args.ai;
+		if (ai === undefined) {
+			console.log(
+				`\n${c.bold("set up ai coding agents?")} ${c.dim("(space/comma separated ids, or 'none')")}`,
+			);
+
+			AGENT_TARGETS.forEach((t) => {
+				console.log(`  ${t.id} ${c.dim(`— ${t.label}`)}`);
+			});
+
+			const ans = (await rl.question(c.dim("  agents [none]: "))).trim();
+
+			if (!ans || ans.toLowerCase() === "none") ai = [];
+			else if (ans.toLowerCase() === "all") ai = AGENT_TARGETS.map((t) => t.id);
+			else ai = ans.split(/[\s,]+/).filter(Boolean);
+		}
+
+		ai = sanitizeAgents(ai);
+
 		const ci = isPlugin
 			? false
 			: (args.ci ?? (await confirm(rl, "add a github actions ci workflow?", d.ci)));
@@ -122,7 +142,7 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 
 		const install = args.install ?? (await confirm(rl, "install dependencies now?", d.install));
 
-		return { name, runtime, packageManager, template, plugins, deploy, ci, git, install };
+		return { name, runtime, packageManager, template, plugins, deploy, ai, ci, git, install };
 	} catch (err) {
 		// ctrl+c during a question rejects with an AbortError — treat as cancel.
 		if (

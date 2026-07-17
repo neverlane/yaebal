@@ -12,8 +12,9 @@ import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import process from "node:process";
+import { installAgents } from "@yaebal/ai/installers";
 import { HELP, parseArgs } from "./args.js";
-import { defaults, type Selections, sanitizePlugins } from "./config.js";
+import { defaults, type Selections, sanitizeAgents, sanitizePlugins } from "./config.js";
 import { applyConfigFile, loadConfigFile } from "./config-file.js";
 import { runPrompts } from "./prompts.js";
 import {
@@ -64,7 +65,7 @@ async function gather(args: ReturnType<typeof parseArgs>): Promise<Selections | 
 	// fully non-interactive: take defaults, no questions asked.
 	if (args.yes) {
 		const d = defaults(args);
-		return { ...d, plugins: sanitizePlugins(d.plugins) };
+		return { ...d, plugins: sanitizePlugins(d.plugins), ai: sanitizeAgents(d.ai) };
 	}
 
 	// no tty (piped/CI) and not --yes: we can't prompt. accept defaults if we
@@ -72,7 +73,7 @@ async function gather(args: ReturnType<typeof parseArgs>): Promise<Selections | 
 	if (!isInteractive()) {
 		if (args.name) {
 			const d = defaults(args);
-			return { ...d, plugins: sanitizePlugins(d.plugins) };
+			return { ...d, plugins: sanitizePlugins(d.plugins), ai: sanitizeAgents(d.ai) };
 		}
 
 		console.error(
@@ -154,6 +155,22 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
 	log(c.green(`\n✓ created ${dirName}/`));
 
+	// ai agents: write rules files / mcp configs into the fresh project before
+	// `git init`, so the first commit includes them. "note" actions are manual
+	// follow-ups — collected here and printed with the next steps below.
+	const aiNotes: string[] = [];
+	if (selections.ai.length > 0) {
+		const results = installAgents(target, selections.ai);
+		let written = 0;
+		for (const actions of results.values()) {
+			for (const action of actions) {
+				if (action.kind === "note") aiNotes.push(action.detail);
+				else written++;
+			}
+		}
+		log(c.dim(`  • set up ai agents: ${selections.ai.join(", ")} (${written} file(s) written)`));
+	}
+
 	let gitOk = false;
 	if (selections.git) {
 		gitOk = await gitInit(target);
@@ -208,6 +225,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 					packageManager: installPackageManager,
 					plugins: selections.plugins,
 					deploy: selections.deploy,
+					ai: selections.ai,
+					aiNotes,
 					ci: selections.ci,
 					git: selections.git ? gitOk : false,
 					install: selections.install ? installOk : false,
@@ -223,6 +242,11 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 	console.log(`\n${c.bold("next steps:")}`);
 
 	for (const s of steps) console.log(`  ${s}`);
+
+	if (aiNotes.length > 0) {
+		console.log(`\n${c.bold("ai agent notes:")}`);
+		for (const note of aiNotes) console.log(`  • ${note}`);
+	}
 
 	console.log(`\n${c.cyan("happy hacking ✦")}\n`);
 }

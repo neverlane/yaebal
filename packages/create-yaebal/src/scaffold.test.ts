@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
+import { installAgents } from "@yaebal/ai/installers";
 import { PLUGIN_IDS } from "./catalog.js";
 import {
 	defaultPackageManager,
@@ -8,6 +12,7 @@ import {
 	renderFiles,
 	runCommand,
 	scriptCommand,
+	writeProject,
 } from "./scaffold.js";
 
 test("renderFiles: bare project has core only", () => {
@@ -334,6 +339,29 @@ test("renderFiles: ci flag adds a github actions workflow for both bot and plugi
 
 	const noCi = renderFiles({ name: "b", runtime: "node", plugins: [] });
 	assert.equal(noCi[".github/workflows/ci.yml"], undefined);
+});
+
+test('scaffolding with ai: ["agents-md"] writes a yaebal AGENTS.md into the project dir', {
+	timeout: 10_000,
+}, async () => {
+	const root = mkdtempSync(join(tmpdir(), "create-yaebal-ai-"));
+	const dir = join(root, "bot");
+
+	try {
+		// same order as main(): project files first, then the agent installer
+		// writes its rules files / mcp configs into the fresh project dir.
+		await writeProject(dir, renderFiles({ name: "bot", runtime: "node", plugins: [] }));
+		const results = installAgents(dir, ["agents-md"]);
+
+		const actions = results.get("agents-md") ?? [];
+		assert.ok(
+			actions.some((a) => a.kind === "write" && a.detail === "AGENTS.md"),
+			`expected a write action for AGENTS.md, got ${JSON.stringify(actions)}`,
+		);
+		assert.match(readFileSync(join(dir, "AGENTS.md"), "utf8"), /yaebal/);
+	} finally {
+		rmSync(root, { recursive: true, force: true });
+	}
 });
 
 test("commands map to package managers", () => {

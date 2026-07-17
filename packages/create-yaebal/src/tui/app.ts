@@ -11,6 +11,7 @@
 import process from "node:process";
 import type { ParsedArgs } from "../args.js";
 import {
+	AGENT_TARGETS,
 	type Choice,
 	DEPLOYS,
 	PACKAGE_MANAGERS,
@@ -18,15 +19,15 @@ import {
 	RUNTIMES,
 	TEMPLATES,
 } from "../catalog.js";
-import { defaults, type Selections, sanitizePlugins } from "../config.js";
+import { defaults, type Selections, sanitizeAgents, sanitizePlugins } from "../config.js";
 import { validateProjectName } from "../util.js";
 import { fg, type KeyEvent, moveTo, onKeypress, padTo, screen, style, vlen } from "./ansi.js";
 import { CARD_WIDTH, TAGLINE, TITLE, theme } from "./theme.js";
 
 // template comes before runtime/pm so the plugin path — which needs neither a
 // runtime nor a deploy question — can skip them cleanly (see `shouldSkip`).
-type StepId = "name" | "template" | "runtime" | "pm" | "plugins" | "deploy" | "review";
-const STEPS: StepId[] = ["name", "template", "runtime", "pm", "plugins", "deploy", "review"];
+type StepId = "name" | "template" | "runtime" | "pm" | "plugins" | "deploy" | "ai" | "review";
+const STEPS: StepId[] = ["name", "template", "runtime", "pm", "plugins", "deploy", "ai", "review"];
 
 /** inner text width: card minus borders (2) minus side padding (2). */
 const TW = CARD_WIDTH - 4;
@@ -41,6 +42,8 @@ interface State {
 	pluginCursor: number;
 	selected: Set<string>;
 	deployIdx: number;
+	aiCursor: number;
+	aiSelected: Set<string>;
 	ci: boolean;
 	git: boolean;
 	install: boolean;
@@ -82,6 +85,8 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 		pluginCursor: 0,
 		selected: new Set(d.plugins),
 		deployIdx: indexOfValue(DEPLOYS, d.deploy),
+		aiCursor: 0,
+		aiSelected: new Set(d.ai),
 		ci: d.ci,
 		git: d.git,
 		install: d.install,
@@ -95,6 +100,7 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 	if (args.template) locked.template = true;
 	if (args.plugins) locked.plugins = true;
 	if (args.deploy) locked.deploy = true;
+	if (args.ai) locked.ai = true;
 	const selectedTemplate = () => TEMPLATES[state.templateIdx]?.value ?? "minimal";
 	const isPluginTemplate = () => selectedTemplate() === "plugin";
 	const shouldSkip = (step: StepId) => {
@@ -195,9 +201,32 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 		return lines;
 	}
 
+	function aiLines(): string[] {
+		const lines: string[] = [accent(`ai coding agents · ${state.aiSelected.size} selected`), ""];
+		const max = Math.max(6, rows() - 12);
+		const [from, to] = windowed(AGENT_TARGETS.length, state.aiCursor, max);
+		if (from > 0) lines.push(dim("   ↑ more"));
+		for (let i = from; i < to; i++) {
+			const t = AGENT_TARGETS[i];
+			if (!t) continue;
+			const active = i === state.aiCursor;
+			const on = state.aiSelected.has(t.id);
+			lines.push(
+				rowLine(active, [
+					{ t: ` ${on ? "◉" : "◯"} `, fg: on ? theme.accent : theme.dim },
+					{ t: t.id, fg: active ? theme.text : theme.dim },
+					{ t: `  ${t.label}`, fg: theme.border },
+				]),
+			);
+		}
+		if (to < AGENT_TARGETS.length) lines.push(dim("   ↓ more"));
+		return lines;
+	}
+
 	function reviewLines(): string[] {
 		const isPlugin = isPluginTemplate();
 		const sel = sanitizePlugins([...state.selected]);
+		const aiSel = sanitizeAgents([...state.aiSelected]);
 		const kv = (k: string, v: string) => `${dim(`  ${k.padEnd(9)}`)} ${text(clip(v, TW - 12))}`;
 		return [
 			accent("review & create"),
@@ -214,6 +243,7 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				"deploy",
 				isPlugin ? "n/a (plugin template)" : (DEPLOYS[state.deployIdx]?.label ?? "none"),
 			),
+			kv("ai", aiSel.length ? aiSel.join(", ") : "none"),
 			"",
 			rowLine(state.reviewCursor === 0, [
 				{ t: ` ${state.git ? "◉" : "◯"} `, fg: state.git ? theme.accent : theme.dim },
@@ -283,6 +313,11 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				return {
 					body: [accent("where does it deploy?"), "", ...selectLines(DEPLOYS, state.deployIdx)],
 					footer: "↑/↓ move · enter next · ← back · esc cancel",
+				};
+			case "ai":
+				return {
+					body: aiLines(),
+					footer: "↑/↓ · space toggle · a/n all·none · enter next · ← back",
 				};
 			default:
 				return {
@@ -363,6 +398,7 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 				template: TEMPLATES[state.templateIdx]?.value ?? "minimal",
 				plugins: isPluginTemplate() ? [] : sanitizePlugins([...state.selected]),
 				deploy: isPluginTemplate() ? "none" : (DEPLOYS[state.deployIdx]?.value ?? "none"),
+				ai: sanitizeAgents([...state.aiSelected]),
 				ci: state.ci,
 				git: state.git,
 				install: state.install,
@@ -454,6 +490,20 @@ export async function runTui(args: ParsedArgs, io: TuiIO = {}): Promise<Selectio
 					if (id) state.selected.has(id) ? state.selected.delete(id) : state.selected.add(id);
 				} else if (key.name === "a") for (const p of PLUGINS) state.selected.add(p.id);
 				else if (key.name === "n") state.selected.clear();
+				else if (enter) return nextStep();
+				else return;
+				return render();
+			}
+
+			if (step === "ai") {
+				if (key.name === "up")
+					state.aiCursor = (state.aiCursor - 1 + AGENT_TARGETS.length) % AGENT_TARGETS.length;
+				else if (key.name === "down") state.aiCursor = (state.aiCursor + 1) % AGENT_TARGETS.length;
+				else if (key.name === "space") {
+					const id = AGENT_TARGETS[state.aiCursor]?.id;
+					if (id) state.aiSelected.has(id) ? state.aiSelected.delete(id) : state.aiSelected.add(id);
+				} else if (key.name === "a") for (const t of AGENT_TARGETS) state.aiSelected.add(t.id);
+				else if (key.name === "n") state.aiSelected.clear();
 				else if (enter) return nextStep();
 				else return;
 				return render();

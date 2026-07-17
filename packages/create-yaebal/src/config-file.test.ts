@@ -96,10 +96,51 @@ test("loadConfigFile: invalid json warns instead of throwing", () => {
 	});
 });
 
+test("loadConfigFile: a valid ai list round-trips", () => {
+	withTmpDir((dir) => {
+		writeFileSync(join(dir, "create-yaebal.json"), JSON.stringify({ ai: ["claude", "agents-md"] }));
+
+		const result = loadConfigFile(dir, undefined, false);
+		assert.deepEqual(result.values.ai, ["claude", "agents-md"]);
+		assert.deepEqual(result.warnings, []);
+	});
+});
+
+test("loadConfigFile: an unknown agent id warns, listing the known ids", () => {
+	withTmpDir((dir) => {
+		writeFileSync(join(dir, "create-yaebal.json"), JSON.stringify({ ai: ["claude", "clippy"] }));
+
+		const result = loadConfigFile(dir, undefined, false);
+		assert.equal(result.values.ai, undefined);
+		assert.ok(
+			result.warnings.some((w) => w.includes('"clippy"') && w.includes("agents-md")),
+			`warning should name the bad id and list known ids: ${JSON.stringify(result.warnings)}`,
+		);
+	});
+});
+
+test('loadConfigFile: a non-array "ai" warns and is dropped', () => {
+	withTmpDir((dir) => {
+		writeFileSync(join(dir, "create-yaebal.json"), JSON.stringify({ ai: "claude" }));
+
+		const result = loadConfigFile(dir, undefined, false);
+		assert.equal(result.values.ai, undefined);
+		assert.ok(result.warnings.some((w) => w.includes('"ai" must be an array of strings')));
+	});
+});
+
 test("applyConfigFile: cli flags always win over the config file", () => {
 	const args = parseArgs(["my-bot", "--runtime", "bun"]);
 	const merged = applyConfigFile(args, { runtime: "deno", template: "commands" });
 
 	assert.equal(merged.runtime, "bun"); // flag wins
 	assert.equal(merged.template, "commands"); // config fills the gap
+});
+
+test("applyConfigFile: --ai wins over the config file's ai, and fills the gap otherwise", () => {
+	const flagged = applyConfigFile(parseArgs(["my-bot", "--ai", "none"]), { ai: ["claude"] });
+	assert.deepEqual(flagged.ai, []); // explicit none wins
+
+	const filled = applyConfigFile(parseArgs(["my-bot"]), { ai: ["claude"] });
+	assert.deepEqual(filled.ai, ["claude"]); // config fills the gap
 });

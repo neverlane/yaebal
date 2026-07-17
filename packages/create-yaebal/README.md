@@ -12,16 +12,17 @@ pnpm create yaebal
 ## the interactive ui
 
 in a real terminal you get a centred, keyboard-driven wizard rendered with pure ansi — no react, no
-solid, **no native dependencies**, just `node:readline` and escape codes. it walks seven steps:
-**name → template → runtime → package manager → plugins → deploy → review** — picking the `plugin`
-template skips runtime, plugins and deploy entirely, since none of them apply to a plugin package.
+solid, **no native dependencies**, just `node:readline` and escape codes. it walks eight steps:
+**name → template → runtime → package manager → plugins → deploy → ai agents → review** — picking
+the `plugin` template skips runtime, plugins and deploy entirely, since none of them apply to a
+plugin package (ai agents still apply, so that step stays).
 
 | key       | does                                    |
 |:----------|:----------------------------------------|
 | `↑ / ↓`   | move within a list                      |
 | `enter`   | confirm the step / create               |
-| `space`   | toggle a plugin or a git/install/ci switch |
-| `a` / `n` | select all / none on the plugins step   |
+| `space`   | toggle a plugin, an ai agent or a git/install/ci switch |
+| `a` / `n` | select all / none on the plugins & ai agents steps |
 | `←`       | back a step                             |
 | `esc`     | back, or cancel on the first step       |
 
@@ -48,6 +49,7 @@ pnpm create yaebal my-bot --plugins all --yes --no-install
 | `-t, --template <id>`                      | starter template or plugin package          |
 | `-p, --plugins <a,b \| all \| none>`       | comma list of `@yaebal` plugins             |
 | `-d, --deploy <target>`                    | none · docker · compose · fly · railway · cloudflare · vercel |
+| `--ai <a,b \| all \| none>`                | set up ai coding agents in the project      |
 | `--ci` / `--no-ci`                         | add a github actions ci workflow            |
 | `--git` / `--no-git`                       | initialise a git repo (+ first commit)      |
 | `--install` / `--no-install`               | install dependencies after scaffolding      |
@@ -73,6 +75,7 @@ cli flags always win over the file; the file only fills in what a flag left unse
 	"template": "commands",
 	"plugins": ["session", "again", "fmt"],
 	"deploy": "cloudflare",
+	"ai": ["claude", "agents-md"],
 	"ci": true
 }
 ```
@@ -128,6 +131,17 @@ containerized. `cloudflare` and `vercel` are serverless: they take over the boot
 the `webhook`/`runner` templates already replace `bot.start()`) and add `@yaebal/web` + a
 `SECRET_TOKEN` to `.env.example`. pass `--ci` (independent of deploy) for a github actions workflow
 that installs and typechecks on every push — plugin packages get one too, plus `test`/`build`.
+
+## ai agents
+
+orthogonal to everything else — pick agents with `--ai` or on the wizard's **ai agents** step
+(default: none) to make the generated project ai-agent-ready. for each selected agent,
+[`@yaebal/ai`](https://github.com/neverlane/yaebal/tree/master/packages/ai)'s installer writes the
+matching rules files and mcp config into the fresh project (before the first git commit):
+`claude` (skills + `.mcp.json`) · `cursor` (`.cursor/rules` + `mcp.json`) · `codex` · `opencode` ·
+`copilot` · `windsurf` · `zed` · `gemini` · `agents-md` (a generic `AGENTS.md` for any other
+agent). anything an installer can't do for you (global mcp configs, editor settings) is printed as
+a note under the next steps.
 
 ## runtimes & plugins
 

@@ -5,6 +5,7 @@
  */
 
 import {
+	AI_AGENT_IDS,
 	type DeployTarget,
 	isDeploy,
 	isPackageManager,
@@ -24,6 +25,8 @@ export interface ParsedArgs {
 	/** undefined = not provided; [] = explicitly none */
 	plugins?: string[];
 	deploy?: DeployTarget;
+	/** ai coding agents to pre-configure; undefined = not provided; [] = explicitly none */
+	ai?: string[];
 	/** ship a github actions ci workflow */
 	ci?: boolean;
 	git?: boolean;
@@ -51,6 +54,18 @@ function resolvePlugins(raw: string): string[] {
 
 	if (v === "" || v === "none") return [];
 	if (v === "all") return [...PLUGIN_IDS];
+
+	return v
+		.split(",")
+		.map((s) => s.trim())
+		.filter(Boolean);
+}
+
+function resolveAgents(raw: string): string[] {
+	const v = raw.trim().toLowerCase();
+
+	if (v === "" || v === "none") return [];
+	if (v === "all") return [...AI_AGENT_IDS];
 
 	return v
 		.split(",")
@@ -141,6 +156,12 @@ export function parseArgs(argv: string[]): ParsedArgs {
 				else out.warnings.push(`--deploy "${v}" is not a known deploy target`);
 				break;
 			}
+			case "--ai": {
+				const v = next();
+				if (v === undefined) out.warnings.push("--ai needs a value (a,b | all | none)");
+				else out.ai = resolveAgents(v);
+				break;
+			}
 			case "--ci":
 				out.ci = true;
 				break;
@@ -203,6 +224,9 @@ options:
   -p, --plugins <a,b | all | none>        comma list of @yaebal plugins
   -d, --deploy <target>                   none · docker · compose · fly ·
                                            railway · cloudflare · vercel
+      --ai <a,b | all | none>             set up ai coding agents: claude ·
+                                           cursor · codex · opencode · copilot ·
+                                           windsurf · zed · gemini · agents-md
       --ci / --no-ci                      add a github actions ci workflow
       --git / --no-git                    initialise a git repo (+ first commit)
       --install / --no-install            install dependencies after scaffolding
@@ -220,6 +244,7 @@ examples:
   create-yaebal my-bot
   create-yaebal my-bot -r bun -t commands -p session,again,fmt
   create-yaebal my-bot -t webhook -d cloudflare --ci --yes
+  create-yaebal my-bot --ai claude,cursor --yes
   create-yaebal my-plugin -t plugin --yes
   create-yaebal my-bot --plugins all --yes --no-install
 `;

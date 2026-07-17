@@ -6,6 +6,7 @@
 
 import type { ParsedArgs } from "./args.js";
 import {
+	AI_AGENT_IDS,
 	type DeployTarget,
 	type PackageManager,
 	PLUGIN_IDS,
@@ -23,6 +24,8 @@ export interface Selections {
 	plugins: string[];
 	/** "none" for the plugin template — a plugin package has nowhere to deploy */
 	deploy: DeployTarget;
+	/** ai coding agents to pre-configure in the generated project ([] = none) */
+	ai: string[];
 	ci: boolean;
 	git: boolean;
 	install: boolean;
@@ -42,6 +45,7 @@ export function defaults(args: ParsedArgs): Selections {
 		template,
 		plugins: template === "plugin" ? [] : (args.plugins ?? ["session", "again", "fmt"]),
 		deploy: template === "plugin" ? "none" : (args.deploy ?? "none"),
+		ai: args.ai ?? [],
 		ci: args.ci ?? false,
 		git: args.git ?? true,
 		install: args.install ?? false,
@@ -55,6 +59,21 @@ export function sanitizePlugins(ids: string[]): string[] {
 
 	for (const id of ids) {
 		if (PLUGIN_IDS.includes(id) && !seen.has(id)) {
+			seen.add(id);
+			out.push(id);
+		}
+	}
+
+	return out;
+}
+
+/** drop any agent ids `@yaebal/ai` doesn't know, preserving order + dedupe. */
+export function sanitizeAgents(ids: string[]): string[] {
+	const seen = new Set<string>();
+	const out: string[] = [];
+
+	for (const id of ids) {
+		if (AI_AGENT_IDS.includes(id) && !seen.has(id)) {
 			seen.add(id);
 			out.push(id);
 		}

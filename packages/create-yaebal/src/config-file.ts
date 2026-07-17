@@ -10,7 +10,14 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { ParsedArgs } from "./args.js";
-import { isDeploy, isPackageManager, isRuntime, isTemplate } from "./catalog.js";
+import {
+	AI_AGENT_IDS,
+	isAiAgent,
+	isDeploy,
+	isPackageManager,
+	isRuntime,
+	isTemplate,
+} from "./catalog.js";
 
 export type ConfigFileShape = Partial<
 	Pick<
@@ -21,6 +28,7 @@ export type ConfigFileShape = Partial<
 		| "template"
 		| "plugins"
 		| "deploy"
+		| "ai"
 		| "ci"
 		| "git"
 		| "install"
@@ -77,6 +85,23 @@ function validate(raw: unknown, source: string): ConfigFileResult {
 	if (obj.deploy !== undefined) {
 		if (typeof obj.deploy === "string" && isDeploy(obj.deploy)) values.deploy = obj.deploy;
 		else warnings.push(`${source}: "deploy" value ${JSON.stringify(obj.deploy)} is not valid`);
+	}
+
+	if (obj.ai !== undefined) {
+		if (Array.isArray(obj.ai) && obj.ai.every((a) => typeof a === "string")) {
+			const unknown = (obj.ai as string[]).filter((a) => !isAiAgent(a));
+			if (unknown.length === 0) {
+				values.ai = obj.ai as string[];
+			} else {
+				warnings.push(
+					`${source}: "ai" has unknown agent id(s) ${unknown
+						.map((a) => JSON.stringify(a))
+						.join(", ")} — known: ${AI_AGENT_IDS.join(", ")}`,
+				);
+			}
+		} else {
+			warnings.push(`${source}: "ai" must be an array of strings`);
+		}
 	}
 
 	if (typeof obj.ci === "boolean") values.ci = obj.ci;
@@ -151,6 +176,7 @@ export function applyConfigFile(args: ParsedArgs, config: ConfigFileShape): Pars
 		template: args.template ?? config.template,
 		plugins: args.plugins ?? config.plugins,
 		deploy: args.deploy ?? config.deploy,
+		ai: args.ai ?? config.ai,
 		ci: args.ci ?? config.ci,
 		git: args.git ?? config.git,
 		install: args.install ?? config.install,

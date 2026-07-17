@@ -37,17 +37,18 @@ const DOWN = "\x1b[B";
 const SPACE = " ";
 const CTRL_C = "\x03";
 
-// step order: name → template → runtime → pm → plugins → deploy → review.
+// step order: name → template → runtime → pm → plugins → deploy → ai → review.
 // template comes before runtime/pm/plugins/deploy so the plugin path can skip
-// all four of them cleanly (see `shouldSkip` in app.ts).
+// all four of them cleanly (see `shouldSkip` in app.ts); the ai step applies
+// to every template, plugin packages included.
 
 test("tui: full flow resolves the chosen selections", { timeout: 5000 }, async () => {
 	const h = harness();
 	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 30, cols: 80 });
 
 	await h.type("testbot");
-	// name → template → runtime → pm → plugins → deploy → review → commit
-	for (let i = 0; i < 7; i++) await h.press(ENTER);
+	// name → template → runtime → pm → plugins → deploy → ai → review → commit
+	for (let i = 0; i < 8; i++) await h.press(ENTER);
 
 	const result = await pending;
 	assert.ok(result, "wizard should resolve with selections");
@@ -55,6 +56,7 @@ test("tui: full flow resolves the chosen selections", { timeout: 5000 }, async (
 	assert.ok(["node", "bun", "deno"].includes(result?.runtime ?? ""));
 	assert.ok(result?.plugins.includes("session"));
 	assert.equal(result?.deploy, "none");
+	assert.deepEqual(result?.ai, []); // default: no agents selected
 	assert.equal(result?.ci, false);
 });
 
@@ -71,7 +73,8 @@ test("tui: navigation, toggles and a plugin selection stick", { timeout: 5000 },
 	await h.press(DOWN); // move to 2nd plugin
 	await h.press(SPACE); // toggle it
 	await h.press(ENTER); // plugins → deploy
-	await h.press(ENTER); // deploy → review (accept "none")
+	await h.press(ENTER); // deploy → ai (accept "none")
+	await h.press(ENTER); // ai → review (no agents)
 	await h.press(ENTER); // create (cursor defaults to "create project")
 
 	const result = await pending;
@@ -93,7 +96,8 @@ test("tui: a deploy target pick sticks, and the ci toggle sticks", { timeout: 50
 	await h.press(ENTER); // pm → plugins
 	await h.press(ENTER); // plugins → deploy
 	await h.press(DOWN); // move off "none" to "docker"
-	await h.press(ENTER); // deploy → review (cursor starts on "create project")
+	await h.press(ENTER); // deploy → ai
+	await h.press(ENTER); // ai → review (cursor starts on "create project")
 	await h.press(DOWN); // create → git
 	await h.press(DOWN); // git → install
 	await h.press(DOWN); // install → ci
@@ -118,7 +122,8 @@ test("tui: plugin template skips runtime, plugins and deploy", { timeout: 5000 }
 
 	await h.type("plugbot");
 	await h.press(ENTER); // name → pm (template locked; runtime skipped for the plugin template)
-	await h.press(ENTER); // pm → review (plugins/deploy skipped for the plugin template)
+	await h.press(ENTER); // pm → ai (plugins/deploy skipped for the plugin template)
+	await h.press(ENTER); // ai → review
 	await h.press(ENTER); // create
 
 	const result = await pending;
@@ -126,6 +131,46 @@ test("tui: plugin template skips runtime, plugins and deploy", { timeout: 5000 }
 	assert.equal(result?.template, "plugin");
 	assert.deepEqual(result?.plugins, []);
 	assert.equal(result?.deploy, "none");
+});
+
+test("tui: an ai agent selection sticks", { timeout: 5000 }, async () => {
+	const h = harness();
+	const pending = runTui(parseArgs([]), { input: h.input, output: h.output, rows: 30, cols: 80 });
+
+	await h.type("aibot");
+	await h.press(ENTER); // name → template
+	await h.press(ENTER); // template → runtime
+	await h.press(ENTER); // runtime → pm
+	await h.press(ENTER); // pm → plugins
+	await h.press(ENTER); // plugins → deploy
+	await h.press(ENTER); // deploy → ai
+	await h.press(SPACE); // toggle the 1st agent (claude)
+	await h.press(DOWN); // move to the 2nd agent (cursor)
+	await h.press(SPACE); // toggle it
+	await h.press(ENTER); // ai → review
+	await h.press(ENTER); // create
+
+	const result = await pending;
+	assert.ok(result);
+	assert.deepEqual(result?.ai, ["claude", "cursor"]);
+});
+
+test("tui: --ai locks and skips the ai step", { timeout: 5000 }, async () => {
+	const h = harness();
+	const pending = runTui(parseArgs(["--ai", "agents-md"]), {
+		input: h.input,
+		output: h.output,
+		rows: 30,
+		cols: 80,
+	});
+
+	await h.type("lockedbot");
+	// name → template → runtime → pm → plugins → deploy → review (ai locked) → commit
+	for (let i = 0; i < 7; i++) await h.press(ENTER);
+
+	const result = await pending;
+	assert.ok(result);
+	assert.deepEqual(result?.ai, ["agents-md"]);
 });
 
 test("tui: renders a centred card with the current step", { timeout: 5000 }, async () => {

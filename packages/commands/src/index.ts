@@ -44,6 +44,12 @@ export interface ScopedCommands<C extends Context = Context> {
 		description: CommandDescription,
 		...handlers: CommandHandler<C>[]
 	): ScopedCommands<C>;
+	/** like `add`, but the menu marks the command ephemeral (`is_ephemeral`) — chainable. */
+	ephemeral(
+		name: string | string[],
+		description: CommandDescription,
+		...handlers: CommandHandler<C>[]
+	): ScopedCommands<C>;
 }
 
 interface CommandDef<C extends Context> {
@@ -51,6 +57,7 @@ interface CommandDef<C extends Context> {
 	description?: { default: string } & Record<string, string>;
 	scope?: BotCommandScope;
 	handlers: CommandHandler<C>[];
+	isEphemeral?: boolean;
 }
 
 type VisibleDef<C extends Context> = CommandDef<C> & {
@@ -91,6 +98,7 @@ function render<C extends Context>(defs: VisibleDef<C>[], locale?: string): BotC
 		command: d.names[0],
 		description:
 			(locale !== undefined ? d.description[locale] : undefined) ?? d.description.default,
+		...(d.isEphemeral ? { is_ephemeral: true } : {}),
 	}));
 }
 
@@ -108,7 +116,12 @@ function setMenu(api: CommandApi, menu: CommandMenu): Promise<boolean> {
 function sameCommands(a: BotCommand[], b: BotCommand[]): boolean {
 	return (
 		a.length === b.length &&
-		a.every((cmd, i) => cmd.command === b[i]?.command && cmd.description === b[i]?.description)
+		a.every(
+			(cmd, i) =>
+				cmd.command === b[i]?.command &&
+				cmd.description === b[i]?.description &&
+				(cmd.is_ephemeral ?? false) === (b[i]?.is_ephemeral ?? false),
+		)
 	);
 }
 
@@ -143,6 +156,21 @@ export class Commands<C extends Context = Context> {
 	}
 
 	/**
+	 * like `add`, but the menu entry carries `is_ephemeral: true` — telegram shows the
+	 * command's invocation only to its sender, and expects the bot to answer within ~15
+	 * seconds with an ephemeral message (pair with `@yaebal/ephemeral`'s
+	 * `ctx.replyEphemeral()`). chainable.
+	 */
+	ephemeral(
+		name: string | string[],
+		description: CommandDescription,
+		...handlers: CommandHandler<C>[]
+	): this {
+		this.define(name, description, undefined, handlers, true);
+		return this;
+	}
+
+	/**
 	 * a view whose `add`s attach commands to a specific menu scope. scoped menus repeat the
 	 * unscoped commands — Telegram replaces (not merges) the list for users a scope matches.
 	 */
@@ -150,6 +178,10 @@ export class Commands<C extends Context = Context> {
 		const view: ScopedCommands<C> = {
 			add: (name, description, ...handlers) => {
 				this.define(name, description, scope, handlers);
+				return view;
+			},
+			ephemeral: (name, description, ...handlers) => {
+				this.define(name, description, scope, handlers, true);
 				return view;
 			},
 		};
@@ -304,6 +336,7 @@ export class Commands<C extends Context = Context> {
 		description: CommandDescription | undefined,
 		scope: BotCommandScope | undefined,
 		handlers: CommandHandler<C>[],
+		isEphemeral = false,
 	): void {
 		const names = Array.isArray(name) ? name : [name];
 		const [first] = names;
@@ -325,7 +358,13 @@ export class Commands<C extends Context = Context> {
 			scopes.push(scope);
 			this.taken.set(n, scopes);
 		}
-		this.defs.push({ names: [first, ...names.slice(1)], description: normalized, scope, handlers });
+		this.defs.push({
+			names: [first, ...names.slice(1)],
+			description: normalized,
+			scope,
+			handlers,
+			...(isEphemeral ? { isEphemeral } : {}),
+		});
 
 		for (const group of this.scopeGroups()) {
 			if (group.defs.length > MAX_COMMANDS)

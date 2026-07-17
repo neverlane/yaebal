@@ -112,6 +112,20 @@ const cmd = commands()
   .hidden("debug", async (ctx) => ctx.reply(inspect(ctx)));
 ```
 
+### ephemeral commands
+
+`ephemeral()` is `add()` plus `is_ephemeral: true` on the menu entry (bot api 10.2+): telegram
+shows the command's invocation only to its sender, and expects an answer within ~15 seconds —
+pair it with [`@yaebal/ephemeral`](https://github.com/neverlane/yaebal/tree/master/packages/ephemeral)'s
+`ctx.replyEphemeral()` so the answer is private too. `sync()` diffs the flag, so flipping a
+command to ephemeral repushes its menu. also available on `scoped(...)` views.
+
+```ts
+const cmd = commands().ephemeral("stats", "your personal stats", async (ctx) => {
+  await ctx.replyEphemeral(`you: ${await stats(ctx.from.id)}`);
+});
+```
+
 ### menu-only entries
 
 `add()` without handlers puts a command in the menu without registering middleware — useful when
@@ -139,7 +153,7 @@ bot.command("help", (ctx) =>
 
 ### validation
 
-`add()` / `hidden()` throw early (instead of a late bot api 400) on: names not matching
+`add()` / `hidden()` / `ephemeral()` throw early (instead of a late bot api 400) on: names not matching
 `[a-z0-9_]{1,32}`, duplicate names/aliases, empty or >256-char descriptions, non-ISO-639-1 locale
 keys, and menus over 100 commands.
 

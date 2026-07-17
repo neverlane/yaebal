@@ -71,6 +71,18 @@ await cmd.register(bot.api);
   // menu-only: no handlers — the command is handled elsewhere (a router, a scene)
   .add("report", "file a report");`;
 
+	const ephemeralCmd = `import { ephemeral } from "@yaebal/ephemeral";
+
+// is_ephemeral in the menu (bot api 10.2+): telegram shows the /stats invocation
+// only to its sender and expects an answer within ~15 seconds — answer it
+// ephemerally too, so nothing lands in the group's history.
+const cmd = commands().ephemeral("stats", "your personal stats", async (ctx) => {
+  await ctx.replyEphemeral(\`you: \${await stats(ctx.from.id)}\`);
+});
+
+bot.install(ephemeral()).install(cmd.plugin());
+await cmd.sync(bot.api); // the flag is diffed — flipping it repushes the menu`;
+
 	const inspect = `cmd.list();                          // default menu: { command, description }[]
 cmd.list({ languageCode: "ru" });    // ru menu, falling back to default text
 cmd.list({ scope: { type: "all_chat_administrators" } });
@@ -187,6 +199,15 @@ env.callsTo("setMyCommands");`;
 <h2>aliases, hidden and menu-only commands</h2>
 <Code code={extras} title="extras.ts" />
 
+<h2>ephemeral commands</h2>
+<p>
+	<code>ephemeral()</code> is <code>add()</code> plus <code>is_ephemeral: true</code> on the menu
+	entry — pair it with
+	<a href="/docs/plugins/ephemeral"><code>@yaebal/ephemeral</code></a>'s
+	<code>ctx.replyEphemeral()</code> so the answer is private too:
+</p>
+<Code code={ephemeralCmd} title="ephemeral.ts" />
+
 <h2>inspecting the registry</h2>
 <Code code={inspect} title="inspect.ts" />
 
@@ -259,6 +280,11 @@ env.callsTo("setMyCommands");`;
 			<td>define a command with handlers but no menu entry</td>
 		</tr>
 		<tr>
+			<td><code>ephemeral</code></td>
+			<td><code>(name | [name, ...aliases], description, ...handlers) =&gt; this</code></td>
+			<td>like <code>add</code>, but the menu entry carries <code>is_ephemeral: true</code> — also on <code>scoped()</code> views</td>
+		</tr>
+		<tr>
 			<td><code>scoped</code></td>
 			<td><code>(scope: BotCommandScope) =&gt; ScopedCommands&lt;C&gt;</code></td>
 			<td>a view whose <code>add()</code>s attach commands to a specific menu scope</td>
@@ -298,7 +324,7 @@ env.callsTo("setMyCommands");`;
 
 <h2>validation</h2>
 <p>
-	<code>add()</code> / <code>hidden()</code> throw early — instead of a late bot api 400 — on:
+	<code>add()</code> / <code>hidden()</code> / <code>ephemeral()</code> throw early — instead of a late bot api 400 — on:
 	names not matching <code>[a-z0-9_]&#123;1,32&#125;</code>, duplicate names or aliases, empty or
 	&gt;256-char descriptions, locale keys that aren't two-letter iso 639-1 codes, and menus over
 	100 commands (scoped menus count the repeated unscoped commands).

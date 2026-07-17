@@ -87,6 +87,7 @@ export const nav: NavSection[] = [
 			{ label: "inline-results", href: "/docs/plugins/inline-results" },
 			{ label: "auto-answer", href: "/docs/plugins/auto-answer" },
 			{ label: "typing", href: "/docs/plugins/typing" },
+			{ label: "ephemeral", href: "/docs/plugins/ephemeral", badge: "new" },
 			{ label: "pagination", href: "/docs/plugins/pagination" },
 			{ label: "fmt (markdown/html)", href: "/docs/plugins/fmt" },
 			{ label: "rich messages", href: "/docs/plugins/rich" },

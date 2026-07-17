@@ -77,6 +77,12 @@ export const EXAMPLES_CATALOG: readonly ExampleCatalogEntry[] = [
 		"run": "pnpm --filter @yaebal/example-commands dev"
 	},
 	{
+		"name": "ephemeral",
+		"package": "@yaebal/example-ephemeral",
+		"focus": "ephemeral menu commands (is_ephemeral), ctx.replyEphemeral() in groups, handle edits/deletes, wrapEphemeralMessage from a callback, private-chat fallback",
+		"run": "pnpm --filter @yaebal/example-ephemeral dev"
+	},
+	{
 		"name": "pagination",
 		"package": "@yaebal/example-pagination",
 		"focus": "lazy sources (count + limit+1 probing), item buttons with onSelect, typed payload, button() menu morphing and back-navigation, ownership filter",
@@ -224,7 +230,7 @@ export const PATTERN_CATALOG: readonly PatternCatalogEntry[] = [
 	},
 	{
 		"pattern": "plugin in isolation",
-		"copyFrom": "again, throttle, keyboard, auto-answer, guards, commands, onboarding, rich-messages, state-machine"
+		"copyFrom": "again, throttle, keyboard, auto-answer, guards, commands, ephemeral, onboarding, rich-messages, state-machine"
 	},
 	{
 		"pattern": "production operator tooling",

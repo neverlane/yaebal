@@ -409,6 +409,11 @@
 			description:
 				"define yaebal telegram bot routes in toml files with typed handler registries, filters, commands, and declarative routing.",
 		},
+		"/docs/plugins/ephemeral": {
+			title: "@yaebal/ephemeral — telegram ephemeral messages, only the asker sees the reply",
+			description:
+				"reply in a telegram group so only one user sees it with @yaebal/ephemeral — ctx.replyEphemeral(), a typed edit/delete handle over ephemeral messages, and a private-chat fallback.",
+		},
 		"/docs/plugins/typing": {
 			title: "@yaebal/typing — keep the telegram typing indicator alive",
 			description:

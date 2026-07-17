@@ -293,3 +293,46 @@ test("a menu cannot exceed 100 commands (scoped menus count repeated ones)", () 
 	assert.throws(() => cmd.add("c101", "x"), /at most 100/);
 	assert.throws(() => cmd.scoped(ADMINS).add("extra", "x"), /at most 100/);
 });
+
+test("ephemeral() marks the menu entry is_ephemeral and wires handlers like add()", async () => {
+	const cmd = commands()
+		.add("start", "go", () => {})
+		.ephemeral("stats", "your stats", (ctx) => ctx.reply("only you see this"));
+
+	const env = createTestEnv(new Composer<Context>().install(cmd.plugin()));
+	await env.createUser().sendCommand("stats");
+
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "only you see this");
+	assert.deepEqual(cmd.list(), [
+		{ command: "start", description: "go" },
+		{ command: "stats", description: "your stats", is_ephemeral: true },
+	]);
+});
+
+test("scoped().ephemeral() carries the flag into that scope's menu", () => {
+	const cmd = commands().add("start", "go", () => {});
+	cmd.scoped(ADMINS).ephemeral("mod", "mod tools", () => {});
+
+	const admin = cmd.list({ scope: ADMINS });
+	assert.deepEqual(admin, [
+		{ command: "start", description: "go" },
+		{ command: "mod", description: "mod tools", is_ephemeral: true },
+	]);
+	assert.deepEqual(cmd.list(), [{ command: "start", description: "go" }]);
+});
+
+test("sync() repushes a menu when only is_ephemeral changed", async () => {
+	const cmd = commands().ephemeral("stats", "your stats", () => {});
+
+	const env = createTestEnv(new Composer<Context>());
+	// telegram still has the pre-ephemeral registration: same name, same description, no flag.
+	env.onApi("getMyCommands", [{ command: "stats", description: "your stats" }]);
+
+	const result = await cmd.sync(env.api);
+
+	assert.equal(result.pushed.length, 1);
+	assert.equal(result.skipped.length, 0);
+	assert.deepEqual(env.callsTo("setMyCommands")[0]?.params, {
+		commands: [{ command: "stats", description: "your stats", is_ephemeral: true }],
+	});
+});

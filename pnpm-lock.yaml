@@ -262,6 +262,22 @@ importers:
         specifier: latest
         version: 26.1.0
 
+  examples/ephemeral:
+    dependencies:
+      '@yaebal/commands':
+        specifier: workspace:*
+        version: link:../../packages/commands
+      '@yaebal/ephemeral':
+        specifier: workspace:*
+        version: link:../../packages/ephemeral
+      yaebal:
+        specifier: workspace:*
+        version: link:../../packages/yaebal
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+
   examples/feature-flags:
     dependencies:
       '@yaebal/feature-flags':
@@ -729,6 +745,22 @@ importers:
         version: 6.0.3
 
   packages/cron:
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
+
+  packages/ephemeral:
+    dependencies:
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
     devDependencies:
       '@types/node':
         specifier: latest

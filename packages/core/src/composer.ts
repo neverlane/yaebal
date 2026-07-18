@@ -77,7 +77,7 @@ export interface CallbackDataMatcher<T> {
 export type FilterQuery = UpdateName | `${UpdateName}:${string}` | `:${string}`;
 
 /** `message:<key>` content fields whose presence `on()` can narrow (L2 of the FilterQuery grammar). */
-interface MediaField {
+export interface MediaField {
 	photo: PhotoSize[];
 	video: Video;
 	sticker: Sticker;

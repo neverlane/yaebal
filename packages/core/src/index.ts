@@ -28,6 +28,7 @@ export {
 	type Filter,
 	type Filtered,
 	type FilterQuery,
+	type MediaField,
 	type Middleware,
 	matchOf,
 	matchQuery,

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { Filter } from "./index.js";
-import { Composer, Context } from "./index.js";
+import type { Filter, MediaField } from "./index.js";
+import { Composer, Context, matchQuery } from "./index.js";
 import type { Update } from "./telegram-types.js";
 
 /** minimal no-op api stub — composer tests never make real api calls. */
@@ -412,6 +412,119 @@ test("context: from/chat cover non-message updates (inline query, chat member)",
 	} as unknown as Update);
 	assert.equal(memberCtx.chat?.id, 5);
 	assert.equal(memberCtx.from?.id, 7);
+});
+
+// ── filter-query parity: Filtered<C,Q> (type narrow) ↔ matchQuery/checkField (runtime gate) ──
+//
+// the type-level narrow and the runtime matcher are maintained independently
+// (composer.ts Filtered vs checkField). if they drift, `on(q)` narrows a field the
+// runtime never verified — an unsound narrow. these tests lock the two together:
+//   1. runtime: matchQuery gates on exactly the field the query names (present → true, absent → false);
+//   2. compile-time: `on(q)` handlers read the narrowed field with no `?.` — a Filtered regression stops compiling;
+//   3. exhaustiveness: the media-field table must cover every key of MediaField (a new key won't compile until listed).
+
+/** every `message:<key>` media field whose presence `on()` narrows. must mirror `MediaField`. */
+const MEDIA_FIELDS = [
+	"photo",
+	"video",
+	"sticker",
+	"audio",
+	"voice",
+	"document",
+	"animation",
+	"contact",
+	"location",
+	"poll",
+	"dice",
+	"venue",
+	"video_note",
+	"game",
+	"invoice",
+	"successful_payment",
+	"web_app_data",
+] as const satisfies readonly (keyof MediaField)[];
+
+// fails to compile if a key is added to MediaField without being listed above — forcing
+// whoever extends the narrow to also confirm the runtime gate covers it.
+type _MediaExhaustive = Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]> extends never
+	? true
+	: ["MEDIA_FIELDS missing keys:", Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]>];
+const _mediaExhaustive: _MediaExhaustive = true;
+void _mediaExhaustive;
+
+test("filter parity: every media query gates on its field (present → match, absent → no match)", () => {
+	const bare = makeMessageCtx("hi"); // has text, none of the media fields
+
+	for (const field of MEDIA_FIELDS) {
+		const value = field === "photo" ? [{ file_id: "f", file_unique_id: "u" }] : { _present: 1 };
+		const withField = makeCtx({
+			update_id: 100,
+			message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: 1, type: "private" as const },
+				[field]: value,
+			},
+		} as unknown as Update);
+
+		assert.equal(matchQuery(withField, `message:${field}`), true, `${field}: should match when present`);
+		assert.equal(matchQuery(bare, `message:${field}`), false, `${field}: should not match when absent`);
+	}
+});
+
+test("filter parity: text/caption/data/entities gate on their field", () => {
+	const withEntities = makeCtx({
+		update_id: 101,
+		message: {
+			message_id: 1,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			text: "hi",
+			entities: [{ type: "bold" as const, offset: 0, length: 2 }],
+		},
+	} as Update);
+
+	assert.equal(matchQuery(makeMessageCtx("hi"), "message:text"), true);
+	assert.equal(matchQuery(makeMessageCtx(), "message:text"), false);
+	assert.equal(matchQuery(withEntities, "message:entities"), true);
+	assert.equal(matchQuery(makeMessageCtx("hi"), "message:entities"), false);
+	assert.equal(matchQuery(makeCallbackCtx("payload"), "callback_query:data"), true);
+	assert.equal(matchQuery(makeCallbackCtx("payload"), "callback_query"), true);
+	assert.equal(matchQuery(makeMessageCtx("hi"), "callback_query:data"), false);
+});
+
+test("filter parity: on(q) narrows the field the runtime just matched (compile-time lock)", async () => {
+	const read: string[] = [];
+
+	// each handler reads the narrowed field WITHOUT `?.` — the whole point. if any of
+	// these stops compiling, Filtered<C,Q> has drifted from what the query promises.
+	const composer = new Composer()
+		.on("message:text", (ctx) => {
+			read.push(`text:${ctx.text.length}`);
+		})
+		.on("message:entities", (ctx) => {
+			read.push(`entities:${ctx.entities.length}`);
+		})
+		.on("callback_query:data", (ctx) => {
+			read.push(`data:${ctx.callbackQuery.data ?? ""}`);
+		})
+		.on("message:video", (ctx) => {
+			read.push(`video:${ctx.message.video.file_id}`);
+		});
+
+	await run(
+		composer,
+		makeCtx({
+			update_id: 102,
+			message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: 1, type: "private" as const },
+				video: { file_id: "vf", file_unique_id: "vu", width: 1, height: 1, duration: 1 },
+			},
+		} as Update),
+	);
+	assert.deepEqual(read, ["video:vf"]);
 });
 
 test("hears: a callback update never triggers text handlers, even with a grafted message", async () => {

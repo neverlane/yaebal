@@ -1,8 +1,31 @@
 <script lang="ts">
+	import { BOT_API_VERSION } from "$lib/api/data.generated";
 	import Code from "$lib/Code.svelte";
 	import ThemeToggle from "$lib/ThemeToggle.svelte";
 
 	import { GITHUB, NPMX } from "$lib/nav";
+
+	const preamble = `import { createBot, autoRetry, autoAnswer, hydrate, typing } from "yaebal";
+
+// the six lines every production bot writes anyway — one import, no wiring
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(autoRetry())  // 429 flood-waits and transient 5xx retry themselves
+  .install(autoAnswer()) // no callback query left spinning
+  .install(hydrate())    // msg.editText(...) / msg.delete() on what you just sent
+  .install(typing());    // ctx.typing(fn) holds "typing…" for as long as fn runs
+
+bot.command("ask", (ctx) =>
+  ctx.typing(async () => {
+    const msg = ctx.hydrate(await ctx.reply("thinking…"));
+    await msg.editText("here you go");
+  }),
+);`;
+
+	const stats = [
+		{ value: BOT_API_VERSION, label: "bot api, regenerated daily" },
+		{ value: "0", label: "runtime deps in core" },
+		{ value: "50+", label: "first-party packages" },
+	];
 
 	const sample = `import { InlineKeyboard, callbackData, createBot, html, session } from "yaebal";
 
@@ -62,6 +85,7 @@ bot.start();`;
 	<a class="brand unbounded" href="/">yaebal</a>
 	<nav class="top-actions">
 		<a class="link" href="/docs/getting-started/">docs</a>
+		<a class="link" href="/docs/comparison/">comparison</a>
 		<a class="link" href="/playground/">playground</a>
 		<a class="link" href={GITHUB} target="_blank" rel="noopener noreferrer">github</a>
 		<a class="link" href={NPMX} target="_blank" rel="noreferrer">npmx</a>
@@ -104,6 +128,25 @@ bot.start();`;
 	<div class="sample">
 		<Code code={sample} title="bot.ts" />
 	</div>
+
+	<section class="stats">
+		{#each stats as s}
+			<div class="stat">
+				<span class="stat-value unbounded">{s.value}</span>
+				<span class="stat-label subtext">{s.label}</span>
+			</div>
+		{/each}
+	</section>
+
+	<section class="batteries">
+		<h2 class="unbounded">batteries, not a shopping list</h2>
+		<p class="subtext">
+			retries, the callback-query spinner, message handles, the typing indicator, file downloads,
+			4096-char splitting — first-party, typed, and already in the <code>yaebal</code> package.
+			every <code>install</code> widens the context type, so a missing one is a compile error.
+		</p>
+		<Code code={preamble} title="preamble.ts" />
+	</section>
 
 	<section class="features">
 		{#each features as f}
@@ -235,6 +278,48 @@ bot.start();`;
 		text-align: left;
 	}
 
+	.stats {
+		width: 100%;
+		margin-top: 28px;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 12px;
+	}
+
+	.stat {
+		padding: 18px 20px;
+		border: 1px solid var(--content-border);
+		border-radius: 16px;
+		background: var(--sidebar-bg);
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		text-align: center;
+	}
+
+	.stat-value {
+		font-size: 1.6rem;
+		line-height: 1.1;
+	}
+
+	.stat-label {
+		font-size: 0.85rem;
+	}
+
+	.batteries {
+		width: 100%;
+		margin-top: 40px;
+		text-align: left;
+	}
+
+	.batteries h2 {
+		margin-bottom: 8px;
+	}
+
+	.batteries p {
+		margin-bottom: 16px;
+	}
+
 	.features {
 		width: 100%;
 		margin-top: 28px;
@@ -261,7 +346,8 @@ bot.start();`;
 	}
 
 	@media (max-width: 620px) {
-		.features {
+		.features,
+		.stats {
 			grid-template-columns: 1fr;
 		}
 	}

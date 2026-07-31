@@ -140,12 +140,21 @@ export default {
 		<tr><td><a href="/docs/plugins/callback-data/">callback-data</a></td><td><code>callbackData</code></td><td>typed <code>callback_data</code> pack / unpack</td></tr>
 		<tr><td><a href="/docs/plugins/session/">session</a></td><td><code>session</code></td><td>per-chat state, pluggable storage</td></tr>
 		<tr><td><a href="/docs/plugins/i18n/">i18n</a></td><td><code>i18n</code></td><td>per-chat locale, <code>ctx.t</code></td></tr>
-		<tr><td><a href="/docs/plugins/sklad/">sklad</a></td><td><code>MemoryStorage</code>, <code>StorageAdapter</code></td><td>the pluggable storage interface session (and other stateful plugins) build on</td></tr>
+		<tr><td><a href="/docs/plugins/sklad/">sklad</a></td><td><code>MemoryStorage</code>, <code>redisStorage</code>, <code>sqliteStorage</code>, <code>kvStorage</code>, <code>StorageAdapter</code></td><td>the pluggable storage interface session (and other stateful plugins) build on, plus its adapters</td></tr>
+		<tr><td><a href="/docs/plugins/again/">again</a></td><td><code>autoRetry</code>, <code>decideRetry</code></td><td>retries 429 flood-waits and transient 5xx</td></tr>
+		<tr><td><a href="/docs/plugins/auto-answer/">auto-answer</a></td><td><code>autoAnswer</code></td><td>clears the callback-query spinner, alerts still win the race</td></tr>
+		<tr><td><a href="/docs/plugins/hydrate/">hydrate</a></td><td><code>hydrate</code>, <code>hydrateApi</code>, <code>hydrateMessage</code></td><td>a sent message carries <code>editText</code>/<code>delete</code>/<code>pin</code>/<code>react</code></td></tr>
+		<tr><td><a href="/docs/plugins/typing/">typing</a></td><td><code>typing</code></td><td><code>ctx.typing(fn)</code> holds the indicator for as long as <code>fn</code> runs</td></tr>
+		<tr><td><a href="/docs/plugins/files/">files</a></td><td><code>files</code>, <code>createFiles</code>, <code>resolveFileId</code>, <code>FileDownload</code></td><td><code>ctx.files</code>: inspect, stream and download telegram files</td></tr>
+		<tr><td><a href="/docs/plugins/file-id/">file-id</a></td><td><code>FileId</code>, <code>FileUniqueId</code>, <code>fileUniqueIdFromFileId</code></td><td>decode a <code>file_id</code> locally — no api call</td></tr>
+		<tr><td><a href="/docs/plugins/split/">split</a></td><td><code>splitter</code>, <code>splitText</code>, <code>splitCaption</code>, <code>MAX_MESSAGE_LENGTH</code></td><td>long text as several messages, entity-aware</td></tr>
+		<tr><td><a href="/docs/plugins/inline-results/">inline-results</a></td><td><code>InlineQueryResult</code>, <code>InputMessageContent</code></td><td>typed <code>answerInlineQuery</code> payloads</td></tr>
 		<tr><td><a href="/docs/plugins/web/">web</a></td><td><code>webhook</code>, <code>serve</code>, <code>setWebhook</code>, <code>deleteWebhook</code>, <code>getWebhookInfo</code>, <code>dedupe</code>, <code>expressAdapter</code>, <code>fastifyAdapter</code>, <code>elysiaAdapter</code>, <code>awsLambdaAdapter</code>, <code>azureAdapter</code>, <code>gcfAdapter</code>, <code>cloudflareAdapter</code></td><td>fetch/webhook helpers plus adapters for the most common node http frameworks and serverless platforms</td></tr>
 	</tbody>
 </table>
 <div class="note">
-	<strong>not re-exported here.</strong> stateful/UI packages with their own dependency footprint —
+	<strong>the rule.</strong> stateless, first-party, no dependency footprint of its own → it ships in
+	the meta package. <strong>not re-exported here:</strong> stateful/UI packages —
 	<code>@yaebal/scenes</code>, <code>@yaebal/conversation</code>, <code>@yaebal/prompt</code>,
 	<code>@yaebal/morda</code>, <code>@yaebal/router</code> and others — stay outside the meta
 	package on purpose. import them directly; see <a href="/docs/plugins/">the plugin catalog</a>.

@@ -446,9 +446,10 @@ const MEDIA_FIELDS = [
 
 // fails to compile if a key is added to MediaField without being listed above — forcing
 // whoever extends the narrow to also confirm the runtime gate covers it.
-type _MediaExhaustive = Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]> extends never
-	? true
-	: ["MEDIA_FIELDS missing keys:", Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]>];
+type _MediaExhaustive =
+	Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]> extends never
+		? true
+		: ["MEDIA_FIELDS missing keys:", Exclude<keyof MediaField, (typeof MEDIA_FIELDS)[number]>];
 const _mediaExhaustive: _MediaExhaustive = true;
 void _mediaExhaustive;
 
@@ -467,8 +468,16 @@ test("filter parity: every media query gates on its field (present → match, ab
 			},
 		} as unknown as Update);
 
-		assert.equal(matchQuery(withField, `message:${field}`), true, `${field}: should match when present`);
-		assert.equal(matchQuery(bare, `message:${field}`), false, `${field}: should not match when absent`);
+		assert.equal(
+			matchQuery(withField, `message:${field}`),
+			true,
+			`${field}: should match when present`,
+		);
+		assert.equal(
+			matchQuery(bare, `message:${field}`),
+			false,
+			`${field}: should not match when absent`,
+		);
 	}
 });
 
@@ -525,6 +534,114 @@ test("filter parity: on(q) narrows the field the runtime just matched (compile-t
 		} as Update),
 	);
 	assert.deepEqual(read, ["video:vf"]);
+});
+
+// ── extended parity: non-media message fields, L1-only queries ──
+//
+// beyond the media table, Filtered narrows any `message:<field>` where <field> is a
+// Message key (checkField's default `Boolean(msg[field])` gate), plus bare L1 queries:
+// message-family → ctx.message: Message, other update types → ctx.update[L1] non-optional.
+
+test("filter parity: a non-media message field gates on presence at runtime", () => {
+	const bare = makeMessageCtx("hi"); // no reply, no pinned message, no members
+
+	const withReply = makeCtx({
+		update_id: 110,
+		message: {
+			message_id: 2,
+			date: 0,
+			chat: { id: 1, type: "private" as const },
+			text: "re",
+			reply_to_message: {
+				message_id: 1,
+				date: 0,
+				chat: { id: 1, type: "private" as const },
+				text: "hi",
+			},
+		},
+	} as Update);
+
+	const withMembers = makeCtx({
+		update_id: 111,
+		message: {
+			message_id: 3,
+			date: 0,
+			chat: { id: -1, type: "supergroup" as const },
+			new_chat_members: [{ id: 5, is_bot: false, first_name: "N" }],
+		},
+	} as unknown as Update);
+
+	assert.equal(matchQuery(withReply, "message:reply_to_message"), true);
+	assert.equal(matchQuery(bare, "message:reply_to_message"), false);
+	assert.equal(matchQuery(withMembers, "message:new_chat_members"), true);
+	assert.equal(matchQuery(bare, "message:new_chat_members"), false);
+});
+
+test("filter parity: L1-only queries gate on the update type", () => {
+	const msg = makeMessageCtx("hi");
+	const cb = makeCallbackCtx();
+
+	assert.equal(matchQuery(msg, "message"), true);
+	assert.equal(matchQuery(msg, "callback_query"), false);
+	assert.equal(matchQuery(cb, "callback_query"), true);
+	assert.equal(matchQuery(cb, "message"), false);
+});
+
+test("filter parity: on(q) narrows non-media fields and L1 queries (compile-time lock)", async () => {
+	const read: string[] = [];
+
+	// message:<field> for a non-media Message key narrows ctx.message.<field> — no `?.`.
+	const byField = new Composer()
+		.on("message:reply_to_message", (ctx) => {
+			read.push(`reply:${ctx.message.reply_to_message.message_id}`);
+		})
+		.on("message:new_chat_members", (ctx) => {
+			read.push(`members:${ctx.message.new_chat_members.length}`);
+		});
+
+	await run(
+		byField,
+		makeCtx({
+			update_id: 112,
+			message: {
+				message_id: 3,
+				date: 0,
+				chat: { id: -1, type: "supergroup" as const },
+				new_chat_members: [{ id: 5, is_bot: false, first_name: "N" }],
+			},
+		} as unknown as Update),
+	);
+	assert.deepEqual(read, ["members:1"]);
+
+	// bare L1: message-family narrows ctx.message to Message (getter non-optional);
+	// a non-message update type narrows the raw ctx.update.<L1> key to non-optional.
+	read.length = 0;
+	const byUpdate = new Composer()
+		.on("message", (ctx) => {
+			read.push(`msg:${ctx.message.message_id}`);
+		})
+		.on("poll", (ctx) => {
+			read.push(`poll:${ctx.update.poll.id}`);
+		});
+
+	await run(byUpdate, makeMessageCtx("hi"));
+	await run(
+		byUpdate,
+		makeCtx({
+			update_id: 113,
+			poll: {
+				id: "p1",
+				question: "?",
+				options: [],
+				total_voter_count: 0,
+				is_closed: false,
+				is_anonymous: true,
+				type: "regular" as const,
+				allows_multiple_answers: false,
+			},
+		} as unknown as Update),
+	);
+	assert.deepEqual(read, ["msg:1", "poll:p1"]);
 });
 
 test("hears: a callback update never triggers text handlers, even with a grafted message", async () => {

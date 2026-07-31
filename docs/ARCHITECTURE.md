@@ -9,7 +9,7 @@ it describes where we are going, not only what is already built. implemented ite
 | idea | source | status |
 |:------------------------------------------------------------------------------------------------|:----------------|:-----------------------------------------------|
 | chainable `Composer`, context type accumulates through the chain (`derive`/`decorate`/`extend`) | gramio          | ✅ done                                        |
-| filter queries `on("message:text")` with context type narrowing                                 | grammy          | ✅ partial                                     |
+| filter queries `on("message:text")` with context type narrowing                                 | grammy          | ✅ done                                        |
 | shortcut routers (`command`/`hears`/`callbackQuery`) on top of queries                          | grammy + gramio | planned                                        |
 | `api.call(method, params)` passthrough for not-yet-typed methods                                | puregram        | ✅ done                                        |
 | `ctx.is("callback_query")` narrowing                                                            | puregram        | ✅ done                                        |
@@ -60,22 +60,31 @@ shortcuts:
 - `::url` — any update containing a `url` entity.
 - array: `on(["message:text", "edited_message:text"], handler)`.
 
-**type narrowing.** `Filtered<C, Q>` writes non-optional fields into the context per query:
+**type narrowing.** ✅ `Filtered<C, Q>` writes non-optional fields into the context for the whole
+query grammar the runtime (`matchQuery`/`checkField`) gates on — a narrowed field is always one the
+runtime verified. resolution order mirrors the runtime's field precedence:
 
 | query | context receives |
 |:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|:--------------------------------------------|
 | `…:text` / `…:caption`                                                                                                                                                                                           | `text: string`                              |
 | `…:data` / `callback_query`                                                                                                                                                                                      | `callbackQuery: CallbackQuery`              |
-| `…:photo`                                                                                                                                                                                                        | `message: Message & { photo: PhotoSize[] }` |
-| `…:video` / `…:sticker` / `…:audio` / `…:voice` / `…:document` / `…:animation` / `…:contact` / `…:location` / `…:poll` / `…:dice` / `…:venue` / `…:video_note` / `…:game` / `…:invoice` / `…:successful_payment` | `message: Message & { <field>: <type> }`    |
-| `…:entities:url`                                                                                                                                                                                                 | `entities: MessageEntity[]`                 |
+| `…:entities` (and the `…:entities:<type>` L3 form)                                                                                                                                                               | `entities: MessageEntity[]`                 |
+| `…:<field>` for **any** `Message` key — media (`photo`/`video`/`sticker`/… ) and the rest (`new_chat_members`, `pinned_message`, `reply_to_message`, `caption_entities`, …)                                       | `message: Message & { <field>: <type> }`    |
+| bare `message` / `edited_message` / `channel_post` / `edited_channel_post` / `business_message` / `edited_business_message`                                                                                        | `message: Message`                          |
+| any other bare update type (`poll`, `inline_query`, `my_chat_member`, …)                                                                                                                                         | `update: { <type>: <payload> }` non-optional|
 
-✅ `text`/`caption`/`data`/media content fields (photo, video, sticker, …) are implemented now.
-**lazy default for anything else: an unknown query doesn't narrow the type (returns `C`) but still
-matches at runtime** via `checkField`/`matchQuery`. no crashes on unrecognised fields.
+anything the runtime can't verify falls through to `C` unchanged — never an unsound narrow. the two
+remaining gaps are **runtime** limitations, not type ones, and are matched at the field level only:
+
+- **L3 entity subtypes** (`message:entities:url`, `message:entities:bot_command`): `checkField` gates
+  on `entities` presence but does not inspect each entity's `type`, so the subtype isn't applied at
+  runtime; the type narrows to `entities: MessageEntity[]` (not the specific subtype).
+- **`::<sub>` shortcuts** (`::url`): the empty L1/L2 makes `checkField` test `msg[""]`, which is never
+  present, so these don't match at runtime and don't narrow.
 
 runtime: `matchQuery(ctx, "message:text")` → `head=message` is compared to `ctx.updateType`,
-tail `text` is checked via `checkField`. ✅
+tail `text` is checked via `checkField`. ✅ the parity is locked test-side (`filter.test.ts`):
+`matchQuery` gates on exactly the field `Filtered` narrows, media-field table stays exhaustive.
 
 ### 1.3 shortcut routers — sugar on top of queries
 
@@ -236,6 +245,7 @@ source = where the idea came from.
 | **`@yaebal/media-cache`** | media cache — `file_id` instead of re-uploading | — | `api.before` | @gramio/media-cache |
 | **`@yaebal/media-group`** | media group — collect an album from a batch of updates | — | | @gramio/media-group |
 | **`@yaebal/auto-answer`** ✅ | auto-clears the callback-query spinner: immediate (fire on arrival, non-blocking) or deferred (fallback only if nothing answered) mode, filter, dynamic per-update params, `onAnswer`/`onError` — never double-answers, never throws | — | `on("callback_query")` | @gramio/auto-answer-cbq |
+| **`@yaebal/hydrate`** ✅ | every `Message` an api call returns comes back with methods bound to it — `editText`/`editCaption`/`editReplyMarkup`/`delete`/`pin`/`unpin`/`forward`/`copy`/`react`; shape-detected (covers all message-returning methods + `sendMediaGroup` arrays), business-connection aware, non-enumerable. `ctx.hydrate(msg)` for messages the api didn't return (callback-query message). standalone `hydrateApi(api)`/`hydrateMessage(api, msg)` | — | `api.after` | grammy hydrate |
 | **`@yaebal/typing`** ✅ | `ctx.typing(fn, opts?)` keeps `sendChatAction` alive on an interval for the duration of an async call (LLM/API latency), clears on settle; overloads the existing `ctx.typing(action?)` one-off sugar so both forms compose | — | `derive` | native ops plugin |
 | **`@yaebal/ephemeral`** ✅ | `ctx.replyEphemeral()`/`ctx.sendEphemeral(userId, …)` over bot api 10.2 ephemeral messages: typed handle hides the `chat_id`+`receiver_user_id`+`ephemeral_message_id` addressing (`message_id` is 0), private-chat fallback to a normal message, `onExpired` throw/ignore/resend policies, `wrapEphemeralMessage` for raw sends. pairs with `commands`' `ephemeral()` (`is_ephemeral` menu flag) | — | `derive` | no prior art (bot api 10.2) |
 

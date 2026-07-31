@@ -15,6 +15,7 @@ import type {
 	Poll,
 	Sticker,
 	SuccessfulPayment,
+	Update,
 	UpdateName,
 	Venue,
 	Video,
@@ -97,7 +98,41 @@ export interface MediaField {
 	web_app_data: WebAppData;
 }
 
-/** narrows the context type for known queries so handlers get non-optional fields. */
+/**
+ * the L1 update types whose payload is a `Message` — exactly what `messageOf`
+ * unwraps, so `on(<one of these>)` can narrow `ctx.message` to non-optional
+ * (`ctx.updateType === Q` ⇒ that key is present ⇒ `messageOf` returns it).
+ * keep in lockstep with `messageOf` in context.ts.
+ */
+export type MessageUpdate =
+	| "message"
+	| "edited_message"
+	| "channel_post"
+	| "edited_channel_post"
+	| "business_message"
+	| "edited_business_message";
+
+/**
+ * narrows the handler context type for the query grammar the runtime (`matchQuery`
+ * / `checkField`) actually gates on — so a narrowed field is one the runtime has
+ * verified. resolution order matches the runtime's field precedence:
+ *
+ * 1. `…:text` / `…:caption`  → `ctx.text: string` (checkField: non-empty string)
+ * 2. `…:data` / `callback_query`  → `ctx.callbackQuery: CallbackQuery`
+ * 3. `…:entities…`  → `ctx.entities: MessageEntity[]` (covers `…:entities` and the
+ *    `…:entities:<type>` L3 form; the runtime only gates on `entities` presence —
+ *    the L3 entity *subtype* is not applied at runtime, so we narrow no further)
+ * 4. `…:<field>` where `<field>` is any `Message` key  → `ctx.message` gains that
+ *    field non-optional (checkField default: `Boolean(msg[field])`). subsumes the
+ *    media fields and every other message content field (`new_chat_members`,
+ *    `pinned_message`, `reply_to_message`, `caption_entities`, …).
+ * 5. bare `MessageUpdate`  → `ctx.message: Message` (the update carries a message)
+ * 6. bare `UpdateName`  → that update key on `ctx.update` becomes non-optional
+ *
+ * anything the runtime can't verify (an unknown `<field>`, the `::<sub>` shortcut
+ * whose empty L1 makes checkField test `msg[""]`, an entity subtype at L3) falls
+ * through to `C` unchanged — matched-or-not at runtime, never an unsound narrow.
+ */
 export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${string}:caption`
 	? C & { text: string }
 	: Q extends `${string}:data` | "callback_query"
@@ -105,10 +140,14 @@ export type Filtered<C, Q extends string> = Q extends `${string}:text` | `${stri
 		: Q extends `${string}:entities${string}`
 			? C & { entities: MessageEntity[] }
 			: Q extends `${string}:${infer Field}`
-				? Field extends keyof MediaField
-					? C & { message: Message & { [K in Field]: MediaField[Field] } }
+				? Field extends keyof Message
+					? C & { message: Message & Required<Pick<Message, Field>> }
 					: C
-				: C;
+				: Q extends MessageUpdate
+					? C & { message: Message }
+					: Q extends UpdateName
+						? C & { update: Required<Pick<Update, Q>> }
+						: C;
 
 /** koa-style middleware composer with single-`next()` protection. */
 export function compose<C>(middlewares: Middleware<C>[]): (ctx: C, next?: NextFn) => Promise<void> {

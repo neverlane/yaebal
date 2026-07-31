@@ -238,7 +238,7 @@ if (matchQuery(ctx, "message:text")) {
 		<tr><td><code>bot.onStart(handler)</code></td><td>runs after <code>getMe()</code> succeeds in <code>start()</code>.</td></tr>
 		<tr><td><code>bot.onStop(handler)</code></td><td>runs once when <code>stop()</code> is requested or polling exits.</td></tr>
 		<tr><td><code>bot.onError(handler)</code></td><td>handles errors thrown by middleware for a specific context.</td></tr>
-		<tr><td><code>bot.onPollingError(handler)</code></td><td>handles <code>getUpdates</code> failures (default: <code>console.error</code>); polling retries after a short pause either way. hung connections are aborted and retried automatically.</td></tr>
+		<tr><td><code>bot.onPollingError(handler)</code></td><td>handles <code>getUpdates</code> failures (default: <code>console.error</code>); polling retries either way, backing off 3s → 30s while failures repeat and resetting on the first success. the second argument is <code>{"{ attempt, retryInMs, aborted }"}</code>. hung connections are aborted and retried automatically — the first three such aborts in a row are silent, since that is normal recovery, not an outage.</td></tr>
 	</tbody>
 </table>
 

@@ -937,3 +937,46 @@ test("onPollingError intercepts getUpdates failures and polling retries", async 
 		globalThis.fetch = previousFetch;
 	}
 });
+
+test("polling: routine hang aborts stay quiet, a run of them is reported with its attempt count", async () => {
+	const previousFetch = globalThis.fetch;
+	let polls = 0;
+
+	// every poll aborts the way a dropped-but-not-closed connection does once the hang timer
+	// fires — the same AbortError node's fetch raises.
+	globalThis.fetch = (async (url: unknown) => {
+		if (String(url).endsWith("/getMe")) {
+			return new Response(
+				JSON.stringify({ ok: true, result: { id: 1, is_bot: true, first_name: "b" } }),
+			);
+		}
+
+		polls++;
+		const error = new Error("This operation was aborted");
+		error.name = "AbortError";
+		throw error;
+	}) as typeof fetch;
+
+	try {
+		const reported: { attempt: number; retryInMs: number; aborted: boolean }[] = [];
+		const bot = new Bot("123:abc").onPollingError((_error, info) => {
+			reported.push(info);
+			if (reported.length === 2) bot.stop();
+		});
+
+		const started = bot.start();
+		for (let i = 0; i < 100 && reported.length < 2; i++) {
+			await new Promise((r) => setTimeout(r, 20));
+		}
+		await bot.stop();
+		await started;
+
+		// the first three aborts are swallowed; reporting starts at the fourth
+		assert.deepEqual(reported[0], { attempt: 4, retryInMs: 0, aborted: true });
+		assert.equal(reported[1]?.attempt, 5);
+		// no backoff pause on an abort — the poll window already served as the wait
+		assert.ok(polls >= 5, `expected the loop to keep polling, got ${polls}`);
+	} finally {
+		globalThis.fetch = previousFetch;
+	}
+});

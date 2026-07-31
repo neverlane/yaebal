@@ -38,14 +38,37 @@ export interface BotOptions {
 type StartHandler = (info: User) => unknown | Promise<unknown>;
 type StopHandler = () => unknown | Promise<unknown>;
 type ErrorHandler = (error: unknown, ctx: Context) => unknown | Promise<unknown>;
-type PollingErrorHandler = (error: unknown) => unknown | Promise<unknown>;
+/** what the polling loop knows about a failure when it hands it to {@link Bot.onPollingError}. */
+export interface PollingErrorInfo {
+	/** how many consecutive `getUpdates` calls have failed, this one included. resets on success. */
+	attempt: number;
+	/** how long the loop waits before the next attempt. */
+	retryInMs: number;
+	/** true when the poll was aborted (the hang timer fired) rather than failing on the wire. */
+	aborted: boolean;
+}
+
+type PollingErrorHandler = (error: unknown, info: PollingErrorInfo) => unknown | Promise<unknown>;
 
 /** server-side long-poll window (seconds) requested from getUpdates. */
 const POLL_TIMEOUT_S = 30;
 /** grace on top of the window before a silent, hung connection is aborted and retried. */
 const POLL_GRACE_MS = 15_000;
-/** pause before retrying after a failed getUpdates. */
+/** pause before retrying after a failed getUpdates — doubles per consecutive failure. */
 const POLL_RETRY_MS = 3_000;
+/** ceiling for that backoff, so a long outage retries every 30s instead of every 3s. */
+const POLL_RETRY_MAX_MS = 30_000;
+/**
+ * consecutive hang-timeout aborts tolerated quietly. one abort is the normal recovery from a
+ * connection the proxy dropped without closing — reporting it as an error trains operators to
+ * ignore the channel. a run of them means the link is actually broken, and that is worth hearing.
+ */
+const POLL_QUIET_ABORTS = 3;
+
+/** an abort (stop, or the hang timer) rather than a real transport/API failure. */
+function isAbortError(error: unknown): boolean {
+	return error instanceof Error && error.name === "AbortError";
+}
 
 function detectUpdateType(update: Update): UpdateName {
 	for (const key of Object.keys(update)) {
@@ -74,8 +97,11 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	#errorHandler: ErrorHandler = (error) => {
 		console.error("[yaebal] unhandled error in middleware:", error);
 	};
-	#pollingErrorHandler: PollingErrorHandler = (error) => {
-		console.error(`[yaebal] getUpdates failed, retrying in ${POLL_RETRY_MS / 1000}s:`, error);
+	#pollingErrorHandler: PollingErrorHandler = (error, info) => {
+		console.error(
+			`[yaebal] getUpdates failed (attempt ${info.attempt}), retrying in ${info.retryInMs / 1000}s:`,
+			error,
+		);
 	};
 	#handle?: Middleware<Context>;
 	#initPromise?: Promise<User>;
@@ -185,8 +211,13 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	/**
-	 * replace the default polling-error handler (a `console.error`). called when a
-	 * `getUpdates` long poll fails; polling retries after a short pause either way.
+	 * replace the default polling-error handler (a `console.error`). called when a `getUpdates`
+	 * long poll fails; polling retries either way, backing off 3s → 30s while failures repeat and
+	 * resetting on the first success. the second argument carries the consecutive-failure count and
+	 * the wait before the next attempt, so an alerting handler can throttle itself.
+	 *
+	 * the routine hang-timeout abort (a connection a proxy dropped without closing) is retried
+	 * silently the first {@link POLL_QUIET_ABORTS} times — only a run of them reaches the handler.
 	 */
 	onPollingError(handler: PollingErrorHandler): this {
 		this.#pollingErrorHandler = handler;
@@ -224,7 +255,17 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		}
 	}
 
-	/** start long polling. resolves only when `stop()` is called. */
+	/**
+	 * start long polling. resolves only when `stop()` is called — it is the loop itself, not a
+	 * fire-and-forget kick, so hold the promise (`const polling = bot.start()`) if anything else
+	 * has to run after it.
+	 *
+	 * updates in a batch are handled strictly one after another. that keeps ordering trivial, but
+	 * one slow handler delays every update behind it — long enough and telegram rejects the
+	 * follow-up with "query is too old and response timeout expired" (callback queries) or drops
+	 * an inline answer. install `@yaebal/runner` for bounded concurrency (per-chat order kept)
+	 * when handlers do real work.
+	 */
 	async start(): Promise<void> {
 		if (this.#running) return;
 		this.#running = true;
@@ -234,6 +275,9 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		try {
 			const info = await this.init();
 			for (const handler of this.#startHandlers) await handler(info);
+
+			// consecutive getUpdates failures — drives the backoff and the quiet-abort window
+			let failures = 0;
 
 			while (this.#running) {
 				let updates: Update[];
@@ -263,13 +307,26 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				} catch (error) {
 					if (!this.#running) break;
 
-					await this.#pollingErrorHandler(error);
-					await new Promise((r) => setTimeout(r, POLL_RETRY_MS));
+					const aborted = isAbortError(error);
+					failures++;
+					// a hang abort already cost the full poll window — go straight back out on the
+					// wire instead of adding a pause on top; a real failure backs off exponentially.
+					const retryInMs = aborted
+						? 0
+						: Math.min(POLL_RETRY_MS * 2 ** (failures - 1), POLL_RETRY_MAX_MS);
+
+					// the first couple of hang aborts are routine recovery, not news
+					if (!aborted || failures > POLL_QUIET_ABORTS)
+						await this.#pollingErrorHandler(error, { attempt: failures, retryInMs, aborted });
+
+					if (retryInMs) await new Promise((r) => setTimeout(r, retryInMs));
 					continue;
 				} finally {
 					clearTimeout(hangTimer);
 					this.#pollAbort.signal.removeEventListener("abort", onStop);
 				}
+
+				failures = 0;
 
 				for (const update of updates) {
 					this.#offset = update.update_id + 1;

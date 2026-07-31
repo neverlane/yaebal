@@ -1,5 +1,6 @@
 import { autoRetry } from "@yaebal/again";
 import { cache } from "@yaebal/cache";
+import { hydrate } from "@yaebal/hydrate";
 import { back, button, type DialogDef, dialogs, switchTo } from "@yaebal/morda";
 import { prompt } from "@yaebal/prompt";
 import { ask, defineScene, scenes } from "@yaebal/scenes";
@@ -41,6 +42,7 @@ const COMMANDS = [
 	{ command: "lang", description: "toggle the locale (i18n)" },
 	{ command: "register", description: "a name → age wizard (scenes)" },
 	{ command: "name", description: "ask once, handle the reply (prompt)" },
+	{ command: "edit", description: "edit a sent message via its own handle (hydrate)" },
 	{ command: "help", description: "list every command" },
 ];
 
@@ -98,6 +100,8 @@ const bot = createBot(token)
 	.install(throttle())
 	// ctx.cache.get/set/wrap; ttl memoization for api calls, dedupes concurrent misses
 	.install(cache({ ttl: 60_000 }))
+	// hydrate: every Message an api call returns carries editText/delete/pin/react
+	.install(hydrate())
 	// install a plugin; `startedAt` now flows into every handler's context type
 	.install(stamp)
 	// per-chat session; `ctx.session` is now typed { count: number }
@@ -157,6 +161,13 @@ try /help, or tap a button below.`,
 	.command("register", (ctx) => ctx.scene.enter("register"))
 	// prompt: ask once, handle the next message
 	.command("name", (ctx) => ctx.prompt("what's your name?", (c) => c.reply(`hi, ${c.text}!`)))
+	// hydrate: the sent message answers back — no chat/message ids threaded by hand.
+	// the methods are there at runtime; ctx.hydrate types them (core owns reply's signature)
+	.command("edit", async (ctx) => {
+		const msg = ctx.hydrate(await ctx.reply("counting…"));
+		await msg.react("👀");
+		await msg.editText("done ✅");
+	})
 	// @yaebal/filters: composed filter — /help only in private chats, with an fmt html reply
 	.filter(and(filters.isPrivate, filters.command("help")), (ctx) =>
 		ctx.send(

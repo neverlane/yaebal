@@ -149,6 +149,9 @@ importers:
       '@yaebal/cache':
         specifier: workspace:*
         version: link:../../packages/cache
+      '@yaebal/hydrate':
+        specifier: workspace:*
+        version: link:../../packages/hydrate
       '@yaebal/morda':
         specifier: workspace:*
         version: link:../../packages/morda
@@ -846,6 +849,22 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/test':
+        specifier: workspace:*
+        version: link:../test
+
+  packages/hydrate:
+    dependencies:
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+      '@yaebal/types':
+        specifier: workspace:*
+        version: link:../types
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.1.1
       '@yaebal/test':
         specifier: workspace:*
         version: link:../test

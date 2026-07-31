@@ -90,6 +90,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/filters`       | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
 | `@yaebal/fmt`           | `basic`, `commerce-suite`, `inline-search`                                             | package tests plus example smoke               |
 | `@yaebal/guards`        | `guards`                                                                               | package tests plus example smoke               |
+| `@yaebal/hydrate`       | `basic`                                                                                | package tests plus example smoke               |
 | `@yaebal/i18n`          | `basic`, `commerce-suite`                                                              | package tests plus example smoke               |
 | `@yaebal/keyboard`      | `basic`, `keyboard`, `modular-router`, `testing-lab`, `payments-stars`, `webhook-edge` | package tests plus actor keyboard assertions   |
 | `@yaebal/media-cache`   | `media-studio`                                                                         | package tests plus example smoke               |

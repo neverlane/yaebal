@@ -29,6 +29,7 @@ const bot = new Bot(token)
 		["@yaebal/link-preview", "/docs/plugins/link-preview/", "fluent builder for link_preview_options"],
 		["@yaebal/inline-results", "/docs/plugins/inline-results/", "typed builders for every InlineQueryResult / InputMessageContent variant"],
 		["@yaebal/auto-answer", "/docs/plugins/auto-answer/", "auto-clears the callback-query loading spinner, no manual answerCallbackQuery call"],
+		["@yaebal/hydrate", "/docs/plugins/hydrate/", "hydrated api results — the returned Message gains editText/delete/pin/forward/copy/react, no manual chat_id or message_id"],
 		["@yaebal/typing", "/docs/plugins/typing/", "ctx.typing(fn) keeps the \"is typing…\" indicator alive for an async call, no manual sendChatAction"],
 		["@yaebal/ephemeral", "/docs/plugins/ephemeral/", "ctx.replyEphemeral() — answer in a group so only the asker sees it, typed edit/delete handle, private-chat fallback"],
 		["@yaebal/ai", "/docs/plugins/ai/", "ctx.ai.replyStream() — llm answers streamed via telegram drafts / throttled edits, model adapters (openai-compatible, anthropic, ai sdk, custom), conversation memory, per-user limits"],

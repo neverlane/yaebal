@@ -283,6 +283,11 @@
 			description:
 				"format telegram messages with @yaebal/fmt tagged templates, safe html, markdown helpers, escaping, entities, and reusable message fragments.",
 		},
+		"/docs/plugins/hydrate": {
+			title: "@yaebal/hydrate — hydrated telegram message results",
+			description:
+				"hydrate telegram api results with @yaebal/hydrate: the Message returned by ctx.send/api.sendMessage gains editText, editCaption, editReplyMarkup, delete, pin, unpin, forward, copy and react methods bound to it — no manual chat_id or message_id, media groups and callback-query messages included.",
+		},
 		"/docs/plugins/i18n": {
 			title: "@yaebal/i18n — telegram bot localization plugin",
 			description:

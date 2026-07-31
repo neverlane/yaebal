@@ -214,6 +214,14 @@ export const PLUGINS: PluginDef[] = [
 		install: "ephemeral()",
 	},
 	{
+		id: "hydrate",
+		dep: "@yaebal/hydrate",
+		hint: "sent messages come back with editText/delete/pin/react bound to themselves",
+		wire: "install",
+		import: 'import { hydrate } from "@yaebal/hydrate";',
+		install: "hydrate()",
+	},
+	{
 		id: "files",
 		dep: "@yaebal/files",
 		hint: "ctx.files: inspect, stream & download telegram files",

@@ -19,6 +19,9 @@
 			"path": "../../packages/again"
 		},
 		{
+			"path": "../../packages/hydrate"
+		},
+		{
 			"path": "../../packages/morda"
 		},
 		{

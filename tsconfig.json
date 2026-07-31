@@ -45,6 +45,7 @@
 		{ "path": "./packages/guards" },
 		{ "path": "./packages/audit-log" },
 		{ "path": "./packages/ephemeral" },
+		{ "path": "./packages/hydrate" },
 		{ "path": "./packages/test" },
 		{ "path": "./examples/basic" },
 		{ "path": "./examples/simple" },

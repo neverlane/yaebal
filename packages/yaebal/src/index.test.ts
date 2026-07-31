@@ -203,3 +203,39 @@ test("keyboard builders satisfy typed reply_markup; guard narrows through the me
 
 	assert.ok(bot);
 });
+
+test("the batteries are reachable from the single import and install on a bot", async () => {
+	const mod = await import("./index.js");
+
+	// one entry per plugin the meta package promises — a missing re-export fails here
+	// instead of at a user's `import { … } from "yaebal"`.
+	for (const name of [
+		"autoRetry",
+		"autoAnswer",
+		"hydrate",
+		"typing",
+		"files",
+		"splitter",
+		"FileId",
+		"redisStorage",
+	]) {
+		assert.equal(typeof (mod as Record<string, unknown>)[name], "function", `${name} missing`);
+	}
+
+	// InlineQueryResult/InputMessageContent are namespaces of builders, not plugins
+	assert.equal(typeof mod.InlineQueryResult.article, "function");
+	assert.equal(typeof mod.InputMessageContent.text, "function");
+
+	// and they compose on a real bot without fighting over the context type
+	const bot = createBot("123:abc")
+		.install(mod.autoRetry())
+		.install(mod.autoAnswer())
+		.install(mod.hydrate())
+		.install(mod.typing())
+		.install(mod.files())
+		.install(mod.splitter());
+
+	const ctx = richContext(api, messageUpdate, "message") as Context & Record<string, unknown>;
+	await bot.handleUpdate(messageUpdate);
+	assert.ok(ctx instanceof Context);
+});

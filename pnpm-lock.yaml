@@ -1247,6 +1247,12 @@ importers:
 
   packages/yaebal:
     dependencies:
+      '@yaebal/again':
+        specifier: workspace:*
+        version: link:../again
+      '@yaebal/auto-answer':
+        specifier: workspace:*
+        version: link:../auto-answer
       '@yaebal/callback-data':
         specifier: workspace:*
         version: link:../callback-data
@@ -1256,15 +1262,27 @@ importers:
       '@yaebal/core':
         specifier: workspace:*
         version: link:../core
+      '@yaebal/file-id':
+        specifier: workspace:*
+        version: link:../file-id
+      '@yaebal/files':
+        specifier: workspace:*
+        version: link:../files
       '@yaebal/filters':
         specifier: workspace:*
         version: link:../filters
       '@yaebal/fmt':
         specifier: workspace:*
         version: link:../fmt
+      '@yaebal/hydrate':
+        specifier: workspace:*
+        version: link:../hydrate
       '@yaebal/i18n':
         specifier: workspace:*
         version: link:../i18n
+      '@yaebal/inline-results':
+        specifier: workspace:*
+        version: link:../inline-results
       '@yaebal/keyboard':
         specifier: workspace:*
         version: link:../keyboard
@@ -1274,6 +1292,12 @@ importers:
       '@yaebal/sklad':
         specifier: workspace:*
         version: link:../sklad
+      '@yaebal/split':
+        specifier: workspace:*
+        version: link:../split
+      '@yaebal/typing':
+        specifier: workspace:*
+        version: link:../typing
       '@yaebal/web':
         specifier: workspace:*
         version: link:../web

@@ -5,14 +5,56 @@
  * auto-generated shortcut methods) onto every update via the core context factory.
  */
 
+export type {
+	AutoRetryEvent,
+	AutoRetryOptions,
+	RetryDecision,
+	RetryReason,
+} from "@yaebal/again";
+export { autoRetry, decideRetry } from "@yaebal/again";
+export type {
+	AutoAnswerContext,
+	AutoAnswerMode,
+	AutoAnswerOptions,
+	AutoAnswerParams,
+	CallbackContext,
+} from "@yaebal/auto-answer";
+export { autoAnswer } from "@yaebal/auto-answer";
 export type { CallbackData, Codec, InferInput, InferOutput, Schema } from "@yaebal/callback-data";
 export { callbackData, field } from "@yaebal/callback-data";
 export * from "@yaebal/contexts";
 export * from "@yaebal/core";
+export type { DocumentFileId } from "@yaebal/file-id";
+export {
+	FileId,
+	FileIdParseError,
+	FileType,
+	FileUniqueId,
+	fileUniqueIdFromFileId,
+	UnsupportedFileIdVersionError,
+} from "@yaebal/file-id";
+export type {
+	FileCallOptions,
+	FileInput,
+	FileSource,
+	FilesControl,
+	FilesErrorReason,
+	FilesOptions,
+	TelegramFile,
+} from "@yaebal/files";
+export { createFiles, FileDownload, FilesError, files, resolveFileId } from "@yaebal/files";
 export { and, defineFilter, filters, not, or } from "@yaebal/filters";
 export { html, htmlToEntities, md, mdToEntities } from "@yaebal/fmt";
+export type {
+	HydratedMessage,
+	HydrateFlavor,
+	HydrateMessageMethods,
+	HydrateReaction,
+} from "@yaebal/hydrate";
+export { hydrate, hydrateApi, hydrateMessage } from "@yaebal/hydrate";
 export type { Dict, I18n, I18nControls, LocaleLike, TFn } from "@yaebal/i18n";
 export { createI18n, i18n } from "@yaebal/i18n";
+export { InlineQueryResult, InputMessageContent } from "@yaebal/inline-results";
 export { InlineKeyboard, Keyboard } from "@yaebal/keyboard";
 export type { SessionKey, SessionOptions, TtlValue } from "@yaebal/session";
 export {
@@ -25,8 +67,41 @@ export {
 	ttl,
 	unwrapTtl,
 } from "@yaebal/session";
-export type { MemoryStorageOptions, StorageAdapter } from "@yaebal/sklad";
-export { MemoryStorage } from "@yaebal/sklad";
+export type {
+	KVNamespaceLike,
+	KvStorageOptions,
+	MemoryStorageOptions,
+	RedisLike,
+	RedisStorageOptions,
+	Serializer,
+	SqliteLike,
+	SqliteStorageOptions,
+	StorageAdapter,
+} from "@yaebal/sklad";
+export { kvStorage, MemoryStorage, redisStorage, sqliteStorage } from "@yaebal/sklad";
+export type {
+	LongSendOptions,
+	SplitCaptionOptions,
+	SplitControl,
+	SplitPart,
+	SplitPartInfo,
+	SplitSendOptions,
+	SplitSource,
+	SplitterOptions,
+} from "@yaebal/split";
+export {
+	MAX_CAPTION_LENGTH,
+	MAX_MESSAGE_LENGTH,
+	SplitSendError,
+	split,
+	splitCaption,
+	splitParts,
+	splitSend,
+	splitText,
+	splitter,
+} from "@yaebal/split";
+export type { ChatAction, TypingControl, TypingOptions } from "@yaebal/typing";
+export { typing } from "@yaebal/typing";
 export type {
 	ApiBot,
 	DedupeOptions,

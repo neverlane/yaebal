@@ -67,8 +67,43 @@ one `import { … } from "yaebal"` gives you, ready to use:
 | `@yaebal/fmt`           | `html`, `md` (+ `*ToEntities`)                                 | tagged templates with auto-escaping    |
 | `@yaebal/filters`       | `filters`, `and`, `or`, `not`                                  | composable, type-narrowing filters     |
 | `@yaebal/session`       | `session`                                                      | per-chat state, pluggable storage      |
+| `@yaebal/sklad`         | `MemoryStorage`, `redisStorage`, `sqliteStorage`, `kvStorage`  | storage adapters for the above         |
 | `@yaebal/i18n`          | `i18n`                                                         | per-chat locale, `ctx.t`               |
+| `@yaebal/again`         | `autoRetry`                                                    | retries 429 flood-waits and 5xx        |
+| `@yaebal/auto-answer`   | `autoAnswer`                                                   | clears the callback-query spinner      |
+| `@yaebal/hydrate`       | `hydrate`                                                      | sent messages carry `editText`/`delete`/… |
+| `@yaebal/typing`        | `typing`                                                       | keeps the typing indicator alive       |
+| `@yaebal/files`         | `files`                                                        | `ctx.files`: inspect, stream, download |
+| `@yaebal/file-id`       | `FileId`, `FileUniqueId`                                       | decode a `file_id` without an api call |
+| `@yaebal/split`         | `splitter`, `splitText`                                        | 4096-char messages, entity-aware       |
+| `@yaebal/inline-results`| `InlineQueryResult`, `InputMessageContent`                     | typed `answerInlineQuery` payloads     |
 | `@yaebal/web`           | `serve`, `webhook`, `setWebhook`, `deleteWebhook`              | webhooks on edge/web runtimes          |
+
+## the production preamble
+
+six lines that every real bot ends up writing anyway — here they come from the same import:
+
+```ts
+import { createBot, autoRetry, autoAnswer, hydrate, typing, files, splitter } from "yaebal";
+
+const bot = createBot(process.env.BOT_TOKEN!)
+  .install(autoRetry())  // 429 flood-waits and transient 5xx retry themselves
+  .install(autoAnswer()) // no callback query left spinning
+  .install(hydrate())    // a sent message answers back: msg.editText(...), msg.delete()
+  .install(typing())     // ctx.typing(fn) holds "typing…" for as long as fn runs
+  .install(files())      // ctx.files.download(fileId).toFile("./x.jpg")
+  .install(splitter());  // ctx.sendLong(text) chunks past 4096 without breaking entities
+
+bot.command("ask", (ctx) =>
+  ctx.typing(async () => {
+    const msg = ctx.hydrate(await ctx.reply("thinking…"));
+    await msg.editText(await answer(ctx.text));
+  }),
+);
+```
+
+every `install` widens the context type, so `ctx.typing` / `ctx.files` / `ctx.hydrate` are
+typed — install one of them later and the compiler, not production, tells you.
 
 ## a quick tour
 
@@ -142,7 +177,7 @@ export default {
 ## need more?
 
 the bundle covers the essentials. everything else is a first-party plugin you add as
-needed — auto-retry, scenes, conversations, routing, broadcast, the operator
+needed — scenes, conversations, routing, broadcast, the operator
 [panel](https://github.com/neverlane/yaebal/tree/master/packages/panel), and more.
 see the [full plugin catalog](https://github.com/neverlane/yaebal#plugins).
 

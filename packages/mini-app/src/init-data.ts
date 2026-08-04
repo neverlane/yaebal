@@ -133,18 +133,31 @@ export function parseInitData(initData: string): InitData {
 	return data;
 }
 
-/** fields excluded from every data-check-string telegram computes a signature over. */
-const SIGNED_EXCLUDED_FIELDS = new Set(["hash", "signature"]);
+/**
+ * fields excluded from the HMAC (bot-token) data-check-string. telegram's spec excludes only
+ * `hash` here — `signature` (Bot API 7.2+) is an ordinary field, covered by the hash like any
+ * other. see [Validating data received via the Mini App](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app).
+ */
+const HMAC_EXCLUDED_FIELDS = new Set(["hash"]);
 
 /**
- * the sorted-by-key `field=value\n…` string telegram signs — shared by both validation modes.
- * sorts by key alone (not the full `"key=value"` pair, which mis-sorts once a value contains a
- * character that sorts differently than a real telegram field name would).
+ * fields excluded from the Ed25519 (third-party) data-check-string. unlike the HMAC mode,
+ * telegram's spec excludes both `hash` **and** `signature` here — see
+ * [Validating data for Third-Party Use](https://core.telegram.org/bots/webapps#validating-data-for-third-party-use).
  */
-function dataCheckString(params: URLSearchParams): string {
+const ED25519_EXCLUDED_FIELDS = new Set(["hash", "signature"]);
+
+/**
+ * the sorted-by-key `field=value\n…` string telegram signs — shared by both validation modes,
+ * parameterized by which fields each mode's spec excludes (see {@link HMAC_EXCLUDED_FIELDS} /
+ * {@link ED25519_EXCLUDED_FIELDS}). sorts by key alone (not the full `"key=value"` pair, which
+ * mis-sorts once a value contains a character that sorts differently than a real telegram field
+ * name would).
+ */
+function dataCheckString(params: URLSearchParams, excluded: ReadonlySet<string>): string {
 	const pairs: Array<[string, string]> = [];
 	for (const [key, value] of params) {
-		if (!SIGNED_EXCLUDED_FIELDS.has(key)) pairs.push([key, value]);
+		if (!excluded.has(key)) pairs.push([key, value]);
 	}
 	pairs.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
 	return pairs.map(([key, value]) => `${key}=${value}`).join("\n");
@@ -209,7 +222,7 @@ export async function validateInitData(
 	if (!hash) return { ok: false, reason: "missing_hash" };
 
 	const secretKey = await getBotTokenSecretKey(botToken);
-	const computedHash = await hmacSha256Hex(secretKey, dataCheckString(params));
+	const computedHash = await hmacSha256Hex(secretKey, dataCheckString(params, HMAC_EXCLUDED_FIELDS));
 	if (!constantTimeEqual(computedHash, hash)) return { ok: false, reason: "bad_hash" };
 
 	const parsed = parseValidated(initData);
@@ -261,7 +274,7 @@ export async function validateInitDataThirdParty(
 	const publicKeyHex =
 		options.publicKey ??
 		(options.test ? TELEGRAM_ED25519_PUBLIC_KEYS.test : TELEGRAM_ED25519_PUBLIC_KEYS.production);
-	const message = `${botId}:WebAppData\n${dataCheckString(params)}`;
+	const message = `${botId}:WebAppData\n${dataCheckString(params, ED25519_EXCLUDED_FIELDS)}`;
 
 	let signatureBytes: Uint8Array;
 	try {
@@ -331,7 +344,7 @@ export async function signInitData(
 
 	const params = new URLSearchParams(raw);
 	const secretKey = await getBotTokenSecretKey(botToken);
-	const hash = await hmacSha256Hex(secretKey, dataCheckString(params));
+	const hash = await hmacSha256Hex(secretKey, dataCheckString(params, HMAC_EXCLUDED_FIELDS));
 	params.set("hash", hash);
 	return params.toString();
 }

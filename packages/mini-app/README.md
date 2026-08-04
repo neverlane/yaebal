@@ -272,10 +272,17 @@ tests](#signing-initdata-for-tests) above.
 
 ## breaking changes from 0.0.x
 
-- **fixed:** 0.0.x computed the HMAC hash over every field *except* `hash` — but telegram's spec
-  excludes `hash` **and** `signature`. Since Bot API 7.2, real `initData` always carries a
-  `signature`, so 0.0.x rejected every genuine payload from a current telegram client as
-  `bad_hash`. If you're on 0.0.x, this alone is worth upgrading for.
+- **fixed:** `validateInitData`'s HMAC data-check-string wrongly excluded `signature` alongside
+  `hash` since 0.1.0 — that exclusion is Ed25519 (`validateInitDataThirdParty`) territory only.
+  `signature` is an ordinary field in the HMAC data-check-string, covered by the hash like any
+  other; excluding it made the computed hash diverge from telegram's for every genuine Bot API
+  7.2+ payload (which always carries a `signature`), so 0.1.0 and 0.1.1 reject all of them as
+  `bad_hash`. If you're on either, this is worth upgrading for. See telegram's [Validating data
+  received via the Mini
+  App](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app) vs.
+  [Validating data for Third-Party
+  Use](https://core.telegram.org/bots/webapps#validating-data-for-third-party-use) for the two
+  (different) exclusion rules.
 - `validateInitData`'s default behavior changed: it now rejects `initData` older than 24h by
   default (`maxAge: 86400`), where 0.0.x never checked freshness unless you passed `maxAge`
   yourself. Pass `{ maxAge: false }` to keep the old (not recommended) behavior.

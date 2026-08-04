@@ -345,12 +345,13 @@ await env.createUser().sendCommand("check"); // "false" — no valid hash`;
 </div>
 
 <div class="note">
-	<strong>upgrading from 0.0.x?</strong> 0.0.x computed the HMAC hash over every field except
-	<code>hash</code> — but telegram's spec excludes <code>hash</code> <em>and</em>
-	<code>signature</code>. Since Bot API 7.2, real <code>initData</code> always carries a
-	<code>signature</code>, so 0.0.x rejected every genuine payload from a current telegram client as
-	<code>bad_hash</code>. <code>validate</code>/<code>validateInitData</code> also now default to a
-	24h <code>maxAge</code> instead of never expiring. See the
+	<strong>on 0.1.0 or 0.1.1?</strong> those versions compute the HMAC hash excluding both
+	<code>hash</code> <em>and</em> <code>signature</code> — but that exclusion rule is Ed25519
+	(<code>validateInitDataThirdParty</code>) territory only. For the HMAC path, telegram's spec
+	excludes just <code>hash</code>; <code>signature</code> is an ordinary field covered by the
+	hash. Since Bot API 7.2, real <code>initData</code> always carries a <code>signature</code>, so
+	0.1.0/0.1.1 reject every genuine payload from a current telegram client as
+	<code>bad_hash</code>. See the
 	<a href="https://github.com/neverlane/yaebal/tree/master/packages/mini-app">package README</a>
 	for the full list.
 </div>

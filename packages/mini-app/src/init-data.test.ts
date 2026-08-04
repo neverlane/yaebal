@@ -19,21 +19,16 @@ const BOT_ID = "123456";
 /**
  * independently signs `fields` the way telegram's spec (not our implementation) says to — sorts
  * by *key*, joins `key=value` with `\n`. proves `validateInitData` matches the spec, not just
- * itself. `extra` params are appended to the querystring after signing (untouched by the hash),
- * so tests can simulate telegram sending fields our code must not choke on.
+ * itself.
  */
-function signHmac(
-	fields: Record<string, string>,
-	botToken = BOT_TOKEN,
-	extra: Record<string, string> = {},
-): string {
+function signHmac(fields: Record<string, string>, botToken = BOT_TOKEN): string {
 	const dataCheckString = Object.entries(fields)
 		.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
 		.map(([key, value]) => `${key}=${value}`)
 		.join("\n");
 	const secretKey = createHmac("sha256", "WebAppData").update(botToken).digest();
 	const hash = createHmac("sha256", secretKey).update(dataCheckString).digest("hex");
-	return new URLSearchParams({ ...fields, ...extra, hash }).toString();
+	return new URLSearchParams({ ...fields, hash }).toString();
 }
 
 function makeEd25519TestKeypair(): { publicKeyHex: string; privateKey: KeyObject } {
@@ -74,23 +69,38 @@ test("validateInitData: accepts a correctly signed payload", async () => {
 	assert.ok(result.ok && result.data.auth_date.getTime() === 1_700_000_000_000);
 });
 
-test("validateInitData: real telegram payload shape (carries `signature`) validates — regression for excluding both `hash` and `signature` from the check string", async () => {
-	// telegram (Bot API 7.2+) always includes a `signature` field alongside `hash`. the hash is
-	// computed over every field *except* `hash` and `signature` — if `signature` leaks into the
-	// data-check-string, this rejects with `bad_hash` even though nothing was tampered with.
-	const initData = signHmac(
-		{ auth_date: "1700000000", user: JSON.stringify(sampleUser) },
-		BOT_TOKEN,
-		{ signature: "not-a-real-ed25519-sig-but-present-like-telegram-sends" },
-	);
+test("validateInitData: real telegram payload shape (carries `signature`) validates — `signature` is an ordinary field covered by the HMAC hash, not excluded like `hash` is", async () => {
+	// telegram (Bot API 7.2+) always includes a `signature` field alongside `hash`. unlike the
+	// Ed25519 third-party mode (which excludes both `hash` and `signature`), the HMAC data-check-
+	// string excludes only `hash` — `signature` must be part of what's hashed, or a tampered
+	// `signature` would validate as `ok: true`.
+	const initData = signHmac({
+		auth_date: "1700000000",
+		user: JSON.stringify(sampleUser),
+		signature: "a-real-ed25519-sig-telegram-sends-alongside-hash",
+	});
 
 	const result = await validateInitData(initData, BOT_TOKEN, { maxAge: false });
 	assert.equal(result.ok, true);
 	assert.ok(result.ok && result.data.user?.id === 1);
 	assert.equal(
 		result.ok ? result.data.signature : undefined,
-		"not-a-real-ed25519-sig-but-present-like-telegram-sends",
+		"a-real-ed25519-sig-telegram-sends-alongside-hash",
 	);
+});
+
+test("validateInitData: tampering with `signature` alone invalidates the hash", async () => {
+	// proves `signature` is actually covered by the HMAC, not just present-but-ignored.
+	const initData = signHmac({
+		auth_date: "1700000000",
+		user: JSON.stringify(sampleUser),
+		signature: "original-signature",
+	});
+	const tampered = new URLSearchParams(initData);
+	tampered.set("signature", "attacker-swapped-signature");
+
+	const result = await validateInitData(tampered.toString(), BOT_TOKEN, { maxAge: false });
+	assert.deepEqual(result, { ok: false, reason: "bad_hash" });
 });
 
 test("validateInitData: sorts the data-check-string by key, not by the full `key=value` pair", async () => {

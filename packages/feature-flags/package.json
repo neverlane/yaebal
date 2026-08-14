@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/feature-flags",
-	"version": "0.1.1",
+	"version": "1.0.0",
 	"description": "yaebal feature-flags — ctx.flags.isEnabled(key)/getVariant(key): typed boolean & A/B/n flags, telegram-native targeting, global overrides, guard/whenFlag, admin commands, and adapters for external providers (LaunchDarkly, GrowthBook, env).",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -28,13 +31,26 @@
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "feature-flags", "rollout", "ab-testing", "launchdarkly", "growthbook"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"feature-flags",
+		"rollout",
+		"ab-testing",
+		"launchdarkly",
+		"growthbook"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/feature-flags"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

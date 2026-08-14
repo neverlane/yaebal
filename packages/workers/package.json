@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/workers",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "yaebal workers — a typed worker_threads pool: queueing, timeouts, aborts, crash recovery, zero-copy transfers.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -16,7 +16,10 @@
 		}
 	},
 	"sideEffects": false,
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",

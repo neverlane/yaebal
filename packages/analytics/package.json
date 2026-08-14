@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/analytics",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "yaebal analytics — typed ctx.track(event, properties) middleware with pluggable sinks (posthog, plausible, sqlite, clickhouse, http, console), privacy controls, auto-capture, and an in-chat admin surface.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -25,7 +28,9 @@
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
+	"engines": {
+		"node": ">=20"
+	},
 	"keywords": [
 		"telegram",
 		"telegram-bot",
@@ -44,5 +49,7 @@
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/analytics"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

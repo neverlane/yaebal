@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/prompt",
-	"version": "0.0.6",
+	"version": "1.0.0",
 	"description": "yaebal prompt plugin — ask a question and handle the next message.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -27,7 +30,12 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "prompt"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"prompt"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

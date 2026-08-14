@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/audit-log",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "yaebal audit-log — correlated, redacted-by-default structured logging of incoming updates and outgoing api calls, with formatters, filters, sampling, and telegram-native sinks.",
 	"type": "module",
 	"sideEffects": false,
@@ -12,7 +12,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -26,13 +29,24 @@
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "audit-log", "logging", "observability"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"audit-log",
+		"logging",
+		"observability"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/audit-log"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

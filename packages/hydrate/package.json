@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/hydrate",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal hydrate — api call results come back with methods: the Message from ctx.send/api.sendMessage gains .editText/.delete/.pin/.forward/.copy/.react.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -25,13 +28,22 @@
 		"@types/node": "latest",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "hydrate"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"hydrate"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/hydrate"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

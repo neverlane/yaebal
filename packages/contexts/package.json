@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/contexts",
-	"version": "0.1.2",
+	"version": "1.0.0",
 	"description": "yaebal contexts — per-update context classes with auto-generated shortcut methods.",
 	"type": "module",
 	"sideEffects": false,

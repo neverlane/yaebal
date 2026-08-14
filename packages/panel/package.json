@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/panel",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "yaebal panel — an operator panel: view chats, handoff, reply and search from the browser.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -23,7 +23,10 @@
 			"import": "./lib/sklad.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",

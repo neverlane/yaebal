@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/ephemeral",
-	"version": "0.0.2",
+	"version": "1.0.0",
 	"description": "yaebal ephemeral — reply in a group so only one user sees it: ctx.replyEphemeral() with a typed edit/delete handle and a private-chat fallback.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -28,13 +31,22 @@
 	"peerDependencies": {
 		"@yaebal/core": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "ephemeral"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"ephemeral"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/ephemeral"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

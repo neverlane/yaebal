@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/cache",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "yaebal cache — ctx.cache.get/set/wrap with stale-while-revalidate, sliding expiry, negative caching, prefix invalidation, namespaces, and an optional typed key catalog, built on @yaebal/sklad storage adapters.",
 	"type": "module",
 	"sideEffects": false,
@@ -12,7 +12,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -29,13 +32,24 @@
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "cache", "ttl", "memoization"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"cache",
+		"ttl",
+		"memoization"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/cache"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

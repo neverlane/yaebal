@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/media-group",
-	"version": "0.1.1",
+	"version": "1.0.0",
 	"description": "yaebal media-group plugin — collect albums into one handler call or a ctx.mediaGroup pass-through.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -27,7 +30,13 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "media-group", "album"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"media-group",
+		"album"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

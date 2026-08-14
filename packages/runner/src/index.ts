@@ -112,29 +112,46 @@ export function createScheduler(concurrency: number): Scheduler {
 
 /** extract the default sequentialization key (chat id, falling back to the actor's user id). */
 export function chatKey(update: Update): number | undefined {
-	const msg =
+	const scoped =
 		update.message ??
 		update.edited_message ??
 		update.channel_post ??
 		update.edited_channel_post ??
+		update.business_message ??
+		update.edited_business_message ??
+		update.deleted_business_messages ??
 		update.callback_query?.message ??
+		update.message_reaction ??
+		update.message_reaction_count ??
 		update.my_chat_member ??
 		update.chat_member ??
-		update.chat_join_request;
+		update.chat_join_request ??
+		update.chat_boost ??
+		update.removed_chat_boost;
 
-	const chatId = msg?.chat?.id;
+	const chatId = scoped?.chat?.id;
 	if (chatId != null) return chatId;
 
 	return (
 		update.callback_query?.from?.id ??
 		update.inline_query?.from?.id ??
+		update.chosen_inline_result?.from?.id ??
+		update.shipping_query?.from?.id ??
+		update.pre_checkout_query?.from?.id ??
+		update.purchased_paid_media?.from?.id ??
 		update.poll_answer?.user?.id ??
+		update.business_connection?.user?.id ??
 		undefined
 	);
 }
 
 export interface RunnerBot {
-	api: { getUpdates(params?: Record<string, unknown>): Promise<Update[]> };
+	api: {
+		getUpdates(
+			params?: Record<string, unknown>,
+			options?: { signal?: AbortSignal },
+		): Promise<Update[]>;
+	};
 	handleUpdate(update: Update): Promise<void>;
 }
 
@@ -158,13 +175,29 @@ export interface RunnerHandle {
 	stop(): Promise<void>;
 }
 
-const delay = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+/** sleep, cut short by `signal` so `stop()` never waits out a retry backoff. */
+const delay = (ms: number, signal: AbortSignal) =>
+	new Promise<void>((resolve) => {
+		if (signal.aborted) return resolve();
+
+		const done = () => {
+			clearTimeout(timer);
+			signal.removeEventListener("abort", done);
+			resolve();
+		};
+
+		const timer = setTimeout(done, ms);
+		signal.addEventListener("abort", done, { once: true });
+	});
 
 /** start driving `bot` concurrently. returns a handle whose `stop()` drains in-flight work. */
 export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 	const concurrency = options.concurrency ?? 50;
 	const seqBy = options.sequentializeBy ?? chatKey;
 	const scheduler = createScheduler(concurrency);
+	// aborts the in-flight long poll (and any retry backoff) so stop() returns promptly
+	// instead of waiting out the full `timeout` window.
+	const abort = new AbortController();
 
 	let stopped = false;
 	let offset = 0;
@@ -184,17 +217,20 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 
 			let updates: Update[];
 			try {
-				updates = await bot.api.getUpdates({
-					offset,
-					limit: options.limit ?? 100,
-					timeout: options.timeout ?? 30,
-					...(options.allowedUpdates ? { allowed_updates: options.allowedUpdates } : {}),
-				});
+				updates = await bot.api.getUpdates(
+					{
+						offset,
+						limit: options.limit ?? 100,
+						timeout: options.timeout ?? 30,
+						...(options.allowedUpdates ? { allowed_updates: options.allowedUpdates } : {}),
+					},
+					{ signal: abort.signal },
+				);
 			} catch (error) {
 				if (stopped) break;
 
 				options.onError?.(error);
-				await delay(3000);
+				await delay(3000, abort.signal);
 
 				continue;
 			}
@@ -211,6 +247,7 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 	return {
 		async stop() {
 			stopped = true;
+			abort.abort();
 			await loopDone;
 			await scheduler.idle();
 		},

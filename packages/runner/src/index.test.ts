@@ -146,3 +146,29 @@ test("run: processes a batch, keeps per-chat order, advances offset, drains on s
 	assert.ok(order.indexOf(1) < order.indexOf(2), "same chat stays ordered");
 	assert.ok(offsets.includes(4), "offset advanced past the batch");
 });
+
+test("run: stop() aborts the in-flight long poll instead of waiting it out", async () => {
+	let errors = 0;
+
+	const bot = {
+		api: {
+			getUpdates(_params?: Record<string, unknown>, opts?: { signal?: AbortSignal }) {
+				// a real long poll: never resolves on its own, only on abort
+				return new Promise((_resolve, reject) => {
+					opts?.signal?.addEventListener("abort", () => reject(new Error("aborted")), {
+						once: true,
+					});
+				});
+			},
+			// biome-ignore lint/suspicious/noExplicitAny: test mock
+		} as any,
+		async handleUpdate() {},
+	};
+
+	const handle = run(bot, { timeout: 600, onError: () => errors++ });
+
+	await tick();
+	await handle.stop(); // hangs forever without the abort wiring
+
+	assert.equal(errors, 0, "the stop-triggered abort is not reported as a polling error");
+});

@@ -2,7 +2,7 @@
 
 ## 0.4.0
 
-### Minor Changes
+### minor changes
 
 - 475e1ed: polling survives a flaky link without shouting about it: consecutive `getUpdates` failures now
   back off 3s → 30s (reset on the first success) instead of retrying every 3s forever, and the

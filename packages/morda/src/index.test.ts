@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { bold, Composer, Context, format, type Middleware } from "@yaebal/core";
-import { MemoryStorage } from "@yaebal/sklad";
+import { MemoryStorage, type StorageAdapter } from "@yaebal/sklad";
 import {
 	back,
 	button,
@@ -12,6 +12,7 @@ import {
 	defineDialog,
 	dialogs,
 	MordaError,
+	type RenderFrame,
 	switchTo,
 	url,
 	type WindowIds,
@@ -815,4 +816,261 @@ test("bare defs stay exactly as before — no annotations required", async () =>
 
 	await mw(msgCtx(api, "/go", 1), noop);
 	assert.equal(of("sendMessage")[0]?.params.text, "plain");
+});
+
+// ── writes from hooks (lost-update regressions) ──────────────────────────────
+
+/**
+ * a storage that round-trips through JSON on every read and write, like redis or
+ * any other out-of-process adapter. it hands back a *fresh* object per `get()`,
+ * which is what makes a lost update observable at all — an in-memory adapter
+ * returns the same instance and papers the bug over.
+ */
+function jsonStorage() {
+	const raw = new Map<string, string>();
+	const storage: StorageAdapter<DialogState> = {
+		async get(key) {
+			const value = raw.get(key);
+			return value === undefined ? undefined : (JSON.parse(value) as DialogState);
+		},
+		async set(key, value) {
+			raw.set(key, JSON.stringify(value));
+		},
+		async delete(key) {
+			raw.delete(key);
+		},
+	};
+	const read = (key: string): DialogState | undefined => {
+		const value = raw.get(key);
+		return value === undefined ? undefined : (JSON.parse(value) as DialogState);
+	};
+	return { storage, read };
+}
+
+test("setData() inside render() survives the commit that follows it", async () => {
+	const { api, of } = fakeApi();
+	const { storage, read } = jsonStorage();
+	let inClick: Record<string, unknown> | undefined;
+
+	const writing = {
+		main: {
+			onEnter: (ctx) => ctx.dialog.setData({ seed: "onEnter" }),
+			render: async (ctx, frame) => {
+				await ctx.dialog.setData({
+					fromRender: "yes",
+					renders: Number(frame.data.renders ?? 0) + 1,
+				});
+				return {
+					text: `seed=${frame.data.seed} fromRender=${frame.data.fromRender}`,
+					keyboard: [
+						[
+							button("ping", {
+								id: "ping",
+								onClick: async (c) => {
+									inClick = await c.dialog.getData();
+								},
+							}),
+						],
+					],
+				};
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(writing, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+
+	// the render's write reached storage — and did not wipe what onEnter seeded
+	assert.deepEqual(read("dlg:1")?.data, { seed: "onEnter", fromRender: "yes", renders: 1 });
+	// …and the render saw it in the very frame it wrote from
+	const sent = of("sendMessage")[0];
+	assert.equal(sent?.params.text, "seed=onEnter fromRender=yes");
+
+	// a later handler reads it back
+	await mw(cbCtx(api, dataAt(sent?.params, 0, 0), 1, read("dlg:1")?.messageId ?? 0), noop);
+	assert.equal(inClick?.fromRender, "yes");
+	// renders accumulate instead of resetting: the button lookup re-rendered once
+	assert.equal(inClick?.renders, 2);
+});
+
+test("setData() inside onClick/onText survives a callback that also sets frame state", async () => {
+	const { api, of } = fakeApi();
+	const { storage, read } = jsonStorage();
+	let frame: RenderFrame | undefined;
+
+	const writing = {
+		main: {
+			render: (_ctx, rf) => {
+				frame = rf; // what jsx's setState closes over
+				return {
+					text: `clicked=${rf.data.clicked ?? false} typed=${rf.data.typed ?? "-"}`,
+					keyboard: [
+						[
+							button("hit", {
+								id: "hit",
+								onClick: async (ctx) => {
+									await ctx.dialog.setData({ clicked: true });
+									(frame as RenderFrame).hooks[0] = "from-click";
+									ctx.dialog.invalidate();
+								},
+							}),
+						],
+					],
+				};
+			},
+			// onText is handed the live frame (jsx re-renders to reach its `<Screen onText>`)
+			onText: async (ctx, rf) => {
+				await ctx.dialog.setData({ typed: ctx.text });
+				rf.hooks[1] = "from-text";
+				ctx.dialog.invalidate();
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(writing, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+	const sent = of("sendMessage")[0];
+	const messageId = read("dlg:1")?.messageId ?? 0;
+
+	await mw(cbCtx(api, dataAt(sent?.params, 0, 0), 1, messageId), noop);
+	// the data write and the frame-state write both survive the commit invalidate() asked for
+	assert.equal(read("dlg:1")?.data.clicked, true);
+	assert.equal(read("dlg:1")?.stack[0]?.hooks?.[0], "from-click");
+	assert.equal(of("editMessageText")[0]?.params.text, "clicked=true typed=-");
+
+	await mw(msgCtx(api, "hello", 1), noop);
+	assert.deepEqual(read("dlg:1")?.data, { clicked: true, typed: "hello" });
+	assert.deepEqual(read("dlg:1")?.stack[0]?.hooks, ["from-click", "from-text"]);
+	assert.equal(of("editMessageText")[1]?.params.text, "clicked=true typed=hello");
+});
+
+test("an onCommit() write is not clobbered by the commit pass it triggers", async () => {
+	const { api, of } = fakeApi();
+	const { storage, read } = jsonStorage();
+	let passes = 0;
+
+	const writing = {
+		main: {
+			render: (_ctx, frame) => ({ text: `effect=${frame.data.effect ?? "-"}` }),
+			onCommit: async (ctx) => {
+				passes++;
+				if (passes > 1) return;
+				await ctx.dialog.setData({ effect: "ran" });
+				ctx.dialog.invalidate(); // ask for the extra pass that used to eat the write
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(writing, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+
+	assert.equal(passes, 2);
+	assert.equal(read("dlg:1")?.data.effect, "ran");
+	// the second pass rendered the value the first pass's onCommit wrote
+	assert.equal(of("sendMessage")[0]?.params.text, "effect=-");
+	assert.equal(of("editMessageText")[0]?.params.text, "effect=ran");
+});
+
+test("update() inside render() folds into one more pass instead of recursing", {
+	timeout: 5000,
+}, async () => {
+	const { api, of } = fakeApi();
+	const { storage, read } = jsonStorage();
+	let renders = 0;
+
+	const writing = {
+		main: {
+			render: async (ctx, frame) => {
+				renders++;
+				if (frame.data.ready === undefined) await ctx.dialog.update({ ready: true });
+				return { text: `ready=${frame.data.ready ?? false}` };
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(writing, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+
+	assert.equal(renders, 2); // one extra pass, not a recursion
+	assert.equal(read("dlg:1")?.data.ready, true);
+	// the write landed in the frame the first pass was already rendering, so the
+	// second pass produced an identical view and cost no extra api call
+	assert.equal(of("sendMessage")[0]?.params.text, "ready=true");
+	assert.equal(of("editMessageText").length, 0);
+});
+
+test("rerender() inside onCommit() folds into the next pass too", { timeout: 5000 }, async () => {
+	const { api, of } = fakeApi();
+	const { storage, read } = jsonStorage();
+	let passes = 0;
+
+	const writing = {
+		main: {
+			render: (_ctx, frame) => ({ text: `step=${frame.data.step ?? 0}` }),
+			onCommit: async (ctx, frame) => {
+				passes++;
+				if (passes > 1) return;
+				frame.data.step = 1; // a direct frame write, the way jsx's setState mutates
+				await ctx.dialog.rerender(); // "render again, now" from inside the commit
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(writing, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await mw(msgCtx(api, "/go", 1), noop);
+
+	assert.equal(passes, 2);
+	assert.equal(read("dlg:1")?.data.step, 1);
+	assert.equal(of("editMessageText")[0]?.params.text, "step=1");
+});
+
+test("a render that always re-renders itself fails loud, not with a stack overflow", {
+	timeout: 5000,
+}, async () => {
+	const { api } = fakeApi();
+	const { storage } = jsonStorage();
+
+	const looping = {
+		main: {
+			render: async (ctx) => {
+				await ctx.dialog.rerender(); // unconditional — bounded by MAX_COMMIT_PASSES
+				return { text: "loop" };
+			},
+		},
+	} satisfies DialogDef;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(dialogs(looping, { storage }))
+			.command("go", (ctx) => ctx.dialog.start("main")),
+	);
+
+	await assert.rejects(async () => {
+		await mw(msgCtx(api, "/go", 1), noop);
+	}, MordaError);
 });

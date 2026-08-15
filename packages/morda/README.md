@@ -60,6 +60,19 @@ ask: {
 `back(result)` · `close()` · `rerender()` · `invalidate()` · `update(patch)` ·
 `setData(patch)` · `getData()` · `active()`.
 
+### writing dialog state
+
+every hook may write — `render` included. one update holds a single dialog state
+for the whole locked section, so `setData()` / `update()` (or a direct mutation of
+`frame.data` / `frame.hooks`) lands in the object the engine persists at the end;
+the engine never clobbers a hook's write, whatever the storage adapter serializes.
+
+`render` has one extra rule: it runs once per commit pass, and again when a press
+is routed (to locate the button that was tapped). keep its writes idempotent, put
+one-shot side effects in `onEnter` / `onCommit`, and note that `update()` /
+`rerender()` called from a render fold into one more pass instead of re-entering it
+— a render that unconditionally re-renders itself fails loud with a `MordaError`.
+
 text accepts `format` results (entities flow to the wire), windows can carry
 `media` (photo/video/animation/document/audio — transitions handled via
 delete + resend), and buttons come in callback / url / webApp / copy /

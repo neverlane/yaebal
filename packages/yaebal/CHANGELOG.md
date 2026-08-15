@@ -2,17 +2,17 @@
 
 ## 0.2.0
 
-### Minor Changes
+### minor changes
 
 - 770b00e: the meta package now ships the production preamble every real bot writes anyway:
   `autoRetry`, `autoAnswer`, `hydrate`, `typing`, `files`, `splitter`, plus the `FileId` decoder,
   the `InlineQueryResult`/`InputMessageContent` builders and the rest of sklad's storage adapters
   (`redisStorage`, `sqliteStorage`, `kvStorage`) — all from the same `import … from "yaebal"`.
 
-### Patch Changes
+### patch changes
 
-- Updated dependencies [475e1ed]
-- Updated dependencies [24f5037]
+- updated dependencies [475e1ed]
+- updated dependencies [24f5037]
   - @yaebal/core@0.4.0
   - @yaebal/again@1.0.0
   - @yaebal/auto-answer@1.0.0

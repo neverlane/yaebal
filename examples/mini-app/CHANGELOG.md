@@ -2,9 +2,9 @@
 
 ## 0.0.1
 
-### Patch Changes
+### patch changes
 
-- Updated dependencies [770b00e]
-- Updated dependencies [412165b]
+- updated dependencies [770b00e]
+- updated dependencies [412165b]
   - yaebal@0.2.0
   - @yaebal/mini-app@1.0.0

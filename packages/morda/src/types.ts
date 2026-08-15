@@ -107,8 +107,24 @@ export type WindowRender<W extends string = string, C extends Context = Context>
 	frame: RenderFrame,
 ) => WindowView<C> | Promise<WindowView<C>>;
 
-/** a window with lifecycle: render plus optional enter/leave/input/result hooks. */
+/**
+ * a window with lifecycle: render plus optional enter/leave/input/result hooks.
+ *
+ * **writing dialog state.** every hook here — `render` included — may write
+ * through `ctx.dialog.setData()` / `update()`, or mutate `frame.data` and
+ * `frame.hooks` directly. all of it is picked up by the save that ends the
+ * update; nothing a hook writes is clobbered by the engine's own persist. one
+ * caveat applies to `render` specifically: it runs once per commit pass (and
+ * again when a press is routed, to locate the button), so its writes must be
+ * idempotent, and `update()` / `rerender()` from inside it fold into one extra
+ * pass rather than re-entering the render they were called from.
+ */
 export interface WindowDef<W extends string = string, C extends Context = Context> {
+	/**
+	 * produce the view. may write dialog state (see above), but must tolerate
+	 * running several times for one update — keep it free of one-shot side
+	 * effects, which belong in `onEnter` or `onCommit`.
+	 */
 	render: WindowRender<W, C>;
 	/** fired when the window is pushed onto (or replaces the top of) the stack. */
 	onEnter?: (ctx: DialogContext<W, C>, frame: RenderFrame) => unknown;
@@ -124,7 +140,8 @@ export interface WindowDef<W extends string = string, C extends Context = Contex
 	onResult?: (ctx: DialogContext<W, C>, result: unknown, frame: RenderFrame) => unknown;
 	/**
 	 * runs after the rendered view is delivered and the state persisted.
-	 * `ctx.dialog.invalidate()` inside re-renders (morda/jsx runs effects here).
+	 * `ctx.dialog.invalidate()` inside re-renders (morda/jsx runs effects here) —
+	 * the extra pass keeps whatever this hook wrote.
 	 */
 	onCommit?: (ctx: DialogContext<W, C>, frame: RenderFrame) => unknown;
 }
@@ -194,9 +211,12 @@ export interface DialogControl<W extends string = string> {
 	 * times in one handler still produces a single `editMessageText`.
 	 */
 	invalidate(): void;
-	/** merge into the dialog `data` bag and re-render. */
+	/**
+	 * merge into the dialog `data` bag and re-render. safe from any window hook;
+	 * from inside `render` it schedules one more commit pass instead of recursing.
+	 */
 	update(patch: Record<string, unknown>): Promise<void>;
-	/** merge into the dialog `data` bag and persist — no render. */
+	/** merge into the dialog `data` bag and persist — no render. safe from any window hook. */
 	setData(patch: Record<string, unknown>): Promise<void>;
 	/** read the dialog `data` bag (undefined when no dialog is open). */
 	getData<T = Record<string, unknown>>(): Promise<T | undefined>;

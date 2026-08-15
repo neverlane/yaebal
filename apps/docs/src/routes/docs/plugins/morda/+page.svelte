@@ -316,6 +316,23 @@ await mw(cbCtx(api, data, chatId, 100), noop); // press the button`;
 </p>
 <Code code={windowDefs} title="windows.ts" />
 
+<h3>writing dialog state from a window</h3>
+<p>
+	every hook may write — <code>render</code> included. one update holds a single dialog
+	state for the whole locked section, so <code>setData()</code> / <code>update()</code> (or a
+	direct mutation of <code>frame.data</code> / <code>frame.hooks</code>) lands in the object
+	the engine persists at the end of the update; the engine never clobbers a hook's write,
+	whatever the storage adapter serializes.
+</p>
+<p>
+	<code>render</code> has one extra rule: it runs once per commit pass, and again when a press
+	is routed (to locate the button that was tapped). keep its writes idempotent, put one-shot
+	side effects in <code>onEnter</code> / <code>onCommit</code>, and note that
+	<code>update()</code> / <code>rerender()</code> called from a render fold into one more pass
+	instead of re-entering it — a render that unconditionally re-renders itself fails loud with a
+	<code>MordaError</code>.
+</p>
+
 <h2>button helpers</h2>
 <table>
 	<thead>

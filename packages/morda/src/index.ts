@@ -114,6 +114,8 @@ interface Engine {
 	cd: ReturnType<typeof makeCd>;
 	storage: StorageAdapter<DialogState>;
 	lock: KeyedLock;
+	/** the open lock sections, by key — see {@link Section}. */
+	sections: Map<string, Section>;
 	prefix: string;
 	getKey: (ctx: Context) => string | undefined;
 	access?: (ctx: DialogContext) => boolean | Promise<boolean>;
@@ -139,16 +141,85 @@ interface Env {
 	key: string;
 }
 
+/**
+ * one held lock section and the single `DialogState` in flight inside it.
+ *
+ * every `load()` made while the section is open resolves to the *same* object,
+ * so a `setData()`/`update()` from a render or any lifecycle hook mutates the
+ * very instance the surrounding code holds and later persists — `save()` stays
+ * the only writer and no caller has to know when it is safe to write.
+ */
+interface Section {
+	/** the section's state, read from storage at most once. */
+	state?: Promise<DialogState | undefined>;
+	/**
+	 * a commit pass (or a bare render, when a press is being routed) is on the
+	 * stack — `update()`/`rerender()` from in there must ask for another pass
+	 * instead of recursing into the one that is already running.
+	 */
+	committing: boolean;
+}
+
+/** run `fn` with the section flagged as committing, restoring the previous flag after. */
+async function inCommit<T>(engine: Engine, key: string, fn: () => Promise<T>): Promise<T> {
+	const open = engine.sections.get(key);
+	if (!open) return fn();
+	const was = open.committing;
+	open.committing = true;
+	try {
+		return await fn();
+	} finally {
+		open.committing = was;
+	}
+}
+
+/**
+ * enter the lock section for `key`. reentrant calls (a control method used
+ * inside a hook) join the section that is already open and share its state.
+ */
+function section<T>(engine: Engine, key: string, fn: (open: Section) => Promise<T>): Promise<T> {
+	return engine.lock.run(key, async () => {
+		const open = engine.sections.get(key);
+		if (open) return fn(open); // reentrant — the outermost section owns the state
+		const fresh: Section = { committing: false };
+		engine.sections.set(key, fresh);
+		try {
+			return await fn(fresh);
+		} finally {
+			engine.sections.delete(key);
+		}
+	});
+}
+
 const storageKey = (engine: Engine, key: string): string => `${engine.prefix}:${key}`;
 
-const load = (engine: Engine, key: string): Promise<DialogState | undefined> =>
-	Promise.resolve(engine.storage.get(storageKey(engine, key)));
+const load = (engine: Engine, key: string): Promise<DialogState | undefined> => {
+	const open = engine.sections.get(key);
+	if (!open) return Promise.resolve(engine.storage.get(storageKey(engine, key)));
+	open.state ??= Promise.resolve(engine.storage.get(storageKey(engine, key)));
+	return open.state;
+};
 
-const save = (engine: Engine, key: string, st: DialogState): Promise<unknown> =>
-	Promise.resolve(engine.storage.set(storageKey(engine, key), st));
+const save = async (engine: Engine, key: string, st: DialogState): Promise<void> => {
+	const open = engine.sections.get(key);
+	if (open) open.state = Promise.resolve(st);
+	await engine.storage.set(storageKey(engine, key), st);
+};
 
-const drop = (engine: Engine, key: string): Promise<unknown> =>
-	Promise.resolve(engine.storage.delete(storageKey(engine, key)));
+const drop = async (engine: Engine, key: string): Promise<void> => {
+	const open = engine.sections.get(key);
+	if (open) open.state = Promise.resolve(undefined);
+	await engine.storage.delete(storageKey(engine, key));
+};
+
+/** render a window; `update()`/`rerender()` from inside it fold into a later pass. */
+const renderWindow = (
+	engine: Engine,
+	key: string,
+	def: WindowDef,
+	ctx: DialogContext,
+	rf: RenderFrame,
+): Promise<WindowView> => inCommit(engine, key, async () => def.render(ctx, rf));
 
 function windowOf(engine: Engine, id: string): WindowDef {
 	const def = engine.windows.get(id);
@@ -184,9 +255,13 @@ function findButton(view: WindowView, id: string): CallbackButton | undefined {
 /**
  * the render → deliver → persist → onCommit loop. `onCommit` (morda/jsx runs
  * effects there) may `invalidate()` to request another pass; identical renders
- * are skipped inside `deliverView`, so extra passes cost no API calls.
+ * are skipped inside `deliverView`, so extra passes cost no API calls. every
+ * hook this loop calls may write dialog state: they all write into the section's
+ * one in-flight `st`, which is what the saves below carry out.
  */
-async function commit(env: Env): Promise<void> {
+const commit = (env: Env): Promise<void> => inCommit(env.engine, env.key, () => commitPasses(env));
+
+async function commitPasses(env: Env): Promise<void> {
 	const { engine, api, ctx, control, key } = env;
 	let window = "?";
 
@@ -199,7 +274,9 @@ async function commit(env: Env): Promise<void> {
 
 		const def = windowOf(engine, frame.w);
 		const rf = frameOf(st, frame);
-		const view = await def.render(ctx, rf);
+		// the render may itself write dialog state — it writes into `st`, so the save
+		// below carries those writes out instead of clobbering them.
+		const view = await renderWindow(engine, key, def, ctx, rf);
 		await deliverView(api, st, frame.w, view, packFor(engine, st));
 		await save(engine, key, st);
 
@@ -209,8 +286,8 @@ async function commit(env: Env): Promise<void> {
 			if (control._nav !== nav) return; // onCommit navigated — it already committed
 		}
 		if (!control._dirty) return;
-		// effects mutated frame state after the save above — persist before reloading,
-		// or a JSON-serializing storage would hand the next pass a stale copy.
+		// onCommit mutated frame state after the save above — persist it before the
+		// next pass so a crash in between can't lose the write.
 		await save(engine, key, st);
 	}
 	throw new MordaError(
@@ -256,7 +333,7 @@ function makeControl(
 			if (chatId === undefined) throw new MordaError("start() requires a chat");
 			windowOf(engine, w);
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const env: Env = { engine, api, ctx: dctx, control, key };
 				const old = await load(engine, key);
 				if (old) await closeState(env, old, undefined);
@@ -286,7 +363,7 @@ function makeControl(
 			control._nav++;
 			windowOf(engine, w);
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const st = await load(engine, key);
 				if (!st) throw new MordaError("push() with no active dialog — call start() first");
 				if (st.stack.length >= engine.maxStack) {
@@ -309,7 +386,7 @@ function makeControl(
 			control._nav++;
 			windowOf(engine, w);
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const st = await load(engine, key);
 				if (!st) throw new MordaError("replace() with no active dialog — call start() first");
 				const top = st.stack[st.stack.length - 1];
@@ -328,7 +405,7 @@ function makeControl(
 		async back(result) {
 			control._nav++;
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const st = await load(engine, key);
 				if (!st) return; // closing what isn't open is a no-op
 				const env: Env = { engine, api, ctx: dctx, control, key };
@@ -354,7 +431,7 @@ function makeControl(
 		async close() {
 			control._nav++;
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const st = await load(engine, key);
 				if (!st) return;
 				await closeState({ engine, api, ctx: dctx, control, key }, st, undefined);
@@ -363,7 +440,12 @@ function makeControl(
 
 		async rerender() {
 			const key = keyOf();
-			await engine.lock.run(key, () => commit({ engine, api, ctx: dctx, control, key }));
+			await section(engine, key, async (open) => {
+				// called from inside a commit (a render, or an onCommit effect): ask for
+				// another pass instead of recursing into the commit already running.
+				if (open.committing) return void control.invalidate();
+				await commit({ engine, api, ctx: dctx, control, key });
+			});
 		},
 
 		invalidate() {
@@ -372,18 +454,19 @@ function makeControl(
 
 		async update(patch) {
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async (open) => {
 				const st = await load(engine, key);
 				if (!st) throw new MordaError("update() with no active dialog");
 				Object.assign(st.data, patch);
 				await save(engine, key, st);
+				if (open.committing) return void control.invalidate(); // see rerender()
 				await commit({ engine, api, ctx: dctx, control, key });
 			});
 		},
 
 		async setData(patch) {
 			const key = keyOf();
-			await engine.lock.run(key, async () => {
+			await section(engine, key, async () => {
 				const st = await load(engine, key);
 				if (!st) throw new MordaError("setData() with no active dialog");
 				Object.assign(st.data, patch);
@@ -425,7 +508,7 @@ async function handleCallback(
 	let outcome: CallbackOutcome = "foreign";
 
 	try {
-		outcome = await engine.lock.run(key, async (): Promise<CallbackOutcome> => {
+		outcome = await section(engine, key, async (): Promise<CallbackOutcome> => {
 			const st = await load(engine, key);
 			// no state: another install's button, or an expired dialog — let the rest
 			// of the bot try. never swallow what we can't prove is ours.
@@ -444,7 +527,7 @@ async function handleCallback(
 
 			const def = windowOf(engine, top.w);
 			const rf = frameOf(st, top);
-			const view = await def.render(ctx, rf);
+			const view = await renderWindow(engine, key, def, ctx, rf);
 			const btn = findButton(view, payload.b);
 			// the button vanished from a fresh render (external state moved on) — stale.
 			if (!btn) return "stale";
@@ -454,7 +537,10 @@ async function handleCallback(
 				const nav = control._nav;
 				await btn.onClick(ctx);
 				if (control._nav === nav && control._dirty) {
-					await save(engine, key, st); // onClick mutated frame state (jsx setState)
+					// `st` is the section's one in-flight state, so this carries out both
+					// the frame state onClick mutated (jsx setState) and anything it wrote
+					// through setData()/update() — neither can clobber the other.
+					await save(engine, key, st);
 					await commit(env);
 				}
 			}
@@ -484,7 +570,7 @@ async function handleText(
 	const control = ctx.dialog as DialogControl & ControlInternals;
 	let handled = false;
 
-	await engine.lock.run(key, async () => {
+	await section(engine, key, async () => {
 		const st = await load(engine, key);
 		const top = st?.stack[st.stack.length - 1];
 		if (!st || !top) return;
@@ -498,7 +584,7 @@ async function handleText(
 		if (result === false) return; // declined — fall through to other handlers
 		handled = true;
 		if (control._nav === nav && control._dirty) {
-			await save(engine, key, st); // onText mutated frame state (jsx setState)
+			await save(engine, key, st); // same in-flight state onText wrote through — see handleCallback
 			await commit({ engine, api: ctx.api, ctx, control, key });
 		}
 	});
@@ -538,10 +624,12 @@ function buildEngine(def: AnyDialogDef, options: DialogsOptions): Engine {
 		order,
 		index,
 		cd: makeCd(prefix),
-		// clone: false — the engine relies on reference identity of the in-flight DialogState
-		// (jsx hooks stash per-instance bookkeeping in it between reads within one update)
+		// clone: false — nothing else reads this store, so copying on every get/set is
+		// pure cost. reference identity within one update comes from the lock Section,
+		// not from the adapter, so a serializing storage behaves identically here.
 		storage: options.storage ?? new MemoryStorage<DialogState>({ clone: false }),
 		lock: new KeyedLock(),
+		sections: new Map(),
 		prefix,
 		getKey: options.getKey ?? defaultGetKey,
 		access: options.access,

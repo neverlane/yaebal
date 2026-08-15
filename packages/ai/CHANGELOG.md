@@ -2,9 +2,9 @@
 
 ## 0.0.4
 
-### Patch Changes
+### patch changes
 
-- Updated dependencies [475e1ed]
-- Updated dependencies [24f5037]
+- updated dependencies [475e1ed]
+- updated dependencies [24f5037]
   - @yaebal/core@0.4.0
   - @yaebal/split@1.0.0

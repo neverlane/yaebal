@@ -3,7 +3,7 @@
 // source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
 /** the Telegram Bot API version these types were generated from. */
-export const BOT_API_VERSION = "10.2";
+export const BOT_API_VERSION = "10.3";
 
 /** runtime list of `Update` payload keys (every update kind, excluding `update_id`). */
 export const updateNames = [
@@ -33,6 +33,7 @@ export const updateNames = [
 	"removed_chat_boost",
 	"managed_bot",
 	"subscription",
+	"stopped_message_generation",
 ] as const;
 
 /**
@@ -417,7 +418,7 @@ export interface CallbackQuery {
 	chat_instance: string;
 	/** *Optional*. Data associated with the callback button. Be aware that the message originated the query can contain no callback buttons with this data. */
 	data?: string;
-	/** *Optional*. Short name of a [Game](https://core.telegram.org/bots/api/#games) to be returned, serves as the unique identifier for the game */
+	/** *Optional*. Short name of a [Game](https://core.telegram.org/bots/api/#game) to be returned, serves as the unique identifier for the game */
 	game_short_name?: string;
 }
 
@@ -475,8 +476,10 @@ export interface ChatAdministratorRights {
 	can_manage_topics?: boolean;
 	/** *Optional*. *True*, if the administrator can manage direct messages of the channel and decline suggested posts; for channels only */
 	can_manage_direct_messages?: boolean;
-	/** *Optional*. *True*, if the administrator can edit the tags of regular members; for groups and supergroups only. If omitted, defaults to the value of can_pin_messages. */
+	/** *Optional*. *True*, if the administrator can edit the tags of regular members; for groups and supergroups only */
 	can_manage_tags?: boolean;
+	/** *True*, if the administrator can manage chat welcome messages or directly send them in the case of bots */
+	can_send_welcome_messages: boolean;
 }
 
 /** This object represents a chat background. */
@@ -761,8 +764,10 @@ export interface ChatMemberAdministrator {
 	can_manage_topics?: boolean;
 	/** *Optional*. *True*, if the administrator can manage direct messages of the channel and decline suggested posts; for channels only */
 	can_manage_direct_messages?: boolean;
-	/** *Optional*. *True*, if the administrator can edit the tags of regular members; for groups and supergroups only. If omitted, defaults to the value of can_pin_messages. */
+	/** *Optional*. *True*, if the administrator can edit the tags of regular members; for groups and supergroups only */
 	can_manage_tags?: boolean;
+	/** *True*, if the administrator can manage chat welcome messages or directly send them in the case of bots */
+	can_send_welcome_messages: boolean;
 	/** *Optional*. Custom title for this user */
 	custom_title?: string;
 }
@@ -1019,13 +1024,19 @@ export interface Community {
 	name: string;
 }
 
-/** Describes a service message about a chat being added to a community. */
+/** Describes a service message about a chat or a bot being added to a community. */
 export interface CommunityChatAdded {
-	/** The new community to which the chat belongs */
+	/** The new community to which the chat or the bot belongs */
 	community: Community;
 }
 
-/** Describes a service message about a chat being removed from a community. Currently holds no information. */
+/** Describes a service message about a chat being joined by a user from a community. */
+export interface CommunityChatJoined {
+	/** The community from which the chat was joined */
+	community: Community;
+}
+
+/** Describes a service message about a chat or a bot being removed from a community. Currently holds no information. */
 export type CommunityChatRemoved = Record<never, never>;
 
 /** This object represents a phone contact. */
@@ -1071,6 +1082,9 @@ export interface DirectMessagesTopic {
 	/** *Optional*. Information about the user that created the topic. Currently, it is always present. */
 	user?: User;
 }
+
+/** This object represents a disabled button which does nothing. Currently holds no information. */
+export type DisabledButton = Record<never, never>;
 
 /** This object represents a general file (as opposed to [photos](https://core.telegram.org/bots/api/#photosize), [voice messages](https://core.telegram.org/bots/api/#voice) and [audio files](https://core.telegram.org/bots/api/#audio)). */
 export interface Document {
@@ -1120,6 +1134,15 @@ export interface EncryptedPassportElement {
 	translation?: PassportFile[];
 	/** Base64-encoded element hash for using in [PassportElementErrorUnspecified](https://core.telegram.org/bots/api/#passportelementerrorunspecified) */
 	hash: string;
+}
+
+export interface EphemeralMessageParameters {
+	/** Identifier of the user who will receive the message. It is not guaranteed that the user will receive the message, especially if they are offline. See [here](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
+	receiver_user_id: number;
+	/** *Optional*. Identifier of the callback query which triggered the message, if any */
+	callback_query_id?: string;
+	/** *Optional*. Pass *True* if the ephemeral message must be shown in place of the original message. Must be *False* for callback queries from ephemeral messages, which must be edited using regular *editEphemeralMessage…* methods. */
+	replace_callback_query_message?: boolean;
 }
 
 /** This object contains information about a message that is being replied to, which may come from another chat or forum topic. */
@@ -1192,7 +1215,7 @@ export interface File {
 
 /** Upon receiving a message with this object, Telegram clients will display a reply interface to the user (act as if the user has selected the bot's message and tapped 'Reply'). This can be extremely useful if you want to create user-friendly step-by-step interfaces without having to sacrifice [privacy mode](/bots/features#privacy-mode). Not supported in channels and for messages sent on behalf of a user account. */
 export interface ForceReply {
-	/** Shows reply interface to the user, as if they manually selected the bot's message and tapped 'Reply' */
+	/** Shows reply interface to the user, as if they had manually selected the bot's message and tapped 'Reply' */
 	force_reply: boolean;
 	/** *Optional*. The placeholder to be shown in the input field when the reply is active; 1-64 characters */
 	input_field_placeholder?: string;
@@ -1434,7 +1457,7 @@ export interface InlineKeyboardButton {
 	callback_data?: string;
 	/** *Optional*. Description of the [Web App](/bots/webapps) that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method [answerWebAppQuery](https://core.telegram.org/bots/api/#answerwebappquery). Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account. */
 	web_app?: WebAppInfo;
-	/** *Optional*. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](/widgets/login). */
+	/** *Optional*. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](/widgets/login). Not supported for ephemeral messages. */
 	login_url?: LoginUrl;
 	/** *Optional*. If set, pressing the button will prompt the user to select one of their chats, open that chat and insert the bot's username and the specified inline query in the input field. May be empty, in which case just the bot's username will be inserted. Not supported for messages sent in channel direct messages chats and on behalf of a business account. */
 	switch_inline_query?: string;
@@ -1448,12 +1471,16 @@ export interface InlineKeyboardButton {
 	callback_game?: CallbackGame;
 	/** *Optional*. Specify *True*, to send a [Pay button](https://core.telegram.org/bots/api/#payments). Substrings “” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.  **NOTE:** This type of button **must** always be the first button in the first row and can only be used in invoice messages. */
 	pay?: boolean;
+	/** *Optional*. If set, then the button is disabled and does nothing */
+	disabled?: DisabledButton;
 }
 
 /** This object represents an [inline keyboard](/bots/features#inline-keyboards) that appears right next to the message it belongs to. */
 export interface InlineKeyboardMarkup {
 	/** Array of button rows, each represented by an Array of [InlineKeyboardButton](https://core.telegram.org/bots/api/#inlinekeyboardbutton) objects */
 	inline_keyboard: InlineKeyboardButton[][];
+	/** *Optional*. Pass *True* if the reply interface must be shown to the user, as if they had manually selected the bot's message and tapped 'Reply'. The value of the field can't be changed when the inline keyboard is edited. */
+	force_reply?: boolean;
 }
 
 /** This object represents an incoming inline query. When the user sends an empty query, your bot could return some default or trending results. */
@@ -1763,7 +1790,7 @@ export interface InlineQueryResultDocument {
 	thumbnail_height?: number;
 }
 
-/** Represents a [Game](https://core.telegram.org/bots/api/#games). */
+/** Represents a [Game](https://core.telegram.org/bots/api/#game). */
 export interface InlineQueryResultGame {
 	/** Type of the result, must be *game* */
 	type: string;
@@ -2413,7 +2440,7 @@ export interface InputProfilePhotoStatic {
 }
 
 /** This object represents a block in a rich formatted message to be sent. Currently, it can be any of the following types: */
-export type InputRichBlock = InputRichBlockParagraph | InputRichBlockSectionHeading | InputRichBlockPreformatted | InputRichBlockFooter | InputRichBlockDivider | InputRichBlockMathematicalExpression | InputRichBlockAnchor | InputRichBlockList | InputRichBlockBlockQuotation | InputRichBlockPullQuotation | InputRichBlockCollage | InputRichBlockSlideshow | InputRichBlockTable | InputRichBlockDetails | InputRichBlockMap | InputRichBlockAnimation | InputRichBlockAudio | InputRichBlockPhoto | InputRichBlockVideo | InputRichBlockVoiceNote | InputRichBlockThinking;
+export type InputRichBlock = InputRichBlockParagraph | InputRichBlockSectionHeading | InputRichBlockPreformatted | InputRichBlockFooter | InputRichBlockDivider | InputRichBlockMathematicalExpression | InputRichBlockAnchor | InputRichBlockList | InputRichBlockBlockQuotation | InputRichBlockExpandableBlockQuotation | InputRichBlockPullQuotation | InputRichBlockCollage | InputRichBlockSlideshow | InputRichBlockTable | InputRichBlockDetails | InputRichBlockMap | InputRichBlockButtons | InputRichBlockAnimation | InputRichBlockAudio | InputRichBlockDocument | InputRichBlockPhoto | InputRichBlockVideo | InputRichBlockVoiceNote | InputRichBlockThinking;
 
 /** A block with an anchor, corresponding to the HTML tag `<a>` with the attribute `name`. */
 export interface InputRichBlockAnchor {
@@ -2453,6 +2480,16 @@ export interface InputRichBlockBlockQuotation {
 	credit?: RichText;
 }
 
+/** A block containing a list of buttons that are shown in one row, corresponding to the custom HTML tag `<tg-button-row>`. */
+export interface InputRichBlockButtons {
+	/** Type of the block, always “buttons” */
+	type: string;
+	/** List of 1-8 buttons to send */
+	buttons: RichMessageButton[];
+	/** *Optional*. Horizontal alignment of the buttons. Currently, must be one of “left”, “center”, or “right”. */
+	align?: "left" | "center" | "right";
+}
+
 /** A collage, corresponding to the custom HTML tag `<tg-collage>`. */
 export interface InputRichBlockCollage {
 	/** Type of the block, always “collage” */
@@ -2479,6 +2516,26 @@ export interface InputRichBlockDetails {
 export interface InputRichBlockDivider {
 	/** Type of the block, always “divider” */
 	type: string;
+}
+
+/** A block with a general file, corresponding to the custom HTML tag `<tg-document>`. */
+export interface InputRichBlockDocument {
+	/** Type of the block, always “document” */
+	type: string;
+	/** The document. Caption is ignored. */
+	document: InputMediaDocument;
+	/** *Optional*. Caption of the block */
+	caption?: RichBlockCaption;
+}
+
+/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"collapsed"`. */
+export interface InputRichBlockExpandableBlockQuotation {
+	/** Type of the block, always “expandable_blockquote” */
+	type: string;
+	/** Content of the block */
+	text: RichText;
+	/** *Optional*. Credit of the block */
+	credit?: RichText;
 }
 
 /** A footer, corresponding to the HTML tag `<footer>`. */
@@ -2517,12 +2574,12 @@ export interface InputRichBlockMap {
 	type: string;
 	/** Location of the center of the map */
 	location: Location;
-	/** Map zoom level; 0-24 */
-	zoom: number;
-	/** Map width; 0-10000 */
-	width: number;
-	/** Map height; 0-10000 */
-	height: number;
+	/** *Optional*. Map zoom level; 0-24 */
+	zoom?: number;
+	/** *Optional*. Map width; 0-10000 */
+	width?: number;
+	/** *Optional*. Map height; 0-10000 */
+	height?: number;
 	/** *Optional*. Caption of the block */
 	caption?: RichBlockCaption;
 }
@@ -2603,6 +2660,8 @@ export interface InputRichBlockTable {
 	is_bordered?: boolean;
 	/** *Optional*. Pass *True* if the table is striped */
 	is_striped?: boolean;
+	/** *Optional*. Pass *True* if table cells must have smaller indents */
+	is_compact?: boolean;
 	/** *Optional*. Caption of the table */
 	caption?: RichText;
 }
@@ -2643,7 +2702,7 @@ export interface InputRichMessage {
 	html?: string;
 	/** *Optional*. Content of the rich message to send described using Markdown formatting. See [rich message formatting options](https://core.telegram.org/bots/api/#rich-message-formatting-options) for more details. Use *media* field to specify the media used in the message. */
 	markdown?: string;
-	/** *Optional*. List of media that are specified in the *markdown* or *html* fields using `tg://photo?id=`, `tg://video?id=`, and `tg://audio?id=` links */
+	/** *Optional*. List of media that are specified in the *markdown* or *html* fields using `tg://photo?id=`, `tg://video?id=`, `tg://document?id=`, and `tg://audio?id=` links */
 	media?: InputRichMessageMedia[];
 	/** *Optional*. Pass *True* if the rich message must be shown right-to-left */
 	is_rtl?: boolean;
@@ -2653,16 +2712,16 @@ export interface InputRichMessage {
 
 /** Represents the [content](https://core.telegram.org/bots/api/#inputmessagecontent) of a rich message to be sent as the result of an inline query. */
 export interface InputRichMessageContent {
-	/** The message to be sent */
+	/** The message to be sent. Only previously uploaded files may be used in the message. */
 	rich_message: InputRichMessage;
 }
 
 /** Describes a media element embedded in an outgoing rich message. */
 export interface InputRichMessageMedia {
-	/** Unique identifier of the media used in a `tg://photo?id=`, `tg://video?id=`, or `tg://audio?id=` link. 1-64 characters, only `A-Z`, `a-z`, `0-9`, `_` and `-` are allowed. */
+	/** Unique identifier of the media used in a `tg://photo?id=`, `tg://video?id=`, `tg://document?id=`, or `tg://audio?id=` link. 1-64 characters, only `A-Z`, `a-z`, `0-9`, `_` and `-` are allowed. */
 	id: string;
 	/** The media to be sent. Everything except the media itself and its properties is ignored. */
-	media: InputMediaAnimation | InputMediaAudio | InputMediaPhoto | InputMediaVideo | InputMediaVoiceNote;
+	media: InputMediaAnimation | InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo | InputMediaVoiceNote;
 }
 
 /** This object describes a sticker to be added to a sticker set. */
@@ -2910,13 +2969,13 @@ export interface LocationAddress {
 	street?: string;
 }
 
-/** This object represents a parameter of the inline keyboard button used to automatically authorize a user. Serves as a great replacement for the [Telegram Login Widget](/widgets/login) when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:  [](/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c)  Telegram apps support these buttons as of [version 5.7](https://telegram.org/blog/privacy-discussions-web-bots#meet-seamless-web-bots).  Sample bot: [@discussbot](https://t.me/discussbot) */
+/** This object represents a parameter of the inline keyboard button used to automatically authorize a user. It serves as a great replacement for the [Telegram Login Widget](/widgets/login) when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:  [](/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c)  Sample bot: [@DiscussBot](https://t.me/discussbot) */
 export interface LoginUrl {
 	/** An HTTPS URL to be opened with user authorization data added to the query string when the button is pressed. If the user refuses to provide authorization data, the original URL without information about the user will be opened. The data added is the same as described in [Receiving authorization data](/widgets/login#receiving-authorization-data).  **NOTE:** You **must** always check the hash of the received data to verify the authentication and the integrity of the data as described in [Checking authorization](/widgets/login#checking-authorization). */
 	url: string;
 	/** *Optional*. New text of the button in forwarded messages */
 	forward_text?: string;
-	/** *Optional*. Username of a bot, which will be used for user authorization. See [Setting up a bot](/widgets/login#setting-up-a-bot) for more details. If not specified, the current bot's username will be assumed. The *url*'s domain must be the same as the domain linked with the bot. See [Linking your domain to the bot](/widgets/login#linking-your-domain-to-the-bot) for more details. */
+	/** *Optional*. Username of a bot, which will be used for user authorization; not supported in [RichMessageButton](https://core.telegram.org/bots/api/#richmessagebutton). See [Setting up a bot](/widgets/login#setting-up-a-bot) for more details. If not specified, the current bot's username will be assumed. The *url*'s domain must be the same as the domain linked with the bot. See [Linking your domain to the bot](/widgets/login#linking-your-domain-to-the-bot) for more details. */
 	bot_username?: string;
 	/** *Optional*. Pass *True* to request the permission for your bot to send messages to the user */
 	request_write_access?: boolean;
@@ -3160,9 +3219,11 @@ export interface Message {
 	checklist_tasks_done?: ChecklistTasksDone;
 	/** *Optional*. Service message: tasks were added to a checklist */
 	checklist_tasks_added?: ChecklistTasksAdded;
-	/** *Optional*. Service message: chat added to a [Community](https://core.telegram.org/bots/api/#community) */
+	/** *Optional*. Service message: chat or bot added to a [Community](https://core.telegram.org/bots/api/#community) */
 	community_chat_added?: CommunityChatAdded;
-	/** *Optional*. Service message: chat removed from a [Community](https://core.telegram.org/bots/api/#community) */
+	/** *Optional*. Service message: chat was joined by a user from a [Community](https://core.telegram.org/bots/api/#community) */
+	community_chat_joined?: CommunityChatJoined;
+	/** *Optional*. Service message: chat or bot removed from a [Community](https://core.telegram.org/bots/api/#community) */
 	community_chat_removed?: CommunityChatRemoved;
 	/** *Optional*. Service message: the price for paid messages in the corresponding direct messages chat of a channel has changed */
 	direct_message_price_changed?: DirectMessagePriceChanged;
@@ -3244,6 +3305,16 @@ export interface MessageEntity {
 	unix_time?: number;
 	/** *Optional*. For “date_time” only, the string that defines the formatting of the date and time. See [date-time entity formatting](https://core.telegram.org/bots/api/#date-time-entity-formatting) for more details. */
 	date_time_format?: string;
+}
+
+/** This object describes an update about a user stopping message generation. */
+export interface MessageGenerationStopped {
+	/** Chat in which the message is generated */
+	chat: Chat;
+	/** *Optional*. Unique identifier of the message thread in which the message is generated */
+	message_thread_id?: number;
+	/** Unique identifier of the message draft which was stopped */
+	draft_id: number;
 }
 
 /** This object represents a unique message identifier. */
@@ -3851,6 +3922,8 @@ export interface ReplyKeyboardMarkup {
 	input_field_placeholder?: string;
 	/** *Optional*. Use this parameter if you want to show the keyboard to specific users only. Targets: 1) users that are @mentioned in the *text* of the [Message](https://core.telegram.org/bots/api/#message) object; 2) if the bot's message is a reply to a message in the same chat and forum topic, sender of the original message.  *Example:* A user requests to change the bot's language, bot replies to the request with a keyboard to select the new language. Other users in the group don't see the keyboard. */
 	selective?: boolean;
+	/** *Optional*. Pass *True* if the reply interface must be shown to the user, as if they had manually selected the bot's message and tapped 'Reply' */
+	force_reply?: boolean;
 }
 
 /** Upon receiving a message with this object, Telegram clients will remove the current custom keyboard and display the default letter-keyboard. By default, custom keyboards are displayed until a new keyboard is sent by a bot. An exception is made for one-time keyboards that are hidden immediately after the user presses a button (see [ReplyKeyboardMarkup](https://core.telegram.org/bots/api/#replykeyboardmarkup)). Not supported in channels and for messages sent on behalf of a business account. */
@@ -3919,7 +3992,7 @@ export interface RevenueWithdrawalStateSucceeded {
 }
 
 /** This object represents a block in a rich formatted message. Currently, it can be any of the following types: */
-export type RichBlock = RichBlockParagraph | RichBlockSectionHeading | RichBlockPreformatted | RichBlockFooter | RichBlockDivider | RichBlockMathematicalExpression | RichBlockAnchor | RichBlockList | RichBlockBlockQuotation | RichBlockPullQuotation | RichBlockCollage | RichBlockSlideshow | RichBlockTable | RichBlockDetails | RichBlockMap | RichBlockAnimation | RichBlockAudio | RichBlockPhoto | RichBlockVideo | RichBlockVoiceNote | RichBlockThinking;
+export type RichBlock = RichBlockParagraph | RichBlockSectionHeading | RichBlockPreformatted | RichBlockFooter | RichBlockDivider | RichBlockMathematicalExpression | RichBlockAnchor | RichBlockList | RichBlockBlockQuotation | RichBlockExpandableBlockQuotation | RichBlockPullQuotation | RichBlockCollage | RichBlockSlideshow | RichBlockTable | RichBlockDetails | RichBlockMap | RichBlockButtons | RichBlockAnimation | RichBlockAudio | RichBlockDocument | RichBlockPhoto | RichBlockVideo | RichBlockVoiceNote | RichBlockThinking;
 
 /** A block with an anchor, corresponding to the HTML tag `<a>` with the attribute `name`. */
 export interface RichBlockAnchor {
@@ -3961,6 +4034,16 @@ export interface RichBlockBlockQuotation {
 	credit?: RichText;
 }
 
+/** A block containing a list of buttons that are shown in one row, corresponding to the custom HTML tag `<tg-button-row>`. */
+export interface RichBlockButtons {
+	/** Type of the block, always “buttons” */
+	type: string;
+	/** The buttons */
+	buttons: RichMessageButton[];
+	/** *Optional*. Horizontal alignment of the buttons. Currently, must be one of “left”, “center”, or “right”. */
+	align?: "left" | "center" | "right";
+}
+
 /** Caption of a rich formatted block. */
 export interface RichBlockCaption {
 	/** Block caption */
@@ -3995,6 +4078,26 @@ export interface RichBlockDetails {
 export interface RichBlockDivider {
 	/** Type of the block, always “divider” */
 	type: string;
+}
+
+/** A block with a general file, corresponding to the custom HTML tag `<tg-document>`. */
+export interface RichBlockDocument {
+	/** Type of the block, always “document” */
+	type: string;
+	/** The document */
+	document: Document;
+	/** *Optional*. Caption of the block */
+	caption?: RichBlockCaption;
+}
+
+/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"collapsed"`. */
+export interface RichBlockExpandableBlockQuotation {
+	/** Type of the block, always “expandable_blockquote” */
+	type: string;
+	/** Content of the block */
+	text: RichText;
+	/** *Optional*. Credit of the block */
+	credit?: RichText;
 }
 
 /** A footer, corresponding to the HTML tag `<footer>`. */
@@ -4035,7 +4138,7 @@ export interface RichBlockMap {
 	type: string;
 	/** Location of the center of the map */
 	location: Location;
-	/** Map zoom level; 13-20 */
+	/** Map zoom level */
 	zoom: number;
 	/** Expected width of the map */
 	width: number;
@@ -4123,6 +4226,8 @@ export interface RichBlockTable {
 	is_bordered?: boolean;
 	/** *Optional*. *True*, if the table is striped */
 	is_striped?: boolean;
+	/** *Optional*. *True*, if table cells have smaller indents */
+	is_compact?: boolean;
 	/** *Optional*. Caption of the table */
 	caption?: RichText;
 }
@@ -4181,8 +4286,34 @@ export interface RichMessage {
 	is_rtl?: boolean;
 }
 
+/** This object represents a button in a [RichMessage](https://core.telegram.org/bots/api/#richmessage). Exactly one of the fields other than *text* and *style* must be used to specify the type of the button. */
+export interface RichMessageButton {
+	/** Text of the button. May contain only plain text, [RichTextCustomEmoji](https://core.telegram.org/bots/api/#richtextcustomemoji) and [RichTextDateTime](https://core.telegram.org/bots/api/#richtextdatetime) entities. */
+	text: RichText;
+	/** *Optional*. Style of the button. Must be one of “danger” (red), “success” (green), “primary” (blue) or “link” (the button is shown as a regular link without borders). If omitted, then an app-specific style is used. The style “link” is allowed only for callback buttons. */
+	style?: "danger" | "success" | "primary" | "link";
+	/** *Optional*. HTTP or tg:// URL to be opened when the button is pressed. Links `tg://user?id=<user_id>` can be used to mention a user by their identifier without using a username, if this is allowed by their privacy settings. */
+	url?: string;
+	/** *Optional*. Data to be sent in a [callback query](https://core.telegram.org/bots/api/#callbackquery) to the bot when the button is pressed, 1-64 bytes */
+	callback_data?: string;
+	/** *Optional*. Description of the [Web App](/bots/webapps) that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method [answerWebAppQuery](https://core.telegram.org/bots/api/#answerwebappquery). Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account. */
+	web_app?: WebAppInfo;
+	/** *Optional*. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](/widgets/login). Not supported for ephemeral messages. */
+	login_url?: LoginUrl;
+	/** *Optional*. If set, pressing the button will prompt the user to select one of their chats, open that chat and insert the bot's username and the specified inline query in the input field. May be empty, in which case just the bot's username will be inserted. Not supported for messages sent in channel direct messages chats and on behalf of a business account. */
+	switch_inline_query?: string;
+	/** *Optional*. If set, pressing the button will insert the bot's username and the specified inline query in the current chat's input field. May be empty, in which case only the bot's username will be inserted. Not supported in channels and for messages sent in channel direct messages chats and on behalf of a business account. */
+	switch_inline_query_current_chat?: string;
+	/** *Optional*. If set, pressing the button will prompt the user to select one of their chats of the specified type, open that chat and insert the bot's username and the specified inline query in the input field. Not supported for messages sent in channel direct messages chats and on behalf of a business account. */
+	switch_inline_query_chosen_chat?: SwitchInlineQueryChosenChat;
+	/** *Optional*. A button that copies the specified text to the clipboard */
+	copy_text?: CopyTextButton;
+	/** *Optional*. If set, then the button is disabled and does nothing */
+	disabled?: DisabledButton;
+}
+
 /** This object represents a rich formatted text. Currently, it can be either a String for plain text, an Array of [RichText](https://core.telegram.org/bots/api/#richtext), or any of the following types: */
-export type RichText = RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
+export type RichText = RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextButton | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
 
 /** An anchor. */
 export interface RichTextAnchor {
@@ -4228,6 +4359,14 @@ export interface RichTextBotCommand {
 	text: RichText;
 	/** The bot command */
 	bot_command: string;
+}
+
+/** A button. */
+export interface RichTextButton {
+	/** Type of the rich text, always “button” */
+	type: string;
+	/** The button */
+	button: RichMessageButton;
 }
 
 /** A cashtag. */
@@ -4912,6 +5051,12 @@ export interface UniqueGiftInfo {
 	gift: UniqueGift;
 	/** Origin of the gift. Currently, either “upgrade” for gifts upgraded from regular gifts, “transfer” for gifts transferred from other users or channels, “resale” for gifts bought from other users, “gifted_upgrade” for upgrades purchased after the gift was sent, or “offer” for gifts bought or sold through gift purchase offers. */
 	origin: "upgrade" | "transfer" | "resale" | "gifted_upgrade" | "offer";
+	/** *Optional*. Text of the message that was added to the gift */
+	text?: string;
+	/** *Optional*. Special entities that appear in the text */
+	entities?: MessageEntity[];
+	/** *Optional*. *True*, if the sender and gift text are shown only to the gift receiver; otherwise, everyone will be able to see them */
+	is_private?: boolean;
 	/** *Optional*. For gifts bought from other users, the currency in which the payment for the gift was done. Currently, one of “XTR” for Telegram Stars or “TON” for TON grams. */
 	last_resale_currency?: "XTR" | "TON";
 	/** *Optional*. For gifts bought from other users, the price paid for the gift in either Telegram Stars or nanograms */
@@ -5002,6 +5147,8 @@ export interface Update {
 	managed_bot?: ManagedBotUpdated;
 	/** *Optional*. User payment subscription has changed */
 	subscription?: BotSubscriptionUpdated;
+	/** *Optional*. A user asked the bot to stop the generation of a message */
+	stopped_message_generation?: MessageGenerationStopped;
 }
 
 /** This object represents a Telegram user or bot. */
@@ -5153,7 +5300,7 @@ export interface VideoChatScheduled {
 /** This object represents a service message about a video chat started in the chat. Currently holds no information. */
 export type VideoChatStarted = Record<never, never>;
 
-/** This object represents a [video message](https://telegram.org/blog/video-messages-and-telescope) (available in Telegram apps as of [v.4.0](https://telegram.org/blog/video-messages-and-telescope)). */
+/** This object represents a [video message](https://telegram.org/blog/video-messages-and-telescope). */
 export interface VideoNote {
 	/** Identifier for this file, which can be used to download or reuse the file */
 	file_id: string;
@@ -5265,7 +5412,7 @@ export interface AnswerCallbackQueryParams {
 	show_alert?: boolean;
 	/** URL that will be opened by the user's client. If you have created a [Game](https://core.telegram.org/bots/api/#game) and accepted the conditions via [@BotFather](https://t.me/botfather), specify the URL that opens your game - note that this will only work if the query comes from a [callback_game](https://core.telegram.org/bots/api/#inlinekeyboardbutton) button.  Otherwise, you may use links like `t.me/your_bot?start=XXXX` that open your bot with a parameter. */
 	url?: string;
-	/** The maximum amount of time in seconds that the result of the callback query may be cached client-side. Telegram apps will support caching starting in version 3.14. Defaults to 0. */
+	/** The maximum amount of time in seconds that the result of the callback query may be cached client-side. Defaults to 0. */
 	cache_time?: number;
 }
 
@@ -5394,7 +5541,7 @@ export interface ConvertGiftToStarsParams {
 	owned_gift_id: string;
 }
 
-/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
 export interface CopyMessageParams {
 	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
 	chat_id: number | string;
@@ -5432,7 +5579,7 @@ export interface CopyMessageParams {
 	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply;
 }
 
-/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
+/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
 export interface CopyMessagesParams {
 	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
 	chat_id: number | string;
@@ -5722,6 +5869,8 @@ export interface EditEphemeralMessageCaptionParams {
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
 	caption_entities?: MessageEntity[];
+	/** Pass *True* if the caption must be shown above the message media. Supported only for animation, photo and video messages. */
+	show_caption_above_media?: boolean;
 	/** A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards) */
 	reply_markup?: InlineKeyboardMarkup;
 }
@@ -5734,7 +5883,7 @@ export interface EditEphemeralMessageMediaParams {
 	receiver_user_id: number;
 	/** Identifier of the ephemeral message to edit */
 	ephemeral_message_id: number;
-	/** A JSON-serialized object for the new media content of the message. A new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. */
+	/** A JSON-serialized object for the new media content of the message */
 	media: InputMedia;
 	/** A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards) */
 	reply_markup?: InlineKeyboardMarkup;
@@ -5752,7 +5901,7 @@ export interface EditEphemeralMessageReplyMarkupParams {
 	reply_markup?: InlineKeyboardMarkup;
 }
 
-/** Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+/** Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
 export interface EditEphemeralMessageTextParams {
 	/** Unique identifier for the target chat or username of the target supergroup in the format `@username` */
 	chat_id: number | string;
@@ -5760,12 +5909,14 @@ export interface EditEphemeralMessageTextParams {
 	receiver_user_id: number;
 	/** Identifier of the ephemeral message to edit */
 	ephemeral_message_id: number;
-	/** New text of the message, 1-4096 characters after entity parsing */
-	text: string | FormattedText;
+	/** New text of the message, 1-4096 characters after entity parsing; required if *rich\_message* isn't specified */
+	text?: string | FormattedText;
 	/** Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in message text, which can be specified instead of *parse\_mode* */
 	entities?: MessageEntity[];
+	/** New rich content of the message; required if *text* isn't specified */
+	rich_message?: InputRichMessage;
 	/** Link preview generation options for the message */
 	link_preview_options?: LinkPreviewOptions;
 	/** A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards) */
@@ -5902,7 +6053,7 @@ export interface EditMessageTextParams {
 	entities?: MessageEntity[];
 	/** Link preview generation options for the message */
 	link_preview_options?: LinkPreviewOptions;
-	/** New rich content of the message; required if *text* isn't specified. Direct upload of new files isn't supported when an inline message is edited. */
+	/** New rich content of the message; required if *text* isn't specified. Direct upload of new files and explicit upload of files by a URL isn't supported when an inline message is edited. */
 	rich_message?: InputRichMessage;
 	/** A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards) */
 	reply_markup?: InlineKeyboardMarkup;
@@ -6354,6 +6505,8 @@ export interface PromoteChatMemberParams {
 	can_manage_direct_messages?: boolean;
 	/** Pass *True* if the administrator can edit the tags of regular members; for groups and supergroups only */
 	can_manage_tags?: boolean;
+	/** Pass *True* if the administrator can manage chat welcome messages or directly send them in the case of bots */
+	can_send_welcome_messages?: boolean;
 }
 
 /** Marks incoming message as read on behalf of a business account. Requires the *can\_read\_messages* business bot right. Returns *True* on success. */
@@ -6501,10 +6654,8 @@ export interface SendAnimationParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Animation to send. Pass a file_id as String to send an animation that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an animation from the Internet, or upload a new animation using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	animation: InputFile | string;
 	/** Duration of sent animation in seconds */
@@ -6551,10 +6702,8 @@ export interface SendAudioParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Audio file to send. Pass a file_id as String to send an audio file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an audio file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	audio: InputFile | string;
 	/** Audio caption, 0-1024 characters after entities parsing */
@@ -6637,10 +6786,8 @@ export interface SendContactParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Contact's phone number */
 	phone_number: string;
 	/** Contact's first name */
@@ -6703,10 +6850,8 @@ export interface SendDocumentParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** File to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	document: InputFile | string;
 	/** Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -6853,10 +6998,8 @@ export interface SendLivePhotoParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Live photo video to send. The video must be no longer than 10 seconds and must not exceed 10 MB in size. Pass a file_id as String to send a video that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
 	live_photo: InputFile | string;
 	/** The static photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
@@ -6897,10 +7040,8 @@ export interface SendLocationParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Latitude of the location */
 	latitude: number;
 	/** Longitude of the location */
@@ -6963,10 +7104,8 @@ export interface SendMessageParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Text of the message to be sent, 1-4096 characters after entities parsing */
 	text: string | FormattedText;
 	/** Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
@@ -6997,7 +7136,7 @@ export interface SendMessageDraftParams {
 	chat_id: number;
 	/** Unique identifier for the target message thread */
 	message_thread_id?: number;
-	/** Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. */
+	/** Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. Otherwise, the draft is replaced without animation. */
 	draft_id: number;
 	/** Text of the message to be sent, 0-4096 characters after entities parsing. Pass an empty text to show a “Thinking…” placeholder. */
 	text?: string | FormattedText;
@@ -7005,6 +7144,10 @@ export interface SendMessageDraftParams {
 	parse_mode?: string;
 	/** A JSON-serialized list of special entities that appear in message text, which can be specified instead of *parse\_mode* */
 	entities?: MessageEntity[];
+	/** Pass *True* to show the user a button to stop further drafts. The bot will receive an [Update](https://core.telegram.org/bots/api/#update) “stopped_message_generation” if the user presses the button. */
+	can_stop?: boolean;
+	/** Pass *True* to keep the draft in the chat when the button is pressed. The draft will still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the bot should send it as a new message. */
+	keep_on_stop?: boolean;
 }
 
 /** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -7055,10 +7198,8 @@ export interface SendPhotoParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a photo from the Internet, or upload a new photo using multipart/form-data. The photo must be at most 10 MB in size. The photo's width and height must not exceed 10000 in total. Width and height ratio must be at most 20. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	photo: InputFile | string;
 	/** Photo caption (may also be used when resending photos by *file\_id*), 0-1024 characters after entities parsing */
@@ -7169,6 +7310,8 @@ export interface SendRichMessageParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** The message to be sent */
 	rich_message: InputRichMessage;
 	/** Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound. */
@@ -7193,10 +7336,14 @@ export interface SendRichMessageDraftParams {
 	chat_id: number;
 	/** Unique identifier for the target message thread */
 	message_thread_id?: number;
-	/** Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. */
+	/** Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. Otherwise, the draft is replaced without animation. */
 	draft_id: number;
-	/** The partial message to be streamed. Direct upload of new files isn't supported. */
+	/** The partial message to be streamed. Direct upload of new files and explicit upload of files by a URL isn't supported. */
 	rich_message: InputRichMessage;
+	/** Pass *True* to show the user a button to stop further drafts. The bot will receive an [Update](https://core.telegram.org/bots/api/#update) “stopped_message_generation” if the user presses the button. */
+	can_stop?: boolean;
+	/** Pass *True* to keep the draft in the chat when the button is pressed. The draft will still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the bot should send it as a new message. */
+	keep_on_stop?: boolean;
 }
 
 /** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -7209,10 +7356,8 @@ export interface SendStickerParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Sticker to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a .WEBP sticker from the Internet, or upload a new .WEBP, .TGS, or .WEBM sticker using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Video and animated stickers can't be sent via an HTTP URL. */
 	sticker: InputFile | string;
 	/** Emoji associated with the sticker; only for just uploaded stickers */
@@ -7243,10 +7388,8 @@ export interface SendVenueParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Latitude of the venue */
 	latitude: number;
 	/** Longitude of the venue */
@@ -7289,10 +7432,8 @@ export interface SendVideoParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Video to send. Pass a file_id as String to send a video that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a video from the Internet, or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	video: InputFile | string;
 	/** Duration of sent video in seconds */
@@ -7335,7 +7476,7 @@ export interface SendVideoParams {
 	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply;
 }
 
-/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+/** Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 export interface SendVideoNoteParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
@@ -7345,10 +7486,8 @@ export interface SendVideoNoteParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Video note to send. Pass a file_id as String to send a video note that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending video notes by a URL is currently unsupported. */
 	video_note: InputFile | string;
 	/** Duration of sent video in seconds */
@@ -7383,10 +7522,8 @@ export interface SendVoiceParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See [ephemeral message sending](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id?: number;
-	/** For outgoing ephemeral messages, identifier of the callback query which triggered the message if any */
-	callback_query_id?: string;
+	/** A JSON-serialized object containing the parameters of the ephemeral message to send */
+	ephemeral_message_parameters?: EphemeralMessageParameters;
 	/** Audio file to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	voice: InputFile | string;
 	/** Voice message caption, 0-1024 characters after entities parsing */
@@ -7885,9 +8022,9 @@ export interface BotApiMethods {
 	closeGeneralForumTopic(params: CloseGeneralForumTopicParams): Promise<boolean>;
 		/** Converts a given regular gift to Telegram Stars. Requires the *can\_convert\_gifts\_to\_stars* business bot right. Returns *True* on success. */
 	convertGiftToStars(params: ConvertGiftToStarsParams): Promise<boolean>;
-		/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+		/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
 	copyMessage(params: CopyMessageParams): Promise<MessageId>;
-		/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
+		/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
 	copyMessages(params: CopyMessagesParams): Promise<MessageId[]>;
 		/** Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
 	createChatInviteLink(params: CreateChatInviteLinkParams): Promise<ChatInviteLink>;
@@ -7941,7 +8078,7 @@ export interface BotApiMethods {
 	editEphemeralMessageMedia(params: EditEphemeralMessageMediaParams): Promise<boolean>;
 		/** Use this method to edit only the reply markup of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
 	editEphemeralMessageReplyMarkup(params: EditEphemeralMessageReplyMarkupParams): Promise<boolean>;
-		/** Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+		/** Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
 	editEphemeralMessageText(params: EditEphemeralMessageTextParams): Promise<boolean>;
 		/** Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success. */
 	editForumTopic(params: EditForumTopicParams): Promise<boolean>;
@@ -8125,7 +8262,7 @@ export interface BotApiMethods {
 	sendVenue(params: SendVenueParams): Promise<Message>;
 		/** Use this method to send video files, Telegram clients support MPEG4 videos (other formats may be sent as [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send video files of up to 50 MB in size, this limit may be changed in the future. */
 	sendVideo(params: SendVideoParams): Promise<Message>;
-		/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+		/** Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendVideoNote(params: SendVideoNoteParams): Promise<Message>;
 		/** Use this method to send audio files, if you want Telegram clients to display the file as a playable voice message. For this to work, your audio must be in an .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats may be sent as [Audio](https://core.telegram.org/bots/api/#audio) or [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send voice messages of up to 50 MB in size, this limit may be changed in the future. */
 	sendVoice(params: SendVoiceParams): Promise<Message>;

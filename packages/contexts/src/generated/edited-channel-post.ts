@@ -62,7 +62,7 @@ export class EditedChannelPostContextBase {
 			: ((a ?? {}) as Omit<t.ForwardMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">);
 		return this.api.call<t.Message>("forwardMessage", { ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...(((this.direct_messages_topic?.topic_id) === undefined) ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), from_chat_id: this.chat.id, message_id: this.message_id, ...params });
 	}
-	/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_id* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+	/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
 	copy(chatId: number | string, params?: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.MessageId>;
 	copy(params: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">): Promise<t.MessageId>;
 	copy(a: number | string | Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id">, b?: Omit<t.CopyMessageParams, "message_thread_id" | "direct_messages_topic_id" | "from_chat_id" | "message_id" | "chat_id">): Promise<t.MessageId> {
@@ -129,7 +129,7 @@ export class EditedChannelPostContextBase {
 			: ((a ?? {}) as Omit<t.SendVoiceParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">);
 		return this.api.call<t.Message>("sendVoice", { chat_id: this.chat.id, ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...(((this.direct_messages_topic?.topic_id) === undefined) ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
-	/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	/** Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendVideoNote(videoNote: t.InputFile | string, params?: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video_note">): Promise<t.Message>;
 	sendVideoNote(params: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">): Promise<t.Message>;
 	sendVideoNote(a: t.InputFile | string | Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id">, b?: Omit<t.SendVideoNoteParams, "chat_id" | "message_thread_id" | "direct_messages_topic_id" | "video_note">): Promise<t.Message> {
@@ -480,7 +480,7 @@ export class EditedChannelPostContextBase {
 	stopPoll(params: Omit<t.StopPollParams, "chat_id" | "message_id">) {
 		return this.api.call<t.Poll>("stopPoll", { chat_id: this.chat.id, message_id: this.message_id, ...params });
 	}
-	/** Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	/** Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
 	editEphemeralMessageText(params: Omit<t.EditEphemeralMessageTextParams, "chat_id">) {
 		return this.api.call<boolean>("editEphemeralMessageText", { chat_id: this.chat.id, ...params });
 	}

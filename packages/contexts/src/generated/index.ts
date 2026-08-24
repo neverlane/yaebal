@@ -27,6 +27,7 @@ import { ChatBoostContext } from "./chat-boost.js";
 import { RemovedChatBoostContext } from "./removed-chat-boost.js";
 import { ManagedBotContext } from "./managed-bot.js";
 import { SubscriptionContext } from "./subscription.js";
+import { StoppedMessageGenerationContext } from "./stopped-message-generation.js";
 
 export { MessageContext } from "../sugar/message.js";
 export { MessageContextBase } from "./message.js";
@@ -66,6 +67,7 @@ export { ChatBoostContext } from "./chat-boost.js";
 export { RemovedChatBoostContext } from "./removed-chat-boost.js";
 export { ManagedBotContext } from "./managed-bot.js";
 export { SubscriptionContext } from "./subscription.js";
+export { StoppedMessageGenerationContext } from "./stopped-message-generation.js";
 
 /** maps an update type to its context class. */
 export interface ContextByType {
@@ -95,6 +97,7 @@ export interface ContextByType {
 	removed_chat_boost: RemovedChatBoostContext;
 	managed_bot: ManagedBotContext;
 	subscription: SubscriptionContext;
+	stopped_message_generation: StoppedMessageGenerationContext;
 }
 
 const CONTEXTS = {
@@ -124,6 +127,7 @@ const CONTEXTS = {
 	removed_chat_boost: RemovedChatBoostContext,
 	managed_bot: ManagedBotContext,
 	subscription: SubscriptionContext,
+	stopped_message_generation: StoppedMessageGenerationContext,
 } satisfies { [K in keyof ContextByType]: new (api: Api, update: t.Update) => ContextByType[K] };
 
 /** build the right context for an update. */

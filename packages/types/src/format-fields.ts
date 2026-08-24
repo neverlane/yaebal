@@ -33,6 +33,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						{ field: "audio", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
+						{ field: "document", nested: [
+							{ field: "caption", entities: "caption_entities" },
+						] },
 						{ field: "photo", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
@@ -65,6 +68,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						{ field: "audio", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
+						{ field: "document", nested: [
+							{ field: "caption", entities: "caption_entities" },
+						] },
 						{ field: "photo", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
@@ -95,6 +101,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 							{ field: "caption", entities: "caption_entities" },
 						] },
 						{ field: "audio", nested: [
+							{ field: "caption", entities: "caption_entities" },
+						] },
+						{ field: "document", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
 						{ field: "photo", nested: [
@@ -132,6 +141,33 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 	],
 	editEphemeralMessageText: [
 		{ field: "text", entities: "entities" },
+		{ field: "rich_message", nested: [
+			{ field: "blocks", nested: [
+				{ field: "animation", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "audio", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "document", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "photo", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "video", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "voice_note", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+			] },
+			{ field: "media", nested: [
+				{ field: "media", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+			] },
+		] },
 	],
 	editMessageCaption: [
 		{ field: "caption", entities: "caption_entities" },
@@ -157,6 +193,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 					{ field: "caption", entities: "caption_entities" },
 				] },
 				{ field: "audio", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "document", nested: [
 					{ field: "caption", entities: "caption_entities" },
 				] },
 				{ field: "photo", nested: [
@@ -196,6 +235,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 							{ field: "caption", entities: "caption_entities" },
 						] },
 						{ field: "audio", nested: [
+							{ field: "caption", entities: "caption_entities" },
+						] },
+						{ field: "document", nested: [
 							{ field: "caption", entities: "caption_entities" },
 						] },
 						{ field: "photo", nested: [
@@ -338,6 +380,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 				{ field: "audio", nested: [
 					{ field: "caption", entities: "caption_entities" },
 				] },
+				{ field: "document", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
 				{ field: "photo", nested: [
 					{ field: "caption", entities: "caption_entities" },
 				] },
@@ -365,6 +410,9 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 					{ field: "caption", entities: "caption_entities" },
 				] },
 				{ field: "audio", nested: [
+					{ field: "caption", entities: "caption_entities" },
+				] },
+				{ field: "document", nested: [
 					{ field: "caption", entities: "caption_entities" },
 				] },
 				{ field: "photo", nested: [

@@ -86,7 +86,7 @@ export class RemovedChatBoostContext {
 			: ((a ?? {}) as Omit<t.SendVoiceParams, "chat_id">);
 		return this.api.call<t.Message>("sendVoice", { chat_id: this.chat.id, ...params });
 	}
-	/** As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	/** Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendVideoNote(videoNote: t.InputFile | string, params?: Omit<t.SendVideoNoteParams, "chat_id" | "video_note">): Promise<t.Message>;
 	sendVideoNote(params: Omit<t.SendVideoNoteParams, "chat_id">): Promise<t.Message>;
 	sendVideoNote(a: t.InputFile | string | Omit<t.SendVideoNoteParams, "chat_id">, b?: Omit<t.SendVideoNoteParams, "chat_id" | "video_note">): Promise<t.Message> {
@@ -309,7 +309,7 @@ export class RemovedChatBoostContext {
 			: ((a ?? {}) as Omit<t.EditMessageReplyMarkupParams, "chat_id">);
 		return this.api.call<t.Message | boolean>("editMessageReplyMarkup", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
+	/** Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned. */
 	editEphemeralMessageText(params: Omit<t.EditEphemeralMessageTextParams, "chat_id">) {
 		return this.api.call<boolean>("editEphemeralMessageText", { chat_id: this.chat.id, ...params });
 	}

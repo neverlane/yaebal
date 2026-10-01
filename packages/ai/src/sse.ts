@@ -6,31 +6,45 @@
 export async function* sseData(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
 	const decoder = new TextDecoder();
 	const reader = body.getReader();
-	let buffer = "";
+	let line = "";
+	let data: string[] = [];
+	let skipLf = false;
+	let completed = false;
 
 	try {
 		while (true) {
 			const { done, value } = await reader.read();
-			if (done) break;
-			buffer += decoder.decode(value, { stream: true });
-
-			// events are separated by a blank line; fields inside may span multiple `data:` lines.
-			let boundary = buffer.indexOf("\n\n");
-			while (boundary !== -1) {
-				const rawEvent = buffer.slice(0, boundary);
-				buffer = buffer.slice(boundary + 2);
-
-				const data = rawEvent
-					.split("\n")
-					.filter((line) => line.startsWith("data:"))
-					.map((line) => line.slice(5).trimStart())
-					.join("\n");
-				if (data.length > 0) yield data;
-
-				boundary = buffer.indexOf("\n\n");
+			if (done) {
+				completed = true;
+				break;
+			}
+			// SSE permits LF, CRLF and CR, including delimiters split between chunks.
+			for (const ch of decoder.decode(value, { stream: true })) {
+				if (skipLf) {
+					skipLf = false;
+					if (ch === "\n") continue;
+				}
+				if (ch !== "\r" && ch !== "\n") {
+					line += ch;
+					continue;
+				}
+				skipLf = ch === "\r";
+				if (line === "") {
+					if (data.length > 0) {
+						const event = data.join("\n");
+						data = [];
+						yield event;
+					}
+				} else if (line === "data" || line.startsWith("data:")) {
+					const field = line.slice(5);
+					// only the single optional space after ':' is removed, not payload whitespace.
+					data.push(field.startsWith(" ") ? field.slice(1) : field);
+				}
+				line = "";
 			}
 		}
 	} finally {
+		if (!completed) await reader.cancel().catch(() => {});
 		reader.releaseLock();
 	}
 }

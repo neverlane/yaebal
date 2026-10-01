@@ -1,11 +1,83 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Composer, type Context } from "@yaebal/core";
+import { type CallOptions, Composer, type Context, TelegramError } from "@yaebal/core";
 import { MemoryStorage } from "@yaebal/sklad";
-import { createTestEnv, type TestEnv } from "@yaebal/test";
+import { apiError, createTestEnv, type TestEnv } from "@yaebal/test";
 import { conversation, createConversation } from "./index.js";
 
 const TIMEOUT = 5000;
+
+test("durable API methods forward per-call cancellation", async (t) => {
+	const abort = new AbortController();
+	let seen: AbortSignal | undefined;
+	const def = createConversation(async (_cv, ctx) => {
+		await ctx.api.getUpdates(undefined, { signal: abort.signal });
+	});
+	const bot = new Composer()
+		.use((ctx, next) => {
+			t.mock.method(
+				ctx.api,
+				"call",
+				async (_method: string, _params: unknown, options?: CallOptions) => {
+					seen = options?.signal;
+					return [];
+				},
+			);
+			return next();
+		})
+		.install(conversation({ def }, { storage: new MemoryStorage() }))
+		.command("go", (ctx) => ctx.conversation.enter("def"));
+	const env = createTestEnv(bot);
+	await env.createUser().sendCommand("go");
+	assert.equal(seen, abort.signal);
+});
+
+test("durable replay preserves TelegramError identity and response parameters after restart", async () => {
+	const storage = new MemoryStorage();
+	const errors: unknown[] = [];
+	const def = createConversation(async (cv, ctx) => {
+		try {
+			await ctx.send("probe");
+		} catch (error) {
+			assert.ok(error instanceof TelegramError);
+			assert.equal(error.code, 429);
+			assert.equal(error.method, "sendMessage");
+			assert.equal(error.parameters?.retry_after, 5);
+		}
+		const answer = await cv.waitFor("message:text");
+		await answer.send("done");
+	});
+	const first = createTestEnv(
+		new Composer()
+			.install(
+				conversation(
+					{ def },
+					{
+						storage,
+						onError: (error) => errors.push(error),
+					},
+				),
+			)
+			.command("go", (ctx) => ctx.conversation.enter("def")),
+	);
+	first.onApi("sendMessage", apiError(429, "Too Many Requests", { retry_after: 5 }), { times: 1 });
+	const user = first.createUser();
+	await user.sendCommand("go");
+	const second = createTestEnv(
+		new Composer().install(
+			conversation(
+				{ def },
+				{
+					storage,
+					onError: (error) => errors.push(error),
+				},
+			),
+		),
+	);
+	await second.createUser({ id: user.id }).sendMessage("continue");
+	assert.deepEqual(errors, []);
+	assert.deepEqual(sentTexts(second), ["done"]);
+});
 
 function sentTexts(env: TestEnv): string[] {
 	return env.callsTo("sendMessage").map((call) => (call.params as { text: string }).text);

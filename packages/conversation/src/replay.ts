@@ -8,6 +8,8 @@ import {
 	Context as ContextClass,
 	type ErrorHook,
 	type Plugin,
+	type ResponseParameters,
+	TelegramError,
 	type Update,
 	type UpdateName,
 } from "@yaebal/core";
@@ -33,6 +35,12 @@ import { buildConversation } from "./wait.js";
 interface SerializedError {
 	name: string;
 	message: string;
+	telegram?: {
+		method: string;
+		code: number;
+		description: string;
+		parameters?: ResponseParameters;
+	};
 }
 
 type LogEntry =
@@ -51,11 +59,27 @@ interface ReplayState {
 }
 
 function serializeError(error: unknown): SerializedError {
+	if (error instanceof TelegramError) {
+		return {
+			name: error.name,
+			message: error.message,
+			telegram: {
+				method: error.method,
+				code: error.code,
+				description: error.description,
+				parameters: error.parameters,
+			},
+		};
+	}
 	if (error instanceof Error) return { name: error.name, message: error.message };
 	return { name: "Error", message: String(error) };
 }
 
 function reviveError(serialized: SerializedError): Error {
+	if (serialized.telegram) {
+		const { method, code, description, parameters } = serialized.telegram;
+		return new TelegramError(method, code, description, parameters);
+	}
 	const error = new Error(serialized.message);
 	error.name = serialized.name;
 	return error;
@@ -159,7 +183,8 @@ function makeTrackingApi(realApi: Api, cursor: ReplayCursor): Api {
 			if (typeof prop === "symbol" || prop === "then") return Reflect.get(obj, prop);
 			if (prop in obj) return obj[prop as keyof typeof obj];
 
-			const method = (params?: Record<string, unknown>) => call(prop as string, params);
+			const method = (params?: Record<string, unknown>, options?: CallOptions) =>
+				call(prop as string, params, options);
 			obj[prop as string] = method;
 			return method;
 		},

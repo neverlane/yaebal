@@ -46,6 +46,36 @@ test("scheduler: same key runs in order, never overlapping", async () => {
 	assert.deepEqual(log, ["a1-start", "a1-end", "a2-start", "a2-end"]);
 });
 
+test("scheduler and runner reject concurrency values that would stall or violate the cap", () => {
+	for (const concurrency of [0, -1, NaN, Infinity, 1.5]) {
+		assert.throws(() => createScheduler(concurrency), RangeError);
+		assert.throws(
+			() =>
+				run(
+					{
+						api: {
+							async getUpdates() {
+								return [];
+							},
+						},
+						async handleUpdate() {},
+					},
+					{ concurrency },
+				),
+			RangeError,
+		);
+	}
+});
+
+test("chatKey: guest messages, generation stops and anonymous poll votes stay ordered", () => {
+	assert.equal(chatKey({ update_id: 1, guest_message: { chat: { id: 7 } } } as never), 7);
+	assert.equal(
+		chatKey({ update_id: 2, stopped_message_generation: { chat: { id: 8 } } } as never),
+		8,
+	);
+	assert.equal(chatKey({ update_id: 3, poll_answer: { voter_chat: { id: 9 } } } as never), 9);
+});
+
 test("scheduler: different keys run concurrently up to the limit", async () => {
 	const s = createScheduler(2);
 	const started: string[] = [];

@@ -20,6 +20,9 @@ export interface Scheduler {
 
 /** a bounded-concurrency scheduler with optional per-key sequentialization. */
 export function createScheduler(concurrency: number): Scheduler {
+	if (!Number.isInteger(concurrency) || concurrency <= 0) {
+		throw new RangeError("concurrency must be a positive integer");
+	}
 	let active = 0;
 	let pending = 0;
 
@@ -119,6 +122,8 @@ export function chatKey(update: Update): number | undefined {
 		update.edited_channel_post ??
 		update.business_message ??
 		update.edited_business_message ??
+		update.guest_message ??
+		update.stopped_message_generation ??
 		update.deleted_business_messages ??
 		update.callback_query?.message ??
 		update.message_reaction ??
@@ -140,6 +145,7 @@ export function chatKey(update: Update): number | undefined {
 		update.pre_checkout_query?.from?.id ??
 		update.purchased_paid_media?.from?.id ??
 		update.poll_answer?.user?.id ??
+		update.poll_answer?.voter_chat?.id ??
 		update.business_connection?.user?.id ??
 		undefined
 	);

@@ -71,6 +71,25 @@ function isAbortError(error: unknown): boolean {
 	return error instanceof Error && error.name === "AbortError";
 }
 
+/** a shared init probe may predate polling; cancellation still stops waiting for it. */
+function untilAborted<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+	return new Promise((resolve, reject) => {
+		const abort = () => reject(signal.reason);
+		if (signal.aborted) abort();
+		else signal.addEventListener("abort", abort, { once: true });
+		work.then(
+			(value) => {
+				signal.removeEventListener("abort", abort);
+				resolve(value);
+			},
+			(error) => {
+				signal.removeEventListener("abort", abort);
+				reject(error);
+			},
+		);
+	});
+}
+
 function detectUpdateType(update: Update): UpdateName {
 	for (const key of Object.keys(update)) {
 		if (key === "update_id") continue;
@@ -91,6 +110,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	#offset = 0;
 	#info?: User;
 	#pollAbort?: AbortController;
+	#pollingPromise?: Promise<void>;
 	readonly #options: BotOptions;
 	readonly #startHandlers: StartHandler[] = [];
 	readonly #stopHandlers: StopHandler[] = [];
@@ -106,6 +126,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	};
 	#handle?: Middleware<Context>;
 	#initPromise?: Promise<User>;
+	#initSignal?: AbortSignal;
 
 	constructor(token: string, options: BotOptions = {}) {
 		super();
@@ -128,18 +149,25 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	 * `ctx.me` and `/cmd@botname` addressing work without long polling.
 	 */
 	async init(): Promise<User> {
-		if (this.#info) return this.#info;
+		return this.#initialize();
+	}
 
-		this.#initPromise ??= this.api.getMe().then(
+	async #initialize(signal?: AbortSignal): Promise<User> {
+		if (this.#info) return this.#info;
+		if (this.#initSignal?.aborted) this.#initPromise = undefined;
+		if (this.#initPromise) return this.#initPromise;
+		const probe = this.api.getMe(undefined, { signal }).then(
 			(me) => {
-				this.#info = me;
+				if (this.#initPromise === probe) this.#info = me;
 				return me;
 			},
 			(error) => {
-				this.#initPromise = undefined; // a failed probe shouldn't poison later attempts
+				if (this.#initPromise === probe) this.#initPromise = undefined;
 				throw error;
 			},
 		);
+		this.#initPromise = probe;
+		this.#initSignal = signal;
 
 		return this.#initPromise;
 	}
@@ -269,18 +297,41 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	 */
 	async start(): Promise<void> {
 		if (this.#running) return;
+		if (this.#pollingPromise) {
+			await this.#pollingPromise;
+			return this.start();
+		}
 		this.#running = true;
 		this.#stopPromise = undefined;
-		this.#pollAbort = new AbortController();
-
+		const abort = new AbortController();
+		this.#pollAbort = abort;
+		const polling = this.#poll(abort);
+		this.#pollingPromise = polling;
 		try {
-			const info = await this.init();
-			for (const handler of this.#startHandlers) await handler(info);
+			await polling;
+		} finally {
+			this.#pollingPromise = undefined;
+		}
+	}
+
+	async #poll(abort: AbortController): Promise<void> {
+		try {
+			let info: User;
+			try {
+				info = await untilAborted(this.#initialize(abort.signal), abort.signal);
+			} catch (error) {
+				if (abort.signal.aborted) return;
+				throw error;
+			}
+			for (const handler of this.#startHandlers) {
+				if (abort.signal.aborted) break;
+				await handler(info);
+			}
 
 			// consecutive getUpdates failures — drives the backoff and the quiet-abort window
 			let failures = 0;
 
-			while (this.#running) {
+			while (!abort.signal.aborted) {
 				let updates: Update[];
 
 				// per-request signal: aborted by stop() (so start() resolves promptly instead
@@ -290,7 +341,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				// AbortSignal.any needs node >= 20.3.)
 				const poll = new AbortController();
 				const onStop = () => poll.abort();
-				this.#pollAbort.signal.addEventListener("abort", onStop, { once: true });
+				abort.signal.addEventListener("abort", onStop, { once: true });
 				const hangTimer = setTimeout(() => poll.abort(), POLL_TIMEOUT_S * 1000 + POLL_GRACE_MS);
 
 				try {
@@ -306,7 +357,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 						{ signal: poll.signal },
 					);
 				} catch (error) {
-					if (!this.#running) break;
+					if (abort.signal.aborted) break;
 
 					const aborted = isAbortError(error);
 					failures++;
@@ -320,16 +371,17 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 					if (!aborted || failures > POLL_QUIET_ABORTS)
 						await this.#pollingErrorHandler(error, { attempt: failures, retryInMs, aborted });
 
-					if (retryInMs) await delay(retryInMs, this.#pollAbort.signal);
+					if (retryInMs) await delay(retryInMs, abort.signal);
 					continue;
 				} finally {
 					clearTimeout(hangTimer);
-					this.#pollAbort.signal.removeEventListener("abort", onStop);
+					abort.signal.removeEventListener("abort", onStop);
 				}
 
 				failures = 0;
 
 				for (const update of updates) {
+					if (abort.signal.aborted) break;
 					this.#offset = update.update_id + 1;
 					await this.handleUpdate(update);
 				}
@@ -349,9 +401,18 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	#runStopHandlers(): Promise<void> {
-		this.#stopPromise ??= (async () => {
-			for (const handler of this.#stopHandlers) await handler();
-		})();
+		this.#stopPromise ??= Promise.resolve().then(async () => {
+			const errors: unknown[] = [];
+			for (const handler of this.#stopHandlers) {
+				try {
+					await handler();
+				} catch (error) {
+					errors.push(error);
+				}
+			}
+			if (errors.length === 1) throw errors[0];
+			if (errors.length > 1) throw new AggregateError(errors, "bot stop handlers failed");
+		});
 
 		return this.#stopPromise;
 	}

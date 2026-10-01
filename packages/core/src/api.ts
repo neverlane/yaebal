@@ -1,4 +1,5 @@
 import type { BotApiMethods } from "@yaebal/types";
+import { delay } from "./delay.js";
 import { applyFormatFields } from "./format-hook.js";
 import { isMediaSource, type MediaSource, type MediaStream } from "./media.js";
 import type { ApiResponse, ResponseParameters } from "./telegram-types.js";
@@ -86,6 +87,13 @@ export interface CallOptions {
 	signal?: AbortSignal;
 }
 
+/** add per-call cancellation without changing the generated telegram method definitions. */
+type ApiMethods = {
+	[K in keyof BotApiMethods]: (
+		...args: [...Parameters<BotApiMethods[K]>, options?: CallOptions]
+	) => ReturnType<BotApiMethods[K]>;
+};
+
 /**
  * the API client. every Bot API method is fully typed via the code-generated
  * {@link BotApiMethods} (the proxy materialises them at runtime); `call` stays as
@@ -93,7 +101,7 @@ export interface CallOptions {
  * params built dynamically as plain records, work before/without types).
  * `before` / `after` / `onError` are the extension points plugins hang off of.
  */
-export interface Api extends BotApiMethods {
+export interface Api extends ApiMethods {
 	call<T = unknown>(
 		method: string,
 		params?: Record<string, unknown>,
@@ -345,7 +353,8 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		let data: ApiResponse<T>;
 		try {
 			data = (await res.json()) as ApiResponse<T>;
-		} catch {
+		} catch (error) {
+			if (callOptions?.signal?.aborted) throw error;
 			// a proxy/self-hosted server answered with something that isn't the JSON
 			// envelope (e.g. an HTML 502) — surface the method + status, not a bare SyntaxError
 			throw new HttpError(method, res.status, res.statusText);
@@ -369,6 +378,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
 		// attempts). with no hook requesting a retry it throws on the first failure.
 		for (let attempt = 1; ; attempt++) {
+			callOptions?.signal?.throwIfAborted();
 			let p = params;
 			for (const hook of beforeHooks) {
 				const next = await hook(method, p);
@@ -398,7 +408,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 				}
 
 				if (!retry) throw error;
-				if (retry.delayMs) await new Promise((r) => setTimeout(r, retry.delayMs));
+				if (retry.delayMs) await delay(retry.delayMs, callOptions?.signal);
 			}
 		}
 	};
@@ -450,7 +460,8 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			if (prop in obj) return obj[prop];
 
 			// lazily materialise `api.<method>(params)` → call(method, params).
-			const method = (params?: Record<string, unknown>) => call(prop, params);
+			const method = (params?: Record<string, unknown>, options?: CallOptions) =>
+				call(prop, params, options);
 
 			obj[prop] = method;
 			return method;
@@ -473,9 +484,15 @@ export function withReplyEnvelope(api: Api, envelope: WebhookReplyEnvelope): Api
 		params?: Record<string, unknown>,
 		callOptions?: CallOptions,
 	): Promise<T> => {
+		callOptions?.signal?.throwIfAborted();
 		// mirror the client's own encoding (fmt fields, media → wire form) so the
 		// claimed params serialize exactly like a normal request body would.
-		const formatted = applyFormatFields(method, params);
+		let formatted = applyFormatFields(method, params);
+		if (formatted) {
+			formatted = { ...formatted };
+			await resolveThenables(formatted);
+		}
+		callOptions?.signal?.throwIfAborted();
 		const uploads: { field: string; source: MediaSource }[] = [];
 		const encoded = extractMedia(formatted, uploads) as Record<string, unknown> | undefined;
 
@@ -503,7 +520,8 @@ export function withReplyEnvelope(api: Api, envelope: WebhookReplyEnvelope): Api
 				return (api as unknown as Record<string, unknown>)[prop];
 			}
 
-			const method = (params?: Record<string, unknown>) => call(prop, params);
+			const method = (params?: Record<string, unknown>, options?: CallOptions) =>
+				call(prop, params, options);
 
 			obj[prop] = method;
 			return method;

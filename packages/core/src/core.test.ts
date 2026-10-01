@@ -9,6 +9,117 @@ import { bold, format } from "./format.js";
 import { isMediaSource, media } from "./media.js";
 import { webhookCallback } from "./webhook.js";
 
+test("typed API methods forward cancellation, including webhook fallback", async (t) => {
+	const signals: (AbortSignal | null | undefined)[] = [];
+	t.mock.method(globalThis, "fetch", async (_url: unknown, init?: RequestInit) => {
+		signals.push(init?.signal);
+		return new Response(JSON.stringify({ ok: true, result: [] }));
+	});
+	const api = createApi("123:abc");
+	const abort = new AbortController();
+	await api.getUpdates(undefined, { signal: abort.signal });
+	await withReplyEnvelope(api, { claim: () => false }).getUpdates(undefined, {
+		signal: abort.signal,
+	});
+	assert.deepEqual(signals, [abort.signal, abort.signal]);
+});
+
+test("API cancellation interrupts retry backoff without another request", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	let requests = 0;
+	t.mock.method(globalThis, "fetch", async () => {
+		requests++;
+		throw new Error("offline");
+	});
+	const api = createApi("123:abc");
+	const abort = new AbortController();
+	let retry!: () => void;
+	const retrying = new Promise<void>((resolve) => {
+		retry = resolve;
+	});
+	api.onError(() => {
+		retry();
+		return { retry: true, delayMs: 60_000 };
+	});
+	const pending = api.getUpdates(undefined, { signal: abort.signal });
+	const rejected = assert.rejects(pending, { name: "AbortError" });
+	await retrying;
+	await Promise.resolve();
+	abort.abort();
+	await rejected;
+	assert.equal(requests, 1);
+});
+
+test("abort during response parsing stays an AbortError, not an HttpError", async (t) => {
+	const abort = new AbortController();
+	t.mock.method(globalThis, "fetch", async () => ({
+		async json() {
+			abort.abort();
+			throw abort.signal.reason;
+		},
+	}));
+	await assert.rejects(createApi("123:abc").getUpdates(undefined, { signal: abort.signal }), {
+		name: "AbortError",
+	});
+});
+
+test("webhook replies resolve promised params and reject cancelled calls", async () => {
+	let claimed: Record<string, unknown> | undefined;
+	const api = withReplyEnvelope(createApi("123:abc"), {
+		claim(_method, params) {
+			claimed = params;
+			return true;
+		},
+	});
+	const params = { chat_id: 1, text: Promise.resolve("hello") };
+	await api.call("sendMessage", params);
+	assert.deepEqual(claimed, { chat_id: 1, text: "hello" });
+	assert.ok(params.text instanceof Promise);
+	claimed = undefined;
+	await assert.rejects(api.call("sendMessage", params, { signal: AbortSignal.abort() }), {
+		name: "AbortError",
+	});
+	assert.equal(claimed, undefined);
+});
+
+test("stop interrupts polling retry backoff", async (t) => {
+	t.mock.timers.enable({ apis: ["setTimeout"] });
+	t.mock.method(globalThis, "fetch", async () => {
+		throw new Error("offline");
+	});
+	const bot = new Bot("123:abc", {
+		botInfo: { id: 1, is_bot: true, first_name: "b" },
+	});
+	let failed!: () => void;
+	const failure = new Promise<void>((resolve) => {
+		failed = resolve;
+	});
+	bot.onPollingError(() => failed());
+	const polling = bot.start();
+	await failure;
+	await Promise.resolve();
+	await bot.stop();
+	await polling;
+});
+
+test("stopped message generation keeps chat and topic routing", async () => {
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api: createApi("123:abc"),
+		updateType: "stopped_message_generation",
+		update: {
+			update_id: 1,
+			stopped_message_generation: {
+				chat: { id: 7, type: "private" },
+				message_thread_id: 9,
+				draft_id: 1,
+			},
+		},
+	});
+	assert.equal(ctx.chat?.id, 7);
+	assert.equal(ctx.messageThreadId, 9);
+});
+
 test("media helpers are branded and discriminated", () => {
 	assert.ok(isMediaSource(media.fileId("AgAC")));
 	assert.ok(isMediaSource(media.url("https://yaebal.mom/y.png")));

@@ -120,6 +120,7 @@ export class Context {
 
 		return (
 			this.message?.message_thread_id ??
+			this.update.stopped_message_generation?.message_thread_id ??
 			(cbMessage && "message_thread_id" in cbMessage ? cbMessage.message_thread_id : undefined)
 		);
 	}
@@ -171,7 +172,8 @@ export class Context {
 			u.message_reaction_count?.chat ??
 			u.chat_boost?.chat ??
 			u.removed_chat_boost?.chat ??
-			u.deleted_business_messages?.chat
+			u.deleted_business_messages?.chat ??
+			u.stopped_message_generation?.chat
 		);
 	}
 

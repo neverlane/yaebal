@@ -1,6 +1,7 @@
 import { type Api, createApi, type FileReader, withReplyEnvelope } from "./api.js";
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
+import { delay } from "./delay.js";
 import type { Update, UpdateName, User } from "./telegram-types.js";
 import type { HandleUpdateOptions } from "./webhook.js";
 
@@ -319,7 +320,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 					if (!aborted || failures > POLL_QUIET_ABORTS)
 						await this.#pollingErrorHandler(error, { attempt: failures, retryInMs, aborted });
 
-					if (retryInMs) await new Promise((r) => setTimeout(r, retryInMs));
+					if (retryInMs) await delay(retryInMs, this.#pollAbort.signal);
 					continue;
 				} finally {
 					clearTimeout(hangTimer);

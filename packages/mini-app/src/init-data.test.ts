@@ -56,6 +56,20 @@ function signEd25519(
 
 const sampleUser: InitDataUser = { id: 1, first_name: "Linia", username: "linia" };
 
+test("initData rejects out-of-range auth_date instead of bypassing expiry with Invalid Date", async () => {
+	for (const auth_date of ["8640000000001", "-8640000000001", "9".repeat(400)]) {
+		assert.throws(() => parseInitData(new URLSearchParams({ auth_date }).toString()), /date range/);
+		const signed = signHmac({ auth_date });
+		assert.deepEqual(await validateInitData(signed, BOT_TOKEN), { ok: false, reason: "malformed" });
+		const keys = makeEd25519TestKeypair();
+		const thirdParty = signEd25519({ auth_date }, BOT_ID, keys.privateKey);
+		assert.deepEqual(
+			await validateInitDataThirdParty(thirdParty, BOT_ID, { publicKey: keys.publicKeyHex }),
+			{ ok: false, reason: "malformed" },
+		);
+	}
+});
+
 test("validateInitData: accepts a correctly signed payload", async () => {
 	const initData = signHmac({
 		query_id: "AAH_query",

@@ -90,7 +90,11 @@ export function parseInitData(initData: string): InitData {
 		);
 	}
 
-	const data: InitData = { auth_date: new Date(Number(authDateRaw) * 1000) };
+	const authDate = new Date(Number(authDateRaw) * 1000);
+	if (!Number.isFinite(authDate.getTime())) {
+		throw new Error("mini-app: auth_date is outside the supported date range");
+	}
+	const data: InitData = { auth_date: authDate };
 
 	const hash = params.get("hash");
 	if (hash !== null) data.hash = hash;
@@ -222,7 +226,10 @@ export async function validateInitData(
 	if (!hash) return { ok: false, reason: "missing_hash" };
 
 	const secretKey = await getBotTokenSecretKey(botToken);
-	const computedHash = await hmacSha256Hex(secretKey, dataCheckString(params, HMAC_EXCLUDED_FIELDS));
+	const computedHash = await hmacSha256Hex(
+		secretKey,
+		dataCheckString(params, HMAC_EXCLUDED_FIELDS),
+	);
 	if (!constantTimeEqual(computedHash, hash)) return { ok: false, reason: "bad_hash" };
 
 	const parsed = parseValidated(initData);

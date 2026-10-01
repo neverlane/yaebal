@@ -548,6 +548,30 @@ test("gappy or invalid migration maps fail at construction time", () => {
 	);
 });
 
+test("migrations reject future and invalid stored versions without overwriting data", async () => {
+	for (const v of [2, -1, 0.5, NaN, Infinity, "1", undefined]) {
+		const { adapter, counts, inner } = countingStorage<unknown>();
+		const record = { __yaebal: "session", v, data: { count: 99 } };
+		inner.set("42", record);
+		let handled = false;
+		const c = new Composer()
+			.install(
+				session({
+					initial: () => ({}),
+					storage: adapter,
+					migrations: { 1: (data) => data },
+				}),
+			)
+			.use(() => {
+				handled = true;
+			});
+		await assert.rejects(async () => await entry(c)(mkCtx(42), noop), SessionError);
+		assert.equal(handled, false);
+		assert.equal(counts.set, 0);
+		assert.equal(inner.get("42"), record);
+	}
+});
+
 test("expired ttl fields are swept on load and the cleanup is persisted", async () => {
 	interface OtpSession {
 		otp?: TtlValue<string>;

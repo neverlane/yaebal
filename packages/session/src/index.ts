@@ -158,17 +158,12 @@ export interface SessionOptions<S, K extends string = "session"> {
 
 interface VersionEnvelope {
 	__yaebal: "session";
-	v: number;
+	v: unknown;
 	data: unknown;
 }
 
 function isVersionEnvelope(raw: unknown): raw is VersionEnvelope {
-	return (
-		typeof raw === "object" &&
-		raw !== null &&
-		(raw as VersionEnvelope).__yaebal === "session" &&
-		typeof (raw as VersionEnvelope).v === "number"
-	);
+	return typeof raw === "object" && raw !== null && (raw as VersionEnvelope).__yaebal === "session";
 }
 
 /** validate the migration map and return its target version. */
@@ -283,6 +278,14 @@ class SessionController<S> {
 		let from = 0;
 		let data: unknown = raw;
 		if (isVersionEnvelope(raw)) {
+			if (typeof raw.v !== "number" || !Number.isSafeInteger(raw.v) || raw.v < 0) {
+				throw new SessionError("migrations: stored version must be a non-negative safe integer");
+			}
+			if (raw.v > this.#version) {
+				throw new SessionError(
+					`migrations: stored version ${raw.v} is newer than supported version ${this.#version}`,
+				);
+			}
 			from = raw.v;
 			data = raw.data;
 		}

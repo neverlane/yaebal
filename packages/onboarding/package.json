@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/onboarding",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal onboarding - declarative product tours and first-run tutorials for telegram bots.",
 	"type": "module",
 	"main": "./lib/index.js",

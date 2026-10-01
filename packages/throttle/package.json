@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/throttle",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal throttle plugin - priority outbound scheduler with Telegram buckets.",
 	"type": "module",
 	"main": "./lib/index.js",

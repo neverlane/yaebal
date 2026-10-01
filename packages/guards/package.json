@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/guards",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal guards — reusable bot.guard() predicates: isAdmin, isPrivate, isGroup, hasMembership, hasPermission.",
 	"type": "module",
 	"main": "./lib/index.js",

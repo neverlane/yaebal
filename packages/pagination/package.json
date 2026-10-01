@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/pagination",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal pagination — paginated lists with inline prev/next navigation.",
 	"type": "module",
 	"main": "./lib/index.js",

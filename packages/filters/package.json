@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/filters",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal filters — composable, type-narrowing update filters (and/or/not) for ctx.filter().",
 	"type": "module",
 	"main": "./lib/index.js",

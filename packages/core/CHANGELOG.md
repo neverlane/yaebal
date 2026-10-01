@@ -1,5 +1,13 @@
 # @yaebal/core
 
+## 0.4.1
+
+### patch changes
+
+- d3179c9: forward cancellation through typed api methods and interrupt retry backoff on abort. preserve cancellation errors during response parsing, resolve promised webhook reply parameters, and retain chat/topic routing for stopped message generation.
+- fb30143: cancel initialization when polling stops, skip remaining startup callbacks and updates after stop, and serialize rapid restarts with the previous polling cycle. run shutdown callbacks once even on reentrant calls and finish cleanup when another callback fails.
+- a742af7: reuse buffered upload streams within one api call so retries send the original bytes instead of empty files.
+
 ## 0.4.0
 
 ### minor changes

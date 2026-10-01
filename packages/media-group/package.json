@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/media-group",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal media-group plugin — collect albums into one handler call or a ctx.mediaGroup pass-through.",
 	"type": "module",
 	"main": "./lib/index.js",

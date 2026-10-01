@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/hydrate",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "yaebal hydrate — api call results come back with methods: the Message from ctx.send/api.sendMessage gains .editText/.delete/.pin/.forward/.copy/.react.",
 	"type": "module",
 	"main": "./lib/index.js",

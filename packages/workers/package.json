@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/workers",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal workers — a typed worker_threads pool: queueing, timeouts, aborts, crash recovery, zero-copy transfers.",
 	"type": "module",
 	"main": "./lib/index.js",

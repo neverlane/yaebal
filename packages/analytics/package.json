@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/analytics",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal analytics — typed ctx.track(event, properties) middleware with pluggable sinks (posthog, plausible, sqlite, clickhouse, http, console), privacy controls, auto-capture, and an in-chat admin surface.",
 	"type": "module",
 	"main": "./lib/index.js",

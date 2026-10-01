@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/callback-data",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal typed callback_data — pack/unpack button payloads with type-safe schemas.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -23,7 +26,12 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "callback-data"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"callback-data"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

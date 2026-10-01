@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/cache",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal cache — ctx.cache.get/set/wrap with stale-while-revalidate, sliding expiry, negative caching, prefix invalidation, namespaces, and an optional typed key catalog, built on @yaebal/sklad storage adapters.",
 	"type": "module",
 	"sideEffects": false,

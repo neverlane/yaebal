@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/ratelimiter",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal ratelimiter plugin — drop updates from users who spam the bot.",
 	"type": "module",
 	"main": "./lib/index.js",

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/files",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal files plugin — ctx.files: inspect, link, stream and download telegram files; local Bot API server aware.",
 	"type": "module",
 	"main": "./lib/index.js",

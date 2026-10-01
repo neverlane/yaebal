@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/audit-log",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal audit-log — correlated, redacted-by-default structured logging of incoming updates and outgoing api calls, with formatters, filters, sampling, and telegram-native sinks.",
 	"type": "module",
 	"sideEffects": false,

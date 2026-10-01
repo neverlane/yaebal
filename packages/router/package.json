@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/router",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal file-based routing — typed define*() route files, load-time validation, nested guards, and dev hot-reload.",
 	"type": "module",
 	"main": "./lib/index.js",

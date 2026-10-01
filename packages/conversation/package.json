@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/conversation",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal conversation — coroutine-style multi-step dialogs with a durable, restart-safe replay engine as a drop-in upgrade.",
 	"type": "module",
 	"main": "./lib/index.js",

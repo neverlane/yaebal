@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/cron",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal cron — typed cron jobs with timezones, retries, catch-up, distributed locks, and a chat-native admin surface.",
 	"type": "module",
 	"main": "./lib/index.js",

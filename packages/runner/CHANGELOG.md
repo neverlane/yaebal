@@ -1,5 +1,11 @@
 # @yaebal/runner
 
+## 0.0.5
+
+### patch changes
+
+- a619c1c: validate concurrency and sequentialize guest messages, generation stops, and anonymous poll votes.
+
 ## 0.0.4
 
 ### patch changes

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/typing",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal typing — keep the \"is typing…\" indicator alive for the duration of an async operation, no manual sendChatAction calls.",
 	"type": "module",
 	"main": "./lib/index.js",

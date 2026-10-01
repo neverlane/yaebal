@@ -1,11 +1,24 @@
 # @yaebal/morda
 
+## 1.0.2
+
+### patch changes
+
+- updated dependencies [ba1ae27]
+- updated dependencies [d3179c9]
+- updated dependencies [fb30143]
+- updated dependencies [a742af7]
+- updated dependencies [4a6acd9]
+  - @yaebal/callback-data@0.1.1
+  - @yaebal/core@0.4.1
+  - @yaebal/sklad@0.1.1
+
 ## 1.0.1
 
 ### patch changes
 
 - writes made from a window's `render()` are no longer silently lost. `commit()` snapshotted the
-  dialog state *before* calling `render`, so a `ctx.dialog.setData()`/`update()` from inside a
+  dialog state _before_ calling `render`, so a `ctx.dialog.setData()`/`update()` from inside a
   render loaded its own copy, mutated it, saved it — and was then clobbered by the snapshot the
   commit wrote back. the same shape hit `onClick`/`onText` whenever the callback also set frame
   state (`invalidate()`, jsx `setState`), and `onEnter`, whose seed was overwritten by `start()`'s

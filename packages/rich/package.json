@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/rich",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal rich — sendRichMessage / sendRichMessageDraft: a typed block builder, a 30s-ttl draft/streaming session, and full read-side coverage of telegram's rich message model.",
 	"type": "module",
 	"main": "./lib/index.js",

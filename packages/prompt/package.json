@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/prompt",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal prompt plugin — ask a question and handle the next message.",
 	"type": "module",
 	"main": "./lib/index.js",

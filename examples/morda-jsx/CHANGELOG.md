@@ -1,5 +1,12 @@
 # @yaebal/example-morda-jsx
 
+## 0.0.2
+
+### patch changes
+
+- @yaebal/morda@1.0.2
+- yaebal@0.2.1
+
 ## 0.0.1
 
 ### patch changes

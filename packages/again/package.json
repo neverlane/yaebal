@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/again",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal auto-retry plugin - retries 429 retry_after and transient 5xx errors.",
 	"type": "module",
 	"main": "./lib/index.js",

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/scenes",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "yaebal scenes plugin — durable step-by-step wizards: typed state, step navigation, sub-scenes, ask() validation, passthrough routing and ttl.",
 	"type": "module",
 	"main": "./lib/index.js",

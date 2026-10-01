@@ -1,5 +1,16 @@
 # @yaebal/cache
 
+## 1.0.1
+
+### patch changes
+
+- updated dependencies [d3179c9]
+- updated dependencies [fb30143]
+- updated dependencies [a742af7]
+- updated dependencies [4a6acd9]
+  - @yaebal/core@0.4.1
+  - @yaebal/sklad@0.1.1
+
 ## 1.0.0
 
 ### patch changes

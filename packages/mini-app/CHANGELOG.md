@@ -1,5 +1,15 @@
 # @yaebal/mini-app
 
+## 1.0.1
+
+### patch changes
+
+- 172d693: reject out-of-range authentication dates instead of bypassing expiry checks with an invalid date.
+- updated dependencies [d3179c9]
+- updated dependencies [fb30143]
+- updated dependencies [a742af7]
+  - @yaebal/core@0.4.1
+
 ## 1.0.0
 
 ### patch changes

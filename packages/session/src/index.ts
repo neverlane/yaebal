@@ -212,6 +212,7 @@ class SessionController<S> {
 	#snapshot = "";
 	#forceDirty = false;
 	#stored = false;
+	#operations: Promise<void> = Promise.resolve();
 
 	constructor(
 		ctx: Context,
@@ -302,6 +303,10 @@ class SessionController<S> {
 
 	/** post-handlers flush: write when dirty (or forced), otherwise refresh a sliding ttl. */
 	async flush(alwaysSave: boolean): Promise<void> {
+		return this.#enqueue(() => this.#flush(alwaysSave));
+	}
+
+	async #flush(alwaysSave: boolean): Promise<void> {
 		if (this.key === undefined || !this.#loaded) return;
 
 		const current = snapshotOf(this.#value);
@@ -315,13 +320,19 @@ class SessionController<S> {
 
 	/** immediate write, snapshot refreshed — the flush after the handlers won't repeat it. */
 	async save(): Promise<void> {
-		if (this.key === undefined) return;
-		await this.load();
-		await this.#persist(snapshotOf(this.#value));
+		return this.#enqueue(async () => {
+			if (this.key === undefined) return;
+			await this.load();
+			await this.#persist(snapshotOf(this.#value));
+		});
 	}
 
 	/** delete from storage and start over from `initial()`. only re-persisted if touched after. */
 	async clear(): Promise<void> {
+		return this.#enqueue(() => this.#clear());
+	}
+
+	async #clear(): Promise<void> {
 		if (this.key !== undefined) await this.#storage.delete(this.key);
 
 		this.#value = this.#initial(this.#ctx);
@@ -331,6 +342,13 @@ class SessionController<S> {
 		this.#loaded = true;
 		// a concurrent in-flight load must not resurrect the deleted record
 		this.#loadPromise = Promise.resolve(this.#value);
+	}
+
+	#enqueue(operation: () => Promise<void>): Promise<void> {
+		const pending = this.#operations.then(operation);
+		// a failed operation is reported to its caller but must not poison a later cleanup.
+		this.#operations = pending.catch(() => {});
+		return pending;
 	}
 
 	async #persist(snapshot: string): Promise<void> {

@@ -436,6 +436,44 @@ test("saveSession flushes immediately and the final flush doesn't repeat it", as
 	assert.equal(inner.get("1")?.count, 5);
 });
 
+test("overlapping saveSession and clearSession do not resurrect a cleared record", async () => {
+	const inner = new MemoryStorage<{ count: number }>();
+	let beginWrite!: () => void;
+	const writing = new Promise<void>((resolve) => {
+		beginWrite = resolve;
+	});
+	let finishWrite!: () => void;
+	const release = new Promise<void>((resolve) => {
+		finishWrite = resolve;
+	});
+	let writes = 0;
+	const storage: StorageAdapter<{ count: number }> = {
+		get: (key) => inner.get(key),
+		async set(key, value) {
+			writes++;
+			beginWrite();
+			await release;
+			inner.set(key, value);
+		},
+		delete: (key) => inner.delete(key),
+	};
+	const c = new Composer()
+		.install(session({ initial: () => ({ count: 0 }), storage }))
+		.use(async (ctx) => {
+			ctx.session.count = 9;
+			const save = saveSession(ctx);
+			await writing;
+			const clear = clearSession(ctx);
+			await new Promise<void>((resolve) => setImmediate(resolve));
+			finishWrite();
+			await Promise.all([save, clear]);
+			assert.equal(ctx.session.count, 0);
+		});
+	await entry(c)(mkCtx(42), noop);
+	assert.equal(inner.get("42"), undefined);
+	assert.equal(writes, 1, "clearing must not cause the untouched initial session to be written");
+});
+
 test("clearSession without the plugin installed throws a SessionError", async () => {
 	const ctx = mkCtx(1) as Context & { session: unknown };
 	await assert.rejects(() => clearSession(ctx), SessionError);

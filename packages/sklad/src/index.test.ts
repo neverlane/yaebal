@@ -116,8 +116,21 @@ function fakeRedis(withKeys = true) {
 
 	if (withKeys) {
 		client.keys = async (pattern) => {
-			const escaped = pattern.slice(0, -1).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-			const re = new RegExp(`^${escaped}`);
+			let regex = "";
+			for (let i = 0; i < pattern.length; i++) {
+				const ch = pattern[i];
+				if (ch === "\\") {
+					regex += (pattern[++i] ?? "\\").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+				} else if (ch === "*") regex += ".*";
+				else if (ch === "?") regex += ".";
+				else if (ch === "[") {
+					const end = pattern.indexOf("]", i + 1);
+					assert.ok(end > i, "fixture requires a closed glob character class");
+					regex += pattern.slice(i, end + 1);
+					i = end;
+				} else regex += ch?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			}
+			const re = new RegExp(`^${regex}$`);
 			return [...store.keys()].filter((key) => re.test(key));
 		};
 	}
@@ -181,10 +194,43 @@ test("redisStorage without a KEYS-capable client does not advertise keys/clear",
 	assert.equal(s.clear, undefined);
 });
 
+test("redisStorage treats glob characters in adapter and key prefixes literally", async () => {
+	for (const prefix of ["app*:", "app?:", "app[ab]:", "app\\:"]) {
+		const { client, store } = fakeRedis();
+		const s = redisStorage<number>(client, { prefix });
+		await s.set("key*1", 1);
+		await s.set("key?2", 2);
+		await s.set("keyX1", 3);
+		store.set("appX:key*1", "99");
+		store.set("appa:key*1", "99");
+		store.set("app:key*1", "99");
+		assert.deepEqual(await s.keys?.("key*"), ["key*1"]);
+		assert.deepEqual(await s.keys?.("key?"), ["key?2"]);
+		await s.clear?.();
+		assert.deepEqual([...store.keys()].sort(), ["app:key*1", "appX:key*1", "appa:key*1"].sort());
+	}
+});
+
 const sqlite = await import("node:sqlite").then(
 	(m) => m,
 	() => undefined,
 );
+
+test("sqliteStorage touch never resurrects an expired row", { skip: sqlite === undefined }, () => {
+	if (sqlite === undefined) return;
+	const db = new sqlite.DatabaseSync(":memory:");
+	try {
+		let now = 0;
+		const s = sqliteStorage<number>(db, { ttl: 100, now: () => now });
+		s.set("expired", 1);
+		now = 100;
+		s.touch?.("expired");
+		assert.equal(s.get("expired"), undefined);
+		assert.equal(s.has?.("expired"), false);
+	} finally {
+		db.close();
+	}
+});
 
 test("sqliteStorage round-trips, expires and touches", { skip: sqlite === undefined }, () => {
 	if (sqlite === undefined) return;

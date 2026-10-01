@@ -208,12 +208,13 @@ export function redisStorage<T>(
 	// advertise enumeration only when the client exposes KEYS
 	if (client.keys) {
 		const scanKeys = client.keys.bind(client);
+		const literalPattern = (value: string) => `${value.replace(/[\\*?[\]]/g, "\\$&")}*`;
 		adapter.keys = async (subPrefix = "") => {
-			const raw = await scanKeys(`${k(subPrefix)}*`);
+			const raw = await scanKeys(literalPattern(k(subPrefix)));
 			return prefix ? raw.map((key) => key.slice(prefix.length)) : raw;
 		};
 		adapter.clear = async () => {
-			const raw = await scanKeys(`${prefix}*`);
+			const raw = await scanKeys(literalPattern(prefix));
 			await Promise.all(raw.map((key) => client.del(key)));
 		};
 	}
@@ -277,7 +278,9 @@ export function sqliteStorage<T>(
 			`ON CONFLICT("key") DO UPDATE SET "value" = excluded."value", "expires_at" = excluded."expires_at"`,
 	);
 	const remove = db.prepare(`DELETE FROM ${table} WHERE "key" = ?`);
-	const refresh = db.prepare(`UPDATE ${table} SET "expires_at" = ? WHERE "key" = ?`);
+	const refresh = db.prepare(
+		`UPDATE ${table} SET "expires_at" = ? WHERE "key" = ? AND ("expires_at" IS NULL OR "expires_at" > ?)`,
+	);
 	const listKeys = db.prepare(
 		`SELECT "key" FROM ${table} WHERE "key" LIKE ? ESCAPE '\\' AND ("expires_at" IS NULL OR "expires_at" > ?)`,
 	);
@@ -311,7 +314,12 @@ export function sqliteStorage<T>(
 		},
 	};
 
-	if (ttl !== undefined) adapter.touch = (key) => refresh.run(now() + ttl, key);
+	if (ttl !== undefined) {
+		adapter.touch = (key) => {
+			const timestamp = now();
+			return refresh.run(timestamp + ttl, key, timestamp);
+		};
+	}
 
 	// advertise enumeration only when the driver's statements support .all()
 	if (typeof listKeys.all === "function") {

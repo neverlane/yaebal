@@ -244,3 +244,22 @@ test("extend appends fields immutably", () => {
 	assert.equal(base.unpack("cart:3:0"), undefined);
 	assert.deepEqual(base.unpack("cart:3"), { id: 3 });
 });
+test("unpack rejects partially parsed numbers, enum indices and invalid optional masks", () => {
+	const number = callbackData("n", { x: Number });
+	for (const token of ["1.5garbage", "1.5!", "1e+2junk", " 1.5", "1.5 "]) {
+		assert.equal(number.unpack(`n:${token}`), undefined);
+	}
+	for (const value of [1.5, -1.5, 1e-7, 1e21, -1e21]) {
+		assert.deepEqual(number.unpack(number.pack({ x: value })), { x: value });
+	}
+	const choice = callbackData("e", { x: field.enum(["yes", "no"]) });
+	for (const token of ["0.5", "0!", "-0", " 0"]) {
+		assert.equal(choice.unpack(`e:${token}`), undefined);
+	}
+	const optional = callbackData("m", { x: field.string().optional() });
+	for (const token of ["0!", "-0", "2", "zzzzzzzzzzzzzzzz"]) {
+		assert.equal(optional.unpack(`m:${token}`), undefined);
+	}
+	assert.deepEqual(optional.unpack("m:0"), {});
+	assert.deepEqual(optional.unpack("m:1:hello"), { x: "hello" });
+});

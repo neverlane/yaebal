@@ -308,8 +308,10 @@ export function callbackData<const S extends Schema>(
 			if (optional.length > 0) {
 				let bitmask = 0;
 				if (ptr < tokens.length) {
-					bitmask = Number.parseInt(tokens[ptr++] as string, 36);
-					if (!Number.isInteger(bitmask) || bitmask < 0) return undefined;
+					const token = tokens[ptr++] as string;
+					if (!/^[0-9a-z]+$/.test(token)) return undefined;
+					bitmask = Number.parseInt(token, 36);
+					if (!Number.isSafeInteger(bitmask) || bitmask >= 2 ** optional.length) return undefined;
 				}
 				for (let i = 0; i < optional.length; i++) {
 					const f = optional[i] as NormalizedField;
@@ -419,13 +421,15 @@ function decode(spec: FieldSpec, token: string): unknown | typeof FAIL {
 				const n = Number.parseInt(token, 36);
 				return Number.isSafeInteger(n) ? n : FAIL;
 			}
-			const n = Number.parseFloat(token);
+			if (!/^-?\d+(?:\.\d+)?(?:e[+-]?\d+)?$/.test(token)) return FAIL;
+			const n = Number(token);
 			return Number.isFinite(n) ? n : FAIL;
 		}
 		case "boolean":
 			return token === "1" ? true : token === "0" ? false : FAIL;
 		case "enum": {
 			const values = spec.enumValues as readonly (string | number)[];
+			if (!/^[0-9a-z]+$/.test(token)) return FAIL;
 			const index = Number.parseInt(token, 36);
 			return Number.isInteger(index) && index >= 0 && index < values.length
 				? (values[index] as string | number)

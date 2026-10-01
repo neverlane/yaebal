@@ -126,6 +126,50 @@ test("media helpers are branded and discriminated", () => {
 	assert.equal(isMediaSource({ kind: "fileId", fileId: "x" }), false); // unbranded
 });
 
+test("API retries replay streamed uploads instead of sending an exhausted stream", async (t) => {
+	const bodies: Uint8Array[][] = [];
+	t.mock.method(globalThis, "fetch", async (_url: unknown, init?: RequestInit) => {
+		assert.ok(init?.body instanceof FormData);
+		const files = [init.body.get("_file0"), init.body.get("_file1")];
+		bodies.push(
+			await Promise.all(
+				files.map(async (file) => {
+					assert.ok(file instanceof Blob);
+					return new Uint8Array(await file.arrayBuffer());
+				}),
+			),
+		);
+		return new Response(
+			JSON.stringify(
+				bodies.length === 1
+					? { ok: false, error_code: 503, description: "unavailable" }
+					: { ok: true, result: [] },
+			),
+		);
+	});
+	const api = createApi("123:abc");
+	api.onError((_method, _error, attempt) => (attempt === 1 ? { retry: true } : undefined));
+	const web = new ReadableStream<Uint8Array>({
+		start(controller) {
+			controller.enqueue(new Uint8Array([1, 2, 3]));
+			controller.close();
+		},
+	});
+	async function* iterable() {
+		yield new Uint8Array([4, 5, 6]);
+	}
+	await api.call("sendMediaGroup", {
+		chat_id: 1,
+		media: [
+			{ type: "photo", media: media.stream(web, "a.png") },
+			{ type: "photo", media: media.stream(iterable(), "b.png") },
+		],
+	});
+	assert.equal(bodies.length, 2);
+	assert.deepEqual(bodies[0], [new Uint8Array([1, 2, 3]), new Uint8Array([4, 5, 6])]);
+	assert.deepEqual(bodies[1], bodies[0]);
+});
+
 test("encodeRequest sends JSON when there is no upload", async () => {
 	const r = await encodeRequest({ chat_id: 1, photo: media.fileId("AgAC") });
 

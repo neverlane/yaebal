@@ -196,7 +196,8 @@ async function* readerToIterable(stream: ReadableStream<Uint8Array>): AsyncItera
 
 async function mediaToBlob(
 	m: MediaSource,
-	readFile?: FileReader,
+	readFile: FileReader | undefined,
+	streams: WeakMap<MediaStream, Promise<Uint8Array>>,
 ): Promise<{ blob: Blob; filename: string }> {
 	switch (m.kind) {
 		case "path": {
@@ -212,7 +213,12 @@ async function mediaToBlob(
 		case "buffer":
 			return { blob: new Blob([toArrayBuffer(m.buffer)]), filename: m.filename ?? "file" };
 		case "stream": {
-			const bytes = await streamToBytes(m.stream);
+			let pending = streams.get(m.stream);
+			if (!pending) {
+				pending = streamToBytes(m.stream);
+				streams.set(m.stream, pending);
+			}
+			const bytes = await pending;
 			return { blob: new Blob([toArrayBuffer(bytes)]), filename: m.filename ?? "file" };
 		}
 		case "text":
@@ -280,9 +286,18 @@ function extractMedia(value: unknown, uploads: { field: string; source: MediaSou
  * the whole request becomes multipart, with each upload attached via `attach://`.
  * exported for testing.
  */
-export async function encodeRequest(
+export function encodeRequest(
 	params: Record<string, unknown> | undefined,
 	readFile?: FileReader,
+): Promise<EncodedRequest> {
+	return encodeRequestWithStreams(params, readFile, new WeakMap());
+}
+
+/** stream buffers live for one api call, so retries can replay one-shot upload sources. */
+async function encodeRequestWithStreams(
+	params: Record<string, unknown> | undefined,
+	readFile: FileReader | undefined,
+	streams: WeakMap<MediaStream, Promise<Uint8Array>>,
 ): Promise<EncodedRequest> {
 	if (!params) return { body: undefined, contentType: "application/json" };
 
@@ -306,7 +321,7 @@ export async function encodeRequest(
 	}
 
 	for (const { field, source } of uploads) {
-		const { blob, filename } = await mediaToBlob(source, readFile);
+		const { blob, filename } = await mediaToBlob(source, readFile, streams);
 		form.set(field, blob, filename);
 	}
 
@@ -338,10 +353,11 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 
 	const rawCall = async <T>(
 		method: string,
-		params?: Record<string, unknown>,
-		callOptions?: CallOptions,
+		params: Record<string, unknown> | undefined,
+		callOptions: CallOptions | undefined,
+		streams: WeakMap<MediaStream, Promise<Uint8Array>>,
 	): Promise<T> => {
-		const { body, contentType } = await encodeRequest(params, options.readFile);
+		const { body, contentType } = await encodeRequestWithStreams(params, options.readFile, streams);
 		const res = await fetch(`${apiRoot}/bot${token}/${method}`, {
 			method: "POST",
 			// for multipart, let fetch set the content-type (with its boundary).
@@ -374,6 +390,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		// split `format`/`fmt` results into text + entities wherever the schema allows
 		// them, so every method — not just the ctx helpers — accepts formatted values.
 		params = applyFormatFields(method, params);
+		const streams = new WeakMap<MediaStream, Promise<Uint8Array>>();
 
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
 		// attempts). with no hook requesting a retry it throws on the first failure.
@@ -386,7 +403,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			}
 
 			try {
-				let result = await rawCall<T>(method, p, callOptions);
+				let result = await rawCall<T>(method, p, callOptions, streams);
 
 				for (const hook of afterHooks) {
 					const next = await hook(method, p, result);

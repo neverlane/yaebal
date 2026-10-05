@@ -65,7 +65,7 @@ await cmd.sync(bot.api);`;
 
 const sent = await bot.api.call("sendMessage", {
   chat_id: chatId,
-  receiver_user_id: userId,
+  ephemeral_message_parameters: { receiver_user_id: userId }, // bot api 10.3
   text: "psst",
 });
 const msg = wrapEphemeralMessage(bot.api, sent, { onExpired: "ignore" });
@@ -78,14 +78,16 @@ await msg.edit("psst — updated");`;
 const env = createTestEnv(bot);
 // teach the auto-stub telegram's ephemeral answer shape
 env.onApi("sendMessage", (params) =>
-  params?.receiver_user_id === undefined
+  params?.ephemeral_message_parameters === undefined
     ? { message_id: 42 }
     : { message_id: 0, ephemeral_message_id: 900 });
 
 const group = env.createChat({ type: "supergroup" });
 await env.createUser({ id: 7 }).in(group).sendCommand("go");
 
-assert.equal(env.lastApiCall("sendMessage")?.params?.receiver_user_id, 7);`;
+assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_parameters, {
+  receiver_user_id: 7,
+});`;
 </script>
 
 <svelte:head>

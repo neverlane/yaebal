@@ -83,7 +83,7 @@ import { wrapEphemeralMessage } from "@yaebal/ephemeral";
 
 const sent = await bot.api.call("sendMessage", {
 	chat_id: chatId,
-	receiver_user_id: userId,
+	ephemeral_message_parameters: { receiver_user_id: userId }, // bot api 10.3
 	text: "psst",
 });
 const msg = wrapEphemeralMessage(bot.api, sent, { onExpired: "ignore" });

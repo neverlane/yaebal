@@ -7,6 +7,8 @@
 //
 // set DRY_RUN=1 to print the plan without publishing. in CI it also passes --provenance
 // (set NO_PROVENANCE=1 to opt out, e.g. if a package's `repository` field doesn't match).
+// CI authenticates through npm trusted publishing (oidc) — `pnpm publish` hands the packed
+// tarball to the npm cli, which does the token exchange; see .github/workflows/release.yml.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";

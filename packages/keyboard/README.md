@@ -1,8 +1,8 @@
 # @yaebal/keyboard
 
 fluent inline & reply keyboard builders — full coverage of Telegram's button types
-(callback, url, web app, login, switch-inline, copy-text, pay, game, request user/chat/managed-bot,
-poll) plus `Keyboard.remove()` / `Keyboard.forceReply()` for the other `reply_markup` shapes.
+(callback, url, web app, login, switch-inline, copy-text, disabled, pay, game, request
+user/chat/managed-bot, poll) plus `Keyboard.remove()` / `Keyboard.forceReply()` for the other `reply_markup` shapes.
 
 ## install
 
@@ -33,6 +33,9 @@ const reply = new Keyboard()
 // hide/force-reply markups
 Keyboard.remove();
 Keyboard.forceReply({ input_field_placeholder: "type here" });
+
+// bot api 10.3: a button that does nothing, and a keyboard that also opens the reply field
+new InlineKeyboard().disabled("sold out").text("notify me", "notify").forceReply().build();
 ```
 
 ### dynamic buttons

@@ -106,20 +106,21 @@ test("math() keeps LaTeX raw in markdown, html-escapes it in html", () => {
 	assert.deepEqual(both(math("a_1 < b")), ["<tg-math>a_1 &lt; b</tg-math>", "$a_1 < b$"]);
 });
 
-test("dateTime() — best-effort <time> / tg://time image link", () => {
+test("dateTime() — <tg-time unix format> / tg://time image link", () => {
+	assert.equal(
+		dateTime(1735689600, "", "then").render("html"),
+		'<tg-time unix="1735689600">then</tg-time>',
+	);
 	assert.deepEqual(both(dateTime(1735689600, "R", "soon")), [
-		'<time datetime="1735689600" data-format="R">soon</time>',
+		'<tg-time unix="1735689600" format="R">soon</tg-time>',
 		"![soon](tg://time?unix=1735689600&format=R)",
 	]);
 });
 
-test("reference()/referenceLink() — tg-reference tags / markdown footnote syntax", () => {
+test('reference()/referenceLink() — <tg-reference> + <a href="#…"> / markdown footnote syntax', () => {
 	assert.deepEqual(both(reference("1", "the fine print")), [
 		'<tg-reference name="1">the fine print</tg-reference>',
 		"[^1]: the fine print",
 	]);
-	assert.deepEqual(both(referenceLink("1", "see note")), [
-		'<tg-reference-link name="1">see note</tg-reference-link>',
-		"[^1]",
-	]);
+	assert.deepEqual(both(referenceLink("1", "see note")), ['<a href="#1">see note</a>', "[^1]"]);
 });

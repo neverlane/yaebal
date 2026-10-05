@@ -390,27 +390,34 @@ export function list(entries: Insertable[], options: ListOptions = {}): RichNode
 // --- media ---
 
 export interface MapOptions {
-	/** 13–20, per `RichBlockMap.zoom`. */
-	zoom: number;
-	width: number;
-	height: number;
+	/** 0–24, per `InputRichBlockMap.zoom`. */
+	zoom?: number;
+	/**
+	 * @deprecated the html form has no width/height attributes — telegram ignores them and
+	 * sizes the map itself (`RichBlockMap.width/height` come back filled in). kept so
+	 * existing calls still type-check; not rendered.
+	 */
+	width?: number;
+	/** @deprecated see {@link MapOptions.width}. */
+	height?: number;
 }
 
 /**
- * `RichBlockMap`, confirmed custom tag `<tg-map>` (raw in markdown too) —
- * attribute names/encoding are a best-effort guess (lat/long/zoom/width/height
- * are telegram's own field names).
+ * `RichBlockMap`, custom tag `<tg-map lat long zoom/>` (raw in markdown too); a
+ * caption wraps it in `<figure>` like the other media blocks.
  */
 export function map(
 	location: { latitude: number; longitude: number },
-	options: MapOptions,
+	options: MapOptions = {},
 	caption: Caption = {},
 ): RichNode {
-	const attrs =
-		` latitude="${location.latitude}" longitude="${location.longitude}"` +
-		` zoom="${options.zoom}" width="${options.width}" height="${options.height}"`;
+	const zoom = options.zoom === undefined ? "" : ` zoom="${options.zoom}"`;
+	const tag = `<tg-map lat="${location.latitude}" long="${location.longitude}"${zoom}/>`;
 
-	return makeNode("block", (d) => `<tg-map${attrs}>${figcaption(caption, d)}</tg-map>`);
+	return makeNode("block", (d) => {
+		const cap = figcaption(caption, d);
+		return cap ? `<figure>${tag}${cap}</figure>` : tag;
+	});
 }
 
 export interface MediaOptions extends Caption {
@@ -421,7 +428,7 @@ export interface MediaOptions extends Caption {
 function figure(tag: string, src: string, options: MediaOptions): RichNode {
 	return makeNode("block", (d) => {
 		if (d === "markdown") {
-			// best-effort `![](url "caption")`; `credit`/`spoiler` have no markdown form and are dropped.
+			// `![](url "caption")`; `credit`/`spoiler` have no markdown form and are dropped.
 			const title =
 				options.caption === undefined
 					? ""
@@ -430,7 +437,7 @@ function figure(tag: string, src: string, options: MediaOptions): RichNode {
 			return `![](${escapeMarkdownUrl(src)}${title})`;
 		}
 
-		const spoilerAttr = options.spoiler ? " data-media-spoiler" : "";
+		const spoilerAttr = options.spoiler ? " tg-spoiler" : "";
 		const media = `<${tag} src="${escapeAttr(src)}"${spoilerAttr}></${tag}>`;
 		const cap = figcaption(options, d);
 

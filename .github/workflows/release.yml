@@ -10,7 +10,7 @@ on:
 
 permissions:
   contents: write # create git tags + github releases
-  id-token: write # npm provenance
+  id-token: write # npm trusted publishing (oidc) + provenance
 
 concurrency:
   group: release
@@ -35,12 +35,18 @@ jobs:
       - name: setup pnpm
         uses: pnpm/action-setup@v6
 
+      # npm publishes through trusted publishing (oidc): no token, npm exchanges the
+      # workflow's id-token itself. that needs node >= 22.14 and npm >= 11.5.1, and each
+      # package must list this repo + release.yml as its trusted publisher on npmjs.com.
       - name: setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
           cache: pnpm
+
+      - name: npm with trusted publishing
+        run: npm install -g npm@latest
 
       - name: install
         run: pnpm install --frozen-lockfile
@@ -52,6 +58,5 @@ jobs:
         run: node scripts/release.mjs
         env:
           RELEASE_SKIP_GATE: "1"
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}

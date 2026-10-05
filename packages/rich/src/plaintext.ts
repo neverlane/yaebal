@@ -3,9 +3,12 @@ import type {
 	RichBlockAnimation,
 	RichBlockAudio,
 	RichBlockBlockQuotation,
+	RichBlockButtons,
 	RichBlockCaption,
 	RichBlockCollage,
 	RichBlockDetails,
+	RichBlockDocument,
+	RichBlockExpandableBlockQuotation,
 	RichBlockFooter,
 	RichBlockList,
 	RichBlockMap,
@@ -22,6 +25,7 @@ import type {
 	RichBlockVoiceNote,
 	RichMessage,
 	RichText,
+	RichTextButton,
 	RichTextCustomEmoji,
 	RichTextMathematicalExpression,
 } from "@yaebal/types";
@@ -60,6 +64,8 @@ export function richTextToPlainText(text: RichTextLike): string {
 			return as<RichTextMathematicalExpression>(text).expression;
 		case "anchor":
 			return "";
+		case "button":
+			return richTextToPlainText(as<RichTextButton>(text).button.text);
 		// every remaining variant wraps a nested `text` field (bold, italic, url,
 		// mention, hashtag, date_time, reference, anchor_link, text_mention, …).
 		default:
@@ -103,6 +109,14 @@ export function richBlockToPlainText(block: RichBlock): string {
 			const { blocks, credit } = as<RichBlockBlockQuotation>(block);
 			return `${blocks.map(richBlockToPlainText).join("")}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
 		}
+		case "expandable_blockquote": {
+			const { text, credit } = as<RichBlockExpandableBlockQuotation>(block);
+			return `${richTextToPlainText(text)}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
+		}
+		case "buttons":
+			return `${as<RichBlockButtons>(block)
+				.buttons.map((button) => richTextToPlainText(button.text))
+				.join(" | ")}\n`;
 		case "pullquote": {
 			const { text, credit } = as<RichBlockPullQuotation>(block);
 			return `${richTextToPlainText(text)}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
@@ -124,11 +138,17 @@ export function richBlockToPlainText(block: RichBlock): string {
 			return captionToPlainText(as<RichBlockMap>(block).caption);
 		case "animation":
 		case "audio":
+		case "document":
 		case "photo":
 		case "video":
 		case "voice_note": {
 			const { caption } = as<
-				RichBlockAnimation | RichBlockAudio | RichBlockPhoto | RichBlockVideo | RichBlockVoiceNote
+				| RichBlockAnimation
+				| RichBlockAudio
+				| RichBlockDocument
+				| RichBlockPhoto
+				| RichBlockVideo
+				| RichBlockVoiceNote
 			>(block);
 			return captionToPlainText(caption);
 		}

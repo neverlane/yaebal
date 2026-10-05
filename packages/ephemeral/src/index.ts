@@ -147,7 +147,9 @@ function makeHandle(state: HandleState): EphemeralMessage {
 	const resend = async (params: Record<string, unknown>): Promise<boolean> => {
 		const sent = await state.api.call<Message>("sendMessage", {
 			chat_id: state.chatId,
-			...(state.isEphemeral ? { receiver_user_id: state.receiverUserId } : {}),
+			...(state.isEphemeral
+				? { ephemeral_message_parameters: { receiver_user_id: state.receiverUserId } }
+				: {}),
 			...state.routing,
 			...params,
 		});
@@ -233,7 +235,7 @@ function makeHandle(state: HandleState): EphemeralMessage {
 
 /**
  * wrap an already-sent ephemeral `Message` (e.g. from a raw `api.call("sendMessage", ...)`
- * with `receiver_user_id`) in an {@link EphemeralMessage} handle.
+ * with `ephemeral_message_parameters`) in an {@link EphemeralMessage} handle.
  */
 export function wrapEphemeralMessage(
 	api: EphemeralApi,
@@ -288,7 +290,9 @@ export function ephemeral(options: EphemeralOptions = {}): Plugin<Context, Ephem
 				const routing = ctx.routing();
 				const sent = await ctx.api.call<Message>("sendMessage", {
 					chat_id: chat.id,
-					receiver_user_id: receiverUserId,
+					// bot api 10.3 moved the receiver into `ephemeral_message_parameters`;
+					// the edit/delete methods still address it with a top-level `receiver_user_id`.
+					ephemeral_message_parameters: { receiver_user_id: receiverUserId },
 					...routing,
 					...resolved,
 					...extra,

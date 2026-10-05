@@ -31,7 +31,7 @@ function setup(options?: EphemeralOptions) {
 	// the auto-stub knows nothing about that, so teach it. plain sends keep a plain shape.
 	let nextEphemeralId = 900;
 	env.onApi("sendMessage", (params: Record<string, unknown> | undefined) =>
-		params?.receiver_user_id === undefined
+		params?.ephemeral_message_parameters === undefined
 			? { message_id: 42 }
 			: { message_id: 0, ephemeral_message_id: nextEphemeralId++ },
 	);
@@ -46,7 +46,7 @@ function setup(options?: EphemeralOptions) {
 	};
 }
 
-test("replyEphemeral in a supergroup sends receiver_user_id and yields an ephemeral handle", async () => {
+test("replyEphemeral in a supergroup sends ephemeral_message_parameters and yields an ephemeral handle", async () => {
 	const { env, handle } = setup();
 	const group = env.createChat({ type: "supergroup" });
 	const user = env.createUser({ id: 7 });
@@ -55,7 +55,8 @@ test("replyEphemeral in a supergroup sends receiver_user_id and yields an epheme
 
 	const call = env.lastApiCall("sendMessage");
 	assert.equal(call?.params?.chat_id, group.id);
-	assert.equal(call?.params?.receiver_user_id, 7);
+	assert.deepEqual(call?.params?.ephemeral_message_parameters, { receiver_user_id: 7 });
+	assert.equal(call?.params?.receiver_user_id, undefined);
 	assert.equal(call?.params?.text, "hello");
 
 	const msg = handle();
@@ -109,7 +110,7 @@ test("private chat falls back to a normal message behind the same handle", async
 	await user.sendCommand("go");
 
 	const sent = env.lastApiCall("sendMessage");
-	assert.equal(sent?.params?.receiver_user_id, undefined);
+	assert.equal(sent?.params?.ephemeral_message_parameters, undefined);
 
 	const msg = handle();
 	assert.equal(msg.isEphemeral, false);
@@ -148,7 +149,9 @@ test("sendEphemeral targets the given user and never falls back", async () => {
 
 	const group = env.createChat({ type: "supergroup" });
 	await env.createUser({ id: 7 }).in(group).sendCommand("nudge");
-	assert.equal(env.lastApiCall("sendMessage")?.params?.receiver_user_id, 99);
+	assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_parameters, {
+		receiver_user_id: 99,
+	});
 
 	env.clearApiCalls();
 	await env.createUser({ id: 8 }).sendCommand("nudge");
@@ -193,7 +196,7 @@ test('onExpired: "resend" sends the new content fresh and retargets the handle',
 	assert.equal(await handle().edit("v2"), true);
 
 	const resent = env.lastApiCall("sendMessage");
-	assert.equal(resent?.params?.receiver_user_id, 7);
+	assert.deepEqual(resent?.params?.ephemeral_message_parameters, { receiver_user_id: 7 });
 	assert.equal(resent?.params?.text, "v2");
 	// the handle now points at the fresh message (second stubbed id, 901)…
 	assert.equal(handle().ephemeralMessageId, 901);

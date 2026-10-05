@@ -380,3 +380,20 @@ test("Keyboard.forceReply()", () => {
 		input_field_placeholder: "reply here",
 	});
 });
+
+test("disabled() adds a DisabledButton (bot api 10.3), decorations included", () => {
+	const kb = new InlineKeyboard().disabled("sold out", { style: "danger" }).build();
+
+	assert.deepEqual(kb.inline_keyboard, [[{ text: "sold out", disabled: {}, style: "danger" }]]);
+});
+
+test("forceReply() sets force_reply on both markups only when asked (bot api 10.3)", () => {
+	assert.equal("force_reply" in new InlineKeyboard().text("a", "a").build(), false);
+	assert.equal(new InlineKeyboard().text("a", "a").forceReply().build().force_reply, true);
+	assert.equal("force_reply" in new Keyboard().text("a").build(), false);
+	assert.equal(new Keyboard().text("a").forceReply().build().force_reply, true);
+	assert.equal(
+		"force_reply" in new Keyboard().text("a").forceReply().forceReply(false).build(),
+		false,
+	);
+});

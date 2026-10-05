@@ -4,10 +4,12 @@ import {
 	anchorBlock,
 	audio,
 	blockquote,
+	buttons,
 	cell,
 	collage,
 	details,
 	divider,
+	file,
 	footer,
 	h2,
 	heading,
@@ -25,7 +27,7 @@ import {
 	thinking,
 	video,
 } from "./blocks.js";
-import { bold, italic } from "./inline.js";
+import { bold, button, customEmoji, italic } from "./inline.js";
 import type { RichNode } from "./node.js";
 
 function both(node: RichNode): [html: string, md: string] {
@@ -94,7 +96,7 @@ test("table() — full html table; gfm with a structural header row in markdown"
 
 	assert.equal(
 		node.render("html"),
-		"<table border><caption>week</caption>" +
+		"<table bordered><caption>week</caption>" +
 			'<tr><th>day</th><th align="right">count</th></tr>' +
 			'<tr><td>mon</td><td align="right">128</td></tr></table>',
 	);
@@ -230,4 +232,94 @@ test("join() — inline entries join with the separator, block entries blank-lin
 	assert.equal(join([paragraph("a"), paragraph("b")]).render("html"), "<p>a</p><p>b</p>");
 	assert.equal(join([paragraph("a"), "b"]).level, "block");
 	assert.equal(join(["a", "b"]).level, "inline");
+});
+
+// --- bot api 10.3 ---
+
+test("table(): striped + compact use the confirmed attributes", () => {
+	assert.equal(
+		table([["a"]], { bordered: true, striped: true, compact: true }).render("html"),
+		"<table bordered striped compact><tr><td>a</td></tr></table>",
+	);
+});
+
+test("blockquote({ expandable }): raw <blockquote expandable> in both dialects", () => {
+	const node = blockquote([paragraph("hidden ", bold("text"))], "me", { expandable: true });
+	const expected = "<blockquote expandable><p>hidden <b>text</b></p><cite>me</cite></blockquote>";
+
+	assert.equal(node.render("html"), expected);
+	assert.equal(node.render("markdown"), expected);
+});
+
+test("file(): <tg-document>, optionally captioned; markdown ![](url)", () => {
+	assert.equal(
+		file("https://x.dev/a.zip").render("html"),
+		'<tg-document src="https://x.dev/a.zip"></tg-document>',
+	);
+	assert.equal(
+		file("tg://document?id=report", { caption: "report" }).render("html"),
+		'<figure><tg-document src="tg://document?id=report"></tg-document><figcaption>report</figcaption></figure>',
+	);
+	assert.equal(
+		file("https://x.dev/a.zip", { caption: "a" }).render("markdown"),
+		'![](https://x.dev/a.zip "a")',
+	);
+});
+
+test("button(): one <tg-button> per action type, attributes escaped", () => {
+	const html = (node: RichNode) => node.render("html");
+
+	assert.equal(
+		html(button("go", { callbackData: 'a"b' }, { style: "link" })),
+		'<tg-button type="callback_data" data="a&quot;b" style="link">go</tg-button>',
+	);
+	assert.equal(
+		html(button("site", { url: "https://t.me" })),
+		'<tg-button type="url" url="https://t.me">site</tg-button>',
+	);
+	assert.equal(
+		html(button("app", { webApp: "https://a.dev" })),
+		'<tg-button type="web_app" url="https://a.dev">app</tg-button>',
+	);
+	assert.equal(
+		html(button("in", { loginUrl: "https://a.dev", forwardText: "f", requestWriteAccess: true })),
+		'<tg-button type="login_url" url="https://a.dev" forward-text="f" request-write-access>in</tg-button>',
+	);
+	assert.equal(
+		html(
+			button("q", {
+				switchInlineQueryChosenChat: "x",
+				allowUserChats: true,
+				allowGroupChats: true,
+			}),
+		),
+		'<tg-button type="switch_inline_query_chosen_chat" query="x" allow-user-chats allow-group-chats>q</tg-button>',
+	);
+	assert.equal(
+		html(button("c", { copyText: "<t>" })),
+		'<tg-button type="copy_text" text="&lt;t&gt;">c</tg-button>',
+	);
+	assert.equal(
+		html(button("off", { disabled: true }, { style: "primary" })),
+		'<tg-button type="disabled" style="primary">off</tg-button>',
+	);
+});
+
+test("button(): label is html in both dialects; link style and oversize data are rejected", () => {
+	const node = button([customEmoji("1", "✅"), " ok"], { callbackData: "ok" });
+	assert.equal(node.render("markdown"), node.render("html"));
+	assert.match(node.render("html"), /<tg-emoji emoji-id="1">✅<\/tg-emoji> ok/);
+	assert.throws(() => button("x", { url: "https://t.me" }, { style: "link" }), /only for callback/);
+	assert.throws(() => button("x", { callbackData: "x".repeat(65) }), /1-64 bytes/);
+});
+
+test("buttons(): one <tg-button-row>, align optional, same in markdown", () => {
+	const row = buttons([button("a", { callbackData: "a" }), button("b", { disabled: true })], {
+		align: "center",
+	});
+	const expected =
+		'<tg-button-row align="center"><tg-button type="callback_data" data="a">a</tg-button><tg-button type="disabled">b</tg-button></tg-button-row>';
+
+	assert.equal(row.render("html"), expected);
+	assert.equal(row.render("markdown"), expected);
 });

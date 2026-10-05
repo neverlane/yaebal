@@ -80,6 +80,7 @@ export class InlineKeyboard {
 	#rows: InlineKeyboardButton[][] = [];
 	#current: InlineKeyboardButton[] = [];
 	#columns?: number;
+	#forceReply = false;
 
 	#push(button: InlineKeyboardButton): this {
 		this.#current.push(button);
@@ -162,6 +163,11 @@ export class InlineKeyboard {
 		return this.#push(decorate({ text: label, copy_text: { text } }, deco));
 	}
 
+	/** a button that does nothing when pressed (`DisabledButton`, bot api 10.3) — a label or a placeholder slot. */
+	disabled(label: string, deco?: ButtonDecoration): this {
+		return this.#push(decorate({ text: label, disabled: {} }, deco));
+	}
+
 	/** Stars/invoice pay button. must be the first button of the first row. */
 	pay(label: string, deco?: ButtonDecoration): this {
 		return this.#push(decorate({ text: label, pay: true }, deco));
@@ -193,10 +199,19 @@ export class InlineKeyboard {
 		return this;
 	}
 
+	/**
+	 * also open the reply interface, as if the user tapped "reply" on the message
+	 * (`force_reply`, bot api 10.3). telegram ignores a change to it on edit.
+	 */
+	forceReply(value = true): this {
+		this.#forceReply = value;
+		return this;
+	}
+
 	build(): InlineKeyboardMarkup {
 		// clone so a returned markup never aliases the live in-progress row.
 		const rows = this.#current.length > 0 ? [...this.#rows, [...this.#current]] : [...this.#rows];
-		return { inline_keyboard: rows };
+		return { inline_keyboard: rows, ...(this.#forceReply ? { force_reply: true } : {}) };
 	}
 
 	/** lets `JSON.stringify` (and thus `Api`, which stringifies `reply_markup`) accept the builder directly. */
@@ -219,6 +234,7 @@ export class Keyboard {
 	#resize = false;
 	#oneTime = false;
 	#selective = false;
+	#forceReply = false;
 	#placeholder?: string;
 
 	#push(button: KeyboardButton): this {
@@ -386,6 +402,16 @@ export class Keyboard {
 		return this;
 	}
 
+	/**
+	 * also open the reply interface along with this keyboard (`force_reply`, bot api 10.3).
+	 * not to be confused with the static `Keyboard.forceReply()`, which builds a standalone
+	 * `ForceReply` markup with no keyboard.
+	 */
+	forceReply(value = true): this {
+		this.#forceReply = value;
+		return this;
+	}
+
 	build(): ReplyKeyboardMarkup {
 		// clone so a returned markup never aliases the live in-progress row.
 		const keyboard =
@@ -398,6 +424,7 @@ export class Keyboard {
 			...(this.#oneTime ? { one_time_keyboard: true } : {}),
 			...(this.#placeholder !== undefined ? { input_field_placeholder: this.#placeholder } : {}),
 			...(this.#selective ? { selective: true } : {}),
+			...(this.#forceReply ? { force_reply: true } : {}),
 		};
 	}
 

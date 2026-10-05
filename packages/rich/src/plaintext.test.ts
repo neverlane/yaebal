@@ -139,3 +139,26 @@ test("richMessageToPlainText flattens a full block tree, joined and trimmed", ()
 
 	assert.equal(richMessageToPlainText(message), "title\nhi there\n---\n- one");
 });
+
+test("bot api 10.3 blocks: buttons, button text, expandable quote, document", () => {
+	const blocks = [
+		{
+			type: "paragraph",
+			text: ["tap ", { type: "button", button: { text: "here", callback_data: "x" } }],
+		},
+		{
+			type: "buttons",
+			buttons: [
+				{ text: "a", url: "https://t.me" },
+				{ text: "b", disabled: {} },
+			],
+		},
+		{ type: "expandable_blockquote", text: "long quote", credit: "me" },
+		{ type: "document", document: { file_id: "f" }, caption: { text: "report" } },
+	] as unknown as RichBlock[];
+
+	assert.equal(
+		blocks.map(richBlockToPlainText).join(""),
+		"tap here\na | b\nlong quote — me\nreport\n",
+	);
+});

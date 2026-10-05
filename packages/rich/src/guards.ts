@@ -4,9 +4,12 @@ import type {
 	RichBlockAnimation,
 	RichBlockAudio,
 	RichBlockBlockQuotation,
+	RichBlockButtons,
 	RichBlockCollage,
 	RichBlockDetails,
 	RichBlockDivider,
+	RichBlockDocument,
+	RichBlockExpandableBlockQuotation,
 	RichBlockFooter,
 	RichBlockList,
 	RichBlockMap,
@@ -27,6 +30,7 @@ import type {
 	RichTextBankCardNumber,
 	RichTextBold,
 	RichTextBotCommand,
+	RichTextButton,
 	RichTextCashtag,
 	RichTextCode,
 	RichTextCustomEmoji,
@@ -66,14 +70,17 @@ interface RichBlockByType {
 	anchor: RichBlockAnchor;
 	list: RichBlockList;
 	blockquote: RichBlockBlockQuotation;
+	expandable_blockquote: RichBlockExpandableBlockQuotation;
 	pullquote: RichBlockPullQuotation;
 	collage: RichBlockCollage;
 	slideshow: RichBlockSlideshow;
 	table: RichBlockTable;
 	details: RichBlockDetails;
 	map: RichBlockMap;
+	buttons: RichBlockButtons;
 	animation: RichBlockAnimation;
 	audio: RichBlockAudio;
+	document: RichBlockDocument;
 	photo: RichBlockPhoto;
 	video: RichBlockVideo;
 	voice_note: RichBlockVoiceNote;
@@ -102,6 +109,7 @@ interface RichTextByType {
 	hashtag: RichTextHashtag;
 	cashtag: RichTextCashtag;
 	bot_command: RichTextBotCommand;
+	button: RichTextButton;
 	anchor: RichTextAnchor;
 	anchor_link: RichTextAnchorLink;
 	reference: RichTextReference;
@@ -116,7 +124,7 @@ function textGuard<K extends keyof RichTextByType>(type: K) {
 	return (text: RichText): text is RichTextByType[K] => text.type === type;
 }
 
-// --- RichBlock (21 variants) — one guard per `.type` discriminant ---
+// --- RichBlock (24 variants) — one guard per `.type` discriminant ---
 
 export const isParagraph = blockGuard("paragraph");
 export const isHeading = blockGuard("heading");
@@ -127,20 +135,23 @@ export const isMathBlock = blockGuard("mathematical_expression");
 export const isAnchorBlock = blockGuard("anchor");
 export const isList = blockGuard("list");
 export const isBlockquote = blockGuard("blockquote");
+export const isExpandableBlockquote = blockGuard("expandable_blockquote");
 export const isPullquote = blockGuard("pullquote");
 export const isCollage = blockGuard("collage");
 export const isSlideshow = blockGuard("slideshow");
 export const isTable = blockGuard("table");
 export const isDetails = blockGuard("details");
 export const isMap = blockGuard("map");
+export const isButtons = blockGuard("buttons");
 export const isAnimation = blockGuard("animation");
 export const isAudio = blockGuard("audio");
+export const isDocument = blockGuard("document");
 export const isPhoto = blockGuard("photo");
 export const isVideo = blockGuard("video");
 export const isVoiceNote = blockGuard("voice_note");
 export const isThinking = blockGuard("thinking");
 
-// --- RichText (25 variants) ---
+// --- RichText (26 variants) ---
 
 export const isBold = textGuard("bold");
 export const isItalic = textGuard("italic");
@@ -163,6 +174,7 @@ export const isMentionText = textGuard("mention");
 export const isHashtag = textGuard("hashtag");
 export const isCashtag = textGuard("cashtag");
 export const isBotCommand = textGuard("bot_command");
+export const isButton = textGuard("button");
 export const isAnchorText = textGuard("anchor");
 export const isAnchorLink = textGuard("anchor_link");
 export const isReference = textGuard("reference");

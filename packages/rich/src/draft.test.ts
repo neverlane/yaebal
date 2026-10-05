@@ -165,3 +165,21 @@ test("preserves is_rtl/skip_entity_detection across write() unless the new push 
 
 	assert.deepEqual(calls[1]?.params?.rich_message, { html: "<p>a</p><p>b</p>", is_rtl: true });
 });
+
+test("canStop/keepOnStop (bot api 10.3) ride along on every draft push", async () => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 3, {
+		keepAliveMs: 60_000,
+		canStop: true,
+		keepOnStop: false,
+	});
+
+	await draft.rewrite("<p>a</p>");
+	await draft.write("<p>b</p>");
+
+	for (const call of calls) {
+		assert.equal(call.params?.can_stop, true);
+		assert.equal(call.params?.keep_on_stop, false);
+	}
+	draft.cancel();
+});

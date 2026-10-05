@@ -41,6 +41,8 @@ bot.command("start", (ctx) => {
   .row()
   .login("log in", "https://example.com/auth")
   .copyText("copy code", "ABC-123")
+  .row()
+  .disabled("sold out") // bot api 10.3: a button that does nothing
   .build();`;
 
 	const styleIcon = `// style()/icon() modify the button that was just added — call them right after it
@@ -164,7 +166,9 @@ await ctx.reply("pick one", {
 <p>
 	<code>Keyboard.remove()</code> and <code>Keyboard.forceReply()</code> are static helpers that
 	build the other two <code>reply_markup</code> shapes Telegram supports — they don't need a
-	builder instance.
+	builder instance. since bot api 10.3 a real keyboard can open the reply field too: call
+	<code>.forceReply()</code> on an <code>InlineKeyboard</code> or <code>Keyboard</code> builder to
+	set <code>force_reply</code> on its markup (telegram ignores a change to it on edit).
 </p>
 <Code code={removeAndForceReply} title="remove.ts" />
 

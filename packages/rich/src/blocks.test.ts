@@ -181,7 +181,7 @@ test("media builders — <img>/<video>/<audio> with figure+caption / markdown im
 	]);
 	assert.equal(
 		audio("https://x.dev/a.mp3", { spoiler: true }).render("html"),
-		'<audio src="https://x.dev/a.mp3" data-media-spoiler></audio>',
+		'<audio src="https://x.dev/a.mp3" tg-spoiler></audio>',
 	);
 });
 
@@ -206,17 +206,18 @@ test("collage()/slideshow() — compact html; blank-line-separated media in mark
 	);
 });
 
-test("map() — <tg-map> with telegram's field names as attributes, in both dialects", () => {
+test("map() — <tg-map lat long zoom/>, captioned via <figure>, in both dialects", () => {
 	const node = map(
 		{ latitude: 55.75, longitude: 37.61 },
 		{ zoom: 14, width: 400, height: 300 },
 		{ caption: "moscow" },
 	);
 	const expected =
-		'<tg-map latitude="55.75" longitude="37.61" zoom="14" width="400" height="300">' +
-		"<figcaption>moscow</figcaption></tg-map>";
+		'<figure><tg-map lat="55.75" long="37.61" zoom="14"/>' +
+		"<figcaption>moscow</figcaption></figure>";
 
 	assert.deepEqual(both(node), [expected, expected]);
+	assert.equal(map({ latitude: 1, longitude: 2 }).render("html"), '<tg-map lat="1" long="2"/>');
 });
 
 test("thinking() — draft-only <tg-thinking> in both dialects", () => {

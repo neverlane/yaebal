@@ -58,7 +58,7 @@ export function br(): RichNode {
 /**
  * `RichTextCustomEmoji` — `<tg-emoji emoji-id="…">`, the same custom tag classic
  * `parse_mode: "HTML"` uses (telegram documents it as reused verbatim here);
- * best-effort `![fallback](tg://emoji?id=…)` in markdown. `fallback` is the
+ * `![fallback](tg://emoji?id=…)` in markdown. `fallback` is the
  * plain emoji shown where custom emoji can't render.
  */
 export function customEmoji(emojiId: string, fallback: string): RichNode {
@@ -112,33 +112,26 @@ export function anchorLink(name: string, ...items: Insertable[]): RichNode {
 	);
 }
 
-// --- inline marks — best-effort tags ---
-//
-// telegram's schema names these types and their fields, but (as scraped) does not
-// state an explicit "corresponding to the html tag …" for them the way it does for
-// bold/italic/code/etc above. the guesses below follow telegram's own pattern of
-// reusing standard html5 semantics (sub/sup/mark/time) or its `tg-*` custom-tag
-// convention — verify against the live "rich message formatting options" docs
-// before depending on the exact tag/attribute spelling in production.
+// --- inline marks and nodes from the "rich html style" / "rich markdown style" docs ---
 
-/** `RichTextMarked`, highlighted text — best-effort `<mark>` / `==x==`. */
+/** `RichTextMarked`, highlighted text — `<mark>` / `==x==`. */
 export const marked = wrap(
 	(x) => `==${x}==`,
 	(x) => `<mark>${x}</mark>`,
 );
-/** `RichTextSubscript` — best-effort `<sub>`; no markdown token, raw tag embedded there too. */
+/** `RichTextSubscript` — `<sub>`; no markdown token, the raw tag is embedded there too. */
 export const subscript = wrap(
 	(x) => `<sub>${x}</sub>`,
 	(x) => `<sub>${x}</sub>`,
 );
-/** `RichTextSuperscript` — best-effort `<sup>`; no markdown token, raw tag embedded there too. */
+/** `RichTextSuperscript` — `<sup>`; no markdown token, the raw tag is embedded there too. */
 export const superscript = wrap(
 	(x) => `<sup>${x}</sup>`,
 	(x) => `<sup>${x}</sup>`,
 );
 
 /**
- * `RichTextMathematicalExpression` (inline) — best-effort `<tg-math>` / `$x$`
+ * `RichTextMathematicalExpression` (inline) — `<tg-math>` / `$x$`
  * (the block form is confirmed as `<tg-math-block>` — see `mathBlock` in
  * blocks.ts). `expression` is raw LaTeX — not markdown-escaped.
  */
@@ -149,8 +142,8 @@ export function math(expression: string): RichNode {
 }
 
 /**
- * `RichTextDateTime`, auto-formatted date-time — best-effort `<time>` (attribute
- * name `data-format` is a guess) / `![label](tg://time?unix=…&format=…)`.
+ * `RichTextDateTime`, auto-formatted date-time — `<tg-time unix format>` /
+ * `![label](tg://time?unix=…&format=…)`.
  * `format` is telegram's date-time entity format string.
  */
 export function dateTime(unixTime: number, format: string, ...items: Insertable[]): RichNode {
@@ -159,14 +152,13 @@ export function dateTime(unixTime: number, format: string, ...items: Insertable[
 	return makeNode("inline", (d) =>
 		d === "markdown"
 			? `![${children(items, d)}](${escapeMarkdownUrl(query)})`
-			: `<time datetime="${unixTime}" data-format="${escapeAttr(format)}">${children(items, d)}</time>`,
+			: `<tg-time unix="${unixTime}"${format ? ` format="${escapeAttr(format)}"` : ""}>${children(items, d)}</tg-time>`,
 	);
 }
 
 /**
- * `RichTextReference`, a footnote definition. no tag is documented anywhere in
- * the scraped schema — `<tg-reference>` is a from-scratch `tg-*`-style guess,
- * `[^name]: …` the standard markdown footnote line (place it at line start).
+ * `RichTextReference`, a footnote definition — `<tg-reference name>` /
+ * `[^name]: …`, the markdown footnote line (place it at line start).
  */
 export function reference(name: string, ...items: Insertable[]): RichNode {
 	return makeNode("inline", (d) =>
@@ -176,12 +168,10 @@ export function reference(name: string, ...items: Insertable[]): RichNode {
 	);
 }
 
-/** `RichTextReferenceLink`, a link to a `reference()` — same caveat as `reference`. */
+/** `RichTextReferenceLink`, a link to a `reference()` — `<a href="#name">` / `[^name]`. */
 export function referenceLink(name: string, ...items: Insertable[]): RichNode {
 	return makeNode("inline", (d) =>
-		d === "markdown"
-			? `[^${name}]`
-			: `<tg-reference-link name="${escapeAttr(name)}">${children(items, d)}</tg-reference-link>`,
+		d === "markdown" ? `[^${name}]` : `<a href="#${escapeAttr(name)}">${children(items, d)}</a>`,
 	);
 }
 

@@ -254,28 +254,20 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 </p>
 
 <div class="note">
-	<strong>tag confidence varies.</strong> most tags are <strong>confirmed</strong> straight from
-	telegram's schema (<code>&lt;p&gt;</code>, <code>&lt;h1&gt;</code>–<code>&lt;h6&gt;</code>,
-	<code>&lt;pre&gt;&lt;code&gt;</code>, <code>&lt;hr/&gt;</code>, <code>&lt;footer&gt;</code>,
-	<code>&lt;blockquote&gt;</code>, <code>&lt;aside&gt;</code>, <code>&lt;details&gt;</code>,
-	<code>&lt;table&gt;</code>, <code>&lt;tg-collage&gt;</code>, <code>&lt;tg-slideshow&gt;</code>,
-	<code>&lt;tg-map&gt;</code>, <code>&lt;tg-math-block&gt;</code>, <code>&lt;tg-thinking&gt;</code>,
-	the classic <code>&lt;b&gt;</code>/<code>&lt;i&gt;</code>/<code>&lt;u&gt;</code>/<code>&lt;s&gt;</code>/<code>&lt;code&gt;</code>/<code>&lt;tg-spoiler&gt;</code>/<code>&lt;tg-emoji&gt;</code>
-	set, and <code>tg://user?id=…</code>). a handful (<code>marked</code>, <code>subscript</code>,
-	<code>superscript</code>, <code>dateTime</code>, inline <code>math</code>,
-	<code>reference</code>/<code>referenceLink</code>) have
-	<strong>no documented tag</strong> in the schema at all — those are best-effort guesses, flagged in
-	their doc comments in <code>inline.ts</code>/<code>blocks.ts</code>. verify against the live
-	"rich message formatting options" docs before depending on the exact spelling in production. the
-	bot api 10.3 additions use their confirmed tags: <code>&lt;tg-button&gt;</code>/<code
-		>&lt;tg-button-row&gt;</code
-	>, <code>&lt;blockquote expandable&gt;</code>, <code>&lt;tg-document&gt;</code>, and the table's
-	<code>bordered</code>/<code>striped</code>/<code>compact</code> attributes. where rich-markdown has
-	no native token for a block at all (<code>footer</code>, pull-quote, collage/slideshow, map,
-	<code>details</code>, buttons, expandable quotes, <code>underline</code>, <code>subscript</code>,
-	<code>superscript</code>), the raw html tag is embedded as-is in the markdown output too —
-	telegram's markdown parser accepts embedded html blocks as long as they're blank-line-separated,
-	which the block builders already handle.
+	<strong>every tag follows telegram's "rich html style" / "rich markdown style" docs</strong>,
+	including the less common ones: <code>&lt;tg-time unix format&gt;</code> for
+	<code>dateTime</code>, <code>&lt;tg-math&gt;</code>, <code>&lt;tg-reference name&gt;</code> with
+	<code>&lt;a href="#…"&gt;</code> links, <code>&lt;tg-map lat long zoom/&gt;</code>, a
+	<code>tg-spoiler</code> attribute on media, <code>&lt;mark&gt;</code>/<code>&lt;sub&gt;</code>/<code
+		>&lt;sup&gt;</code
+	>, and the bot api 10.3 <code>&lt;tg-button&gt;</code>/<code>&lt;tg-button-row&gt;</code>,
+	<code>&lt;blockquote expandable&gt;</code>, <code>&lt;tg-document&gt;</code> and
+	<code>bordered</code>/<code>striped</code>/<code>compact</code> table attributes. where
+	rich-markdown has no native token for a block at all (<code>footer</code>, pull-quote,
+	collage/slideshow, map, <code>details</code>, buttons, expandable quotes,
+	<code>underline</code>, <code>subscript</code>, <code>superscript</code>), the raw html tag is
+	embedded as-is in the markdown output too — telegram's markdown parser accepts embedded html
+	blocks as long as they're blank-line-separated, which the block builders already handle.
 	<br /><br />
 	<code>sendRichMessage</code> has no <code>attach://</code>/multipart upload path (unlike
 	<code>sendPhoto</code>) — media blocks take a hosted url (or a <code>tg://…?id=</code> link to an

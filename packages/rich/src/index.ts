@@ -20,12 +20,9 @@
  * - **read**: type guards (guards.ts) and plain-text flattening (plaintext.ts)
  *   cover every `RichBlock`/`RichText` variant telegram can hand back.
  *
- * a handful of inline/block tags have no "corresponding to the html tag …" note in
- * the schema (marked, subscript, superscript, date_time, inline math, map,
- * reference/reference_link, table borders) — those are flagged best-effort in
- * their doc comments in inline.ts/blocks.ts. everything else is either a
- * documented tag or (for url/email/phone/bank-card/@mention/#hashtag/$cashtag/
- * /bot_command) auto-detected from plain text by telegram itself.
+ * every tag follows telegram's "rich html style" / "rich markdown style" docs;
+ * url/email/phone/bank-card/@mention/#hashtag/$cashtag//bot_command need no tag —
+ * telegram auto-detects them from plain text.
  */
 
 // the full generated rich-message type surface, re-exported so consumers never
@@ -218,7 +215,14 @@ export {
 	textMention,
 	underline,
 } from "./inline.js";
-export { type Dialect, isRichNode, type Level, RichError, type RichNode } from "./node.js";
+export {
+	type Dialect,
+	isRichNode,
+	type Level,
+	makeNode,
+	RichError,
+	type RichNode,
+} from "./node.js";
 export { richBlockToPlainText, richMessageToPlainText, richTextToPlainText } from "./plaintext.js";
 export { escapeFor, type Insertable, render } from "./render.js";
 export {

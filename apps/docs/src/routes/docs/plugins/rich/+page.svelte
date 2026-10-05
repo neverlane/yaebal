@@ -57,6 +57,20 @@ bot.command("ask", async (ctx) => {
   await draft.send();
 });`;
 
+	const buttonsCode = `import { button, buttons, customEmoji, html, paragraph } from "@yaebal/rich";
+
+await ctx.sendRichMessage(html\`
+  \${paragraph("deploy is ready ", button("details", { callbackData: "deploy:details" }, { style: "link" }))}
+
+  \${buttons([
+    button([customEmoji("5368324170671202286", "✅"), " ship"], { callbackData: "deploy:ship" }, { style: "success" }),
+    button("cancel", { callbackData: "deploy:cancel" }, { style: "danger" }),
+  ], { align: "center" })}
+\`);
+
+// callback buttons arrive as an ordinary callback_query
+bot.callbackQuery("deploy:ship", (ctx) => ctx.answerCallbackQuery({ text: "shipping" }));`;
+
 	const read = `import { richMessageToPlainText, isTable, isPhoto } from "@yaebal/rich";
 
 bot.on("message:rich_message", (ctx) => {
@@ -77,11 +91,12 @@ bot.on("message:rich_message", (ctx) => {
 	const blocks = `paragraph / heading / h1…h6 / preformatted / footer / divider
 mathBlock / anchorBlock
 blockquote / pullquote / details / list / item / table / cell / join
-collage / slideshow / map / image / video / audio
+collage / slideshow / map / image / video / audio / file
+buttons             (a row of button()s, bot api 10.3)
 thinking            (draft-only — see RichMessageDraft)`;
 
 	const inline = `bold / italic / underline / strikethrough / spoiler / code / br
-link / textMention / anchor / anchorLink / customEmoji
+link / textMention / anchor / anchorLink / customEmoji / button
 marked / subscript / superscript / dateTime / math / reference / referenceLink
 
 // no builder needed — auto-detected from plain text unless .noEntityDetection():
@@ -184,6 +199,23 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	<code>send()</code> to abandon a draft without persisting anything — it expires within 30s
 	regardless.
 </div>
+<p>
+	<code>ctx.richMessageDraft(id, {'{ canStop: true }'})</code> shows the user a stop button on the
+	draft (bot api 10.3). a press arrives as a <code>stopped_message_generation</code> update — stop
+	generating there and <code>send()</code> or <code>cancel()</code>. <code>keepOnStop: true</code>
+	keeps the draft visible after the press.
+</p>
+
+<h2>buttons</h2>
+<p>
+	bot api 10.3 puts buttons inside the message body: <code>button()</code> sits right in the text,
+	<code>buttons()</code> lays out a row. every <code>RichMessageButton</code> type is covered
+	(<code>callbackData</code>, <code>url</code>, <code>webApp</code>, <code>loginUrl</code>,
+	<code>switchInlineQuery*</code>, <code>copyText</code>, <code>disabled</code>), with
+	<code>style</code> <code>"success" | "danger" | "primary" | "link"</code> (<code>link</code> is
+	callback-only). the label holds plain text, <code>customEmoji()</code> and <code>dateTime()</code>.
+</p>
+<Code code={buttonsCode} title="buttons.ts" />
 
 <h2>reading</h2>
 <p>
@@ -231,18 +263,23 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	the classic <code>&lt;b&gt;</code>/<code>&lt;i&gt;</code>/<code>&lt;u&gt;</code>/<code>&lt;s&gt;</code>/<code>&lt;code&gt;</code>/<code>&lt;tg-spoiler&gt;</code>/<code>&lt;tg-emoji&gt;</code>
 	set, and <code>tg://user?id=…</code>). a handful (<code>marked</code>, <code>subscript</code>,
 	<code>superscript</code>, <code>dateTime</code>, inline <code>math</code>,
-	<code>reference</code>/<code>referenceLink</code>, table borders) have
+	<code>reference</code>/<code>referenceLink</code>) have
 	<strong>no documented tag</strong> in the schema at all — those are best-effort guesses, flagged in
 	their doc comments in <code>inline.ts</code>/<code>blocks.ts</code>. verify against the live
-	"rich message formatting options" docs before depending on the exact spelling in production. where
-	rich-markdown has no native token for a block at all (<code>footer</code>, pull-quote,
-	collage/slideshow, map, <code>details</code>, <code>underline</code>, <code>subscript</code>,
+	"rich message formatting options" docs before depending on the exact spelling in production. the
+	bot api 10.3 additions use their confirmed tags: <code>&lt;tg-button&gt;</code>/<code
+		>&lt;tg-button-row&gt;</code
+	>, <code>&lt;blockquote expandable&gt;</code>, <code>&lt;tg-document&gt;</code>, and the table's
+	<code>bordered</code>/<code>striped</code>/<code>compact</code> attributes. where rich-markdown has
+	no native token for a block at all (<code>footer</code>, pull-quote, collage/slideshow, map,
+	<code>details</code>, buttons, expandable quotes, <code>underline</code>, <code>subscript</code>,
 	<code>superscript</code>), the raw html tag is embedded as-is in the markdown output too —
 	telegram's markdown parser accepts embedded html blocks as long as they're blank-line-separated,
 	which the block builders already handle.
 	<br /><br />
 	<code>sendRichMessage</code> has no <code>attach://</code>/multipart upload path (unlike
-	<code>sendPhoto</code>) — media blocks take a hosted url, not a local file.
+	<code>sendPhoto</code>) — media blocks take a hosted url (or a <code>tg://…?id=</code> link to an
+	<code>InputRichMessage.media</code> entry), not a local file.
 </div>
 
 <h2>api</h2>
@@ -256,6 +293,7 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 		<tr><td><code>RichDocument</code></td><td>the sendable result — <code>.rtl()</code>/<code>.noEntityDetection()</code>, <code>toInputRichMessage()</code>/<code>toJSON()</code></td></tr>
 		<tr><td><code>sendRichMessage</code> / <code>sendRichMessageDraft</code></td><td>standalone send functions, no plugin required</td></tr>
 		<tr><td><code>rich()</code></td><td>plugin — adds <code>ctx.sendRichMessage</code> / <code>ctx.richMessageDraft</code></td></tr>
+		<tr><td><code>button</code> / <code>buttons</code></td><td>in-message buttons (bot api 10.3) — inline, or a row block</td></tr>
 		<tr><td><code>RichMessageDraft</code></td><td>the draft/streaming session class (<code>rewrite</code> / <code>write</code> / <code>send</code> / <code>cancel</code>)</td></tr>
 		<tr><td><code>RichNode</code> / <code>isRichNode</code> / <code>makeNode</code></td><td>the node contract, for writing your own dual-dialect builder</td></tr>
 		<tr><td><code>escapeMarkdown</code> / <code>escapeMarkdownUrl</code></td><td>the raw markdown escapers the builders use internally</td></tr>

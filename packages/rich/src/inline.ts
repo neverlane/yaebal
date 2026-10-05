@@ -1,6 +1,6 @@
 import type { User } from "@yaebal/core";
 import { escapeAttr, escapeMarkdownUrl } from "./escape.js";
-import { type Dialect, makeNode, type RichNode } from "./node.js";
+import { type Dialect, makeNode, RichError, type RichNode } from "./node.js";
 import { escapeFor, type Insertable, render } from "./render.js";
 
 // every builder here returns a dialect-agnostic `RichNode` — the html/markdown
@@ -182,5 +182,89 @@ export function referenceLink(name: string, ...items: Insertable[]): RichNode {
 		d === "markdown"
 			? `[^${name}]`
 			: `<tg-reference-link name="${escapeAttr(name)}">${children(items, d)}</tg-reference-link>`,
+	);
+}
+
+// --- buttons (bot api 10.3) ---
+
+/** `RichMessageButton.style`; `"link"` (a borderless link-like button) is for callback buttons only. */
+export type ButtonStyle = "danger" | "success" | "primary" | "link";
+
+/** what a `button()` does — exactly one `RichMessageButton` type, as in `<tg-button type="…">`. */
+export type ButtonAction =
+	| { callbackData: string }
+	| { url: string }
+	| { webApp: string }
+	| { loginUrl: string; forwardText?: string; requestWriteAccess?: boolean }
+	| { switchInlineQuery: string }
+	| { switchInlineQueryCurrentChat: string }
+	| {
+			switchInlineQueryChosenChat: string;
+			allowUserChats?: boolean;
+			allowBotChats?: boolean;
+			allowGroupChats?: boolean;
+			allowChannelChats?: boolean;
+	  }
+	| { copyText: string }
+	| { disabled: true };
+
+export interface ButtonOptions {
+	style?: ButtonStyle;
+}
+
+const flag = (name: string, on: boolean | undefined) => (on ? ` ${name}` : "");
+
+function buttonAttrs(action: ButtonAction): string {
+	if ("callbackData" in action) {
+		if (new TextEncoder().encode(action.callbackData).length > 64)
+			throw new RichError("button(): callbackData must be 1-64 bytes");
+		return `type="callback_data" data="${escapeAttr(action.callbackData)}"`;
+	}
+	if ("url" in action) return `type="url" url="${escapeAttr(action.url)}"`;
+	if ("webApp" in action) return `type="web_app" url="${escapeAttr(action.webApp)}"`;
+	if ("loginUrl" in action) {
+		const forward =
+			action.forwardText === undefined ? "" : ` forward-text="${escapeAttr(action.forwardText)}"`;
+		return `type="login_url" url="${escapeAttr(action.loginUrl)}"${forward}${flag("request-write-access", action.requestWriteAccess)}`;
+	}
+	if ("switchInlineQuery" in action)
+		return `type="switch_inline_query" query="${escapeAttr(action.switchInlineQuery)}"`;
+	if ("switchInlineQueryCurrentChat" in action)
+		return `type="switch_inline_query_current_chat" query="${escapeAttr(action.switchInlineQueryCurrentChat)}"`;
+	if ("switchInlineQueryChosenChat" in action)
+		return (
+			`type="switch_inline_query_chosen_chat" query="${escapeAttr(action.switchInlineQueryChosenChat)}"` +
+			flag("allow-user-chats", action.allowUserChats) +
+			flag("allow-bot-chats", action.allowBotChats) +
+			flag("allow-group-chats", action.allowGroupChats) +
+			flag("allow-channel-chats", action.allowChannelChats)
+		);
+	if ("copyText" in action) return `type="copy_text" text="${escapeAttr(action.copyText)}"`;
+	return `type="disabled"`;
+}
+
+/**
+ * `RichTextButton` (bot api 10.3), confirmed custom tag `<tg-button>` — a button
+ * placed right in the text; group several into a row with `buttons()` (blocks.ts).
+ * the label may hold only plain text, `customEmoji()` and `dateTime()`. markdown has
+ * no token for it, so the raw html tag is embedded in both dialects.
+ *
+ * @example
+ * paragraph("ready? ", button("start", { callbackData: "start" }, { style: "success" }));
+ */
+export function button(
+	label: Insertable,
+	action: ButtonAction,
+	options: ButtonOptions = {},
+): RichNode {
+	if (options.style === "link" && !("callbackData" in action))
+		throw new RichError('button(): style "link" is allowed only for callback buttons');
+	const attrs = buttonAttrs(action);
+	const style = options.style === undefined ? "" : ` style="${options.style}"`;
+
+	// telegram parses the label as html in both dialects (it sits inside an html tag).
+	return makeNode(
+		"inline",
+		() => `<tg-button ${attrs}${style}>${render(label, "html")}</tg-button>`,
 	);
 }

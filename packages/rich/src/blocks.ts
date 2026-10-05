@@ -96,13 +96,32 @@ export function anchorBlock(name: string): RichNode {
 	return makeNode("block", () => `<a name="${escapeAttr(name)}"></a>`);
 }
 
+export interface BlockquoteOptions {
+	/**
+	 * `RichBlockExpandableBlockQuotation` (bot api 10.3), confirmed `<blockquote expandable>`:
+	 * collapsed by default, the reader expands it.
+	 */
+	expandable?: boolean;
+}
+
 /**
  * `RichBlockBlockQuotation` — `<blockquote>` with an optional `<cite>` credit;
  * `>`-prefixed lines in markdown (each array item becomes its own line, the
  * credit a trailing `> — credit` line).
  */
-export function blockquote(items: Insertable[], credit?: Insertable): RichNode {
+export function blockquote(
+	items: Insertable[],
+	credit?: Insertable,
+	options: BlockquoteOptions = {},
+): RichNode {
 	return makeNode("block", (d) => {
+		if (options.expandable) {
+			// markdown has no token for it and isn't parsed inside a block html tag, so the
+			// raw tag goes into both dialects with html content.
+			const creditHtml = credit === undefined ? "" : `<cite>${render(credit, "html")}</cite>`;
+			return `<blockquote expandable>${children(items, "html")}${creditHtml}</blockquote>`;
+		}
+
 		if (d === "markdown") {
 			const body = items
 				.map((item) =>
@@ -208,10 +227,12 @@ export function cell(content?: Insertable, options: TableCellOptions = {}): Tabl
 }
 
 export interface TableOptions {
-	/** best-effort: rendered as the `border` attribute. html-only. */
+	/** confirmed `bordered` attribute. html-only. */
 	bordered?: boolean;
-	/** best-effort: no standard html equivalent, rendered as `data-striped`. html-only. */
+	/** confirmed `striped` attribute. html-only. */
 	striped?: boolean;
+	/** `is_compact` (bot api 10.3), confirmed `compact` attribute: smaller cell indents. html-only. */
+	compact?: boolean;
 	/** `<caption>` in html; a leading caption line in markdown. */
 	caption?: Insertable;
 }
@@ -226,7 +247,7 @@ const ALIGN_MARKER: Record<"left" | "center" | "right", string> = {
  * `RichBlockTable`, confirmed `<table>` / a gfm table. build cells with `cell()`
  * (a bare value is wrapped in a plain `cell()` automatically). gfm structurally
  * requires a header row, so in markdown `rows[0]` always renders as the header
- * line and `colspan`/`rowspan`/`valign`/`header`/`bordered`/`striped` are
+ * line and `colspan`/`rowspan`/`valign`/`header`/`bordered`/`striped`/`compact` are
  * dropped; in html the header is per-cell opt-in (`cell(x, { header: true })`).
  */
 export function table(rows: Insertable[][], options: TableOptions = {}): RichNode {
@@ -243,7 +264,10 @@ export function table(rows: Insertable[][], options: TableOptions = {}): RichNod
 			return `${captionLine}${[line(head), separator, ...cells.slice(1).map(line)].join("\n")}`;
 		}
 
-		const attrs = (options.bordered ? " border" : "") + (options.striped ? " data-striped" : "");
+		const attrs =
+			(options.bordered ? " bordered" : "") +
+			(options.striped ? " striped" : "") +
+			(options.compact ? " compact" : "");
 		const captionHtml =
 			options.caption === undefined ? "" : `<caption>${render(options.caption, d)}</caption>`;
 		const body = cells.map((row) => `<tr>${row.map((c) => c.render(d)).join("")}</tr>`).join("");
@@ -439,6 +463,34 @@ export function video(src: string, options: MediaOptions = {}): RichNode {
  */
 export function audio(src: string, options: MediaOptions = {}): RichNode {
 	return figure("audio", src, options);
+}
+
+/**
+ * `RichBlockDocument` (bot api 10.3), confirmed custom tag `<tg-document>` — a general
+ * file by url (or a `tg://document?id=` link to an `InputRichMessage.media` upload);
+ * `![](url "caption")` in markdown.
+ */
+export function file(src: string, caption: Caption = {}): RichNode {
+	return figure("tg-document", src, caption);
+}
+
+/**
+ * `RichBlockButtons` (bot api 10.3), confirmed custom tag `<tg-button-row>` — one
+ * row of `button()`s (inline.ts). raw html in both dialects: markdown has no token
+ * for it and isn't parsed inside a block html tag.
+ */
+export function buttons(items: RichNode[], options: ButtonsOptions = {}): RichNode {
+	const align = options.align === undefined ? "" : ` align="${options.align}"`;
+
+	return makeNode(
+		"block",
+		() => `<tg-button-row${align}>${children(items, "html")}</tg-button-row>`,
+	);
+}
+
+export interface ButtonsOptions {
+	/** `RichBlockButtons.align`. */
+	align?: "left" | "center" | "right";
 }
 
 /**

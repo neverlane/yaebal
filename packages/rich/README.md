@@ -114,6 +114,25 @@ bot.command("ask", async (ctx) => {
 
 call `draft.cancel()` instead of `send()` to abandon a draft without persisting anything (it expires within 30s regardless).
 
+`ctx.richMessageDraft(id, { canStop: true })` shows the user a stop button on the draft (bot api 10.3); a press arrives as a `stopped_message_generation` update — stop generating there and `send()` or `cancel()`. `keepOnStop: true` keeps the draft visible after the press.
+
+## buttons
+
+bot api 10.3 puts buttons inside the message body: `button()` sits right in the text, `buttons()` lays out a row. every `RichMessageButton` type is covered (`callbackData`, `url`, `webApp`, `loginUrl`, `switchInlineQuery*`, `copyText`, `disabled`), with `style: "success" | "danger" | "primary" | "link"` (`link` is callback-only). callback buttons arrive as an ordinary `callback_query`.
+
+```ts
+import { button, buttons, customEmoji, html, paragraph } from "@yaebal/rich";
+
+await ctx.sendRichMessage(html`
+  ${paragraph("deploy is ready ", button("details", { callbackData: "deploy:details" }, { style: "link" }))}
+
+  ${buttons([
+    button([customEmoji("5368324170671202286", "✅"), " ship"], { callbackData: "deploy:ship" }, { style: "success" }),
+    button("cancel", { callbackData: "deploy:cancel" }, { style: "danger" }),
+  ], { align: "center" })}
+`);
+```
+
 ## reading
 
 ```ts
@@ -136,9 +155,9 @@ every one of telegram's ~50 `Rich*` types is covered on both sides:
 
 most tags are **confirmed** directly from telegram's schema (`<p>`, `<h1>`–`<h6>`, `<pre><code>`, `<hr/>`, `<footer>`, `<blockquote>`, `<aside>` for pull-quotes, `<details>`/`<summary>`, `<table>`, `<tg-collage>`, `<tg-slideshow>`, `<tg-map>`, `<tg-math-block>`, `<tg-thinking>`, `<img>`/`<video>`/`<audio>`, `<a name>`/`<a href="#…">`, `<cite>`, and the classic `<b>`/`<i>`/`<u>`/`<s>`/`<code>`/`<tg-spoiler>`/`<tg-emoji>`/`tg://user?id=…` set). `url`/`email_address`/`phone_number`/`bank_card_number`/`@mention`/`#hashtag`/`$cashtag`/`/bot_command` need **no explicit tag at all** — telegram auto-detects them from plain text unless you pass `.noEntityDetection()`.
 
-a handful of inline/block features have **no documented tag** in the schema at all (`marked`, `subscript`, `superscript`, `date_time`, inline `mathematical_expression`, `reference`/`reference_link`, table `is_bordered`/`is_striped`). those are implemented as a best-effort guess (standard html5 tags where one exists, a `tg-*`-style name otherwise) and flagged in their doc comments in `inline.ts`/`blocks.ts` — verify against the live "rich message formatting options" docs before relying on the exact spelling in production. where rich-markdown has no native token for a block at all (`footer`, pull-quote, collage/slideshow, map, `details`, `underline`, `subscript`, `superscript`), the raw html tag is embedded as-is in the markdown output too — telegram's markdown parser accepts embedded html blocks as long as they're blank-line-separated, which the block builders already handle.
+a handful of inline/block features have **no documented tag** in the schema at all (`marked`, `subscript`, `superscript`, `date_time`, inline `mathematical_expression`, `reference`/`reference_link`). those are implemented as a best-effort guess (standard html5 tags where one exists, a `tg-*`-style name otherwise) and flagged in their doc comments in `inline.ts`/`blocks.ts` — verify against the live "rich message formatting options" docs before relying on the exact spelling in production. the bot api 10.3 additions use their confirmed tags: `<tg-button>`/`<tg-button-row>`, `<blockquote expandable>`, `<tg-document>`, and the table's `bordered`/`striped`/`compact` attributes. where rich-markdown has no native token for a block at all (`footer`, pull-quote, collage/slideshow, map, `details`, buttons, expandable quotes, `underline`, `subscript`, `superscript`), the raw html tag is embedded as-is in the markdown output too — telegram's markdown parser accepts embedded html blocks as long as they're blank-line-separated, which the block builders already handle.
 
-`sendRichMessage` has no `attach://`/multipart upload path (unlike `sendPhoto`) — media blocks (`image`/`video`/`audio`) take a hosted url, not a local file.
+`sendRichMessage` has no `attach://`/multipart upload path (unlike `sendPhoto`) — media blocks (`image`/`video`/`audio`/`file`) take a hosted url (or a `tg://photo|video|document|audio?id=` link to an `InputRichMessage.media` entry), not a local file.
 
 ### tables and lists carry their full field set
 
@@ -165,9 +184,10 @@ in html this is a full `<table>` with `colspan`/`rowspan`/`valign`/per-cell `<th
 | `RichDocument`                                                                                         | the sendable result — `.rtl()`/`.noEntityDetection()`, `toInputRichMessage()`/`toJSON()` |
 | `bold`/`italic`/`underline`/`strikethrough`/`spoiler`/`code`/`marked`/`subscript`/`superscript`/`br`   | inline marks                                                                             |
 | `link`/`textMention`/`anchor`/`anchorLink`/`customEmoji`/`dateTime`/`math`/`reference`/`referenceLink` | inline nodes with data                                                                   |
+| `button`/`buttons`                                                                                     | in-message buttons (bot api 10.3) — inline, or a row block                               |
 | `paragraph`/`heading`/`h1`–`h6`/`preformatted`/`footer`/`divider`/`mathBlock`/`anchorBlock`            | simple blocks                                                                            |
-| `blockquote`/`pullquote`/`details`/`list`/`item`/`table`/`cell`/`join`                                 | structural blocks & composition                                                          |
-| `collage`/`slideshow`/`map`/`image`/`video`/`audio`/`thinking`                                         | media & draft-only blocks                                                                |
+| `blockquote`/`pullquote`/`details`/`list`/`item`/`table`/`cell`/`join`                                 | structural blocks & composition (`blockquote(…, { expandable })`, `table(…, { compact })`) |
+| `collage`/`slideshow`/`map`/`image`/`video`/`audio`/`file`/`thinking`                                  | media & draft-only blocks                                                                |
 | `RichNode`/`isRichNode`/`makeNode`/`Dialect`/`Level`/`RichError`                                       | the node contract, for writing your own dual-dialect builder                             |
 | `escapeMarkdown`/`escapeMarkdownUrl`                                                                   | the raw markdown escapers the builders use internally                                    |
 | `sendRichMessage`/`sendRichMessageDraft`                                                               | standalone send functions, no plugin required                                            |

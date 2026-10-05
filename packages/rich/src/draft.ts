@@ -22,6 +22,14 @@ export interface RichMessageDraftOptions {
 	messageThreadId?: number;
 	/** routed into the final `send()` only — see {@link messageThreadId}. */
 	businessConnectionId?: string;
+	/**
+	 * `can_stop` (bot api 10.3) — show the user a button to stop the generation. a press
+	 * arrives as a `stopped_message_generation` update; stop pushing and `send()` or
+	 * `cancel()` from there.
+	 */
+	canStop?: boolean;
+	/** `keep_on_stop` (bot api 10.3) — keep the draft visible when the stop button is pressed. */
+	keepOnStop?: boolean;
 }
 
 interface DraftState {
@@ -110,6 +118,7 @@ export class RichMessageDraft {
 	readonly #onError?: (error: unknown) => void;
 	readonly #messageThreadId?: number;
 	readonly #businessConnectionId?: string;
+	readonly #stopParams: { can_stop?: boolean; keep_on_stop?: boolean };
 
 	#timer?: ReturnType<typeof setInterval>;
 	#state: DraftState | undefined;
@@ -123,6 +132,10 @@ export class RichMessageDraft {
 		this.#onError = options.onError;
 		this.#messageThreadId = options.messageThreadId;
 		this.#businessConnectionId = options.businessConnectionId;
+		this.#stopParams = {
+			...(options.canStop === undefined ? {} : { can_stop: options.canStop }),
+			...(options.keepOnStop === undefined ? {} : { keep_on_stop: options.keepOnStop }),
+		};
 	}
 
 	get closed(): boolean {
@@ -180,6 +193,7 @@ export class RichMessageDraft {
 			draft_id: this.#draftId,
 			rich_message: input,
 			...(this.#messageThreadId === undefined ? {} : { message_thread_id: this.#messageThreadId }),
+			...this.#stopParams,
 		});
 	}
 

@@ -3,6 +3,7 @@ import type { Api } from "@yaebal/core";
 import { isMediaSource } from "@yaebal/core";
 import type * as t from "@yaebal/types";
 import { requiredId } from "../require-id.js";
+import { messageReplyParameters } from "../reply-parameters.js";
 
 export interface BusinessMessageContextBase extends t.Message {}
 export class BusinessMessageContextBase {
@@ -47,7 +48,7 @@ export class BusinessMessageContextBase {
 	}
 	/** reply to this message. */
 	reply(params: Omit<t.SendMessageParams, "chat_id" | "business_connection_id" | "message_thread_id" | "direct_messages_topic_id">) {
-		return this.api.call<t.Message>("sendMessage", { chat_id: this.chat.id, reply_parameters: { message_id: this.message_id }, ...(((this.business_connection_id) === undefined) ? {} : { business_connection_id: this.business_connection_id }), ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...(((this.direct_messages_topic?.topic_id) === undefined) ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
+		return this.api.call<t.Message>("sendMessage", { chat_id: this.chat.id, ...messageReplyParameters(this), ...(((this.business_connection_id) === undefined) ? {} : { business_connection_id: this.business_connection_id }), ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...(((this.direct_messages_topic?.topic_id) === undefined) ? {} : { direct_messages_topic_id: this.direct_messages_topic?.topic_id }), ...params });
 	}
 	/** Use this method to send text messages. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	send(params: Omit<t.SendMessageParams, "business_connection_id" | "chat_id" | "message_thread_id" | "direct_messages_topic_id">) {

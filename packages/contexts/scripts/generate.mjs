@@ -256,7 +256,7 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 
 		lines.push(`	/** reply to this message. */
 	reply(params: Omit<t.SendMessageParams, ${replyOmit}>) {
-		return this.api.call<t.Message>("sendMessage", { chat_id: ${providers.chat_id}, reply_parameters: { message_id: this.message_id }${replyExtra}, ...params });
+		return this.api.call<t.Message>("sendMessage", { chat_id: ${providers.chat_id}, ...messageReplyParameters(this)${replyExtra}, ...params });
 	}`);
 		used.add("reply");
 	}
@@ -471,10 +471,10 @@ const payloadProps = update.properties.filter((p) => p.name !== "update_id");
 const genDir = new URL("src/generated/", root);
 mkdirSync(genDir, { recursive: true });
 
-const header = (usesMedia, usesRequiredId) => `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
+const header = (usesMedia, usesRequiredId, isMessage) => `// AUTO-GENERATED — do not edit by hand. regenerate: pnpm --filter @yaebal/contexts generate
 import type { Api } from "@yaebal/core";
 ${usesMedia ? 'import { isMediaSource } from "@yaebal/core";\n' : ""}import type * as t from "@yaebal/types";
-${usesRequiredId ? 'import { requiredId } from "../require-id.js";\n' : ""}
+${usesRequiredId ? 'import { requiredId } from "../require-id.js";\n' : ""}${isMessage ? 'import { messageReplyParameters } from "../reply-parameters.js";\n' : ""}
 `;
 
 const entries = []; // { prop, payloadName, pascal, kebab, sugared }
@@ -501,7 +501,7 @@ for (const prop of payloadProps) {
 	);
 	const getters = gettersFor(payload);
 
-	const file = `${header(usesMedia, usesRequiredId)}export interface ${className} extends t.${payloadName} {}
+	const file = `${header(usesMedia, usesRequiredId, payloadName === "Message")}export interface ${className} extends t.${payloadName} {}
 export class ${className} {
 	readonly api: Api;
 	readonly update: t.Update;

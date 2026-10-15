@@ -239,3 +239,25 @@ test("the batteries are reachable from the single import and install on a bot", 
 	await bot.handleUpdate(messageUpdate);
 	assert.ok(ctx instanceof Context);
 });
+
+test("createBot keeps ephemeral reply behavior when rich contexts are installed", async (t) => {
+	const calls: Record<string, unknown>[] = [];
+	t.mock.method(globalThis, "fetch", async (_url: unknown, init?: RequestInit) => {
+		calls.push(JSON.parse(String(init?.body)));
+		return Response.json({ ok: true, result: { message_id: 0, ephemeral_message_id: 11 } });
+	});
+	const bot = createBot("123:test").on("message:text", (ctx) => ctx.reply("answer"));
+	await bot.handleUpdate({
+		update_id: 1,
+		message: {
+			message_id: 0,
+			ephemeral_message_id: 10,
+			date: 0,
+			text: "hello",
+			chat: { id: -1, type: "supergroup" },
+			from: { id: 7, is_bot: false, first_name: "user" },
+		},
+	});
+	assert.deepEqual(calls[0]?.reply_parameters, { ephemeral_message_id: 10 });
+	assert.deepEqual(calls[0]?.ephemeral_message_parameters, { receiver_user_id: 7 });
+});

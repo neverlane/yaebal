@@ -291,7 +291,9 @@ export async function streamToChat(
 	} finally {
 		options.signal?.removeEventListener("abort", interrupt);
 		if (options.signal?.aborted) {
-			void Promise.resolve(iterator.return?.()).catch(() => undefined);
+			void Promise.resolve()
+				.then(() => iterator.return?.())
+				.catch(() => undefined);
 		} else {
 			await iterator.return?.();
 		}

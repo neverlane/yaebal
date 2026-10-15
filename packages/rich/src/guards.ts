@@ -121,7 +121,8 @@ function blockGuard<K extends keyof RichBlockByType>(type: K) {
 }
 
 function textGuard<K extends keyof RichTextByType>(type: K) {
-	return (text: RichText): text is RichTextByType[K] => text.type === type;
+	return (text: RichText): text is RichTextByType[K] =>
+		typeof text === "object" && text !== null && !Array.isArray(text) && text.type === type;
 }
 
 // --- RichBlock (24 variants) — one guard per `.type` discriminant ---

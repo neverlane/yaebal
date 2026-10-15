@@ -11,7 +11,8 @@
 	},
 	"dependencies": {
 		"@yaebal/ai": "workspace:*",
-		"yaebal": "workspace:*"
+		"yaebal": "workspace:*",
+		"@yaebal/runner": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "latest"

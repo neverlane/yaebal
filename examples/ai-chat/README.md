@@ -3,7 +3,9 @@
 a focused bot that shows `@yaebal/ai` end to end: llm answers streamed into the chat
 (telegram's native draft animation in private chats, throttled edits with a `▍` cursor in
 groups), per-user-per-chat conversation memory, automatic splitting past 4096 chars, and a
-polite `AiLimitError` reply when a user burns the hourly budget.
+polite `AiLimitError` reply when a user burns the hourly budget. native stop buttons
+cancel the provider and preserve partial answers. polling uses `@yaebal/runner`, with stop
+updates bypassing chat queues; do not also call `bot.start()`.
 
 ## running
 

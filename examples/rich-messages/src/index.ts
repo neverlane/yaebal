@@ -6,6 +6,7 @@ import {
 	details,
 	divider,
 	document,
+	file,
 	footer,
 	heading,
 	html,
@@ -22,7 +23,7 @@ import {
 	thinking,
 	video,
 } from "@yaebal/rich";
-import { createBot } from "yaebal";
+import { createBot, media } from "yaebal";
 
 // a focused tour of @yaebal/rich: the dual-dialect builders (every builder works
 // in both the html and markdown template), sending a document, streaming a draft
@@ -125,6 +126,22 @@ const bot = createBot(token)
 			]),
 		),
 	)
+	.command("attachment", (ctx) =>
+		ctx.sendRichMessage(
+			html([heading(2, "attached report"), file("tg://document?id=report")]).media({
+				id: "report",
+				media: { type: "document", media: media.text("your report", "report.txt") },
+			}),
+		),
+	)
+	.command("blocks", async (ctx) => {
+		const draft = ctx.richMessageDraft(Date.now() % 1_000_000 || 1);
+		await draft.rewrite({
+			blocks: [{ type: "paragraph", text: ["hello ", { type: "bold", text: "world" }] }],
+		});
+		await draft.write({ blocks: [{ type: "anchor", name: "end" }] });
+		await draft.send();
+	})
 	.command("ask", async (ctx) => {
 		const question = ctx.args.join(" ").trim();
 
@@ -175,6 +192,8 @@ const bot = createBot(token)
 					{ command: "md", description: "the same builders, rendered as markdown" },
 					{ command: "report", description: "table + checklist + details demo" },
 					{ command: "media", description: "photo/video/audio blocks demo" },
+					{ command: "attachment", description: "upload an attached document" },
+					{ command: "blocks", description: "structured draft blocks" },
 					{ command: "ask", description: "stream a fake answer via sendRichMessageDraft" },
 				],
 			})

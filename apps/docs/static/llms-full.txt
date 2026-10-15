@@ -750,3 +750,25 @@ env.lastApiCall("sendMessage")?.params?.text;
 - https://yaebal.mom/docs/api/types/WebAppInfo/
 - https://yaebal.mom/docs/api/types/WebhookInfo/
 - https://yaebal.mom/docs/api/types/WriteAccessAllowed/
+
+
+## bot api 10.2 and 10.3 flows
+
+- rich messages: https://yaebal.mom/docs/plugins/rich/ — `RichDocument.media(...entries)` attaches
+  uploads referenced by `tg://photo|video|audio|document?id=` links. normal sends support uploads;
+  draft pushes accept existing file ids only. `RichMessageDraft.rewrite` accepts structured
+  `InputRichMessage.blocks`; `write` appends blocks or same-dialect text and preserves media.
+- ephemeral: https://yaebal.mom/docs/plugins/ephemeral/ — `replyEphemeral`/`sendEphemeral` accept
+  text, `{ rich_message }` or `{ media }`. handles expose `editRich`, `editMedia`, `editCaption`,
+  `editReplyMarkup` and `delete`. `replaceWithEphemeral` creates a personal overlay from a regular
+  group-message callback. ids are short-lived; do not persist handles. answer ephemeral commands
+  within 15 seconds using `ephemeral_message_id`; `ctx.reply` keeps these answers ephemeral.
+- ai stop: https://yaebal.mom/docs/plugins/ai/ — `streaming.canStop` and `keepOnStop` default false.
+  the plugin cancels the shared provider signal on `stopped_message_generation`; `keepOnStop`
+  persists partial output. use concurrent dispatch: `@yaebal/runner` with
+  `sequentializeBy: (u) => u.stopped_message_generation ? undefined : chatKey(u)`,
+  `await bot.init()` then `run(bot, ...)`, not sequential `bot.start()`. include the stop update
+  in custom allowed_updates. custom providers must honor request.signal.
+- mini apps: https://yaebal.mom/docs/telegram/mini-apps/ — since july 20, 2026, external origins
+  opened inside mini apps cannot use mini app methods by default. server-side initData
+  validation is unchanged; botfather provides an opt-out for trusted linking setups.

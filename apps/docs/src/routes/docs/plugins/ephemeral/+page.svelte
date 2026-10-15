@@ -71,6 +71,21 @@ const sent = await bot.api.call("sendMessage", {
 const msg = wrapEphemeralMessage(bot.api, sent, { onExpired: "ignore" });
 await msg.edit("psst — updated");`;
 
+	const richMedia = `import { media } from "@yaebal/core";
+
+const summary = await ctx.replyEphemeral({
+  rich_message: { html: "<h2>your summary</h2><p>only you see this.</p>" },
+});
+await summary.editRich({ blocks: [{ type: "divider" }] });
+
+const photo = await ctx.replyEphemeral({ media: { type: "photo", media: "file-id" } });
+await photo.editMedia({ type: "photo", media: media.path("./updated.jpg") });
+await photo.editCaption("ready", { show_caption_above_media: true });`;
+
+	const replacement = `bot.on("callback_query:data", async (ctx) => {
+  await ctx.replaceWithEphemeral({ rich_message: { html: "<p>your personal view</p>" } });
+});`;
+
 	const testing = `const bot = new Composer<Context>()
   .install(ephemeral())
   .command("go", async (ctx) => void (await ctx.replyEphemeral("hi")));
@@ -140,6 +155,44 @@ assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_param
 </p>
 <Code code={commandsPair} title="bot.ts" />
 
+<h2>rich content and media</h2>
+<p>
+	<code>replyEphemeral</code> and <code>sendEphemeral</code> accept text, a format result,
+	<code>{'{ rich_message }'}</code> or <code>{'{ media }'}</code>. rich content accepts
+	<code>InputRichMessage</code> or a <code>RichDocument</code> from
+	<a href="/docs/plugins/rich"><code>@yaebal/rich</code></a>, with no required plugin dependency.
+	media supports photo, video, animation, audio, document, live photo and voice note inputs.
+	voice notes can be sent but cannot be edited with <code>editMedia</code>.
+</p>
+<Code code={richMedia} title="rich-media.ts" />
+<p>
+	new uploads work in media edits. the same handle methods use regular send/edit methods for
+	private-chat fallbacks. extra options are typed as <code>EphemeralSendOptions</code>,
+	<code>EphemeralEditOptions</code>, <code>EphemeralMediaOptions</code> and
+	<code>EphemeralCaptionOptions</code>.
+</p>
+<h2>personalized callback overlays</h2>
+<p>
+	<code>ctx.replaceWithEphemeral(content)</code> supplies the callback id and
+	<code>replace_callback_query_message</code> to display a personal overlay in place of the
+	original group message. it requires a callback from a regular group message. edit existing
+	ephemeral messages through their handles instead; private chats and inline-only callbacks reject.
+</p>
+<Code code={replacement} title="overlay.ts" />
+<p>
+	incoming ephemeral commands are answered using <code>reply_parameters.ephemeral_message_id</code>.
+	answer within 15 seconds, then continue longer work by editing the returned handle.
+	core's <code>ctx.reply()</code> also addresses incoming ephemeral messages correctly and
+	keeps the answer ephemeral.
+</p>
+<p>
+	expiry recovery preserves known rich/media content, captions, formatting and keyboards, and
+	never replays old callback replacements or replies. use reusable file ids, buffers or paths
+	for recovery; a consumed one-shot stream cannot be resent. unknown read-side rich content
+	from <code>wrapEphemeralMessage</code> cannot be reconstructed for markup-only recovery.
+	unrelated missing-chat and invalid-content errors are rethrown.
+</p>
+
 <h2>standalone</h2>
 <p>sent an ephemeral message through the raw api? wrap it:</p>
 <Code code={standalone} title="bot.ts" />
@@ -181,16 +234,30 @@ assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_param
 	<tbody>
 		<tr>
 			<td><code>replyEphemeral</code></td>
-			<td><code>(text, extra?) =&gt; Promise&lt;EphemeralMessage&gt;</code></td>
+			<td><code>(content, extra?) =&gt; Promise&lt;EphemeralMessage&gt;</code></td>
 			<td>answer the update's author privately; falls back per <code>fallback</code> in private chats</td>
 		</tr>
 		<tr>
 			<td><code>sendEphemeral</code></td>
-			<td><code>(receiverUserId, text, extra?) =&gt; Promise&lt;EphemeralMessage&gt;</code></td>
+			<td><code>(receiverUserId, content, extra?) =&gt; Promise&lt;EphemeralMessage&gt;</code></td>
 			<td>ephemeral message to a specific user in the current group; never falls back</td>
 		</tr>
 	</tbody>
 </table>
+
+<h3>handle methods</h3>
+<table>
+	<thead><tr><th>method</th><th>description</th></tr></thead>
+	<tbody>
+		<tr><td><code>edit(text, extra?)</code></td><td>replace text and formatting</td></tr>
+		<tr><td><code>editRich(input, extra?)</code></td><td>replace rich content</td></tr>
+		<tr><td><code>editMedia(media, extra?)</code></td><td>replace media, including new uploads</td></tr>
+		<tr><td><code>editCaption(caption, extra?)</code></td><td>replace caption, entities and caption placement</td></tr>
+		<tr><td><code>editReplyMarkup(markup)</code></td><td>replace the keyboard; undefined clears it</td></tr>
+		<tr><td><code>delete()</code></td><td>delete; false if already gone</td></tr>
+	</tbody>
+</table>
+<p><code>ctx.replaceWithEphemeral(content, extra?)</code> returns the same <code>EphemeralMessage</code> handle.</p>
 
 <h3>EphemeralOptions</h3>
 <table>
@@ -199,7 +266,7 @@ assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_param
 	</thead>
 	<tbody>
 		<tr><td><code>fallback</code></td><td><code>"message" | "error"</code></td><td><code>"message"</code></td><td>what <code>replyEphemeral</code> does in a private chat</td></tr>
-		<tr><td><code>onExpired</code></td><td><code>"throw" | "ignore" | "resend"</code></td><td><code>"throw"</code></td><td>what <code>edit</code>/<code>editReplyMarkup</code> do when the message already expired</td></tr>
+		<tr><td><code>onExpired</code></td><td><code>"throw" | "ignore" | "resend"</code></td><td><code>"throw"</code></td><td>what handle edits do when the message already expired</td></tr>
 		<tr><td><code>isExpiredError</code></td><td><code>(error: unknown) =&gt; boolean</code></td><td><code>isExpiredEphemeralError</code></td><td>override the expiry detector</td></tr>
 	</tbody>
 </table>

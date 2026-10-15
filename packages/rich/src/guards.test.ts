@@ -144,3 +144,10 @@ test("guards narrow RichBlock by .type despite the generated field being `string
 	assert.equal(isPhoto(blocks[1] as RichBlock), true);
 	assert.equal(isTable(blocks[1] as RichBlock), false);
 });
+
+test("rich-text object guards reject plain strings and nested arrays", () => {
+	for (const [, guard] of TEXT_GUARDS) {
+		assert.equal(guard("plain"), false);
+		assert.equal(guard(["nested", ["text"]]), false);
+	}
+});

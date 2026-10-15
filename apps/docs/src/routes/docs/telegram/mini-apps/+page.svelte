@@ -93,3 +93,12 @@ bot.on("message:web_app_data", async (ctx) => {
 	<li>use short-lived server-side state for checkout or privileged actions.</li>
 	<li>log only safe user ids and action names, not full <code>initData</code> strings.</li>
 </ul>
+
+<h2>external domains</h2>
+<p>
+	since july 20, 2026, telegram blocks mini app methods on external origins opened through
+	links inside the app by default. keep method calls on the original mini app domain.
+	this browser-side restriction does not change server-side <code>initData</code> validation.
+	botfather's mini app offers an opt-out that leaves trust in linked sites to the bot developer.
+	see the <a href="https://core.telegram.org/bots/api-changelog#july-14-2026">bot api 10.2 changelog</a>.
+</p>

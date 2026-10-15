@@ -40,6 +40,9 @@ sdk or the tui.
 - **`parseMode` applies at finalization only.** in-flight previews are always plain text (a
   half-open `**bold` must never 400 the stream), and a finalization 400 "can't parse entities"
   falls back to resending plain — text is never lost.
+- **native stop is opt-in** via `streaming.canStop`; chat/topic/draft-scoped registrations
+  abort the provider signal. `keepOnStop` persists partial text. stop updates need concurrent
+  dispatch and must bypass chat sequentialization (see the ai-chat example).
 - **preview ticks are cosmetic and non-fatal**: a failed tick (flood limit, race) is swallowed
   and the next tick catches up. finalization errors propagate.
 - **overflow consumes the raw buffer tail.** when a >`maxLength` buffer is split, the head

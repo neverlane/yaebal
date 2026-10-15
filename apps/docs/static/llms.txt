@@ -55,7 +55,7 @@ yaebal is built around one invariant: the context type accumulates through the c
 - `@yaebal/types`: generated telegram bot api types.
 - `@yaebal/contexts`: generated per-update contexts and shortcuts.
 - `@yaebal/test`: in-process bot testing with virtual users and intercepted api calls.
-- `@yaebal/ai`: llm replies for bots (`ctx.ai.replyStream`, model adapters, memory, limits) plus the ai dev tooling below.
+- `@yaebal/ai`: llm replies for bots (`ctx.ai.replyStream`, native stop, model adapters, memory, limits) plus the ai dev tooling below.
 
 ## ai tooling
 

@@ -1,5 +1,6 @@
-import type { InputRichMessage } from "@yaebal/types";
+import type { InputRichMessage, InputRichMessageMedia } from "@yaebal/types";
 import type { Dialect } from "./node.js";
+import { RichError } from "./node.js";
 
 /**
  * the emitted rich message — a rendered dialect string plus the
@@ -12,6 +13,7 @@ import type { Dialect } from "./node.js";
 export class RichDocument {
 	#isRtl?: boolean;
 	#skipEntityDetection?: boolean;
+	#media: InputRichMessageMedia[] = [];
 
 	constructor(
 		readonly dialect: Dialect,
@@ -34,10 +36,28 @@ export class RichDocument {
 		return this;
 	}
 
+	/** attach media referenced by `tg://photo|video|audio|document?id=…` in the content. */
+	media(...entries: InputRichMessageMedia[]): this {
+		const ids = new Set(this.#media.map((entry) => entry.id));
+		for (const entry of entries) {
+			if (!/^[A-Za-z0-9_-]{1,64}$/.test(entry.id)) {
+				throw new RichError("RichDocument.media(): ids must be 1-64 letters, digits, _ or -");
+			}
+			if (ids.has(entry.id))
+				throw new RichError(`RichDocument.media(): duplicate id "${entry.id}"`);
+			ids.add(entry.id);
+		}
+		this.#media.push(...entries.map((entry) => ({ ...entry, media: { ...entry.media } })));
+		return this;
+	}
+
 	/** the `rich_message` method argument: `{ [dialect]: content, is_rtl?, skip_entity_detection? }`. */
 	toInputRichMessage(): InputRichMessage {
 		return {
 			[this.dialect]: this.content,
+			...(this.#media.length
+				? { media: this.#media.map((entry) => ({ ...entry, media: { ...entry.media } })) }
+				: {}),
 			...(this.#isRtl !== undefined ? { is_rtl: this.#isRtl } : {}),
 			...(this.#skipEntityDetection !== undefined
 				? { skip_entity_detection: this.#skipEntityDetection }

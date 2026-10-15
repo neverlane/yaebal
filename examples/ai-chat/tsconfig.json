@@ -17,6 +17,9 @@
 		},
 		{
 			"path": "../../packages/ai"
+		},
+		{
+			"path": "../../packages/runner"
 		}
 	],
 	"include": [

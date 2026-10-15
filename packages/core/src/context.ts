@@ -271,10 +271,23 @@ export class Context {
 	/** object form: full `sendMessage` params (minus `chat_id`) in one object. */
 	reply(params: SendParams): Promise<Message>;
 	reply(text: SendText | SendParams, extra: Record<string, unknown> = {}): Promise<Message> {
-		const replyTo = this.message?.message_id;
+		const message = this.message;
+		const replyTo = message?.message_id;
+		const ephemeralId = message?.ephemeral_message_id;
+		const receiver = message?.receiver_user?.id ?? message?.from?.id;
+		if (ephemeralId !== undefined && receiver === undefined) {
+			return Promise.reject(new Error("reply(): no receiver for the ephemeral message"));
+		}
 
 		return this.send(text as SendText, {
-			...(replyTo !== undefined ? { reply_parameters: { message_id: replyTo } } : {}),
+			...(ephemeralId !== undefined
+				? {
+						reply_parameters: { ephemeral_message_id: ephemeralId },
+						ephemeral_message_parameters: { receiver_user_id: receiver },
+					}
+				: replyTo !== undefined
+					? { reply_parameters: { message_id: replyTo } }
+					: {}),
 			...extra,
 		});
 	}

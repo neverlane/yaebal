@@ -15,3 +15,8 @@ pnpm add @yaebal/contexts
 ---
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+
+replies and quote shortcuts to an incoming ephemeral message use
+`reply_parameters.ephemeral_message_id` and keep the outgoing answer ephemeral. answer
+within 15 seconds; use `@yaebal/ephemeral` handles for later edits.

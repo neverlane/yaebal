@@ -194,7 +194,13 @@ function parseObject(section) {
 			return link ? { type: "reference", reference: link.text } : { type: "unknown" };
 		});
 
-		return { ...base, type: "any_of", any_of };
+		// Some unions also describe scalar/recursive alternatives before the object list
+		// (RichText: a String for plain text, an Array of RichText, or marked-up objects).
+		const alternatives = [];
+		if (/\bString for plain text\b/i.test(stripTags(raw))) alternatives.push({ type: "string" });
+		const array = raw.match(/\bArray of\s+<a\b[^>]*>[^<]+<\/a>/i);
+		if (array) alternatives.push(parseTypeCell(array[0]));
+		return { ...base, type: "any_of", any_of: [...alternatives, ...any_of] };
 	}
 
 	// marker type with no fields (e.g. CallbackGame, ForumTopicClosed) — nothing more to describe

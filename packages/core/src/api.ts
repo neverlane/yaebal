@@ -269,6 +269,17 @@ function extractMedia(value: unknown, uploads: { field: string; source: MediaSou
 		return `attach://${field}`;
 	}
 
+	// honor builders' JSON payloads before looking for nested upload sources.
+	if (
+		value !== null &&
+		typeof value === "object" &&
+		"toJSON" in value &&
+		typeof value.toJSON === "function"
+	) {
+		const serialized: unknown = value.toJSON();
+		if (serialized !== value) return extractMedia(serialized, uploads);
+	}
+
 	if (Array.isArray(value)) return value.map((item) => extractMedia(item, uploads));
 
 	if (isWalkable(value)) {

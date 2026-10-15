@@ -46,7 +46,7 @@ bot.command("reset", async (ctx) => {
   `sendMessageDraft` (telegram's own "Thinking…" placeholder + animated draft, finalized as a
   real message); in groups/channels via throttled `editMessageText` with a `▍` cursor. answers
   past 4096 chars split at word boundaries and finalize message-by-message. returns
-  `{ text, messages, mode: "draft" | "edit", ticks, aborted }`.
+  `{ text, messages, mode: "draft" | "edit", ticks, aborted, stopped }`.
 - `ctx.ai.reply(prompt, options?)` — generate fully, then send (typing action kept alive
   meanwhile); returns `{ text, usage?, messages }`.
 - `ctx.ai.generate(prompt, options?)` — run the model, return `{ text, usage }`, send nothing.
@@ -87,6 +87,13 @@ lazy-loads the `ai` package only when used.
   answer politely; don't let it hit the global error handler.
 - streaming knobs live under `streaming`: `intervalMs` (500 draft / 1200 edit), `drafts: false`
   to opt out of drafts in private chats, `cursor` (`""` disables), `maxLength`.
+- native draft stop: `streaming: { canStop: true, keepOnStop: true }` (both default false),
+  overridable per `replyStream`. the plugin aborts the model request on
+  `stopped_message_generation`; `keepOnStop` persists the partial answer and memory.
+  use concurrent dispatch: `@yaebal/runner` with
+  `sequentializeBy: (u) => u.stopped_message_generation ? undefined : chatKey(u)`;
+  initialize with `await bot.init()` and `run(bot, ...)`, not sequential `bot.start()`.
+  include the stop update in custom allowed_updates. custom models must honor request.signal.
 - `typing: false` disables the typing action for non-streamed replies.
 
 ## learn more

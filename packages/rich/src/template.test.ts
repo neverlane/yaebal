@@ -98,3 +98,23 @@ test("document() result is a RichDocument, so the fluent setters chain onto it",
 	assert.ok(doc instanceof RichDocument);
 	assert.deepEqual(doc.rtl().toInputRichMessage(), { html: "<p>hi</p>", is_rtl: true });
 });
+
+test("document attachments serialize, compose and validate ids atomically", () => {
+	const media = { id: "photo1", media: { type: "photo", media: "file-id" } };
+	const inner = html`<img src="tg://photo?id=photo1">`.media(media);
+	for (const doc of [
+		html`${inner}`,
+		html([inner]),
+		document([inner]),
+		document("photo", { media: [media] }),
+	]) {
+		assert.deepEqual(doc.toInputRichMessage().media, [media]);
+	}
+	assert.deepEqual(JSON.parse(JSON.stringify(inner)).media, [media]);
+	const serialized = inner.toInputRichMessage();
+	serialized.media?.pop();
+	assert.equal(inner.toInputRichMessage().media?.length, 1);
+	assert.throws(() => inner.media({ ...media, id: "bad id" }), /ids must be/);
+	assert.throws(() => inner.media(media), /duplicate id/);
+	assert.equal(inner.toInputRichMessage().media?.length, 1);
+});

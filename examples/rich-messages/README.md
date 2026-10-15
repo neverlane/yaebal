@@ -39,3 +39,8 @@ the block tree flattened by `richMessageToPlainText`.
 ---
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) - a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+
+`/attachment` uploads a document through `RichDocument.media(...)`; `/blocks` streams
+structured `InputRichMessage.blocks` and finalizes the result. draft pushes require
+previously uploaded files, while normal rich sends can upload new attachments.

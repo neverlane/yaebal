@@ -312,6 +312,8 @@ test("button(): label is html in both dialects; link style and oversize data are
 	assert.match(node.render("html"), /<tg-emoji emoji-id="1">✅<\/tg-emoji> ok/);
 	assert.throws(() => button("x", { url: "https://t.me" }, { style: "link" }), /only for callback/);
 	assert.throws(() => button("x", { callbackData: "x".repeat(65) }), /1-64 bytes/);
+	assert.throws(() => button("x", { callbackData: "" }), /1-64 bytes/);
+	assert.throws(() => button("x", { callbackData: "я".repeat(33) }), /1-64 bytes/);
 });
 
 test("buttons(): one <tg-button-row>, align optional, same in markdown", () => {

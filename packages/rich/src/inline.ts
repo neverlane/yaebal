@@ -206,7 +206,10 @@ const flag = (name: string, on: boolean | undefined) => (on ? ` ${name}` : "");
 
 function buttonAttrs(action: ButtonAction): string {
 	if ("callbackData" in action) {
-		if (new TextEncoder().encode(action.callbackData).length > 64)
+		if (
+			action.callbackData.length === 0 ||
+			new TextEncoder().encode(action.callbackData).length > 64
+		)
 			throw new RichError("button(): callbackData must be 1-64 bytes");
 		return `type="callback_data" data="${escapeAttr(action.callbackData)}"`;
 	}

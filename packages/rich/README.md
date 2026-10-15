@@ -116,6 +116,12 @@ call `draft.cancel()` instead of `send()` to abandon a draft without persisting 
 
 `ctx.richMessageDraft(id, { canStop: true })` shows the user a stop button on the draft (bot api 10.3); a press arrives as a `stopped_message_generation` update — stop generating there and `send()` or `cancel()`. `keepOnStop: true` keeps the draft visible after the press.
 
+stop updates must be dispatched concurrently with the streaming handler; sequential polling
+or a chat queue otherwise waits for generation to finish. use the concurrent runner setup
+in [`@yaebal/ai`](https://github.com/neverlane/yaebal/tree/master/packages/ai#native-stop-button-bot-api-103)
+or concurrent webhooks. close the draft and cancel your provider from the stop handler.
+`keepOnStop` keeps the preview only temporarily; call `send()` to preserve it permanently.
+
 ## buttons
 
 bot api 10.3 puts buttons inside the message body: `button()` sits right in the text, `buttons()` lays out a row. every `RichMessageButton` type is covered (`callbackData`, `url`, `webApp`, `loginUrl`, `switchInlineQuery*`, `copyText`, `disabled`), with `style: "success" | "danger" | "primary" | "link"` (`link` is callback-only). callback buttons arrive as an ordinary `callback_query`.
@@ -157,7 +163,7 @@ every tag follows telegram's "rich html style" and "rich markdown style" docs: `
 
 where rich-markdown has no native token for a block at all (`footer`, pull-quote, collage/slideshow, map, `details`, buttons, expandable quotes, `underline`, `subscript`, `superscript`), the raw html tag is embedded as-is in the markdown output too — telegram's markdown parser accepts embedded html blocks as long as they're blank-line-separated, which the block builders already handle.
 
-`sendRichMessage` has no `attach://`/multipart upload path (unlike `sendPhoto`) — media blocks (`image`/`video`/`audio`/`file`) take a hosted url (or a `tg://photo|video|document|audio?id=` link to an `InputRichMessage.media` entry), not a local file.
+media blocks (`image`/`video`/`audio`/`file`) take a hosted url or a `tg://photo|video|document|audio?id=` link to an explicit attachment. normal sends upload attachments with the same multipart transport as `sendPhoto`; draft pushes require existing files. see the attached media example below.
 
 ### tables and lists carry their full field set
 
@@ -201,3 +207,29 @@ plus the full generated type surface (`RichMessage`, `RichBlock`, `RichText`, an
 ---
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+## structured drafts and attached media
+
+raw `InputRichMessage.blocks` work with `sendRichMessage` and `RichMessageDraft`:
+`rewrite()` replaces the blocks and `write()` appends more blocks. a draft must use one
+format at a time: `html`, `markdown`, or `blocks`.
+
+attach files referenced by `tg://` links with `RichDocument.media(...)` or
+`document(blocks, { media })`. ids must be unique and match `[A-Za-z0-9_-]{1,64}`.
+
+```ts
+import { media } from "@yaebal/core";
+import { html, file, sendRichMessage } from "@yaebal/rich";
+
+const report = html([file("tg://document?id=report")]).media({
+  id: "report",
+  media: { type: "document", media: media.text("hello", "report.txt") },
+});
+await sendRichMessage(ctx.api, ctx.chat.id, report);
+```
+
+normal sends support new uploads through `media.path`/`buffer`/`stream`/`text`, urls and
+existing file ids. drafts accept only previously uploaded files: use a file id or
+`media.fileId(...)`. `RichMessageDraft` preserves explicit attachments through appends,
+keep-alive pushes and finalization. appending an attachment with an existing id replaces
+that entry. a final `draft.send(override)` may upload new files even though draft pushes cannot.

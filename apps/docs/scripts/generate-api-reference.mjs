@@ -34,10 +34,13 @@ function extractApiShortcuts() {
 
 	// `Api extends BotApiMethods` proxies every Telegram Bot API method onto Api directly
 	// (packages/types' generator emits one BotApiMethods member per schema method) — so if
-	// that's in the extends clause, every schema method is a direct shortcut, not just the
+	// that's in the extends clause (directly or via the cancellation-aware ApiMethods),
+	// every schema method is a direct shortcut, not just the
 	// ones written out in Api's own body.
 	const extendsClause = ifaceMatch[1] ?? "";
-	if (/\bBotApiMethods\b/.test(extendsClause)) {
+	const mappedMethods = /\bApiMethods\b/.test(extendsClause) &&
+		/type ApiMethods\s*=\s*\{\s*\[K in keyof BotApiMethods\]/.test(text);
+	if (/\bBotApiMethods\b/.test(extendsClause) || mappedMethods) {
 		for (const m of schema.methods) names.add(m.name);
 	}
 

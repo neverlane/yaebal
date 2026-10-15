@@ -28,8 +28,10 @@
 // the full generated rich-message type surface, re-exported so consumers never
 // need to reach into `@yaebal/types` directly for annotations.
 export type {
+	InputRichBlock,
 	InputRichMessage,
 	InputRichMessageContent,
+	InputRichMessageMedia,
 	RichBlock,
 	RichBlockAnchor,
 	RichBlockAnimation,

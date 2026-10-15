@@ -1,5 +1,5 @@
 import type { Api, Message } from "@yaebal/core";
-import type { InputRichMessage } from "@yaebal/types";
+import type { InputRichBlock, InputRichMessage, InputRichMessageMedia } from "@yaebal/types";
 import { RichDocument } from "./document.js";
 import type { Dialect } from "./node.js";
 
@@ -33,47 +33,75 @@ export interface RichMessageDraftOptions {
 }
 
 interface DraftState {
-	dialect: Dialect;
+	dialect: Dialect | "blocks";
 	text: string;
+	blocks?: InputRichBlock[];
+	media?: InputRichMessageMedia[];
 	isRtl?: boolean;
 	skipEntityDetection?: boolean;
 }
 
 type DraftSource = RichDocument | InputRichMessage | string;
 
-function resolve(input: DraftSource, fallbackDialect: Dialect): DraftState {
-	if (typeof input === "string") return { dialect: fallbackDialect, text: input };
+function resolve(input: DraftSource, fallbackDialect: Dialect | "blocks"): DraftState {
+	if (typeof input === "string") {
+		if (fallbackDialect === "blocks")
+			throw new Error("RichMessageDraft: cannot append text to blocks");
+		return { dialect: fallbackDialect, text: input };
+	}
 	if (input instanceof RichDocument) return resolve(input.toInputRichMessage(), fallbackDialect);
-
-	if (input.html !== undefined) {
-		return {
-			dialect: "html",
-			text: input.html,
-			isRtl: input.is_rtl,
-			skipEntityDetection: input.skip_entity_detection,
-		};
+	if (
+		[input.html, input.markdown, input.blocks].filter((value) => value !== undefined).length !== 1
+	) {
+		throw new Error("RichMessageDraft: input must have exactly one of html, markdown or blocks");
 	}
-
-	if (input.markdown !== undefined) {
-		return {
-			dialect: "markdown",
-			text: input.markdown,
-			isRtl: input.is_rtl,
-			skipEntityDetection: input.skip_entity_detection,
-		};
-	}
-
-	throw new Error("RichMessageDraft: input must have an `html` or `markdown` field");
+	return {
+		dialect: input.blocks !== undefined ? "blocks" : input.html !== undefined ? "html" : "markdown",
+		text: input.html ?? input.markdown ?? "",
+		blocks: input.blocks === undefined ? undefined : [...input.blocks],
+		media: input.media === undefined ? undefined : [...input.media],
+		isRtl: input.is_rtl,
+		skipEntityDetection: input.skip_entity_detection,
+	};
 }
 
 function toInputRichMessage(state: DraftState): InputRichMessage {
 	return {
-		[state.dialect]: state.text,
+		...(state.dialect === "blocks" ? { blocks: state.blocks } : { [state.dialect]: state.text }),
+		...(state.media === undefined ? {} : { media: state.media }),
 		...(state.isRtl !== undefined ? { is_rtl: state.isRtl } : {}),
 		...(state.skipEntityDetection !== undefined
 			? { skip_entity_detection: state.skipEntityDetection }
 			: {}),
 	};
+}
+
+/** drafts accept existing files only; reject upload sources before starting a keep-alive. */
+function assertDraftMedia(value: unknown, field?: string): void {
+	if (value === null || value === undefined) return;
+	if (typeof value === "object" && "kind" in value) {
+		if (value.kind !== "fileId")
+			throw new Error("RichMessageDraft: drafts require previously uploaded files");
+		return;
+	}
+	if (typeof value === "string" && ["media", "thumbnail", "cover"].includes(field ?? "")) {
+		if (/^(?:https?:|attach:)/i.test(value))
+			throw new Error("RichMessageDraft: drafts require previously uploaded files");
+	}
+	if (Array.isArray(value)) {
+		for (const item of value) assertDraftMedia(item, field);
+	} else if (typeof value === "object") {
+		for (const [key, item] of Object.entries(value)) assertDraftMedia(item, key);
+	}
+}
+
+function mergeMedia(
+	previous: InputRichMessageMedia[] = [],
+	next: InputRichMessageMedia[] = [],
+): InputRichMessageMedia[] | undefined {
+	const merged = new Map(previous.map((entry) => [entry.id, entry]));
+	for (const entry of next) merged.set(entry.id, entry);
+	return merged.size ? [...merged.values()] : undefined;
 }
 
 /**
@@ -146,7 +174,12 @@ export class RichMessageDraft {
 	async rewrite(input: DraftSource): Promise<void> {
 		this.#assertOpen();
 
-		this.#state = resolve(input, this.#state?.dialect ?? "html");
+		const next = resolve(
+			input,
+			this.#state?.dialect === "blocks" ? "html" : (this.#state?.dialect ?? "html"),
+		);
+		assertDraftMedia(toInputRichMessage(next));
+		this.#state = next;
 		await this.#pushCurrent();
 		this.#arm();
 	}
@@ -164,6 +197,7 @@ export class RichMessageDraft {
 		}
 
 		const next = resolve(input, this.#state.dialect);
+		assertDraftMedia(toInputRichMessage(next));
 		if (next.dialect !== this.#state.dialect) {
 			throw new Error(
 				`RichMessageDraft: write() dialect "${next.dialect}" doesn't match the draft's "${this.#state.dialect}"`,
@@ -173,6 +207,9 @@ export class RichMessageDraft {
 		this.#state = {
 			dialect: this.#state.dialect,
 			text: this.#state.text + next.text,
+			blocks:
+				next.blocks === undefined ? undefined : [...(this.#state.blocks ?? []), ...next.blocks],
+			media: mergeMedia(this.#state.media, next.media),
 			isRtl: next.isRtl ?? this.#state.isRtl,
 			skipEntityDetection: next.skipEntityDetection ?? this.#state.skipEntityDetection,
 		};

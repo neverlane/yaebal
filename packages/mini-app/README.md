@@ -292,3 +292,12 @@ tests](#signing-initdata-for-tests) above.
 ---
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+
+## external domains (july 20, 2026)
+
+telegram blocks mini app methods on external origins opened from links inside the app
+by default. keep method calls on your original mini app domain. this browser-side policy
+does not change server-side initData signature validation. botfather's mini app provides
+an opt-out, which leaves trust in linked sites to the bot developer. see the
+[bot api 10.2 changelog](https://core.telegram.org/bots/api-changelog#july-14-2026).

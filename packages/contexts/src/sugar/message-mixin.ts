@@ -1,5 +1,6 @@
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
+import { messageReplyParameters } from "../reply-parameters.js";
 
 /** A friendly reaction: an emoji string, a `{ emoji }` / `{ custom_emoji_id }` shorthand, or a raw `ReactionType`. */
 export type ReactionInput =
@@ -32,6 +33,8 @@ interface MessageFields {
 	readonly api: Api;
 	chat: t.Chat;
 	message_id: number;
+	ephemeral_message_id?: number;
+	receiver_user?: t.User;
 	from?: t.User;
 	business_connection_id?: string;
 	message_thread_id?: number;
@@ -108,7 +111,7 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 			const params = typeof a === "string" ? { text: a, ...b } : a;
 			return this.api.call<t.Message>("sendMessage", {
 				chat_id: this.chat.id,
-				reply_parameters: { message_id: this.message_id },
+				...messageReplyParameters(this),
 				...routing(this),
 				...params,
 			});
@@ -202,10 +205,12 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 
 		/** Reply quoting a piece of this message's text (`reply_parameters.quote`). */
 		quote(quoteText: string, text: string, params?: QuoteExtra): Promise<t.Message> {
+			const reply = messageReplyParameters(this);
 			return this.api.call<t.Message>("sendMessage", {
 				chat_id: this.chat.id,
 				text,
-				reply_parameters: { message_id: this.message_id, quote: quoteText },
+				...reply,
+				reply_parameters: { ...reply.reply_parameters, quote: quoteText },
 				...routing(this),
 				...params,
 			});

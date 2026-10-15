@@ -94,6 +94,9 @@ importers:
       '@yaebal/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@yaebal/runner':
+        specifier: workspace:*
+        version: link:../../packages/runner
       yaebal:
         specifier: workspace:*
         version: link:../../packages/yaebal

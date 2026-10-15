@@ -246,3 +246,15 @@ test("parseSchema: end-to-end fixture", () => {
 test("parseVersion throws a clear error when the changelog section is missing", () => {
 	assert.throws(() => parseVersion("<html><body>nothing here</body></html>"), /Recent changes/);
 });
+
+test("parseSchema preserves plain strings and recursive arrays in rich-text unions", () => {
+	const schema = parseSchema(`${FIXTURE_HTML}
+<h4><a class="anchor" name="richtext" href="#richtext"><i class="anchor-icon"></i></a>RichText</h4>
+<p>This object represents a rich formatted text. Currently, it can be either a String for plain text, an Array of <a href="#richtext">RichText</a>, or any of the following types:</p>
+<ul><li><a href="#richtextbold">RichTextBold</a></li></ul>`);
+	assert.deepEqual(schema.objects.find((object) => object.name === "RichText")?.any_of, [
+		{ type: "string" },
+		{ type: "array", array: { type: "reference", reference: "RichText" } },
+		{ type: "reference", reference: "RichTextBold" },
+	]);
+});

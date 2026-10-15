@@ -30,9 +30,12 @@ pnpm --filter @yaebal/example-ephemeral dev                  # reloads on change
 |:---------|:---------------------------------------------------------------------------------------------------|
 | `/roll`  | ephemeral reply + `msg.edit()` + inline buttons; reroll/dismiss keep editing the same handle       |
 | `/me`    | a second ephemeral command — `is_ephemeral` in the menu, private answer in the group               |
+| `/summary` | rich ephemeral content and `editRich` |
+| `/report` | an uploaded personal document and `editCaption` |
+| `/menu` | a regular message with a personalized callback overlay |
 | `/about` | a normal command for contrast — its reply lands in the group history for everyone                  |
 
-ephemeral messages need bot api 10.2+ and exist in group/supergroup chats only; delivery is
+these examples target bot api 10.3+. ephemeral messages exist in group/supergroup chats only; delivery is
 best-effort by design (offline users may never see one).
 
 ---

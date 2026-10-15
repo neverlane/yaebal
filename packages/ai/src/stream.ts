@@ -32,6 +32,9 @@ export function targetOf(ctx: Context): StreamTarget {
 	};
 }
 
+/** shared only by the runtime plugin and renderer. */
+export const GENERATION_STOPPED = Symbol("ai.generationStopped");
+
 export interface AiStreamRenderOptions {
 	/** applied at finalization only — in-flight ticks are always plain text. */
 	parseMode?: string;
@@ -39,6 +42,12 @@ export interface AiStreamRenderOptions {
 	intervalMs?: number;
 	/** use `sendMessageDraft` in private chats (native "Thinking…" + animation). default true. */
 	drafts?: boolean;
+	/** show telegram's native stop button in private drafts. default false. */
+	canStop?: boolean;
+	/** persist the partial response after a native stop. default false. */
+	keepOnStop?: boolean;
+	/** observe the current draft id (also changes on message splitting). */
+	onDraft?: (draftId: number) => void;
 	/** appended to in-flight edit ticks so the message visibly streams. default `"▍"`, `""` disables. */
 	cursor?: string;
 	/** per-message length budget. default telegram's 4096. */
@@ -62,6 +71,8 @@ export interface AiStreamResult {
 	ticks: number;
 	/** true when `signal` aborted mid-stream — `text`/`messages` hold what was rendered. */
 	aborted: boolean;
+	/** true when telegram's native stop button cancelled this stream. */
+	stopped: boolean;
 }
 
 const DRAFT_INTERVAL_MS = 500;
@@ -113,6 +124,10 @@ export async function streamToChat(
 	let buffer = "";
 	let ticks = 0;
 	let aborted = false;
+	const stopParams = {
+		...(options.canStop === undefined ? {} : { can_stop: options.canStop }),
+		...(options.keepOnStop === undefined ? {} : { keep_on_stop: options.keepOnStop }),
+	};
 
 	// draft state
 	let draftId = nextDraftId();
@@ -171,7 +186,7 @@ export async function streamToChat(
 
 	/** flush the in-flight preview (throttled; best-effort — a failed tick just waits for the next). */
 	const preview = async (): Promise<void> => {
-		if (buffer.length === 0 || now() - lastFlush < intervalMs) return;
+		if (options.signal?.aborted || buffer.length === 0 || now() - lastFlush < intervalMs) return;
 		lastFlush = now();
 		ticks += 1;
 
@@ -180,6 +195,7 @@ export async function streamToChat(
 				await target.call("sendMessageDraft", {
 					chat_id: target.chatId,
 					draft_id: draftId,
+					...stopParams,
 					text: buffer,
 					...(target.threadId === undefined ? {} : { message_thread_id: target.threadId }),
 				});
@@ -211,14 +227,15 @@ export async function streamToChat(
 	};
 
 	/** finalize every full-size head part, keep the raw tail (boundary whitespace intact) streaming. */
-	const overflow = async (): Promise<void> => {
-		while (buffer.length > maxLength) {
+	const overflow = async (finalizing = false): Promise<void> => {
+		while (buffer.length > maxLength && (finalizing || !options.signal?.aborted)) {
 			const head = splitText(buffer, maxLength)[0];
 			if (head === undefined || head.text.length === 0) return;
 
 			if (mode === "draft") {
 				await sendFinal(head.text);
 				draftId = nextDraftId();
+				options.onDraft?.(draftId);
 			} else {
 				await finalizeEdit(head.text);
 			}
@@ -232,12 +249,14 @@ export async function streamToChat(
 		}
 	};
 
-	if (mode === "draft") {
+	if (mode === "draft" && !options.signal?.aborted) {
+		options.onDraft?.(draftId);
 		// empty draft = telegram's native "Thinking…" placeholder, shown before the first token.
 		try {
 			await target.call("sendMessageDraft", {
 				chat_id: target.chatId,
 				draft_id: draftId,
+				...stopParams,
 				text: "",
 				...(target.threadId === undefined ? {} : { message_thread_id: target.threadId }),
 			});
@@ -246,25 +265,45 @@ export async function streamToChat(
 		}
 	}
 
-	for await (const piece of source) {
-		if (options.signal?.aborted === true) {
-			aborted = true;
-			break;
+	// race an idle provider against cancellation; custom models may ignore the signal.
+	// do not await iterator.return() after abort: an async generator can still be waiting
+	// in next(). the provider shares the signal and closes its network stream separately.
+	const iterator = source[Symbol.asyncIterator]();
+	const interrupted = Symbol("interrupted");
+	let interrupt!: () => void;
+	const cancellation = new Promise<typeof interrupted>((resolve) => {
+		interrupt = () => resolve(interrupted);
+	});
+	options.signal?.addEventListener("abort", interrupt, { once: true });
+	try {
+		while (!options.signal?.aborted) {
+			const item = await Promise.race([iterator.next(), cancellation]);
+			if (item === interrupted || item.done || options.signal?.aborted) break;
+			const piece = item.value;
+			if (piece.length === 0) continue;
+			full += piece;
+			buffer += piece;
+			await overflow();
+			await preview();
 		}
-		if (piece.length === 0) continue;
-		full += piece;
-		buffer += piece;
-		await overflow();
-		await preview();
+	} catch (error) {
+		if (!options.signal?.aborted) throw error;
+	} finally {
+		options.signal?.removeEventListener("abort", interrupt);
+		if (options.signal?.aborted) {
+			void Promise.resolve()
+				.then(() => iterator.return?.())
+				.catch(() => undefined);
+		} else {
+			await iterator.return?.();
+		}
 	}
-
-	// finalization: whatever is left becomes real message(s).
-	await overflow();
-	if (mode === "draft") {
-		await sendFinal(buffer);
-	} else {
-		await finalizeEdit(buffer);
+	aborted = options.signal?.aborted ?? false;
+	const stopped = aborted && options.signal?.reason === GENERATION_STOPPED;
+	if (!stopped || options.keepOnStop === true) {
+		await overflow(true);
+		if (mode === "draft") await sendFinal(buffer);
+		else await finalizeEdit(buffer);
 	}
-
-	return { text: full, messages, mode, ticks, aborted };
+	return { text: full, messages, mode, ticks, aborted, stopped };
 }

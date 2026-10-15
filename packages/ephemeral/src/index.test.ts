@@ -274,13 +274,176 @@ test("isExpiredEphemeralError: 400 + gone-ish description only", () => {
 	);
 	assert.equal(
 		isExpiredEphemeralError({ code: 400, description: "Bad Request: chat not found" }),
-		true,
+		false,
 	);
 	assert.equal(isExpiredEphemeralError({ code: 403, description: "Forbidden: not found" }), false);
 	assert.equal(
 		isExpiredEphemeralError({ code: 400, description: "Bad Request: message is too long" }),
 		false,
 	);
+	assert.equal(
+		isExpiredEphemeralError({ code: 400, description: "Bad Request: invalid message content" }),
+		false,
+	);
 	assert.equal(isExpiredEphemeralError(new Error("not found")), false);
 	assert.equal(isExpiredEphemeralError(null), false);
+});
+
+test("rich replies, edits and markup recovery preserve the whole rich payload", async () => {
+	let handle!: EphemeralMessage;
+	const doc = {
+		html: "<p>personal</p>",
+		media: [{ id: "file", media: { type: "document", media: "file-id" } }],
+	};
+	const bot = new Composer<Context>()
+		.install(ephemeral({ onExpired: "resend" }))
+		.command("rich", async (ctx) => {
+			handle = await ctx.replyEphemeral({ rich_message: { toInputRichMessage: () => doc } });
+		});
+	const env = createTestEnv(bot);
+	let id = 10;
+	env.onApi("sendRichMessage", () => ({ message_id: 0, ephemeral_message_id: id++ }));
+	const group = env.createChat({ type: "supergroup" });
+	await env.createUser({ id: 7 }).in(group).sendCommand("rich");
+	assert.deepEqual(env.lastApiCall("sendRichMessage")?.params?.rich_message, doc);
+	await handle.editRich({ blocks: [{ type: "divider" }] });
+	assert.equal(env.lastApiCall("editEphemeralMessageText")?.params?.text, undefined);
+	env.onApi("editEphemeralMessageReplyMarkup", GONE);
+	await handle.editReplyMarkup(undefined);
+	assert.deepEqual(env.lastApiCall("sendRichMessage")?.params?.rich_message, {
+		blocks: [{ type: "divider" }],
+	});
+	assert.deepEqual(env.lastApiCall("sendRichMessage")?.params?.reply_markup, {
+		inline_keyboard: [],
+	});
+	assert.equal(handle.ephemeralMessageId, 11);
+});
+
+test("media sends route each type to its native method, including private fallbacks", async () => {
+	for (const [type, method, field] of [
+		["photo", "sendPhoto", "photo"],
+		["video", "sendVideo", "video"],
+		["animation", "sendAnimation", "animation"],
+		["audio", "sendAudio", "audio"],
+		["document", "sendDocument", "document"],
+		["voice_note", "sendVoice", "voice"],
+		["live_photo", "sendLivePhoto", "live_photo"],
+	] as const) {
+		const bot = new Composer<Context>().install(ephemeral()).command("media", async (ctx) => {
+			await ctx.replyEphemeral({
+				media: { type, media: "file-id", photo: "photo-id", caption: "caption" },
+			});
+		});
+		const env = createTestEnv(bot);
+		env.onApi(method, () => ({ message_id: 99, ephemeral_message_id: 5 }));
+		const user = env.createUser({ id: 7 });
+		await user.in(env.createChat({ type: "supergroup" })).sendCommand("media");
+		assert.equal(env.lastApiCall(method)?.params?.[field], "file-id");
+		assert.deepEqual(env.lastApiCall(method)?.params?.ephemeral_message_parameters, {
+			receiver_user_id: 7,
+		});
+		await user.sendCommand("media");
+		assert.equal(env.lastApiCall(method)?.params?.ephemeral_message_parameters, undefined);
+	}
+});
+
+test("media edits accept new uploads; caption and markup resend retain media and formatting", async () => {
+	const { env, handle } = setup({ onExpired: "resend" });
+	await env
+		.createUser({ id: 7 })
+		.in(env.createChat({ type: "supergroup" }))
+		.sendCommand("go");
+	const { media } = await import("@yaebal/core");
+	const uploaded = {
+		type: "photo",
+		media: media.buffer(new Uint8Array([1]), "photo.jpg"),
+		caption: "original",
+	};
+	env.onApi("sendPhoto", () => ({ message_id: 0, ephemeral_message_id: 901 }));
+	await handle().editMedia(uploaded);
+	assert.deepEqual(env.lastApiCall("editEphemeralMessageMedia")?.params?.media, uploaded);
+	const caption = { text: "updated", entities: [{ type: "bold" as const, offset: 0, length: 7 }] };
+	await handle().editCaption(caption, { show_caption_above_media: true });
+	env.onApi("editEphemeralMessageReplyMarkup", GONE);
+	await handle().editReplyMarkup(undefined);
+	const resent = env.lastApiCall("sendPhoto")?.params;
+	assert.equal(resent?.photo, uploaded.media);
+	assert.equal(resent?.caption, "updated");
+	assert.deepEqual(resent?.caption_entities, caption.entities);
+	assert.equal(resent?.show_caption_above_media, true);
+	assert.equal(handle().ephemeralMessageId, 901);
+});
+
+test("callback replacements target the caller and never replay the replacement after expiry", async () => {
+	let handle!: EphemeralMessage;
+	const bot = new Composer<Context>()
+		.install(ephemeral({ onExpired: "resend" }))
+		.on("callback_query", async (ctx) => {
+			handle = await ctx.replaceWithEphemeral("personal");
+		});
+	const env = createTestEnv(bot);
+	env.onApi("sendMessage", () => ({ message_id: 0, ephemeral_message_id: 10 }));
+	const { callbackUpdate } = await import("@yaebal/test");
+	const message = { message_id: 42, date: 0, chat: { id: -1, type: "supergroup" as const } };
+	await env.dispatch(callbackUpdate({ fromId: 7, message }));
+	assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_parameters, {
+		receiver_user_id: 7,
+		callback_query_id: "1",
+		replace_callback_query_message: true,
+	});
+	env.onApi("editEphemeralMessageText", GONE);
+	await handle.edit("updated");
+	assert.deepEqual(env.lastApiCall("sendMessage")?.params?.ephemeral_message_parameters, {
+		receiver_user_id: 7,
+	});
+	await assert.rejects(
+		() =>
+			env.dispatch(
+				callbackUpdate({ fromId: 7, message: { ...message, ephemeral_message_id: 10 } }),
+			),
+		/regular chat message/,
+	);
+});
+
+test("private fallback supports rich, media and caption edits through regular methods", async () => {
+	const { env, handle } = setup();
+	await env.createUser({ id: 7 }).sendCommand("go");
+	await handle().editRich({ html: "<p>rich</p>" });
+	assert.deepEqual(env.lastApiCall("editMessageText")?.params?.rich_message, {
+		html: "<p>rich</p>",
+	});
+	await handle().editMedia({ type: "photo", media: "photo-id" });
+	await handle().editCaption("new caption", { show_caption_above_media: true });
+	assert.equal(env.lastApiCall("editMessageMedia")?.params?.message_id, 42);
+	assert.equal(env.lastApiCall("editMessageCaption")?.params?.show_caption_above_media, true);
+});
+
+test("replies to ephemeral commands use their short-lived reply id", async () => {
+	const { env } = setup();
+	await env.dispatch({
+		update_id: 1,
+		message: {
+			message_id: 0,
+			ephemeral_message_id: 50,
+			date: 0,
+			chat: { id: -1, type: "supergroup" },
+			from: { id: 7, is_bot: false, first_name: "user" },
+			text: "/go",
+			entities: [{ type: "bot_command", offset: 0, length: 3 }],
+		},
+	});
+	assert.deepEqual(env.lastApiCall("sendMessage")?.params?.reply_parameters, {
+		ephemeral_message_id: 50,
+	});
+});
+
+test("replacements reject private chats and non-callback updates without sending", async () => {
+	const { callbackUpdate } = await import("@yaebal/test");
+	const bot = new Composer<Context>()
+		.install(ephemeral())
+		.use((ctx) => ctx.replaceWithEphemeral("personal"));
+	const env = createTestEnv(bot);
+	await assert.rejects(() => env.dispatch(callbackUpdate()), /group and supergroup/);
+	await assert.rejects(() => env.createUser().sendMessage("hello"), /regular chat message/);
+	assert.equal(env.callsTo("sendMessage").length, 0);
 });

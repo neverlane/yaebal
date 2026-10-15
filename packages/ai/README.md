@@ -108,3 +108,39 @@ when used.
 | `temperature`, `maxTokens` | provider defaults | forwarded to the model |
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+
+## native stop button (bot api 10.3)
+
+set `streaming: { canStop: true, keepOnStop: true }` to show telegram's stop button
+on private-chat drafts and persist the partial answer if pressed. both options default
+to `false` and can be overridden per `replyStream` call. groups still use edit previews.
+
+```ts
+import { chatKey, run } from "@yaebal/runner";
+
+// after installing ai({ model, streaming: { canStop: true, keepOnStop: true } })
+await bot.init();
+const runner = run(bot, {
+  sequentializeBy: (update) => update.stopped_message_generation ? undefined : chatKey(update),
+});
+process.once("SIGINT", () => void runner.stop());
+```
+
+install `@yaebal/runner` for polling with stop support. do not also call `bot.start()`.
+sequential polling and same-chat sequentialization block the stop update behind the
+running generation. webhook handlers must also dispatch stop updates concurrently.
+include `stopped_message_generation` if you restrict `allowed_updates`; install `ai()`
+before middleware that queues updates. stop routing is scoped by chat, topic and draft id.
+keep concurrency capacity available so stop events can be handled while streams run.
+
+`keepOnStop: false` discards the unfinished draft and does not append its text to memory;
+`true` sends the partial text as a real message and remembers it. previously finalized
+parts of a long answer remain in the chat. the result has `aborted: true` and
+`stopped: true`. external `signal` cancellation sets only `aborted` and preserves the
+partial answer. provider failures unrelated to cancellation still throw.
+
+custom models must honor the shared request `signal` to cancel their underlying work.
+the renderer stops waiting even if a custom provider ignores it, but cannot terminate
+arbitrary work inside that provider. active draft registrations and abort listeners are
+removed on completion, stop or error.

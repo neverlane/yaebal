@@ -724,3 +724,34 @@ test("callback send: requiredId guards chat_id when the message is gone, explici
 	noMessage.send({ text: "hi", chat_id: 42 });
 	assert.deepEqual(calls[0], { m: "sendMessage", p: { text: "hi", chat_id: 42 } });
 });
+
+test("message reply and quote shortcuts preserve ephemeral addressing and visibility", async () => {
+	const { MessageContextBase } = await import("./generated/message.js");
+	const { api, calls } = recorder();
+	const update = {
+		update_id: 1,
+		message: {
+			message_id: 0,
+			ephemeral_message_id: 10,
+			date: 0,
+			chat: { id: -1, type: "supergroup" as const },
+			from: { id: 7, is_bot: false, first_name: "user" },
+			message_thread_id: 2,
+		},
+	};
+	new MessageContextBase(api, update).reply({ text: "base" });
+	const ctx = new MessageContext(api, update);
+	await ctx.reply("positional");
+	await ctx.reply({ text: "object" });
+	await ctx.quote("ignored for ephemeral messages", "quote");
+	for (const call of calls) {
+		assert.equal(
+			call.p?.reply_parameters &&
+				(call.p.reply_parameters as { ephemeral_message_id: number }).ephemeral_message_id,
+			10,
+		);
+		assert.equal((call.p?.reply_parameters as { message_id?: number }).message_id, undefined);
+		assert.deepEqual(call.p?.ephemeral_message_parameters, { receiver_user_id: 7 });
+		assert.equal(call.p?.message_thread_id, 2);
+	}
+});

@@ -1,6 +1,6 @@
 import { commands } from "@yaebal/commands";
 import { type EphemeralControl, ephemeral, wrapEphemeralMessage } from "@yaebal/ephemeral";
-import { type Context, createBot, InlineKeyboard } from "yaebal";
+import { type Context, createBot, InlineKeyboard, media } from "yaebal";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -34,6 +34,27 @@ const cmd = commands<BotContext>()
 			].join("\n"),
 		),
 	)
+	.ephemeral("summary", "rich personal summary", async (ctx) => {
+		const msg = await ctx.replyEphemeral({
+			rich_message: { html: "<h2>your summary</h2><p>only you see this.</p>" },
+		});
+		await msg.editRich({ html: "<h2>your summary</h2><p>ready.</p>" });
+	})
+	.ephemeral("report", "a personal document", async (ctx) => {
+		const msg = await ctx.replyEphemeral({
+			media: {
+				type: "document",
+				media: media.text("your report", "report.txt"),
+				caption: "personal report",
+			},
+		});
+		await msg.editCaption("report is ready");
+	})
+	.add("menu", "open a personalized overlay", (ctx) =>
+		ctx.reply("open your personal view", {
+			reply_markup: new InlineKeyboard().text("only me", "personal").build(),
+		}),
+	)
 	// a normal command for contrast — this one lands in the group history for everyone
 	.add("about", "what this bot demonstrates", (ctx) =>
 		ctx.reply(
@@ -51,6 +72,14 @@ const bot = createBot(token)
 	.install(cmd.plugin())
 	.on("callback_query", async (ctx) => {
 		await ctx.answerCallbackQuery();
+		if (ctx.callbackQuery.data === "personal") {
+			const content = {
+				rich_message: { html: "<h2>your view</h2><p>this overlay is personal.</p>" },
+			};
+			if (ctx.chat?.type === "private") await ctx.replyEphemeral(content);
+			else await ctx.replaceWithEphemeral(content);
+			return;
+		}
 
 		// the buttons live on an ephemeral message — rebuild a handle from the
 		// callback's message payload and keep editing it in place

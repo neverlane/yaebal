@@ -101,3 +101,37 @@ two: register the command as ephemeral there, answer it with `ctx.replyEphemeral
 ---
 
 part of [**yaebal**](https://github.com/neverlane/yaebal) — a type-safe, runtime-agnostic Telegram Bot API framework. MIT.
+
+## rich content, media and callback overlays
+
+`replyEphemeral` and `sendEphemeral` also accept `{ rich_message }` and `{ media }`.
+rich content accepts `InputRichMessage` or a `RichDocument` from `@yaebal/rich`.
+media accepts `InputMedia` (photo, video, animation, audio, document, live photo) or
+`InputMediaVoiceNote`. use the same `media.*` upload helpers as regular bot api calls.
+
+```ts
+const rich = await ctx.replyEphemeral({ rich_message: { html: "<p>your summary</p>" } });
+await rich.editRich({ blocks: [{ type: "divider" }] });
+
+const photo = await ctx.replyEphemeral({ media: { type: "photo", media: "file-id" } });
+await photo.editMedia({ type: "photo", media: media.path("./updated.jpg") });
+await photo.editCaption("updated", { show_caption_above_media: true });
+```
+
+`editMedia` follows `InputMedia`: voice notes can be sent but cannot be edited through
+this method. private-chat fallbacks use the matching regular send/edit methods.
+`onExpired: "resend"` preserves the last known rich/media payload, caption formatting
+and keyboard. use reusable upload sources (file ids, buffers or paths) for recovery;
+a consumed one-shot stream cannot be resent. unknown read-side rich content wrapped with
+`wrapEphemeralMessage` cannot be faithfully reconstructed for a markup-only resend.
+
+from a callback on a regular group message, `ctx.replaceWithEphemeral(content)` shows a
+personalized overlay in its place. it supplies `callback_query_id` and
+`replace_callback_query_message` automatically. callbacks from an existing ephemeral
+message must use its handle's edit methods instead. replacement rejects outside groups,
+and expiry recovery sends a fresh ephemeral message without replaying the old callback.
+
+incoming ephemeral commands are answered using `reply_parameters.ephemeral_message_id`.
+answer within 15 seconds; later work can continue by editing the returned handle.
+`isExpiredEphemeralError` recognizes message-related 400 errors, not unrelated invalid
+content or a missing chat. all extra options and handle edit options are typed.

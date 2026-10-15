@@ -1,5 +1,17 @@
 # @yaebal/mini-app
 
+## 1.0.2
+
+### patch changes
+
+- ef37463: refresh bot api 10.3 descriptions for expandable quotes and button styles, and document mini app external-origin restrictions.
+- updated dependencies [ef37463]
+- updated dependencies [46920ed]
+- updated dependencies [1ebbb05]
+- updated dependencies [a7a2d74]
+  - @yaebal/types@10.3.1
+  - @yaebal/core@0.4.2
+
 ## 1.0.1
 
 ### patch changes

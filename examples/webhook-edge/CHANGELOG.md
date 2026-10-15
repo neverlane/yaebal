@@ -1,5 +1,15 @@
 # @yaebal/example-webhook-edge
 
+## 0.0.3
+
+### patch changes
+
+- updated dependencies [46920ed]
+- updated dependencies [1ebbb05]
+  - @yaebal/core@0.4.2
+  - @yaebal/keyboard@0.1.3
+  - @yaebal/web@1.0.2
+
 ## 0.0.2
 
 ### patch changes

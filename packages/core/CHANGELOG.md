@@ -1,5 +1,15 @@
 # @yaebal/core
 
+## 0.4.2
+
+### patch changes
+
+- 46920ed: resolve nested builders through toJSON before extracting multipart uploads, including rich document attachments.
+- 1ebbb05: address replies to incoming ephemeral messages by ephemeral_message_id and keep their responses ephemeral.
+- updated dependencies [ef37463]
+- updated dependencies [a7a2d74]
+  - @yaebal/types@10.3.1
+
 ## 0.4.1
 
 ### patch changes

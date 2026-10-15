@@ -1135,3 +1135,59 @@ test("polling: routine hang aborts stay quiet, a run of them is reported with it
 		globalThis.fetch = previousFetch;
 	}
 });
+
+test("reply addresses ephemeral messages and keeps the response ephemeral", async () => {
+	const { Context } = await import("./context.js");
+	const calls: Record<string, unknown>[] = [];
+	const api = {
+		call: async (_method: string, params: Record<string, unknown>) => {
+			calls.push(params);
+			return {};
+		},
+	};
+	for (const withReceiver of [false, true]) {
+		const ctx = new Context({
+			api: api as never,
+			updateType: "message",
+			update: {
+				update_id: 1,
+				message: {
+					message_id: 0,
+					ephemeral_message_id: 77,
+					date: 0,
+					chat: { id: -1, type: "supergroup" },
+					from: { id: 7, is_bot: false, first_name: "user" },
+					...(withReceiver
+						? { receiver_user: { id: 8, is_bot: false, first_name: "receiver" } }
+						: {}),
+				},
+			},
+		});
+		await ctx.reply("answer");
+		await ctx.reply({ text: "answer", disable_notification: true });
+		for (const call of calls.splice(0)) {
+			assert.deepEqual(call.reply_parameters, { ephemeral_message_id: 77 });
+			assert.deepEqual(call.ephemeral_message_parameters, {
+				receiver_user_id: withReceiver ? 8 : 7,
+			});
+		}
+	}
+});
+
+test("reply refuses an ephemeral message with no recipient instead of sending publicly", async () => {
+	const { Context } = await import("./context.js");
+	const ctx = new Context({
+		api: { call: () => assert.fail("must not send") } as never,
+		updateType: "message",
+		update: {
+			update_id: 1,
+			message: {
+				message_id: 0,
+				ephemeral_message_id: 77,
+				date: 0,
+				chat: { id: -1, type: "supergroup" },
+			},
+		},
+	});
+	await assert.rejects(() => ctx.reply("answer"), /no receiver/);
+});

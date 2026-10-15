@@ -1,4 +1,5 @@
 import { AiLimitError, ai, openaiCompatible } from "@yaebal/ai";
+import { chatKey, run } from "@yaebal/runner";
 import { createBot } from "yaebal";
 
 // an ai chat bot with streamed answers, per-user memory and polite rate limits.
@@ -27,6 +28,7 @@ const bot = createBot(token).install(
 			"match the user's language.",
 		// memory is on by default (per user per chat, windowed); limits keep the bill sane.
 		limits: { perUser: "20/h" },
+		streaming: { canStop: true, keepOnStop: true },
 	}),
 );
 
@@ -59,5 +61,12 @@ bot.onError((error, ctx) => {
 	console.error("update failed", ctx?.update?.update_id, error);
 });
 
-await bot.start();
+// regular messages stay ordered per chat; stop events must bypass that queue.
+// sequential bot.start() cannot receive a stop while a handler is still streaming.
+await bot.init();
+const runner = run(bot, {
+	sequentializeBy: (update) => (update.stopped_message_generation ? undefined : chatKey(update)),
+});
+process.once("SIGINT", () => void runner.stop());
+process.once("SIGTERM", () => void runner.stop());
 console.log("ai-chat bot is up");

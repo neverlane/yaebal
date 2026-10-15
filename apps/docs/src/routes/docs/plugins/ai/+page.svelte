@@ -66,6 +66,15 @@ customModel(async function* ({ messages }) {
   }),
 );`;
 
+	const nativeStop = `import { chatKey, run } from "@yaebal/runner";
+
+// install ai({ model, streaming: { canStop: true, keepOnStop: true } }) first
+await bot.init();
+const runner = run(bot, {
+  sequentializeBy: (update) => update.stopped_message_generation ? undefined : chatKey(update),
+});
+process.once("SIGINT", () => void runner.stop());`;
+
 	const memory = `import { redisStorage } from "@yaebal/sklad";
 
 bot.install(
@@ -243,6 +252,7 @@ await env.createUser().sendMessage("hi");
 		<tr><td><code>parseMode</code></td><td>plain</td><td><code>"MarkdownV2"</code> / <code>"HTML"</code> for finalized messages only</td></tr>
 		<tr><td><code>streaming.intervalMs</code></td><td><code>500</code> draft / <code>1200</code> edit</td><td>minimum gap between preview updates, ms</td></tr>
 		<tr><td><code>streaming.drafts</code></td><td><code>true</code></td><td>opt out of <code>sendMessageDraft</code> in private chats</td></tr>
+		<tr><td><code>streaming.canStop</code>, <code>streaming.keepOnStop</code></td><td><code>false</code></td><td>native draft stop button and partial-response persistence</td></tr>
 		<tr><td><code>streaming.cursor</code></td><td><code>"▍"</code></td><td>in-flight cursor for edit mode, <code>""</code> disables</td></tr>
 		<tr><td><code>streaming.maxLength</code></td><td><code>4096</code></td><td>per-message length budget before splitting</td></tr>
 		<tr><td><code>typing</code></td><td><code>true</code></td><td>typing action during non-streamed replies; <code>{'{ intervalMs }'}</code> tunes the keep-alive</td></tr>
@@ -282,10 +292,37 @@ await env.createUser().sendMessage("hi");
 </ul>
 <Code code={streaming} title="streaming.ts" />
 <p>
-	the result reports how it went: <code>{'{ text, messages, mode, ticks, aborted }'}</code> —
+	the result reports how it went: <code>{'{ text, messages, mode, ticks, aborted, stopped }'}</code> —
 	<code>mode</code> is <code>"draft"</code> or <code>"edit"</code>, and <code>aborted</code> is
 	true when the call's <code>signal</code> fired mid-stream. the engine itself is exported as
 	<code>streamToChat(target, source, options)</code> for use outside <code>ctx.ai</code>.
+</p>
+
+<h2>native stop button</h2>
+<p>
+	bot api 10.3 supports <code>streaming.canStop</code> and <code>streaming.keepOnStop</code>,
+	both defaulting to false and overridable per <code>replyStream</code> call. the native
+	button works in private-chat draft mode. stop events cancel the shared provider signal
+	and set <code>result.stopped</code> and <code>result.aborted</code> to true.
+</p>
+<Code code={nativeStop} title="native-stop.ts" />
+<p>
+	install <code>@yaebal/runner</code> for this polling setup. sequential <code>bot.start()</code>
+	cannot receive stop updates while its handler is streaming; do not run both pollers.
+	stop updates must bypass chat queues, including custom middleware; install <code>ai()</code>
+	before queueing middleware. webhook dispatch must also process stops concurrently.
+	include <code>stopped_message_generation</code> when restricting <code>allowed_updates</code>,
+	and leave concurrency capacity for stop updates. the runnable
+	<a href="https://github.com/neverlane/yaebal/tree/master/examples/ai-chat">ai-chat example</a>
+	shows the full setup.
+</p>
+<p>
+	with <code>keepOnStop: true</code>, the partial answer is sent as a real message and
+	remembered. false discards unfinished text and does not add it to memory; already finalized
+	parts remain in the chat. an external abort preserves partial output and sets
+	<code>aborted</code> without <code>stopped</code>. unrelated provider failures still throw.
+	custom models must honor the request signal to stop their own network work; the renderer
+	stops waiting even if they ignore it. registrations and abort listeners are cleaned up.
 </p>
 
 <h2>memory</h2>

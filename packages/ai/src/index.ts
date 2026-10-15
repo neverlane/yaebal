@@ -14,6 +14,7 @@ import {
 import {
 	type AiStreamRenderOptions,
 	type AiStreamResult,
+	GENERATION_STOPPED,
 	type StreamTarget,
 	streamToChat,
 	targetOf,
@@ -73,6 +74,9 @@ export interface AiCallOptions {
 }
 
 export interface AiReplyOptions extends AiCallOptions {
+	/** override native draft stop behavior for this replyStream call. */
+	canStop?: boolean;
+	keepOnStop?: boolean;
 	/** observe every telegram message as it lands. */
 	onPart?: (message: Message) => unknown;
 }
@@ -104,7 +108,10 @@ export interface AiOptions {
 	/** parse mode for finalized messages (`"MarkdownV2"`, `"HTML"`, …). in-flight ticks stay plain. */
 	parseMode?: string;
 	/** how streamed replies render: tick interval, draft opt-out, cursor, message budget. */
-	streaming?: Pick<AiStreamRenderOptions, "intervalMs" | "drafts" | "cursor" | "maxLength" | "now">;
+	streaming?: Pick<
+		AiStreamRenderOptions,
+		"intervalMs" | "drafts" | "cursor" | "maxLength" | "now" | "canStop" | "keepOnStop"
+	>;
 	/** keep a `typing` chat action alive during non-streamed replies. default on; `false` disables. */
 	typing?: boolean | AiTypingOptions;
 	temperature?: number;
@@ -197,125 +204,163 @@ export function ai(options: AiOptions): Plugin<Context, AiControl> {
 	const typingInterval =
 		typeof options.typing === "object" ? (options.typing.intervalMs ?? 4000) : 4000;
 
+	const active = new Map<string, AbortController>();
+	const draftKey = (chatId: number | string, threadId: number | undefined, draftId: number) =>
+		`${chatId}:${threadId ?? ""}:${draftId}`;
 	return (composer) =>
-		composer.derive((ctx) => {
-			const takeLimit = (): void => {
-				if (limiter === undefined) return;
-				const key = limitKey(ctx);
-				if (key !== undefined) limiter.take(key);
-			};
-
-			const systemOf = (call: AiCallOptions): string | undefined => {
-				if (call.system !== undefined) return call.system;
-				return typeof options.system === "function" ? options.system(ctx) : options.system;
-			};
-
-			const buildRequest = async (
-				prompt: string | AiMessage[],
-				call: AiCallOptions,
-				useMemory: boolean,
-			): Promise<AiRequest> => {
-				const system = systemOf(call);
-				const history = useMemory && memory !== undefined ? await memory.load(ctx) : [];
-				return {
-					messages: [
-						...(system === undefined ? [] : [{ role: "system", content: system } as AiMessage]),
-						...history,
-						...promptTurns(prompt),
-					],
-					temperature: call.temperature ?? options.temperature,
-					maxTokens: call.maxTokens ?? options.maxTokens,
-					signal: call.signal,
+		composer
+			.use(async (ctx, next) => {
+				const stop = ctx.update.stopped_message_generation;
+				if (stop)
+					active
+						.get(draftKey(stop.chat.id, stop.message_thread_id, stop.draft_id))
+						?.abort(GENERATION_STOPPED);
+				await next();
+			})
+			.derive((ctx) => {
+				const takeLimit = (): void => {
+					if (limiter === undefined) return;
+					const key = limitKey(ctx);
+					if (key !== undefined) limiter.take(key);
 				};
-			};
 
-			const remember = async (
-				prompt: string | AiMessage[],
-				answer: string,
-				call: AiCallOptions,
-				fallback: boolean,
-			): Promise<void> => {
-				if (memory === undefined || !(call.memory ?? fallback)) return;
-				await memory.append(ctx, [
-					...promptTurns(prompt).filter((turn) => turn.role !== "system"),
-					{ role: "assistant", content: answer },
-				]);
-			};
-
-			/** keep the "typing…" action alive while `fn` runs — for non-streamed replies. */
-			const withTyping = async <T>(fn: () => Promise<T>): Promise<T> => {
-				if (options.typing === false || ctx.chat === undefined) return fn();
-				const send = (): void => {
-					void ctx.api
-						.call("sendChatAction", { chat_id: ctx.chat?.id, action: "typing", ...ctx.routing() })
-						.catch(() => undefined);
+				const systemOf = (call: AiCallOptions): string | undefined => {
+					if (call.system !== undefined) return call.system;
+					return typeof options.system === "function" ? options.system(ctx) : options.system;
 				};
-				send();
-				const timer = setInterval(send, typingInterval);
-				try {
-					return await fn();
-				} finally {
-					clearInterval(timer);
-				}
-			};
 
-			const api: AiApi = {
-				model,
-				async generate(prompt, call = {}) {
-					takeLimit();
-					const reply = await generate(await buildRequest(prompt, call, call.memory ?? false));
-					await remember(prompt, reply.text, call, false);
-					return reply;
-				},
-				async *stream(prompt, call = {}) {
-					takeLimit();
-					yield* model.stream(await buildRequest(prompt, call, call.memory ?? true));
-				},
-				async reply(prompt, call = {}) {
-					takeLimit();
-					const target = targetOf(ctx);
-					const reply = await withTyping(async () =>
-						generate(await buildRequest(prompt, call, call.memory ?? true)),
-					);
-					const messages = await sendText(target, reply.text, {
-						parseMode: options.parseMode,
-						maxLength: options.streaming?.maxLength,
-						onPart: call.onPart,
-					});
-					await remember(prompt, reply.text, call, true);
-					return { ...reply, messages };
-				},
-				async replyStream(prompt, call = {}) {
-					takeLimit();
-					const target = targetOf(ctx);
-					// drafts have a native "Thinking…" placeholder; edit mode gets a typing action
-					// to cover the silence before the first token lands.
-					if (
-						!(target.isPrivate && options.streaming?.drafts !== false) &&
-						options.typing !== false
-					) {
-						void ctx.api
-							.call("sendChatAction", {
-								chat_id: target.chatId,
-								action: "typing",
-								...ctx.routing(),
-							})
-							.catch(() => undefined);
-					}
-					const request = await buildRequest(prompt, call, call.memory ?? true);
-					const result = await streamToChat(target, model.stream(request), {
-						...options.streaming,
-						parseMode: options.parseMode,
+				const buildRequest = async (
+					prompt: string | AiMessage[],
+					call: AiCallOptions,
+					useMemory: boolean,
+				): Promise<AiRequest> => {
+					const system = systemOf(call);
+					const history = useMemory && memory !== undefined ? await memory.load(ctx) : [];
+					return {
+						messages: [
+							...(system === undefined ? [] : [{ role: "system", content: system } as AiMessage]),
+							...history,
+							...promptTurns(prompt),
+						],
+						temperature: call.temperature ?? options.temperature,
+						maxTokens: call.maxTokens ?? options.maxTokens,
 						signal: call.signal,
-						onPart: call.onPart,
-					});
-					await remember(prompt, result.text, call, true);
-					return result;
-				},
-				history: () => (memory === undefined ? Promise.resolve([]) : memory.load(ctx)),
-				reset: () => (memory === undefined ? Promise.resolve() : memory.clear(ctx)),
-			};
+					};
+				};
 
-			return { ai: api };
-		});
+				const remember = async (
+					prompt: string | AiMessage[],
+					answer: string,
+					call: AiCallOptions,
+					fallback: boolean,
+				): Promise<void> => {
+					if (memory === undefined || !(call.memory ?? fallback)) return;
+					await memory.append(ctx, [
+						...promptTurns(prompt).filter((turn) => turn.role !== "system"),
+						{ role: "assistant", content: answer },
+					]);
+				};
+
+				/** keep the "typing…" action alive while `fn` runs — for non-streamed replies. */
+				const withTyping = async <T>(fn: () => Promise<T>): Promise<T> => {
+					if (options.typing === false || ctx.chat === undefined) return fn();
+					const send = (): void => {
+						void ctx.api
+							.call("sendChatAction", { chat_id: ctx.chat?.id, action: "typing", ...ctx.routing() })
+							.catch(() => undefined);
+					};
+					send();
+					const timer = setInterval(send, typingInterval);
+					try {
+						return await fn();
+					} finally {
+						clearInterval(timer);
+					}
+				};
+
+				const api: AiApi = {
+					model,
+					async generate(prompt, call = {}) {
+						takeLimit();
+						const reply = await generate(await buildRequest(prompt, call, call.memory ?? false));
+						await remember(prompt, reply.text, call, false);
+						return reply;
+					},
+					async *stream(prompt, call = {}) {
+						takeLimit();
+						yield* model.stream(await buildRequest(prompt, call, call.memory ?? true));
+					},
+					async reply(prompt, call = {}) {
+						takeLimit();
+						const target = targetOf(ctx);
+						const reply = await withTyping(async () =>
+							generate(await buildRequest(prompt, call, call.memory ?? true)),
+						);
+						const messages = await sendText(target, reply.text, {
+							parseMode: options.parseMode,
+							maxLength: options.streaming?.maxLength,
+							onPart: call.onPart,
+						});
+						await remember(prompt, reply.text, call, true);
+						return { ...reply, messages };
+					},
+					async replyStream(prompt, call = {}) {
+						takeLimit();
+						const target = targetOf(ctx);
+						// drafts have a native "Thinking…" placeholder; edit mode gets a typing action
+						// to cover the silence before the first token lands.
+						if (
+							!(target.isPrivate && options.streaming?.drafts !== false) &&
+							options.typing !== false
+						) {
+							void ctx.api
+								.call("sendChatAction", {
+									chat_id: target.chatId,
+									action: "typing",
+									...ctx.routing(),
+								})
+								.catch(() => undefined);
+						}
+						const controller = new AbortController();
+						const abort = () => controller.abort(call.signal?.reason);
+						call.signal?.addEventListener("abort", abort, { once: true });
+						if (call.signal?.aborted) abort();
+						let key: string | undefined;
+						const canStop = call.canStop ?? options.streaming?.canStop ?? false;
+						try {
+							const request = await buildRequest(
+								prompt,
+								{ ...call, signal: controller.signal },
+								call.memory ?? true,
+							);
+							const result = await streamToChat(target, model.stream(request), {
+								...options.streaming,
+								canStop,
+								keepOnStop: call.keepOnStop ?? options.streaming?.keepOnStop,
+								parseMode: options.parseMode,
+								signal: controller.signal,
+								onPart: call.onPart,
+								onDraft: (id) => {
+									if (key !== undefined) active.delete(key);
+									if (canStop) {
+										key = draftKey(target.chatId, target.threadId, id);
+										active.set(key, controller);
+									}
+								},
+							});
+							if (!result.stopped || (call.keepOnStop ?? options.streaming?.keepOnStop) === true) {
+								if (result.text.length > 0) await remember(prompt, result.text, call, true);
+							}
+							return result;
+						} finally {
+							call.signal?.removeEventListener("abort", abort);
+							if (key !== undefined) active.delete(key);
+						}
+					},
+					history: () => (memory === undefined ? Promise.resolve([]) : memory.load(ctx)),
+					reset: () => (memory === undefined ? Promise.resolve() : memory.clear(ctx)),
+				};
+
+				return { ai: api };
+			});
 }

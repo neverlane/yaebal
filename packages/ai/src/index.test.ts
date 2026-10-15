@@ -329,3 +329,191 @@ test("generate(): returns text without sending anything", TIMEOUT, async () => {
 	assert.equal(env.callsTo("sendMessage").length, 0);
 	assert.equal(env.callsTo("sendMessageDraft").length, 0);
 });
+
+function deferred<T = void>() {
+	let resolve!: (value: T) => void;
+	const promise = new Promise<T>((done) => {
+		resolve = done;
+	});
+	return { promise, resolve };
+}
+
+for (const keepOnStop of [false, true]) {
+	test(
+		`native stop cancels an idle provider and ${keepOnStop ? "preserves" : "discards"} partial output`,
+		TIMEOUT,
+		async () => {
+			const idle = deferred();
+			const release = deferred();
+			let signal: AbortSignal | undefined;
+			const closed = deferred();
+			const model = customModel(async function* (request) {
+				signal = request.signal;
+				try {
+					yield "partial";
+					idle.resolve();
+					await release.promise;
+					yield "late";
+				} finally {
+					closed.resolve();
+				}
+			});
+			let result!: AiStreamResult;
+			let history: AiMessage[] = [];
+			const bot = new Composer<Context>()
+				.install(ai({ model, streaming: { canStop: true, keepOnStop } }))
+				.command("history", async (ctx) => {
+					history = await ctx.ai.history();
+				})
+				.on("message:text", async (ctx) => {
+					result = await ctx.ai.replyStream(ctx.text);
+				});
+			const env = createTestEnv(bot);
+			const user = env.createUser({ id: 7 });
+			const running = user.sendMessage("hello");
+			try {
+				await idle.promise;
+				const params = env.lastApiCall("sendMessageDraft")?.params;
+				assert.equal(params?.can_stop, true);
+				assert.equal(params?.keep_on_stop, keepOnStop);
+				const draftId = Number(params?.draft_id);
+				const stop = (chatId: number, id: number, thread?: number) =>
+					env.dispatch({
+						update_id: 900,
+						stopped_message_generation: {
+							chat: { id: chatId, type: "private" },
+							draft_id: id,
+							...(thread === undefined ? {} : { message_thread_id: thread }),
+						},
+					});
+				await stop(8, draftId);
+				await stop(7, draftId + 1);
+				await stop(7, draftId, 99);
+				assert.equal(signal?.aborted, false);
+				await stop(7, draftId);
+				await running;
+				assert.equal(signal?.aborted, true);
+				assert.equal(result.stopped, true);
+				assert.equal(result.aborted, true);
+				assert.equal(result.text, "partial");
+				assert.deepEqual(
+					env.callsTo("sendMessage").map((call) => call.params?.text),
+					keepOnStop ? ["partial"] : [],
+				);
+				await user.sendCommand("history");
+				assert.deepEqual(
+					history.map((turn) => turn.content),
+					keepOnStop ? ["hello", "partial"] : [],
+				);
+			} finally {
+				release.resolve();
+				await running;
+			}
+			await Promise.resolve();
+			await closed.promise;
+		},
+	);
+}
+
+test(
+	"per-call stop options override defaults and stop follows the new draft after splitting",
+	TIMEOUT,
+	async () => {
+		const idle = deferred();
+		const release = deferred();
+		let result!: AiStreamResult;
+		const model = customModel(async function* () {
+			yield "aaaa bbbb";
+			idle.resolve();
+			await release.promise;
+		});
+		const bot = new Composer<Context>()
+			.install(ai({ model, memory: false, streaming: { canStop: false, maxLength: 5 } }))
+			.on("message:text", async (ctx) => {
+				result = await ctx.ai.replyStream(ctx.text, { canStop: true, keepOnStop: true });
+			});
+		const env = createTestEnv(bot);
+		const running = env.createUser({ id: 7 }).sendMessage("hello");
+		try {
+			await idle.promise;
+			const drafts = env.callsTo("sendMessageDraft");
+			const first = Number(drafts[0]?.params?.draft_id);
+			const current = Number(drafts.at(-1)?.params?.draft_id);
+			assert.notEqual(first, current);
+			await env.dispatch({
+				update_id: 10,
+				stopped_message_generation: { chat: { id: 7, type: "private" }, draft_id: first },
+			});
+			await env.dispatch({
+				update_id: 11,
+				stopped_message_generation: { chat: { id: 7, type: "private" }, draft_id: current },
+			});
+			await running;
+			assert.equal(result.stopped, true);
+			assert.deepEqual(
+				env.callsTo("sendMessage").map((call) => call.params?.text),
+				["aaaa", "bbbb"],
+			);
+		} finally {
+			release.resolve();
+			await running;
+		}
+	},
+);
+
+test(
+	"provider abort errors return the partial result while unrelated provider failures propagate",
+	TIMEOUT,
+	async () => {
+		const abort = new AbortController();
+		const model = customModel(async function* () {
+			yield "partial";
+			abort.abort();
+			throw abort.signal.reason;
+		});
+		let result!: AiStreamResult;
+		const bot = new Composer<Context>()
+			.install(ai({ model, memory: false }))
+			.on("message:text", async (ctx) => {
+				result = await ctx.ai.replyStream(ctx.text, { signal: abort.signal });
+			});
+		const env = createTestEnv(bot);
+		await env.createUser().sendMessage("hello");
+		assert.equal(result.aborted, true);
+		assert.equal(result.stopped, false);
+		assert.equal(env.lastApiCall("sendMessage")?.params?.text, "partial");
+		const failure = new Error("provider failed");
+		const broken = aiBot({
+			model: customModel(async function* () {
+				yield "before failure";
+				throw failure;
+			}),
+			memory: false,
+		});
+		await assert.rejects(
+			() => createTestEnv(broken.bot).createUser().sendMessage("hi"),
+			(error) => error === failure,
+		);
+	},
+);
+
+test("an already aborted request never starts generation or sends a draft", TIMEOUT, async () => {
+	const abort = new AbortController();
+	abort.abort();
+	let starts = 0;
+	const bot = new Composer<Context>()
+		.install(
+			ai({
+				model: customModel(async function* () {
+					starts++;
+					yield "unexpected";
+				}),
+				memory: false,
+			}),
+		)
+		.on("message:text", (ctx) => ctx.ai.replyStream(ctx.text, { signal: abort.signal }));
+	const env = createTestEnv(bot);
+	await env.createUser().sendMessage("hello");
+	assert.equal(starts, 0);
+	assert.equal(env.apiCalls.length, 0);
+});

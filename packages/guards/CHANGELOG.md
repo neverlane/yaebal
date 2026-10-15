@@ -1,5 +1,15 @@
 # @yaebal/guards
 
+## 1.0.2
+
+### patch changes
+
+- updated dependencies [46920ed]
+- updated dependencies [1ebbb05]
+  - @yaebal/core@0.4.2
+  - @yaebal/cache@1.0.2
+  - @yaebal/filters@1.0.2
+
 ## 1.0.1
 
 ### patch changes

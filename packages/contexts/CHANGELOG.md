@@ -1,5 +1,17 @@
 # @yaebal/contexts
 
+## 1.0.3
+
+### patch changes
+
+- a6a4587: keep generated and positional reply/quote shortcuts ephemeral when responding to an ephemeral message.
+- updated dependencies [ef37463]
+- updated dependencies [46920ed]
+- updated dependencies [1ebbb05]
+- updated dependencies [a7a2d74]
+  - @yaebal/types@10.3.1
+  - @yaebal/core@0.4.2
+
 ## 1.0.2
 
 ### patch changes

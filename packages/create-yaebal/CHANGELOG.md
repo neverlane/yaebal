@@ -1,5 +1,12 @@
 # create-yaebal
 
+## 0.3.4
+
+### patch changes
+
+- updated dependencies [32091fb]
+  - @yaebal/ai@0.1.0
+
 ## 0.3.3
 
 ### patch changes

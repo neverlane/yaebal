@@ -1,5 +1,13 @@
 # @yaebal/runner
 
+## 0.0.6
+
+### patch changes
+
+- updated dependencies [ef37463]
+- updated dependencies [a7a2d74]
+  - @yaebal/types@10.3.1
+
 ## 0.0.5
 
 ### patch changes

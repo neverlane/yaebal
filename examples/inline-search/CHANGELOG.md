@@ -1,5 +1,19 @@
 # @yaebal/example-inline-search
 
+## 0.0.3
+
+### patch changes
+
+- updated dependencies [ef37463]
+- updated dependencies [46920ed]
+- updated dependencies [a6a4587]
+- updated dependencies [1ebbb05]
+- updated dependencies [a7a2d74]
+  - @yaebal/types@10.3.1
+  - @yaebal/core@0.4.2
+  - @yaebal/contexts@1.0.3
+  - @yaebal/fmt@1.0.2
+
 ## 0.0.2
 
 ### patch changes

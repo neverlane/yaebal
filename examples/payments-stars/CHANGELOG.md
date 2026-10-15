@@ -1,5 +1,11 @@
 # @yaebal/example-payments-stars
 
+## 0.0.3
+
+### patch changes
+
+- yaebal@0.2.2
+
 ## 0.0.2
 
 ### patch changes

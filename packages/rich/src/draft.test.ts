@@ -187,13 +187,16 @@ test("canStop/keepOnStop (bot api 10.3) ride along on every draft push", async (
 test("structured blocks append and survive finalization without mutating the input", async () => {
 	const { api, calls } = mockApi();
 	const draft = new RichMessageDraft(api, 1, 9);
-	const input = { blocks: [{ type: "divider" }], is_rtl: false };
+	const input = { blocks: [{ type: "paragraph", text: "hello" }], is_rtl: false };
 	await draft.rewrite(input);
 	await draft.write({ blocks: [{ type: "anchor", name: "end" }] });
 	await draft.send();
-	assert.deepEqual(input.blocks, [{ type: "divider" }]);
+	assert.deepEqual(input.blocks, [{ type: "paragraph", text: "hello" }]);
 	assert.deepEqual(calls.at(-1)?.params?.rich_message, {
-		blocks: [{ type: "divider" }, { type: "anchor", name: "end" }],
+		blocks: [
+			{ type: "paragraph", text: "hello" },
+			{ type: "anchor", name: "end" },
+		],
 		is_rtl: false,
 	});
 });

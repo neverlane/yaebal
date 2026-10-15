@@ -1,6 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { Message, SendMessageParams, Update, User } from "./index.js";
+import type {
+	InputRichMessage,
+	Message,
+	RichText,
+	SendMessageParams,
+	Update,
+	User,
+} from "./index.js";
 import { BOT_API_VERSION } from "./index.js";
 
 test("exposes the generated Bot API version", () => {
@@ -29,4 +36,12 @@ test("Message is a usable type reference", () => {
 	const msg: Pick<Message, "message_id" | "date"> = { message_id: 10, date: 0 };
 
 	assert.equal(msg.message_id, 10);
+});
+
+test("structured rich messages accept plain text, nested arrays and formatted objects", () => {
+	const text: RichText = ["hello ", { type: "bold", text: ["world", "!"] }];
+	const message: InputRichMessage = {
+		blocks: [{ type: "paragraph", text }],
+	};
+	assert.equal(message.blocks?.length, 1);
 });

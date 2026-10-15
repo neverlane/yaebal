@@ -30,13 +30,8 @@ import type {
 	RichTextMathematicalExpression,
 } from "@yaebal/types";
 
-/**
- * the schema documents `RichText` fields as "either a String for plain text, an
- * Array of RichText, or" one of the marked-up variants — but the generated
- * `RichText` type only lists the object variants. widen locally so plain-string
- * leaves (by far the common case) don't need a cast at every call site.
- */
-type RichTextLike = RichText | string | RichTextLike[] | undefined;
+/** optional rich-text fields flatten to an empty string. */
+type RichTextLike = RichText | undefined;
 
 /**
  * every generated `.type` field is plain `string`, not a literal — so unlike a

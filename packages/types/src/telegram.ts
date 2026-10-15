@@ -2528,7 +2528,7 @@ export interface InputRichBlockDocument {
 	caption?: RichBlockCaption;
 }
 
-/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"collapsed"`. */
+/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"expandable"`. */
 export interface InputRichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
 	type: string;
@@ -4090,7 +4090,7 @@ export interface RichBlockDocument {
 	caption?: RichBlockCaption;
 }
 
-/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"collapsed"`. */
+/** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"expandable"`. */
 export interface RichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
 	type: string;
@@ -4290,7 +4290,7 @@ export interface RichMessage {
 export interface RichMessageButton {
 	/** Text of the button. May contain only plain text, [RichTextCustomEmoji](https://core.telegram.org/bots/api/#richtextcustomemoji) and [RichTextDateTime](https://core.telegram.org/bots/api/#richtextdatetime) entities. */
 	text: RichText;
-	/** *Optional*. Style of the button. Must be one of “danger” (red), “success” (green), “primary” (blue) or “link” (the button is shown as a regular link without borders). If omitted, then an app-specific style is used. The style “link” is allowed only for callback buttons. */
+	/** *Optional*. Style of the button. Must be one of “danger”, “success”, “primary”, or “link” (the button is shown as a regular link without borders). Apps may use theme-specific colors for the button background and text based on the style. The style “link” is allowed only for callback buttons. */
 	style?: "danger" | "success" | "primary" | "link";
 	/** *Optional*. HTTP or tg:// URL to be opened when the button is pressed. Links `tg://user?id=<user_id>` can be used to mention a user by their identifier without using a username, if this is allowed by their privacy settings. */
 	url?: string;
@@ -4313,7 +4313,7 @@ export interface RichMessageButton {
 }
 
 /** This object represents a rich formatted text. Currently, it can be either a String for plain text, an Array of [RichText](https://core.telegram.org/bots/api/#richtext), or any of the following types: */
-export type RichText = RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextButton | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
+export type RichText = string | RichText[] | RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextButton | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
 
 /** An anchor. */
 export interface RichTextAnchor {

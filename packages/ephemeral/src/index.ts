@@ -13,6 +13,7 @@ import type {
 	SendMessageParams,
 } from "@yaebal/types";
 
+/** the same plain/formatted text accepted by core's send/reply helpers. */
 export type EphemeralText = string | FormatResult;
 /** structural support for @yaebal/rich's RichDocument without a plugin dependency. */
 export type EphemeralRichSource = InputRichMessage | { toInputRichMessage(): InputRichMessage };
@@ -43,27 +44,49 @@ export type EphemeralMediaOptions = WithMarkup<
 export interface EphemeralApi {
 	call<T = unknown>(method: string, params?: Record<string, unknown>): Promise<T>;
 }
-/** private chats may fall back to a normal message; channels always reject. */
+/**
+ * private chats: "message" (default) sends a normal message behind the same handle;
+ * "error" rejects. channels always reject, because a normal channel post is public.
+ */
 export type EphemeralFallback = "message" | "error";
-/** expiry recovery never repeats a callback replacement or replies to an expired command. */
+/**
+ * "throw" (default) rethrows expired edits; "ignore" resolves false; "resend" sends
+ * known content again and retargets the handle. recovery never repeats an old callback
+ * replacement or a reply to an expired command.
+ */
 export type EphemeralExpiredAction = "throw" | "ignore" | "resend";
 export interface EphemeralOptions {
+	/** private-chat policy. default "message". */
 	fallback?: EphemeralFallback;
+	/** expired-edit policy. default "throw". */
 	onExpired?: EphemeralExpiredAction;
+	/** override the message-related 400 detector when telegram's wording changes. */
 	isExpiredError?: (error: unknown) => boolean;
 }
 
-/** a short-lived handle. never persist its ids: telegram may reuse them after expiry. */
+/**
+ * a short-lived handle. never persist it or its ids: telegram may reuse them after
+ * expiry. delivery and edits are best-effort, especially for offline receivers.
+ * edit methods resolve false when expiry recovery is skipped; delete is idempotent.
+ */
 export interface EphemeralMessage {
+	/** false on the normal private-chat fallback. */
 	readonly isEphemeral: boolean;
 	readonly chatId: number;
 	readonly receiverUserId: number;
+	/** may change after onExpired: "resend" recovery. */
 	readonly ephemeralMessageId: number | undefined;
+	/** the regular id, on the private-chat fallback only. */
 	readonly messageId: number | undefined;
+	/** replace text and entities; extra options follow editEphemeralMessageText. */
 	edit(text: EphemeralText, extra?: EphemeralEditOptions): Promise<boolean>;
+	/** replace rich content without sending a conflicting text field. */
 	editRich(input: EphemeralRichSource, extra?: EphemeralEditOptions): Promise<boolean>;
+	/** replace media; new uploads are supported by bot api 10.3. */
 	editMedia(media: InputMedia, extra?: EphemeralMediaOptions): Promise<boolean>;
+	/** replace the caption, entities and optional caption placement. */
 	editCaption(caption: EphemeralText, extra?: EphemeralCaptionOptions): Promise<boolean>;
+	/** replace the inline keyboard; undefined clears it. */
 	editReplyMarkup(replyMarkup: Markup | undefined): Promise<boolean>;
 	/** an already-gone message resolves false. */
 	delete(): Promise<boolean>;

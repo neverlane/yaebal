@@ -138,3 +138,33 @@ test("sendRichMessage()/richMessageDraft() reject when the update has no chat", 
 	await assert.rejects(() => decorated.sendRichMessage("x"), /no chat in this update/);
 	assert.throws(() => decorated.richMessageDraft(1), /no chat in this update/);
 });
+
+test("rich document attachments upload through helpers and raw API builder serialization", async (t) => {
+	const { createApi, media } = await import("@yaebal/core");
+	const bodies: FormData[] = [];
+	t.mock.method(globalThis, "fetch", async (_url: unknown, init?: RequestInit) => {
+		assert.ok(init?.body instanceof FormData);
+		bodies.push(init.body);
+		return Response.json({
+			ok: true,
+			result: { message_id: 1, date: 0, chat: { id: 42, type: "private" } },
+		});
+	});
+	const api = createApi("123:test");
+	const doc = document("report").media({
+		id: "report",
+		media: { type: "document", media: media.text("hello", "report.txt") },
+	});
+	await sendRichMessage(api, 42, doc);
+	await api.call("sendRichMessage", { chat_id: 42, rich_message: doc });
+	for (const body of bodies) {
+		assert.deepEqual(JSON.parse(String(body.get("rich_message"))), {
+			html: "report",
+			media: [{ id: "report", media: { type: "document", media: "attach://_file0" } }],
+		});
+		const file = body.get("_file0");
+		assert.ok(file instanceof Blob);
+		assert.equal(await file.text(), "hello");
+	}
+	assert.equal(bodies.length, 2);
+});

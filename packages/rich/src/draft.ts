@@ -174,7 +174,10 @@ export class RichMessageDraft {
 	async rewrite(input: DraftSource): Promise<void> {
 		this.#assertOpen();
 
-		const next = resolve(input, this.#state?.dialect ?? "html");
+		const next = resolve(
+			input,
+			this.#state?.dialect === "blocks" ? "html" : (this.#state?.dialect ?? "html"),
+		);
 		assertDraftMedia(toInputRichMessage(next));
 		this.#state = next;
 		await this.#pushCurrent();

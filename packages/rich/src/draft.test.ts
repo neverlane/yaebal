@@ -248,3 +248,12 @@ test("ambiguous input and mixed block/text writes reject without replacing the l
 	await draft.send();
 	assert.deepEqual(calls.at(-1)?.params?.rich_message, { blocks: [{ type: "divider" }] });
 });
+
+test("rewrite can replace a block draft with plain html", async () => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 9);
+	await draft.rewrite({ blocks: [{ type: "divider" }] });
+	await draft.rewrite("<p>replacement</p>");
+	await draft.send();
+	assert.deepEqual(calls.at(-1)?.params?.rich_message, { html: "<p>replacement</p>" });
+});

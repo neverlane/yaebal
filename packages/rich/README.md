@@ -116,6 +116,12 @@ call `draft.cancel()` instead of `send()` to abandon a draft without persisting 
 
 `ctx.richMessageDraft(id, { canStop: true })` shows the user a stop button on the draft (bot api 10.3); a press arrives as a `stopped_message_generation` update — stop generating there and `send()` or `cancel()`. `keepOnStop: true` keeps the draft visible after the press.
 
+stop updates must be dispatched concurrently with the streaming handler; sequential polling
+or a chat queue otherwise waits for generation to finish. use the concurrent runner setup
+in [`@yaebal/ai`](https://github.com/neverlane/yaebal/tree/master/packages/ai#native-stop-button-bot-api-103)
+or concurrent webhooks. close the draft and cancel your provider from the stop handler.
+`keepOnStop` keeps the preview only temporarily; call `send()` to preserve it permanently.
+
 ## buttons
 
 bot api 10.3 puts buttons inside the message body: `button()` sits right in the text, `buttons()` lays out a row. every `RichMessageButton` type is covered (`callbackData`, `url`, `webApp`, `loginUrl`, `switchInlineQuery*`, `copyText`, `disabled`), with `style: "success" | "danger" | "primary" | "link"` (`link` is callback-only). callback buttons arrive as an ordinary `callback_query`.

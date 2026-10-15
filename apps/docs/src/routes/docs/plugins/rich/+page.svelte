@@ -288,6 +288,13 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	including <code>tg://document?id=</code>. draft pushes require previously uploaded files.
 </div>
 
+<p>
+	when using <code>canStop</code>, stop updates must run concurrently with generation and
+	bypass chat queues. see the <a href="/docs/plugins/ai#native-stop-button">concurrent ai runner setup</a>
+	or use concurrent webhooks. close the draft and cancel the provider in the stop handler.
+	<code>keepOnStop</code> keeps the preview only temporarily; <code>send()</code> persists it.
+</p>
+
 <h2>attachments and structured drafts</h2>
 <p>
 	<code>RichDocument.media(...entries)</code> attaches files referenced in html or markdown.

@@ -1191,3 +1191,20 @@ test("reply refuses an ephemeral message with no recipient instead of sending pu
 	});
 	await assert.rejects(() => ctx.reply("answer"), /no receiver/);
 });
+
+test("multipart extraction honors nested builders' toJSON without flattening upload bytes", async () => {
+	const bytes = new Uint8Array([1, 2, 3]);
+	const builder = {
+		toJSON: () => ({
+			media: [{ id: "file", media: { type: "document", media: media.buffer(bytes, "file.bin") } }],
+		}),
+	};
+	const encoded = await encodeRequest({ rich_message: builder });
+	assert.ok(encoded.body instanceof FormData);
+	assert.deepEqual(JSON.parse(String(encoded.body.get("rich_message"))), {
+		media: [{ id: "file", media: { type: "document", media: "attach://_file0" } }],
+	});
+	const file = encoded.body.get("_file0");
+	assert.ok(file instanceof Blob);
+	assert.deepEqual(new Uint8Array(await file.arrayBuffer()), bytes);
+});

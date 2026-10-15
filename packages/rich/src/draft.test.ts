@@ -183,3 +183,68 @@ test("canStop/keepOnStop (bot api 10.3) ride along on every draft push", async (
 	}
 	draft.cancel();
 });
+
+test("structured blocks append and survive finalization without mutating the input", async () => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 9);
+	const input = { blocks: [{ type: "divider" }], is_rtl: false };
+	await draft.rewrite(input);
+	await draft.write({ blocks: [{ type: "anchor", name: "end" }] });
+	await draft.send();
+	assert.deepEqual(input.blocks, [{ type: "divider" }]);
+	assert.deepEqual(calls.at(-1)?.params?.rich_message, {
+		blocks: [{ type: "divider" }, { type: "anchor", name: "end" }],
+		is_rtl: false,
+	});
+});
+
+test("drafts preserve and merge referenced file ids through pushes and finalization", async (t) => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 9, { keepAliveMs: 1000 });
+	t.mock.timers.enable({ apis: ["setInterval"] });
+	t.after(() => draft.cancel());
+	const photo = { id: "photo1", media: { type: "photo", media: "photo-file-id" } };
+	const file = { id: "file1", media: { type: "document", media: "document-file-id" } };
+	await draft.rewrite({ html: '<img src="tg://photo?id=photo1">', media: [photo] });
+	await draft.write({ html: '<tg-document src="tg://document?id=file1">', media: [file] });
+	t.mock.timers.tick(1000);
+	await draft.send();
+	for (const call of calls.slice(1)) {
+		assert.deepEqual((call.params?.rich_message as { media: unknown }).media, [photo, file]);
+	}
+});
+
+test("draft uploads reject early while a final override can upload new media", async () => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 9);
+	for (const source of [
+		"https://example.com/file",
+		"attach://file",
+		{ kind: "text" as const, text: "new", filename: "file.txt" },
+	]) {
+		await assert.rejects(
+			() =>
+				draft.rewrite({
+					blocks: [{ type: "document", document: { type: "document", media: source } }],
+				}),
+			/previously uploaded files/,
+		);
+	}
+	assert.equal(calls.length, 0);
+	await draft.send({
+		blocks: [
+			{ type: "document", document: { type: "document", media: "https://example.com/file" } },
+		],
+	});
+	assert.equal(calls[0]?.method, "sendRichMessage");
+});
+
+test("ambiguous input and mixed block/text writes reject without replacing the last draft", async () => {
+	const { api, calls } = mockApi();
+	const draft = new RichMessageDraft(api, 1, 9);
+	await draft.rewrite({ blocks: [{ type: "divider" }] });
+	await assert.rejects(() => draft.write("text"), /cannot append text to blocks/);
+	await assert.rejects(() => draft.rewrite({ html: "a", markdown: "b" }), /exactly one/);
+	await draft.send();
+	assert.deepEqual(calls.at(-1)?.params?.rich_message, { blocks: [{ type: "divider" }] });
+});

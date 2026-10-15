@@ -1,3 +1,4 @@
+import type { InputRichMessageMedia } from "@yaebal/types";
 import { RichDocument } from "./document.js";
 import type { Dialect } from "./node.js";
 import { type Insertable, render } from "./render.js";
@@ -38,6 +39,12 @@ function joinBlocks(blocks: readonly Insertable[], dialect: Dialect): string {
 	return blocks.map((block) => render(block, dialect)).join(separator);
 }
 
+function attachedMedia(value: Insertable): InputRichMessageMedia[] {
+	if (value instanceof RichDocument) return value.toInputRichMessage().media ?? [];
+	if (Array.isArray(value)) return value.flatMap((item) => attachedMedia(item));
+	return [];
+}
+
 function makeTemplate(dialect: Dialect): RichTemplate {
 	return ((
 		first: string | TemplateStringsArray | readonly Insertable[],
@@ -47,7 +54,9 @@ function makeTemplate(dialect: Dialect): RichTemplate {
 
 		// a plain array (no `.raw` template marker) composes top-level blocks.
 		if (!("raw" in first)) {
-			return new RichDocument(dialect, joinBlocks(first as readonly Insertable[], dialect));
+			return new RichDocument(dialect, joinBlocks(first as readonly Insertable[], dialect)).media(
+				...attachedMedia(first),
+			);
 		}
 
 		// dedent the literal skeleton only (\x00 marks interpolation seams so values aren't dedented).
@@ -60,7 +69,7 @@ function makeTemplate(dialect: Dialect): RichTemplate {
 			if (i < subs.length) out += render(subs[i] as Insertable, dialect);
 		}
 
-		return new RichDocument(dialect, out);
+		return new RichDocument(dialect, out).media(...subs.flatMap(attachedMedia));
 	}) as RichTemplate;
 }
 
@@ -94,6 +103,8 @@ export interface DocumentOptions {
 	rtl?: boolean;
 	/** `InputRichMessage.skip_entity_detection` — see `RichDocument.noEntityDetection`. */
 	skipEntityDetection?: boolean;
+	/** explicit attachments for tg:// links in the document. */
+	media?: InputRichMessageMedia[];
 }
 
 /**
@@ -106,7 +117,10 @@ export function document(
 ): RichDocument {
 	const dialect = options.dialect ?? "html";
 	const entries: readonly Insertable[] = Array.isArray(blocks) ? blocks : [blocks];
-	const doc = new RichDocument(dialect, joinBlocks(entries, dialect));
+	const doc = new RichDocument(dialect, joinBlocks(entries, dialect)).media(
+		...attachedMedia(entries),
+		...(options.media ?? []),
+	);
 
 	if (options.rtl !== undefined) doc.rtl(options.rtl);
 	if (options.skipEntityDetection !== undefined) doc.noEntityDetection(options.skipEntityDetection);

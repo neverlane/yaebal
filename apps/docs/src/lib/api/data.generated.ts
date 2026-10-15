@@ -19861,7 +19861,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "style",
 				"type": "\"danger\" | \"success\" | \"primary\" | \"link\"",
 				"required": false,
-				"description": "<em>Optional</em>. Style of the button. Must be one of “danger” (red), “success” (green), “primary” (blue) or “link” (the button is shown as a regular link without borders). If omitted, then an app-specific style is used. The style “link” is allowed only for callback buttons."
+				"description": "<em>Optional</em>. Style of the button. Must be one of “danger”, “success”, “primary”, or “link” (the button is shown as a regular link without borders). Apps may use theme-specific colors for the button background and text based on the style. The style “link” is allowed only for callback buttons."
 			},
 			{
 				"name": "url",
@@ -19934,6 +19934,8 @@ export const apiTypes: ApiTypeDoc[] = [
 		"kind": "any_of",
 		"fields": [],
 		"variants": [
+			"string",
+			"RichText[]",
 			"RichTextBold",
 			"RichTextItalic",
 			"RichTextUnderline",
@@ -21213,7 +21215,7 @@ export const apiTypes: ApiTypeDoc[] = [
 	{
 		"name": "RichBlockExpandableBlockQuotation",
 		"category": "Rich messages",
-		"description": "<p>A block quotation, corresponding to the HTML tag <code>&lt;blockquote&gt;</code> with custom attribute <code>&quot;collapsed&quot;</code>.</p>",
+		"description": "<p>A block quotation, corresponding to the HTML tag <code>&lt;blockquote&gt;</code> with custom attribute <code>&quot;expandable&quot;</code>.</p>",
 		"kind": "properties",
 		"fields": [
 			{
@@ -22080,7 +22082,7 @@ export const apiTypes: ApiTypeDoc[] = [
 	{
 		"name": "InputRichBlockExpandableBlockQuotation",
 		"category": "Rich messages",
-		"description": "<p>A block quotation, corresponding to the HTML tag <code>&lt;blockquote&gt;</code> with custom attribute <code>&quot;collapsed&quot;</code>.</p>",
+		"description": "<p>A block quotation, corresponding to the HTML tag <code>&lt;blockquote&gt;</code> with custom attribute <code>&quot;expandable&quot;</code>.</p>",
 		"kind": "properties",
 		"fields": [
 			{

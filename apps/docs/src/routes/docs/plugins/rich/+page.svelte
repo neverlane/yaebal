@@ -30,6 +30,20 @@ await sendRichMessage(ctx.api, ctx.chat.id, doc);`;
 
 await sendRichMessage(ctx.api, ctx.chat.id, doc);`;
 
+	const attachments = `import { media } from "@yaebal/core";
+import { html, file, sendRichMessage } from "@yaebal/rich";
+
+const report = html([file("tg://document?id=report")]).media({
+  id: "report",
+  media: { type: "document", media: media.text("hello", "report.txt") },
+});
+await sendRichMessage(ctx.api, ctx.chat.id, report);
+
+const draft = ctx.richMessageDraft(7);
+await draft.rewrite({ blocks: [{ type: "paragraph", text: ["hello ", { type: "bold", text: "world" }] }] });
+await draft.write({ blocks: [{ type: "anchor", name: "end" }] });
+await draft.send();`;
+
 	const plugin = `import { Bot } from "@yaebal/core";
 import { rich, html, paragraph } from "@yaebal/rich";
 
@@ -269,10 +283,33 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	embedded as-is in the markdown output too — telegram's markdown parser accepts embedded html
 	blocks as long as they're blank-line-separated, which the block builders already handle.
 	<br /><br />
-	<code>sendRichMessage</code> has no <code>attach://</code>/multipart upload path (unlike
-	<code>sendPhoto</code>) — media blocks take a hosted url (or a <code>tg://…?id=</code> link to an
-	<code>InputRichMessage.media</code> entry), not a local file.
+	media blocks take a hosted url or a <code>tg://…?id=</code> link to an explicit attachment.
+	normal sends support multipart uploads through nested <code>media.*</code> sources,
+	including <code>tg://document?id=</code>. draft pushes require previously uploaded files.
 </div>
+
+<h2>attachments and structured drafts</h2>
+<p>
+	<code>RichDocument.media(...entries)</code> attaches files referenced in html or markdown.
+	<code>document(blocks, {'{ media }'})</code> is the options-object equivalent. attachment ids
+	must be unique and match <code>[A-Za-z0-9_-]{'{1,64}'}</code>. normal sends accept new
+	uploads through <code>media.path</code>, <code>media.buffer</code>, <code>media.stream</code>
+	and <code>media.text</code>, urls or existing file ids.
+</p>
+<Code code={attachments} title="attachments.ts" />
+<p>
+	all send helpers accept raw <code>InputRichMessage</code>, including structured
+	<code>blocks</code>. drafts preserve blocks and explicit media through keep-alive pushes
+	and finalization. <code>rewrite</code> replaces the content; <code>write</code> appends
+	blocks to blocks or text in the same dialect, preserving flags and merging attachment ids.
+	an appended entry replaces the previous attachment with the same id.
+</p>
+<p>
+	drafts reject new uploads and explicit media urls before sending. use existing file ids
+	or <code>media.fileId</code> while streaming, then optionally upload files with a final
+	<code>draft.send(override)</code>. a rich input must specify exactly one of
+	<code>html</code>, <code>markdown</code> or <code>blocks</code>.
+</p>
 
 <h2>api</h2>
 <table>
@@ -282,7 +319,7 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	<tbody>
 		<tr><td><code>html</code> / <code>md</code></td><td>tagged templates — same builders, either dialect, auto-escaped interpolation</td></tr>
 		<tr><td><code>document</code></td><td>options-object form: assemble blocks into a <code>RichDocument</code> with an explicit dialect</td></tr>
-		<tr><td><code>RichDocument</code></td><td>the sendable result — <code>.rtl()</code>/<code>.noEntityDetection()</code>, <code>toInputRichMessage()</code>/<code>toJSON()</code></td></tr>
+		<tr><td><code>RichDocument</code></td><td>the sendable result — <code>.media(...entries)</code>, <code>.rtl()</code>/<code>.noEntityDetection()</code>, <code>toInputRichMessage()</code>/<code>toJSON()</code></td></tr>
 		<tr><td><code>sendRichMessage</code> / <code>sendRichMessageDraft</code></td><td>standalone send functions, no plugin required</td></tr>
 		<tr><td><code>rich()</code></td><td>plugin — adds <code>ctx.sendRichMessage</code> / <code>ctx.richMessageDraft</code></td></tr>
 		<tr><td><code>button</code> / <code>buttons</code></td><td>in-message buttons (bot api 10.3) — inline, or a row block</td></tr>

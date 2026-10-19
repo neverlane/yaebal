@@ -171,11 +171,12 @@ if (matchQuery(ctx, "message:text")) {
 	<thead><tr><th>method</th><th>what it does</th></tr></thead>
 	<tbody>
 		<tr><td><code>use(...middleware)</code></td><td>raw middleware. receives <code>(ctx, next)</code>.</td></tr>
-		<tr><td><code>on(query, ...handlers)</code></td><td>filter-query routing: <code>"message:text"</code>, <code>"callback_query:data"</code>, <code>":photo"</code>.</td></tr>
-		<tr><td><code>command(name, ...handlers)</code></td><td>matches <code>/name</code> in fresh message text (edits don't re-fire), verifies <code>@botname</code> against the bot's username when known, adds <code>ctx.command</code> and <code>ctx.args</code>.</td></tr>
-		<tr><td><code>hears(trigger, ...handlers)</code></td><td>matches text/caption by string or RegExp and adds <code>ctx.match</code>.</td></tr>
+		<tr><td><code>on(query, ...handlers)</code></td><td>filter-query routing: <code>"message:text"</code>, <code>"callback_query:data"</code>, <code>":photo"</code>. an array matches any of its queries; the handler sees the union of their contexts.</td></tr>
+		<tr><td><code>command(name, ...handlers)</code></td><td>matches <code>/name</code> in fresh message text (edits don't re-fire), verifies <code>@botname</code> against the bot's username when known, adds <code>ctx.command</code> and <code>ctx.args</code>. an array of names routes aliases to one handler.</td></tr>
+		<tr><td><code>hears(trigger, ...handlers)</code></td><td>matches text/caption by string or RegExp (or an array of them) and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>callbackQuery(trigger, ...handlers)</code></td><td>matches <code>callback_query.data</code> and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>guard(predicate)</code></td><td>continues only when the predicate returns true. a type-guard predicate (<code>ctx is …</code>) narrows the context for everything after it.</td></tr>
+		<tr><td><code>when(condition, (c) =&gt; c…)</code></td><td>build-time conditional registration — the callback runs once, at startup, only when <code>condition</code> holds. what it adds is typed <code>Partial</code>.</td></tr>
 		<tr><td><code>filter(filter, ...handlers)</code></td><td>runs a composable filter (sync or async, may stage typed data), e.g. from <code>@yaebal/filters</code>.</td></tr>
 	</tbody>
 </table>

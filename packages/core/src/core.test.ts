@@ -1258,3 +1258,30 @@ test("on/command/hears accept arrays", { timeout: 5_000 }, async () => {
 		"hears:you",
 	]);
 });
+
+test("when() registers at build time and types its additions as optional", async () => {
+	const seen: string[] = [];
+	const bot = new Composer<Context>()
+		.when(true, (c) => c.derive(() => ({ debug: "on" })))
+		.when(false, (c) => c.derive(() => ({ never: 1 })))
+		.use((ctx) => {
+			const debug: string | undefined = ctx.debug;
+			const never: number | undefined = ctx.never;
+			seen.push(`${debug}:${never}`);
+		});
+
+	await bot.toMiddleware()(
+		new Context({
+			api: {} as Api,
+			update: {
+				update_id: 1,
+				message: { message_id: 1, date: 0, chat: { id: 1, type: "private" } },
+			} as Update,
+			updateType: "message",
+		}),
+		async () => {},
+	);
+
+	assert.deepEqual(seen, ["on:undefined"]);
+	assert.throws(() => new Composer().when(true, () => new Composer()), /must chain on/);
+});

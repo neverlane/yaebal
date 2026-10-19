@@ -173,12 +173,22 @@ export class InvoiceBuilder {
 		return { ...this.#params, prices: [...this.#params.prices] };
 	}
 
-	/** params for `api.sendInvoice` — sends the invoice as a message in `chatId`. */
+	/**
+	 * params for `api.sendInvoice` — sends the invoice as a message in `chatId`. throws for a
+	 * `.subscription()` invoice: `sendInvoice` has no `subscription_period`, so Telegram would
+	 * silently bill it once — use {@link toCreateInvoiceLinkParams} instead.
+	 */
 	toSendInvoiceParams(
 		chatId: number | string,
 		extra: Partial<Omit<SendInvoiceParams, keyof InvoiceParams | "chat_id">> = {},
 	): SendInvoiceParams {
-		return { chat_id: chatId, ...this.build(), ...extra };
+		const { subscription_period, ...params } = this.build();
+		if (subscription_period !== undefined) {
+			throw new Error(
+				"@yaebal/payments: subscription invoices can't be sent with sendInvoice — use toCreateInvoiceLinkParams()",
+			);
+		}
+		return { chat_id: chatId, ...params, ...extra };
 	}
 
 	/** params for `api.createInvoiceLink` — a shareable link, no chat required. */
@@ -215,10 +225,18 @@ export type PreCheckoutDecision =
 	| { ok: boolean; errorMessage?: string }
 	| undefined;
 
+/** shown to the payer when a decline carries no message — Telegram requires one when `ok` is false. */
+const DEFAULT_DECLINE_MESSAGE = "this payment can't be processed right now. please try again later.";
+
 function normalizeDecision(decision: PreCheckoutDecision): { ok: boolean; errorMessage?: string } {
 	if (decision === undefined || decision === true) return { ok: true };
-	if (decision === false) return { ok: false };
-	if (typeof decision === "string") return { ok: false, errorMessage: decision };
+	if (decision === false) return { ok: false, errorMessage: DEFAULT_DECLINE_MESSAGE };
+	if (typeof decision === "string") {
+		return { ok: false, errorMessage: decision || DEFAULT_DECLINE_MESSAGE };
+	}
+	if (!decision.ok && !decision.errorMessage) {
+		return { ok: false, errorMessage: DEFAULT_DECLINE_MESSAGE };
+	}
 	return decision;
 }
 
@@ -251,13 +269,29 @@ export function payments(options: PaymentsOptions = {}): Plugin<Context, Record<
 
 			composer.on("pre_checkout_query", async (ctx, next) => {
 				const query = ctx.update.pre_checkout_query!;
-				const decision = normalizeDecision(await onPreCheckout(ctx, query));
+				let decision: { ok: boolean; errorMessage?: string };
+				try {
+					decision = normalizeDecision(await onPreCheckout(ctx, query));
+				} catch (error) {
+					// a throwing hook must still answer, or the payer stares at a spinner until
+					// Telegram's 10s timeout — decline, then let the error reach the bot's handler.
+					if (autoAnswer) {
+						await ctx.api.answerPreCheckoutQuery({
+							pre_checkout_query_id: query.id,
+							ok: false,
+							error_message: DEFAULT_DECLINE_MESSAGE,
+						});
+					}
+					throw error;
+				}
 
 				if (autoAnswer) {
 					await ctx.api.answerPreCheckoutQuery({
 						pre_checkout_query_id: query.id,
 						ok: decision.ok,
-						...(decision.errorMessage ? { error_message: decision.errorMessage } : {}),
+						...(!decision.ok && decision.errorMessage
+							? { error_message: decision.errorMessage }
+							: {}),
 					});
 				}
 

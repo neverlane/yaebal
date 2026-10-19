@@ -63,13 +63,18 @@ bot.install(albums);
 bot.onStop(() => albums.flush());`;
 
 	const typedHandler = `import type { Context } from "@yaebal/core";
-import type { Session } from "@yaebal/session";
+import { saveSession } from "@yaebal/session";
+
+type Data = { albums: number };
 
 // installed after session()? pin the handler's context view explicitly —
 // the enrichment is on ctx at runtime either way
 bot.install(
-  mediaGroup<Context & { session: Session<Data> }>(async (ctx, messages) => {
+  mediaGroup<Context & { session: Data }>(async (ctx, messages) => {
     ctx.session.albums += 1;
+    // the album flushes from a timer, after session() already saved this update —
+    // persist explicitly, or install mediaGroup() (pass-through) before session()
+    await saveSession(ctx);
   }),
 );`;
 </script>
@@ -184,6 +189,14 @@ bot.install(
 <p>
 	pass-through mode doesn't need this — the chain's accumulated context type flows into
 	downstream handlers as usual.
+</p>
+<p>
+	one runtime catch: the album flushes from a timer, after the first part already finished its own
+	trip through the chain. middleware installed <em>before</em> the plugin that works after
+	<code>await next()</code> has run by then — <code>session()</code> has already saved. call
+	<code>saveSession(ctx)</code> at the end of the album handler, as above, or install pass-through
+	<code>mediaGroup()</code> before <code>session()</code> so the resumed chain loads and saves the
+	session itself.
 </p>
 
 <h2>testing</h2>

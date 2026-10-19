@@ -1,6 +1,7 @@
 import { type Api, createApi, type FileReader, withReplyEnvelope } from "./api.js";
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
+import { createDebug, type DebugLogger } from "./debug.js";
 import { delay } from "./delay.js";
 import { type Update, type UpdateName, type User, updateNames } from "./telegram-types.js";
 import type { HandleUpdateOptions } from "./webhook.js";
@@ -136,6 +137,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		);
 	};
 	#handle?: Middleware<Context>;
+	readonly #logUpdate: DebugLogger = createDebug("yaebal:update");
+	readonly #logPolling: DebugLogger = createDebug("yaebal:polling");
 	#initPromise?: Promise<User>;
 	#initSignal?: AbortSignal;
 
@@ -302,6 +305,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 			? withReplyEnvelope(this.api, options.replyEnvelope)
 			: this.api;
 		const updateType = detectUpdateType(update);
+		const started = this.#logUpdate ? Date.now() : 0;
 		let ctx: Context | undefined;
 
 		try {
@@ -309,7 +313,9 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				? this.#options.contextFactory(api, update, updateType, this.#info)
 				: new Context({ api, update, updateType, me: this.#info });
 			await this.#handle(ctx, async () => {});
+			this.#logUpdate?.(`${update.update_id} ${updateType} ${Date.now() - started}ms`);
 		} catch (error) {
+			this.#logUpdate?.(`${update.update_id} ${updateType} threw after ${Date.now() - started}ms`);
 			// a throwing contextFactory lands here too — hand the error handler a
 			// bare context so it still sees the update.
 			await this.#errorHandler(
@@ -396,6 +402,9 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 					const aborted = isAbortError(error);
 					failures++;
+					this.#logPolling?.(
+						`getUpdates failed (attempt ${failures}${aborted ? ", hang abort" : ""})`,
+					);
 					// a hang abort already cost the full poll window — go straight back out on the
 					// wire instead of adding a pause on top; a real failure backs off exponentially.
 					const retryInMs = aborted
@@ -414,6 +423,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				}
 
 				failures = 0;
+				if (updates.length > 0)
+					this.#logPolling?.(`batch of ${updates.length}, offset ${this.#offset}`);
 
 				for (const update of updates) {
 					if (abort.signal.aborted) break;

@@ -1,4 +1,5 @@
 import type { BotApiMethods } from "@yaebal/types";
+import { createDebug } from "./debug.js";
 import { delay } from "./delay.js";
 import { applyFormatFields } from "./format-hook.js";
 import { isMediaSource, type MediaSource, type MediaStream } from "./media.js";
@@ -355,12 +356,18 @@ function normalizeApiRoot(apiRoot: string): string {
 	return stripped;
 }
 
+/** one line for a debug log — `TelegramError`s already carry method, code and description. */
+const describeError = (error: unknown): string =>
+	error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+
 /** builds a callable API client with before/after/error hooks. */
 export function createApi(token: string, options: ApiOptions = {}): Api {
 	const apiRoot = normalizeApiRoot(options.apiRoot ?? "https://api.telegram.org");
 	const beforeHooks: BeforeHook[] = [];
 	const afterHooks: AfterHook[] = [];
 	const errorHooks: ErrorHook[] = [];
+	const log = createDebug("yaebal:api");
+	const logRaw = createDebug("yaebal:api:raw");
 
 	const rawCall = async <T>(
 		method: string,
@@ -402,6 +409,8 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		// them, so every method — not just the ctx helpers — accepts formatted values.
 		params = applyFormatFields(method, params);
 		const streams = new WeakMap<MediaStream, Promise<Uint8Array>>();
+		const started = log || logRaw ? Date.now() : 0;
+		logRaw?.(`-> ${method}`, params ?? {});
 
 		// ponytail: retry loop is bounded by the error hooks themselves (e.g. again caps
 		// attempts). with no hook requesting a retry it throws on the first failure.
@@ -421,6 +430,8 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 					if (next !== undefined) result = next as Awaited<T>;
 				}
 
+				log?.(`<- ${method} ok ${Date.now() - started}ms`);
+				logRaw?.(`<- ${method}`, result);
 				return result;
 			} catch (error) {
 				// a deliberate abort is a cancellation, not a failure — never offer it for retry
@@ -435,7 +446,11 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 					}
 				}
 
-				if (!retry) throw error;
+				if (!retry) {
+					log?.(`<- ${method} failed ${Date.now() - started}ms: ${describeError(error)}`);
+					throw error;
+				}
+				log?.(`   ${method} attempt ${attempt} failed, retrying in ${retry.delayMs ?? 0}ms`);
 				if (retry.delayMs) await delay(retry.delayMs, callOptions?.signal);
 			}
 		}

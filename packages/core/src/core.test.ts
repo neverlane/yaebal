@@ -12,6 +12,7 @@ import {
 import { Bot, type BotPlugin } from "./bot.js";
 import { Composer } from "./composer.js";
 import { Context } from "./context.js";
+import { debugEnabled } from "./debug.js";
 import { bold, format } from "./format.js";
 import { isMediaSource, media } from "./media.js";
 import type { Update } from "./telegram-types.js";
@@ -1284,4 +1285,35 @@ test("when() registers at build time and types its additions as optional", async
 
 	assert.deepEqual(seen, ["on:undefined"]);
 	assert.throws(() => new Composer().when(true, () => new Composer()), /must chain on/);
+});
+
+test("debugEnabled matches exact namespaces and * prefixes", () => {
+	assert.equal(debugEnabled("yaebal:api", undefined), false);
+	assert.equal(debugEnabled("yaebal:api", "yaebal:*"), true);
+	assert.equal(debugEnabled("yaebal:api:raw", "yaebal:api"), false);
+	assert.equal(debugEnabled("yaebal:api:raw", "yaebal:update, yaebal:api:*"), true);
+	assert.equal(debugEnabled("yaebal:polling", " , "), false);
+});
+
+test("YAEBAL_DEBUG=yaebal:api logs one line per call and never the token", async (t) => {
+	const previous = process.env.YAEBAL_DEBUG;
+	process.env.YAEBAL_DEBUG = "yaebal:api";
+	t.after(() => {
+		if (previous === undefined) delete process.env.YAEBAL_DEBUG;
+		else process.env.YAEBAL_DEBUG = previous;
+	});
+	const lines: string[] = [];
+	t.mock.method(console, "error", (...args: unknown[]) => lines.push(args.join(" ")));
+	t.mock.method(
+		globalThis,
+		"fetch",
+		async () => new Response(JSON.stringify({ ok: true, result: { message_id: 1 } })),
+	);
+
+	const api = createApi("123:secret-token");
+	await api.call("sendMessage", { chat_id: 1, text: "hi" });
+
+	assert.equal(lines.length, 1);
+	assert.match(lines[0] ?? "", /^\[yaebal:api\] <- sendMessage ok \d+ms$/);
+	assert.ok(!lines.join("\n").includes("secret-token"));
 });

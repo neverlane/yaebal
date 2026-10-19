@@ -36,6 +36,7 @@ export {
 	type Plugin,
 } from "./composer.js";
 export { Context, type ContextOptions, messageOf } from "./context.js";
+export { createDebug, type DebugLogger, type DebugNamespace, debugEnabled } from "./debug.js";
 export {
 	blockquote,
 	bold,

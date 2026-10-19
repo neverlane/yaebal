@@ -41,16 +41,29 @@ export function ratelimiter(
 	const windowMs = options.windowMs ?? 1000;
 	const getKey = options.getKey ?? ((ctx: Context) => ctx.from?.id?.toString());
 
-	// ponytail: one entry per distinct key, never evicted — bounded by the number
-	// of users the bot ever sees. fine for anti-spam scale; add a sweep if it grows.
+	// one entry per key seen in the current window. expired windows are swept lazily, at most
+	// once per window length, so memory tracks *active* keys instead of every user ever seen.
 	const windows = new Map<string, Window>();
+	let nextSweep = 0;
+
+	const sweep = (now: number): void => {
+		if (now < nextSweep) return;
+		nextSweep = now + windowMs;
+
+		for (const [key, window] of windows) {
+			if (now >= window.resetAt) windows.delete(key);
+		}
+	};
 
 	const plugin: Plugin<Context, Record<never, never>> = (composer) =>
 		composer.use(async (ctx, next) => {
 			const key = getKey(ctx);
 			if (key === undefined) return next();
 
-			const { allowed, window } = decide(windows.get(key), Date.now(), limit, windowMs);
+			const now = Date.now();
+			sweep(now);
+
+			const { allowed, window } = decide(windows.get(key), now, limit, windowMs);
 			windows.set(key, window);
 
 			if (!allowed) {

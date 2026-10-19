@@ -284,6 +284,19 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	/**
+	 * build the context this bot hands its middleware for `update`: the configured
+	 * `contextFactory` (the rich per-update contexts on `yaebal`'s `Bot`) or a base
+	 * {@link Context}. `api` defaults to the bot's own client — test harnesses pass a mock so
+	 * a dispatched update behaves exactly like a live one without touching the network.
+	 */
+	createContext(update: Update, api: Api = this.api): Context {
+		const updateType = detectUpdateType(update);
+		return this.#options.contextFactory
+			? this.#options.contextFactory(api, update, updateType, this.#info)
+			: new Context({ api, update, updateType, me: this.#info });
+	}
+
+	/**
 	 * run the middleware chain for a single update. this is the webhook entry
 	 * point — call it from your HTTP handler. errors go to the error handler.
 	 *
@@ -301,9 +314,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		let ctx: Context | undefined;
 
 		try {
-			ctx = this.#options.contextFactory
-				? this.#options.contextFactory(api, update, updateType, this.#info)
-				: new Context({ api, update, updateType, me: this.#info });
+			ctx = this.createContext(update, api);
 			await this.#handle(ctx, async () => {});
 			this.#logUpdate?.(`${update.update_id} ${updateType} ${Date.now() - started}ms`);
 		} catch (error) {

@@ -122,11 +122,16 @@ export class TestEnv<C extends Context = Context> implements ActorHost {
 	 * messages, whatever ships in the next Bot API release before the actors catch up).
 	 */
 	async dispatch(update: Update): Promise<void> {
-		const ctx = new Context({
-			api: this.api,
-			update,
-			updateType: detectUpdateType(update),
-		}) as unknown as C;
+		// a Bot builds its own contexts (yaebal's rich ones carry ctx.answer, ctx.editText, …);
+		// a bare Composer gets the base Context
+		const bot = this.bot as { createContext?: (update: Update, api: Api) => Context };
+		const ctx = (typeof bot.createContext === "function"
+			? bot.createContext(update, this.api)
+			: new Context({
+					api: this.api,
+					update,
+					updateType: detectUpdateType(update),
+				})) as unknown as C;
 
 		let reachedEnd = false;
 		const sentinel: NextFn = async () => {

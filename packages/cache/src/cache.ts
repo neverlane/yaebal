@@ -77,8 +77,19 @@ export function createCache<S extends CacheSchema = Record<never, never>>(
 		options.storage ?? new MemoryStorage({ max: options.max ?? 1000 });
 
 	// keyed by scoped key: dedupes concurrent misses (and revalidations) so `wrap` never issues
-	// the same upstream call twice for one key at once.
-	const inflight = new Map<string, Promise<unknown>>();
+	// the same upstream call twice for one key at once. a `set`/`delete`/invalidation while a
+	// fetch is in flight marks it `superseded`, so the (now outdated) result is never written back.
+	interface Flight {
+		promise: Promise<unknown>;
+		superseded: boolean;
+	}
+	const inflight = new Map<string, Flight>();
+	const supersede = (scopedKey: string) => {
+		const flight = inflight.get(scopedKey);
+		if (flight === undefined) return;
+		flight.superseded = true;
+		inflight.delete(scopedKey);
+	};
 
 	const scoped = (key: string) => scopeKey(scope, key);
 	const unscope = (scopedKey: string) => (scope ? scopedKey.slice(scope.length + 1) : scopedKey);
@@ -207,24 +218,32 @@ export function createCache<S extends CacheSchema = Record<never, never>>(
 		sliding: boolean,
 		reason: "miss" | "revalidate",
 	): Promise<T> => {
+		// registered before `fn` runs: concurrent callers checking `inflight` right after this
+		// call started can never miss it, and a synchronously-throwing `fn` still clears it in
+		// `finally` instead of leaving a rejected promise to be "deduped" onto forever.
+		const flight = { superseded: false } as Flight;
+		inflight.set(scopedKey, flight);
+
 		const promise = (async () => {
 			try {
 				const value = await fn();
-				await writeValue(scopedKey, key, value, ttl, staleTtl, sliding);
+				if (!flight.superseded) {
+					await writeValue(scopedKey, key, value, ttl, staleTtl, sliding);
+				}
 				if (reason === "revalidate") await emit({ type: "revalidate", key, scopedKey });
 				return value;
 			} catch (error) {
-				if (errorTtl !== undefined) await writeError(scopedKey, error, errorTtl);
+				if (errorTtl !== undefined && !flight.superseded) {
+					await writeError(scopedKey, error, errorTtl);
+				}
 				if (reason === "revalidate") await emit({ type: "error", key, scopedKey, error });
 				throw error;
 			} finally {
-				inflight.delete(scopedKey);
+				if (inflight.get(scopedKey) === flight) inflight.delete(scopedKey);
 			}
 		})();
 
-		// set synchronously, before any await runs — concurrent callers checking `inflight` right
-		// after this call started can never miss it and issue a duplicate fetch.
-		inflight.set(scopedKey, promise);
+		flight.promise = promise;
 		return promise;
 	};
 
@@ -253,11 +272,14 @@ export function createCache<S extends CacheSchema = Record<never, never>>(
 
 		async set<T>(key: string, value: T, input?: number | SetOptions): Promise<void> {
 			const { ttl, sliding } = normalizeSetOptions(input);
-			await writeValue(scoped(key), key, value, ttl, undefined, sliding);
+			const scopedKey = scoped(key);
+			supersede(scopedKey);
+			await writeValue(scopedKey, key, value, ttl, undefined, sliding);
 		},
 
 		async delete(key: string): Promise<void> {
 			const scopedKey = scoped(key);
+			supersede(scopedKey);
 			await storage.delete(scopedKey);
 			await emit({ type: "delete", key, scopedKey });
 		},
@@ -310,7 +332,7 @@ export function createCache<S extends CacheSchema = Record<never, never>>(
 			}
 
 			await emit({ type: "miss", key, scopedKey });
-			const pending = inflight.get(scopedKey) as Promise<T> | undefined;
+			const pending = inflight.get(scopedKey)?.promise as Promise<T> | undefined;
 			if (pending !== undefined) {
 				await emit({ type: "dedupe", key, scopedKey });
 				return pending;
@@ -347,7 +369,11 @@ export function createCache<S extends CacheSchema = Record<never, never>>(
 						"redisStorage/kvStorage do when their client exposes KEYS/list().",
 				);
 			}
-			const scopedKeys = await storage.keys(scoped(prefix));
+			const scopedPrefix = scoped(prefix);
+			for (const scopedKey of [...inflight.keys()]) {
+				if (scopedKey.startsWith(scopedPrefix)) supersede(scopedKey);
+			}
+			const scopedKeys = await storage.keys(scopedPrefix);
 			await Promise.all(
 				scopedKeys.map(async (scopedKey) => {
 					await storage.delete(scopedKey);

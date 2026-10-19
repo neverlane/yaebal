@@ -640,3 +640,47 @@ test("typed keys: a mismatched value/return doesn't typecheck (enforced by `pnpm
 	await typed.set("anything", 123);
 	assert.equal(await typed.get<number>("anything"), 123);
 });
+
+test("a synchronously throwing fn doesn't poison the key for later wraps", { timeout: 2000 }, async () => {
+	const c = createCache({ sweepIntervalMs: false });
+	await assert.rejects(
+		c.wrap("k", () => {
+			throw new Error("boom");
+		}),
+		/boom/,
+	);
+
+	assert.equal(await c.wrap("k", () => "ok"), "ok");
+});
+
+test("delete/set while a fetch is in flight wins over the fetch's outdated result", {
+	timeout: 2000,
+}, async () => {
+	const c = createCache({ sweepIntervalMs: false });
+	let release!: (value: string) => void;
+	const slow = c.wrap("k", () => new Promise<string>((r) => (release = r)));
+	await new Promise((r) => setImmediate(r));
+
+	await c.delete("k");
+	release("old");
+	assert.equal(await slow, "old"); // the caller still gets its answer…
+	assert.equal(await c.get("k"), undefined); // …but it isn't written over the invalidation
+
+	const slow2 = c.wrap("j", () => new Promise<string>((r) => (release = r)));
+	await new Promise((r) => setImmediate(r));
+	await c.set("j", "new");
+	release("old");
+	await slow2;
+	assert.equal(await c.get("j"), "new");
+
+	// a fresh wrap after an invalidation starts its own fetch instead of joining the stale one
+	const slow3 = c.wrap("p:1", () => new Promise<string>((r) => (release = r)));
+	await new Promise((r) => setImmediate(r));
+	const first = release;
+	await c.invalidatePrefix("p:");
+	const fresh = c.wrap("p:1", () => "fresh");
+	first("old");
+	await slow3;
+	assert.equal(await fresh, "fresh");
+	assert.equal(await c.get("p:1"), "fresh");
+});

@@ -47,10 +47,7 @@ bot.command("poll", (ctx) =>
   }),
 );
 
-bot.callbackQuery(vote.pattern, (ctx) => {
-  const data = vote.unpack(ctx.callbackQuery.data!);
-  if (data) return ctx.answer("voted " + data.id);
-});`;
+bot.callbackQuery(vote, (ctx) => ctx.answer("voted " + ctx.queryData.id));`;
 
 	const stateful = `import { createBot, session, i18n } from "yaebal";
 

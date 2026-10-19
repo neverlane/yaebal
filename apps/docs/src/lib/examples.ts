@@ -25,6 +25,65 @@ bot.onStart((me) => console.log("bot ready"));
 bot.start();`,
 		steps: [{ user: "/start" }, { user: "hi there" }],
 	},
+	"ux-settings-menu": {
+		title: "button-first menu that edits in place",
+		code: `import { InlineKeyboard, blockquote, bold, callbackData, createBot, format, italic } from "yaebal";
+
+const nav = callbackData("nav", { to: String });
+const toggle = callbackData("toggle", { key: String });
+const prefs = { alerts: true, digest: false };
+
+const label = (on: boolean, text: string) => \`\${on ? "✅" : "⬜"} \${text}\`;
+
+const screens = {
+  home: () => ({
+    text: format\`\${bold("🤖 demo bot")}
+
+\${blockquote("every screen is this one message, edited in place. tap a tile.")}\`,
+    markup: new InlineKeyboard().text("⚙️ settings", nav.pack({ to: "settings" })),
+  }),
+  settings: () => ({
+    text: format\`\${bold("⚙️ settings")} \${italic("· home › settings")}
+
+\${blockquote("tap a row to flip it — the label is the state.")}\`,
+    markup: new InlineKeyboard()
+      .text(label(prefs.alerts, "alerts"), toggle.pack({ key: "alerts" }))
+      .row()
+      .text(label(prefs.digest, "daily digest"), toggle.pack({ key: "digest" }))
+      .row()
+      .text("◀ back", nav.pack({ to: "home" })),
+  }),
+};
+
+const bot = createBot(process.env.BOT_TOKEN!);
+
+bot.command("start", (ctx) => {
+  const screen = screens.home();
+  return ctx.reply(screen.text, { reply_markup: screen.markup });
+});
+
+bot.callbackQuery(nav, async (ctx) => {
+  await ctx.answer(); // stop the spinner — the edited message is the feedback
+  const screen = ctx.queryData.to === "settings" ? screens.settings() : screens.home();
+  await ctx.editText(screen.text, { reply_markup: screen.markup });
+});
+
+bot.callbackQuery(toggle, async (ctx) => {
+  const key = ctx.queryData.key as keyof typeof prefs;
+  prefs[key] = !prefs[key];
+  await ctx.answer(prefs[key] ? "on" : "off");
+  const screen = screens.settings();
+  await ctx.editText(screen.text, { reply_markup: screen.markup });
+});
+
+bot.start();`,
+		steps: [
+			{ user: "/start" },
+			{ click: "nav:settings", label: "⚙️ settings" },
+			{ click: "toggle:digest", label: "⬜ daily digest" },
+			{ click: "nav:home", label: "◀ back" },
+		],
+	},
 	"keyboard-callback": {
 		title: "typed inline buttons",
 		code: `import { InlineKeyboard, callbackData, createBot } from "yaebal";
@@ -41,10 +100,10 @@ bot.command("start", (ctx) =>
   }),
 );
 
-bot.callbackQuery(choice.pattern, async (ctx) => {
-  const data = choice.unpack(ctx.callbackQuery.data ?? "");
-  await ctx.answer(data?.value === "ship" ? "shipping" : "holding");
-  await ctx.editText(\`status: \${data?.value ?? "unknown"}\`);
+bot.callbackQuery(choice, async (ctx) => {
+  // the namespace validates + decodes the payload: ctx.queryData is typed
+  await ctx.answer(ctx.queryData.value === "ship" ? "shipping" : "holding");
+  await ctx.editText(\`status: \${ctx.queryData.value}\`);
 });
 
 bot.start();`,

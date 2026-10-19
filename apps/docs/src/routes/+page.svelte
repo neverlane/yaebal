@@ -49,9 +49,8 @@ bot.on("message:text", async (ctx) => {
   return ctx.reply(html\`<code>\${ctx.text}</code> landed in a typed handler\`);
 });
 
-bot.callbackQuery(vibe.pattern, (ctx) => {
-  const data = vibe.unpack(ctx.callbackQuery.data ?? "");
-  ctx.session.fire += data?.score ?? 0;
+bot.callbackQuery(vibe, (ctx) => {
+  ctx.session.fire += ctx.queryData.score; // decoded + typed, foreign data never gets here
   return ctx.answer(\`vibe score: \${ctx.session.fire}\`);
 });
 

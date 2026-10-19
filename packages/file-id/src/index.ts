@@ -2,7 +2,7 @@
  * @yaebal/file-id — parse, inspect and re-serialize telegram `file_id` /
  * `file_unique_id` strings. a `file_id` is a TL-serialized TDLib blob (dc id,
  * access hash, photo size source, …) behind RLE + url-safe base64 — this package
- * decodes it. zero deps, no telegram client required.
+ * decodes it, and `inline_message_id` strings too. zero deps, no telegram client required.
  */
 
 export {
@@ -59,6 +59,16 @@ export {
 	type TempFileUniqueId,
 	type WebFileUniqueId,
 } from "./file-unique-id.js";
+export {
+	InlineMessageId,
+	isLegacyInlineMessageId,
+	isModernInlineMessageId,
+	type LegacyInlineMessageId,
+	type ModernInlineMessageId,
+	type ParsedInlineMessageId,
+	parseInlineMessageId,
+	serializeInlineMessageId,
+} from "./inline-message-id.js";
 export {
 	type DialogPhotoBigLegacyPhotoSizeSource,
 	type DialogPhotoBigPhotoSizeSource,

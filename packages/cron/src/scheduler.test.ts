@@ -942,3 +942,83 @@ test("a job's tz overrides the scheduler's global tz", { timeout: 5000 }, async 
 		clock.restore();
 	}
 });
+
+test("acquireLock: a fire arriving while the lock is still pending respects overlap", {
+	timeout: 5000,
+}, async () => {
+	let grant: ((value: boolean) => void) | undefined;
+	let runs = 0;
+	const scheduler = new Cron({
+		acquireLock: () => new Promise<boolean>((resolve) => (grant = resolve)),
+	}).job("locked", 60_000, () => {
+		runs++;
+	});
+
+	const first = scheduler.trigger("locked");
+	await flushMicrotasks();
+	const second = await scheduler.trigger("locked"); // first is still waiting on its lock
+
+	assert.equal(second, "skipped");
+	grant?.(true);
+	assert.equal(await first, "ran");
+	assert.equal(runs, 1);
+});
+
+test("acquireLock: a denied lock still fires the run queued behind it", {
+	timeout: 5000,
+}, async () => {
+	const grants: Array<(value: boolean) => void> = [];
+	let runs = 0;
+	const scheduler = new Cron({
+		acquireLock: () => new Promise<boolean>((resolve) => grants.push(resolve)),
+	}).job(
+		"locked",
+		60_000,
+		() => {
+			runs++;
+		},
+		{ overlap: "wait" },
+	);
+
+	const first = scheduler.trigger("locked");
+	await flushMicrotasks();
+	const queued = scheduler.trigger("locked");
+	grants[0]?.(false);
+	assert.equal(await first, "skipped");
+
+	await flushMicrotasks();
+	grants[1]?.(true);
+	assert.equal(await queued, "ran");
+	assert.equal(runs, 1);
+});
+
+test("stop() cancels a retry that's waiting out its backoff", { timeout: 5000 }, async () => {
+	const clock = installTestClock();
+	try {
+		let attempts = 0;
+		const errors: unknown[] = [];
+		const scheduler = new Cron().job(
+			"flaky",
+			60_000,
+			() => {
+				attempts++;
+				throw new Error("nope");
+			},
+			{ retries: 3, retryDelayMs: 1000, onError: (error) => errors.push(error) },
+		);
+
+		const triggered = scheduler.trigger("flaky");
+		await flushMicrotasks();
+		assert.equal(attempts, 1);
+
+		await scheduler.stop({ graceful: false });
+		await clock.advance(5000);
+		await triggered;
+
+		assert.equal(attempts, 1);
+		assert.equal(scheduler.state("flaky")?.failures, 1);
+		assert.equal(errors.length, 1);
+	} finally {
+		clock.restore();
+	}
+});

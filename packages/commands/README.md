@@ -79,8 +79,12 @@ await cmd.register(bot.api);
 // default menu: /start — admins' menu: /start /ban /unban
 ```
 
-note: scope only affects the *menu*. handlers still run for anyone — guard them yourself (e.g.
-with `@yaebal/filters`).
+scoped handlers run only where the scope applies — the same rule telegram uses to show the menu:
+`all_private_chats` in private chats, `all_group_chats` in groups, `chat` in that chat,
+`chat_member` for that user there, and the administrator scopes only for admins (checked with one
+`getChatMember` call when such a command arrives; an anonymous admin posting as the group counts).
+outside its scope a command falls back to the unscoped handlers of the same name, or moves on down
+the chain when there are none — so a non-admin typing `/ban` above reaches nothing.
 
 ### shadowing an unscoped command in one explicit scope
 
@@ -97,9 +101,8 @@ await cmd.register(bot.api);
 // default menu: /start (generic text) — private-chats menu: /start (dm text)
 ```
 
-since `plugin()` wires `command()` by name alone (no scope awareness at runtime), the explicit
-def's handler wins globally, not just inside its scope — a menu-only shadow (no handlers) falls
-back to the unscoped handler instead. two *explicit* scopes can never share a name: nothing at
+the explicit def's handler runs inside its scope and the unscoped one everywhere else; a menu-only
+shadow (no handlers) always falls back to the unscoped handler. two *explicit* scopes can never share a name: nothing at
 runtime could pick between two differing handlers, so that stays a `duplicate command name` error.
 
 ### aliases and hidden commands

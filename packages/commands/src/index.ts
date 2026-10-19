@@ -1,4 +1,4 @@
-import type { Context, Middleware, Plugin } from "@yaebal/core";
+import { type Chat, type Context, compose, type Middleware, type Plugin } from "@yaebal/core";
 import type { BotCommand, BotCommandScope } from "@yaebal/types";
 
 export type { BotCommand, BotCommandScope };
@@ -130,6 +130,60 @@ function sameCommands(a: BotCommand[], b: BotCommand[]): boolean {
  * `bot.install(cmd.plugin())` wires the handlers; `cmd.register(bot.api)` (or the
  * diff-aware `cmd.sync(bot.api)`) pushes every `(scope, language)` menu to Telegram.
  */
+const scope = (route: { scope: BotCommandScope }): BotCommandScope => route.scope;
+
+const isGroupChat = (chat: Chat | undefined): boolean =>
+	chat?.type === "group" || chat?.type === "supergroup";
+
+/** a scope's `chat_id` (a number, or an `@username` string) names the update's chat. */
+function sameChat(chat: Chat | undefined, chatId: number | string): boolean {
+	if (chat === undefined) return false;
+	if (typeof chatId === "number") return chat.id === chatId;
+	if (chatId.startsWith("@")) return chat.username?.toLowerCase() === chatId.slice(1).toLowerCase();
+	return String(chat.id) === chatId;
+}
+
+/** an admin of the update's chat — an anonymous admin posting as the group counts too. */
+async function isChatAdmin(ctx: Context): Promise<boolean> {
+	const chat = ctx.chat;
+	if (chat === undefined) return false;
+	if (ctx.senderChat?.id === chat.id) return true;
+	const userId = ctx.from?.id;
+	if (userId === undefined) return false;
+
+	try {
+		const member = await ctx.api.call<{ status: string }>("getChatMember", {
+			chat_id: chat.id,
+			user_id: userId,
+		});
+		return member.status === "creator" || member.status === "administrator";
+	} catch {
+		return false; // can't tell — treat as outside the admin scope
+	}
+}
+
+/** does `scope` — a menu scope — cover the update `ctx` came from? */
+export async function inScope(ctx: Context, scope: BotCommandScope): Promise<boolean> {
+	switch (scope.type) {
+		case "default":
+			return true;
+		case "all_private_chats":
+			return ctx.chat?.type === "private";
+		case "all_group_chats":
+			return isGroupChat(ctx.chat);
+		case "all_chat_administrators":
+			return isGroupChat(ctx.chat) && (await isChatAdmin(ctx));
+		case "chat":
+			return sameChat(ctx.chat, scope.chat_id);
+		case "chat_administrators":
+			return sameChat(ctx.chat, scope.chat_id) && (await isChatAdmin(ctx));
+		case "chat_member":
+			return sameChat(ctx.chat, scope.chat_id) && ctx.from?.id === scope.user_id;
+		default:
+			return false;
+	}
+}
+
 export class Commands<C extends Context = Context> {
 	private defs: CommandDef<C>[] = [];
 	/** name → scopes it's registered under so far (`undefined` = unscoped). */
@@ -226,34 +280,51 @@ export class Commands<C extends Context = Context> {
 
 	/**
 	 * a plugin that wires every command's (and alias's) handlers — `bot.install(cmd.plugin())`.
-	 * for a shadowed name, the explicit-scope handlers win over the unscoped ones (empty
-	 * explicit handlers — a menu-only override — fall back to the unscoped handlers instead).
+	 * a scoped command's handlers run only where its scope applies, the way telegram shows its
+	 * menu: `all_private_chats` in private chats, `chat` in that chat, `chat_member` for that user
+	 * there, and the administrator scopes only for admins (one `getChatMember` per such command).
+	 * outside the scope the unscoped handlers of the same name run if there are any; otherwise the
+	 * update moves on down the chain. empty scoped handlers (a menu-only override) always fall
+	 * back to the unscoped ones.
 	 */
 	plugin(): Plugin<C, Record<never, never>> {
-		const resolved = new Map<string, CommandHandler<C>[]>();
+		const routes = new Map<
+			string,
+			{
+				base?: CommandHandler<C>[];
+				scoped?: { scope: BotCommandScope; handlers: CommandHandler<C>[] };
+			}
+		>();
 
 		for (const d of this.defs) {
-			if (d.scope !== undefined) continue;
-			for (const n of d.names) resolved.set(n, d.handlers);
-		}
-		for (const d of this.defs) {
-			if (d.scope === undefined || d.handlers.length === 0) continue;
-			for (const n of d.names) resolved.set(n, d.handlers);
+			if (d.handlers.length === 0) continue;
+			for (const n of d.names) {
+				const route = routes.get(n) ?? {};
+				if (d.scope === undefined) route.base = d.handlers;
+				else route.scoped = { scope: d.scope, handlers: d.handlers };
+				routes.set(n, route);
+			}
 		}
 
 		return (composer) => {
-			for (const [name, handlers] of resolved) {
-				if (handlers.length === 0) continue;
-				composer.command(name, ...handlers);
+			for (const [name, { base, scoped }] of routes) {
+				if (scoped === undefined) {
+					if (base) composer.command(name, ...base);
+					continue;
+				}
+
+				const inside = compose(scoped.handlers as unknown as Middleware<Context>[]);
+				const outside = base ? compose(base as unknown as Middleware<Context>[]) : undefined;
+				composer.command(name, async (ctx, next) => {
+					if (await inScope(ctx, scope(scoped))) return inside(ctx, next);
+					if (outside) return outside(ctx, next);
+					return next();
+				});
 			}
 			return composer;
 		};
 	}
 
-	/**
-	 * push menus to Telegram via `setMyCommands`. with no options pushes every menu from
-	 * `menus()`; pass `scope`/`languageCode` to push a single one. returns what was pushed.
-	 */
 	async register(
 		api: CommandApi,
 		options?: { languageCode?: string; scope?: BotCommandScope },

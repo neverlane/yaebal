@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Composer, type Context } from "@yaebal/core";
 import { createTestEnv } from "@yaebal/test";
-import { type BotCommandScope, commands } from "./index.js";
+import { type BotCommandScope, commands, inScope } from "./index.js";
 
 const ADMINS: BotCommandScope = { type: "all_chat_administrators" };
 
@@ -335,4 +335,74 @@ test("sync() repushes a menu when only is_ephemeral changed", async () => {
 	assert.deepEqual(env.callsTo("setMyCommands")[0]?.params, {
 		commands: [{ command: "stats", description: "your stats", is_ephemeral: true }],
 	});
+});
+
+test("a scoped command only runs inside its scope; outside it the unscoped one does", async () => {
+	const cmd = commands().add("start", "generic start", (ctx) => ctx.reply("generic"));
+	cmd.scoped({ type: "all_private_chats" }).add("start", "private start", (ctx) => ctx.reply("dm"));
+
+	const env = createTestEnv(new Composer<Context>().install(cmd.plugin()));
+	const group = env.createChat({ type: "supergroup", title: "g" });
+	const user = env.createUser();
+
+	await user.sendCommand("start");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "dm");
+
+	await user.in(group).sendCommand("start");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "generic");
+});
+
+test("an admin-scoped command checks the sender's membership and skips everyone else", async () => {
+	const cmd = commands();
+	cmd.scoped(ADMINS).add("ban", "ban someone", (ctx) => ctx.reply("banned"));
+	let fellThrough = 0;
+
+	const env = createTestEnv(
+		new Composer<Context>().install(cmd.plugin()).command("ban", () => {
+			fellThrough++;
+		}),
+	);
+	const group = env.createChat({ type: "supergroup", title: "g" });
+	const admin = env.createUser();
+	const member = env.createUser();
+	env.onApi("getChatMember", (params: Record<string, unknown> | undefined) => ({
+		status: params?.user_id === admin.id ? "administrator" : "member",
+	}));
+
+	await admin.in(group).sendCommand("ban");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "banned");
+
+	env.clearApiCalls();
+	await member.in(group).sendCommand("ban");
+	assert.equal(
+		env.lastApiCall("sendMessage"),
+		undefined,
+		"a member doesn't reach the admin handler",
+	);
+	assert.equal(fellThrough, 1, "the update moves on down the chain instead");
+});
+
+test("inScope matches chat and chat_member scopes by id and @username", async () => {
+	const ctx = (chat: object, fromId = 5) =>
+		({ chat, from: { id: fromId }, senderChat: undefined, api: {} }) as never;
+
+	assert.equal(
+		await inScope(ctx({ id: -100, type: "supergroup" }), { type: "chat", chat_id: -100 }),
+		true,
+	);
+	assert.equal(
+		await inScope(ctx({ id: -100, type: "supergroup", username: "Room" }), {
+			type: "chat",
+			chat_id: "@room",
+		}),
+		true,
+	);
+	assert.equal(
+		await inScope(ctx({ id: -100, type: "supergroup" }, 6), {
+			type: "chat_member",
+			chat_id: -100,
+			user_id: 5,
+		}),
+		false,
+	);
 });

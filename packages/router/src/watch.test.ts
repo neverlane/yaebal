@@ -9,10 +9,18 @@ const TIMEOUT = 20_000;
 
 /** polls an observable effect until it holds — a hot-reload landing is inherently async (fs
  * events + a debounce), so this drives real updates through the bot rather than guessing a
- * fixed delay. fails loudly (via the surrounding test's own `{ timeout }`) if it never lands. */
-async function waitUntil(check: () => Promise<boolean>, intervalMs = 40): Promise<void> {
-	for (;;) {
+ * fixed delay. stops with the test's own signal on timeout, so a failure can't keep the process
+ * alive, and re-runs `retrigger` every second: fs watchers may coalesce or drop an event under
+ * load (fsevents does), which a dev reloader shrugs off on the next save — so does the test. */
+async function waitUntil(
+	check: () => Promise<boolean>,
+	signal: AbortSignal,
+	retrigger?: () => Promise<void>,
+	intervalMs = 40,
+): Promise<void> {
+	for (let polls = 1; !signal.aborted; polls++) {
 		if (await check()) return;
+		if (retrigger && polls % 25 === 0) await retrigger();
 		await new Promise((resolve) => setTimeout(resolve, intervalMs));
 	}
 }
@@ -45,16 +53,22 @@ test("watchRoutes: reloads on edit and keeps serving after the disposer runs", {
 	await env.createUser().sendCommand("start");
 	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "v1");
 
-	await routes.write(
-		"commands/start.mjs",
-		`export default router.defineCommand("start", (ctx) => ctx.reply("v2"));`,
-	);
+	const writeV2 = () =>
+		routes.write(
+			"commands/start.mjs",
+			`export default router.defineCommand("start", (ctx) => ctx.reply("v2"));`,
+		);
+	await writeV2();
 
-	await waitUntil(async () => {
-		env.clearApiCalls();
-		await env.createUser().sendCommand("start");
-		return env.lastApiCall("sendMessage")?.params?.text === "v2";
-	});
+	await waitUntil(
+		async () => {
+			env.clearApiCalls();
+			await env.createUser().sendCommand("start");
+			return env.lastApiCall("sendMessage")?.params?.text === "v2";
+		},
+		t.signal,
+		writeV2,
+	);
 	assert.ok(reloads >= 2, "onReload must have fired again for the live edit");
 
 	await stop();
@@ -105,9 +119,10 @@ test("watchRoutes: a broken live edit reports onError and keeps the last-good ro
 	// strict defaults to false under watchRoutes, so a genuinely non-route export becomes a
 	// live warning; force a hard failure instead (a broken _guard.ts always throws) to prove
 	// the bot keeps the previous, good route set live and reports the failure via onError.
-	await routes.write("commands/_guard.mjs", `export default 42;`);
+	const writeGuard = () => routes.write("commands/_guard.mjs", `export default 42;`);
+	await writeGuard();
 
-	await waitUntil(async () => lastError !== undefined);
+	await waitUntil(async () => lastError !== undefined, t.signal, writeGuard);
 	assert.match(
 		String((lastError as Error)?.message ?? lastError),
 		/must default-export defineGuard/,

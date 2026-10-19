@@ -77,6 +77,16 @@ export default {
     return webhook(bot, { secretToken: env.SECRET })(request);
   },
 };`;
+
+	const feature = `import type { Bot, Context } from "yaebal";
+
+export const ping = <C extends Context>(bot: Bot<C>) =>
+  bot
+    .command("ping", (ctx) => ctx.react("👍"))
+    .callbackQuery("pong", (ctx) => ctx.answer("pong!"));
+
+// bot.ts
+bot.install(ping);`;
 </script>
 
 <svelte:head>
@@ -121,6 +131,15 @@ export default {
 	update and backed by the generated context classes.
 </p>
 <Code code={rich} title="rich.ts" />
+
+<h2>feature modules</h2>
+<p>
+	the rich typing lives on yaebal's <code>Bot</code>, so write a feature as a function over it
+	and install it — its handlers see <code>ctx.react</code>, <code>ctx.answer</code> and friends
+	typed, and anything installed before it (session, i18n, …) flows in through <code>C</code>. a
+	plain <code>new Composer()</code> still works for features that only need the base context.
+</p>
+<Code code={feature} title="features/ping.ts" />
 
 <h2>exports</h2>
 <table>

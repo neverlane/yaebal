@@ -280,10 +280,17 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
 	): Bot<C & Add>;
 	override install<Add extends object>(plugin: (bot: CoreBot<C>) => CoreBot<C & Add>): Bot<C & Add>;
+	/**
+	 * a feature module written against yaebal's own `Bot` — its handlers see the rich
+	 * per-update contexts (`ctx.react`, `ctx.answer`, …), unlike a bare `Composer`:
+	 * `const ping = <C extends Context>(bot: Bot<C>) => bot.command("ping", (ctx) => ctx.react("👍"));`
+	 */
+	override install<Add extends object>(plugin: (bot: Bot<C>) => Bot<C & Add>): Bot<C & Add>;
 	override install<Add extends object>(
 		plugin:
 			| ((composer: Composer<C>) => Composer<C & Add>)
-			| ((bot: CoreBot<C>) => CoreBot<C & Add>),
+			| ((bot: CoreBot<C>) => CoreBot<C & Add>)
+			| ((bot: Bot<C>) => Bot<C & Add>),
 	): Bot<C & Add> {
 		const out = (plugin as (bot: CoreBot<C>) => CoreBot<C & Add>)(this);
 

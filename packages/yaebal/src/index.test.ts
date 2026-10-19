@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
 	type Api,
+	type Bot,
 	Context,
 	callbackData,
 	createBot,
@@ -278,4 +279,28 @@ test("createBot keeps ephemeral reply behavior when rich contexts are installed"
 	});
 	assert.deepEqual(calls[0]?.reply_parameters, { ephemeral_message_id: 10 });
 	assert.deepEqual(calls[0]?.ephemeral_message_parameters, { receiver_user_id: 7 });
+});
+
+test("feature modules written against yaebal's Bot install with rich ctx types", async (t) => {
+	const calls: string[] = [];
+	t.mock.method(globalThis, "fetch", async (url: unknown) => {
+		calls.push(String(url).split("/").pop() ?? "");
+		return new Response(JSON.stringify({ ok: true, result: true }));
+	});
+
+	const ping = <C extends Context>(bot: Bot<C>) => bot.command("ping", (ctx) => ctx.react("👍")); // a generated shortcut, typed
+	const bot = createBot("123:abc").install(ping);
+
+	await bot.handleUpdate({
+		update_id: 1,
+		message: {
+			message_id: 7,
+			date: 0,
+			chat: { id: 1, type: "private" },
+			from: { id: 1, is_bot: false, first_name: "u" },
+			text: "/ping",
+		},
+	} as never);
+
+	assert.deepEqual(calls, ["setMessageReaction"]);
 });

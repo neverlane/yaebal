@@ -19,9 +19,21 @@ export interface PromptControl {
 export type PromptHandler = (ctx: Context & PromptControl) => unknown | Promise<unknown>;
 
 export interface PromptOptions {
-	/** prompt key for an update. defaults to per-chat (`ctx.chat.id`). */
+	/**
+	 * prompt key for an update. defaults to per user per chat (`"<chat>:<user>"`), so in a group
+	 * only the member who was asked can answer; pass `(ctx) => ctx.chat?.id.toString()` for the
+	 * old shared per-chat behavior.
+	 */
 	getKey?: (ctx: Context) => string | undefined;
 }
+
+/** `"<chat>:<user>"` — the asked member's answer, not whoever in the group types next. */
+const perChatUser = (ctx: Context): string | undefined => {
+	const chat = ctx.chat?.id;
+	if (chat === undefined) return undefined;
+	const from = ctx.from?.id;
+	return from === undefined ? String(chat) : `${chat}:${from}`;
+};
 
 /**
  * prompt plugin: `ctx.prompt(question, handler)` sends a question and runs the
@@ -34,7 +46,7 @@ export interface PromptOptions {
  */
 export function prompt(options: PromptOptions = {}): Plugin<Context, PromptControl> {
 	const pending = new Map<string, PromptHandler>();
-	const getKey = options.getKey ?? ((ctx: Context) => ctx.chat?.id?.toString());
+	const getKey = options.getKey ?? perChatUser;
 
 	const plugin: Plugin<Context, PromptControl> = (composer) =>
 		composer

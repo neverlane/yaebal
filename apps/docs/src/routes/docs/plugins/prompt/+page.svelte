@@ -130,7 +130,7 @@ await ctx.prompt(
 			<td><code>getKey</code></td>
 			<td><code>(ctx: Context) =&gt; string | undefined</code></td>
 			<td>no</td>
-			<td>identifies which chat a pending handler belongs to. defaults to <code>ctx.chat?.id?.toString()</code></td>
+			<td>identifies whose answer a pending handler waits for. defaults to per user per chat (<code>"&lt;chat&gt;:&lt;user&gt;"</code>) — in a group only the member who was asked can answer. pass <code>(ctx) =&gt; ctx.chat?.id.toString()</code> for a shared per-chat prompt</td>
 		</tr>
 	</tbody>
 </table>

@@ -161,3 +161,44 @@ test("a question that failed to send doesn't arm its handler", async () => {
 	assert.equal(answered, false);
 	assert.equal(fellThrough, 1);
 });
+
+test("in a group only the asked member's message answers the prompt", async () => {
+	const { api } = fakeApi();
+	let answer = "";
+	let fellThrough = 0;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(prompt())
+			.command("ask", (ctx) =>
+				(ctx as Ctx).prompt("name?", (c) => {
+					answer = c.text ?? "";
+				}),
+			)
+			.on("message:text", () => {
+				fellThrough++;
+			}),
+	);
+	const inGroup = (userId: number, text: string) =>
+		new Context({
+			api,
+			update: {
+				update_id: 1,
+				message: {
+					message_id: 1,
+					date: 0,
+					chat: { id: -100, type: "supergroup" },
+					from: { id: userId, is_bot: false, first_name: "u" },
+					text,
+				},
+			} as never,
+			updateType: "message",
+		});
+
+	await mw(inGroup(1, "/ask"), noop);
+	await mw(inGroup(2, "bystander"), noop); // someone else talks in the group
+	await mw(inGroup(1, "Bob"), noop);
+
+	assert.equal(answer, "Bob");
+	assert.equal(fellThrough, 1, "the bystander's message went to the normal handlers");
+});

@@ -326,6 +326,20 @@ test("rate limit: repeated wrong bearer tokens get 429 with Retry-After", async 
 	assert.ok(Number(blocked.headers.get("retry-after")) > 0);
 });
 
+test("rate limit: a client-supplied address header can't rotate the rate-limit key", async () => {
+	const { handler } = fakePanel({ rateLimit: { max: 3, windowMs: 60_000 } });
+	let attempt = 0;
+	const forged = () =>
+		handler(
+			new Request("http://x/api/chats", {
+				headers: { authorization: "Bearer nope", "x-panel-remote-addr": `10.0.0.${attempt++}` },
+			}),
+		);
+
+	for (let i = 0; i < 3; i++) assert.equal((await forged()).status, 401);
+	assert.equal((await forged()).status, 429, "a fresh fake address per guess is still one client");
+});
+
 test("multi-operator: sends are stamped with the sending operator's name (audit trail)", async () => {
 	const { handler, sent, store } = fakePanel({
 		token: undefined,
@@ -430,6 +444,7 @@ test("edit route calls editMessageText and patches the store", async () => {
 	});
 	assert.equal(store.history(1)[0]?.text, "corrected");
 	assert.equal(store.history(1)[0]?.edited, true);
+	assert.equal(store.history(1)[0]?.operator, "operator", "the edit is stamped with who made it");
 });
 
 test("delete route calls deleteMessage and soft-deletes in the store", async () => {

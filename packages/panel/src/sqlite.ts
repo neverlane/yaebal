@@ -389,6 +389,10 @@ export class SqlitePanelStore implements PanelStore {
 			sets.push("deleted = ?");
 			params.push(patch.deleted ? 1 : 0);
 		}
+		if (patch.operator !== undefined) {
+			sets.push("operator = ?");
+			params.push(patch.operator);
+		}
 		if (sets.length === 0) return;
 
 		params.push(chatId, messageId);

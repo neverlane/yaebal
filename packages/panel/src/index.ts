@@ -1,6 +1,7 @@
 import type { ApiOptions, Context, Plugin } from "@yaebal/core";
 import { createApi, media } from "@yaebal/core";
 import { PANEL_HTML } from "./panel-html.js";
+import { remoteAddrOf } from "./remote-addr.js";
 import { applyHistoryLimit, newestFirst } from "./store-util.js";
 
 /** keep at most this many messages per chat in the in-memory store. */
@@ -320,6 +321,8 @@ export interface MessagePatch {
 	text?: string;
 	edited?: boolean;
 	deleted?: boolean;
+	/** the operator who edited/deleted it from the panel — the audit trail for that change. */
+	operator?: string;
 }
 
 export interface SearchOptions {
@@ -506,6 +509,7 @@ export class MemoryPanelStore implements PanelStore {
 		if (patch.text !== undefined) message.text = patch.text;
 		if (patch.edited !== undefined) message.edited = patch.edited;
 		if (patch.deleted !== undefined) message.deleted = patch.deleted;
+		if (patch.operator !== undefined) message.operator = patch.operator;
 
 		this.#emit({ type: "chat", chatId });
 	}
@@ -954,10 +958,11 @@ export interface PanelOptions {
 	 */
 	rateLimit?: { max?: number; windowMs?: number } | false;
 	/**
-	 * derive a client key for rate limiting. defaults to the socket address `serve()` stamps
-	 * on the request (`x-panel-remote-addr`), falling back to a single shared bucket when
-	 * that's absent (e.g. mounted directly on bun/deno/an edge runtime without going through
-	 * `@yaebal/panel/serve`) — supply your own to use that platform's client-ip mechanism.
+	 * derive a client key for rate limiting. defaults to the socket address `serve()` recorded
+	 * for the request, falling back to a single shared bucket when there is none (mounted
+	 * directly on bun/deno/an edge runtime) — supply your own to use that platform's client-ip
+	 * mechanism, e.g. bun's `server.requestIP(request)?.address`. no request header is trusted
+	 * for this unless `trustProxy` is on.
 	 */
 	clientKey?: (request: Request) => string;
 	/**
@@ -1054,9 +1059,9 @@ function createLimiter(config: PanelOptions["rateLimit"]) {
 	};
 }
 
-/** client key from the socket address `serve()` stamps — see {@link PanelOptions.clientKey}. */
+/** client key from the socket address `serve()` recorded — see {@link PanelOptions.clientKey}. */
 function defaultClientKey(request: Request): string {
-	return request.headers.get("x-panel-remote-addr") ?? "shared";
+	return remoteAddrOf(request) ?? "shared";
 }
 
 /** client key trusting proxy-supplied headers — only used when `trustProxy: true`. */
@@ -1526,7 +1531,11 @@ export function panelHandler(
 				message_id: messageId,
 				text: body.text,
 			});
-			await store.updateMessage(chatId, messageId, { text: body.text, edited: true });
+			await store.updateMessage(chatId, messageId, {
+				text: body.text,
+				edited: true,
+				operator: operatorName,
+			});
 			return finish(json({ ok: true }));
 		}
 
@@ -1537,7 +1546,7 @@ export function panelHandler(
 			const chatId = Number(deleteMsgMatch[1]);
 			const messageId = Number(deleteMsgMatch[2]);
 			await api.call("deleteMessage", { chat_id: chatId, message_id: messageId });
-			await store.updateMessage(chatId, messageId, { deleted: true });
+			await store.updateMessage(chatId, messageId, { deleted: true, operator: operatorName });
 			return finish(json({ ok: true }));
 		}
 

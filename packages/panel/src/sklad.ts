@@ -259,6 +259,7 @@ export function skladPanelStore(
 				if (patch.text !== undefined) message.text = patch.text;
 				if (patch.edited !== undefined) message.edited = patch.edited;
 				if (patch.deleted !== undefined) message.deleted = patch.deleted;
+				if (patch.operator !== undefined) message.operator = patch.operator;
 
 				await writeHistory(chatId, list);
 				emit({ type: "chat", chatId });

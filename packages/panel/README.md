@@ -238,8 +238,8 @@ without realtime push.
   ever follows them, since `PanelStore.record` is a public interface any adapter can write to.
 - `trustProxy` defaults to `false`: `x-forwarded-for`/`x-forwarded-proto` are only trusted for
   rate-limit keys and cookie `Secure` detection when you explicitly opt in from behind a proxy
-  you control. `@yaebal/panel/serve` stamps a same-origin `x-panel-remote-addr` header from the
-  actual socket, which the rate limiter uses by default without needing to trust anything.
+  you control. `@yaebal/panel/serve` hands the handler the actual socket address out of band (no
+  header a client could forge), which the rate limiter uses by default without trusting anything.
 - the inline `<script>` still runs under `script-src 'unsafe-inline'` — the single-file,
   zero-build-step UI is the point of this package, and a proper CSP hash/nonce would require a
   build step that defeats it. if that tradeoff doesn't work for your threat model, put the
@@ -250,12 +250,24 @@ without realtime push.
 
 ### rate limiting & proxies
 
-the default `clientKey` reads `x-panel-remote-addr`, a header only `@yaebal/panel/serve` sets
-(from the real socket address). mounting on bun/Deno/an edge runtime without that helper means
-every client falls into one shared bucket unless you pass your own `clientKey` using that
-platform's client-ip mechanism. behind a reverse proxy, either forward `x-panel-remote-addr`
-yourself, or set `trustProxy: true` and rely on `x-forwarded-for`/`x-real-ip` — only do this
-if the proxy strips any client-supplied copies of those headers first.
+the default `clientKey` uses the socket address `@yaebal/panel/serve` recorded for the request —
+out of band, never a request header, so a client can't forge or rotate it. mounting on
+bun/Deno/an edge runtime without that helper means every client falls into one shared bucket
+unless you pass your own `clientKey` using that platform's client-ip mechanism:
+
+```ts
+const server = Bun.serve({
+	fetch: (request) => handler(request),
+});
+const handler = panelHandler(bot.api, store, {
+	token,
+	clientKey: (request) => server.requestIP(request)?.address ?? "shared",
+});
+```
+
+behind a reverse proxy, set `trustProxy: true` and rely on `x-forwarded-for`/`x-real-ip` — only
+if the proxy strips any client-supplied copies of those headers first. (the old
+`x-panel-remote-addr` header is no longer read: anyone reaching the handler directly could set it.)
 
 ## media
 

@@ -55,6 +55,8 @@ type PollingErrorHandler = (error: unknown, info: PollingErrorInfo) => unknown |
 const POLL_TIMEOUT_S = 30;
 /** grace on top of the window before a silent, hung connection is aborted and retried. */
 const POLL_GRACE_MS = 15_000;
+/** cap on the offset-confirming `getUpdates` a mid-batch stop sends, so shutdown can't hang on it. */
+const CONFIRM_TIMEOUT_MS = 5_000;
 /** pause before retrying after a failed getUpdates — doubles per consecutive failure. */
 const POLL_RETRY_MS = 3_000;
 /** ceiling for that backoff, so a long outage retries every 30s instead of every 3s. */
@@ -108,6 +110,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	readonly api: Api;
 	#running = false;
 	#offset = 0;
+	/** the offset the last `getUpdates` carried — updates below it are confirmed to telegram. */
+	#sentOffset = 0;
 	#info?: User;
 	#pollAbort?: AbortController;
 	#pollingPromise?: Promise<void>;
@@ -345,6 +349,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				const hangTimer = setTimeout(() => poll.abort(), POLL_TIMEOUT_S * 1000 + POLL_GRACE_MS);
 
 				try {
+					this.#sentOffset = this.#offset;
 					updates = await this.api.call<Update[]>(
 						"getUpdates",
 						{
@@ -389,7 +394,29 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		} finally {
 			this.#running = false;
 			this.#pollAbort = undefined;
+			await this.#confirmHandled();
 			await this.#runStopHandlers();
+		}
+	}
+
+	/**
+	 * telegram confirms updates only when the next `getUpdates` carries a higher offset. a stop
+	 * mid-batch leaves the already-handled part of it unconfirmed, and the next process would get
+	 * those updates again — so send the offset once more, without waiting for anything new.
+	 * best effort: a failure here only means a redelivery, never a reason to fail the shutdown.
+	 */
+	async #confirmHandled(): Promise<void> {
+		if (this.#offset <= this.#sentOffset) return;
+
+		try {
+			this.#sentOffset = this.#offset;
+			await this.api.call(
+				"getUpdates",
+				{ offset: this.#offset, limit: 1, timeout: 0 },
+				{ signal: AbortSignal.timeout(CONFIRM_TIMEOUT_MS) },
+			);
+		} catch {
+			// redelivered on the next start — handlers already have to tolerate that
 		}
 	}
 

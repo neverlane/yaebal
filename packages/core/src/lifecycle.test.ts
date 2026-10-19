@@ -125,7 +125,10 @@ test("restart waits for the previous polling cycle to finish", async (t) => {
 	release.resolve();
 	await restarted.promise;
 	await bot.stop();
-	assert.deepEqual((await settled).map((result) => result.status), ["fulfilled", "fulfilled"]);
+	assert.deepEqual(
+		(await settled).map((result) => result.status),
+		["fulfilled", "fulfilled"],
+	);
 	assert.equal(startsBeforeRelease, 1, "restart must not overlap an old handler");
 });
 
@@ -168,4 +171,63 @@ test("stop callbacks are reentrant and remaining callbacks run after a failure",
 	await assert.rejects(bot.stop(), (error) => error === failure);
 	assert.equal(calls, 1);
 	assert.equal(cleaned, true);
+});
+
+test("a stop mid-batch confirms the handled updates so a restart doesn't redeliver them", {
+	timeout: 5_000,
+}, async (t) => {
+	const polls: Record<string, unknown>[] = [];
+	t.mock.method(globalThis, "fetch", async (url: unknown, options?: RequestInit) => {
+		const params = JSON.parse(String(options?.body ?? "{}")) as Record<string, unknown>;
+		if (String(url).endsWith("/getUpdates")) polls.push(params);
+		const result =
+			polls.length === 1
+				? [
+						{
+							update_id: 10,
+							message: { message_id: 1, date: 0, chat: { id: 1, type: "private" } },
+						},
+						{
+							update_id: 11,
+							message: { message_id: 2, date: 0, chat: { id: 1, type: "private" } },
+						},
+					]
+				: [];
+		return new Response(JSON.stringify({ ok: true, result }));
+	});
+
+	const seen: number[] = [];
+	const bot: Bot = new Bot("123:test", { botInfo: info });
+	bot.use(async (ctx) => {
+		seen.push(ctx.update.update_id);
+		await bot.stop();
+	});
+	await bot.start();
+
+	assert.deepEqual(seen, [10], "the rest of the batch is left for the next start");
+	assert.equal(polls.length, 2);
+	assert.deepEqual(polls[1], { offset: 11, limit: 1, timeout: 0 });
+});
+
+test("a stop while idle in the long poll sends no extra confirmation", {
+	timeout: 5_000,
+}, async (t) => {
+	let polls = 0;
+	const requested = deferred();
+	t.mock.method(globalThis, "fetch", (url: unknown, options?: RequestInit) => {
+		if (String(url).endsWith("/getUpdates")) polls++;
+		requested.resolve();
+		return new Promise<Response>((_resolve, reject) => {
+			options?.signal?.addEventListener("abort", () => reject(options.signal?.reason), {
+				once: true,
+			});
+		});
+	});
+
+	const bot = new Bot("123:test", { botInfo: info });
+	const polling = bot.start();
+	await requested.promise;
+	await bot.stop();
+	await polling;
+	assert.equal(polls, 1);
 });

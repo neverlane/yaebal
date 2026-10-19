@@ -65,3 +65,23 @@ test("ratelimiter drops updates over the limit and fires onLimit", async () => {
 	await mw(ctxFrom(2), noop); // different user → allowed
 	assert.equal(handled, 3);
 });
+
+test("expired windows are swept without changing who gets limited", async (t) => {
+	t.mock.timers.enable({ apis: ["Date"], now: 0 });
+	let handled = 0;
+	const mw = entry(
+		new Composer<Context>().install(ratelimiter({ limit: 1, windowMs: 1_000 })).use(() => {
+			handled++;
+		}),
+	);
+
+	await mw(ctxFrom(1), noop);
+	await mw(ctxFrom(2), noop);
+	await mw(ctxFrom(1), noop); // over the limit in the first window
+	assert.equal(handled, 2);
+
+	t.mock.timers.tick(1_000); // both windows expire; the next update sweeps them
+	await mw(ctxFrom(1), noop);
+	await mw(ctxFrom(1), noop); // a fresh window, limited again
+	assert.equal(handled, 3);
+});

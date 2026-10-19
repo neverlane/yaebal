@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { bold, Composer, type Context, format } from "@yaebal/core";
+import { Bot, bold, Composer, Context, format } from "@yaebal/core";
 import { apiError } from "./api.js";
 import { createTestEnv } from "./env.js";
 
@@ -367,4 +367,37 @@ test("packs: setup(env) runs at construction time and can seed api overrides", (
 
 	assert.equal(ran, true);
 	return env.api.getMe().then((me) => assert.equal(me.id, 99));
+});
+
+test("a Bot's own contextFactory builds the contexts the env dispatches", {
+	timeout: 5_000,
+}, async () => {
+	class Shouty extends Context {
+		shout(text: string) {
+			return this.send(text.toUpperCase());
+		}
+	}
+	const bot = new Bot<Shouty>("123:test", {
+		contextFactory: (api, update, updateType) => new Shouty({ api, update, updateType }),
+	});
+	bot.command("hi", (ctx) => ctx.shout("hello"));
+
+	const env = createTestEnv(bot);
+	await env.createUser().sendCommand("hi");
+
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "HELLO");
+});
+
+test("recorded params look like the wire: format results are split into text + entities", {
+	timeout: 5_000,
+}, async () => {
+	const bot = new Composer<Context>().command("hi", (ctx) =>
+		ctx.api.call("sendMessage", { chat_id: 1, text: format`${bold("hey")}` }),
+	);
+	const env = createTestEnv(bot);
+	await env.createUser().sendCommand("hi");
+
+	const params = env.lastApiCall("sendMessage")?.params;
+	assert.equal(params?.text, "hey");
+	assert.deepEqual(params?.entities, [{ type: "bold", offset: 0, length: 3 }]);
 });

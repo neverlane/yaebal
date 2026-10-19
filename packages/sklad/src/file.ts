@@ -40,13 +40,16 @@ export function fileStorage<T>(path: string, options: FileStorageOptions = {}): 
 	const load = async (): Promise<Record<string, Entry>> => {
 		if (data !== undefined) return data;
 
+		// null-prototype document: keys like `__proto__` / `constructor` are plain keys, never
+		// inherited members or a prototype swap
+		const doc = Object.create(null) as Record<string, Entry>;
 		try {
-			data = JSON.parse(await readFile(path, "utf8")) as Record<string, Entry>;
+			Object.assign(doc, JSON.parse(await readFile(path, "utf8")) as Record<string, Entry>);
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-			data = {};
 		}
 
+		data = doc;
 		return data;
 	};
 
@@ -111,7 +114,7 @@ export function fileStorage<T>(path: string, options: FileStorageOptions = {}): 
 		},
 		clear() {
 			return run(async () => {
-				data = {};
+				data = Object.create(null) as Record<string, Entry>;
 				await flush(data);
 			});
 		},

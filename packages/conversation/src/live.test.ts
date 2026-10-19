@@ -520,3 +520,28 @@ test("cv.form.int validates and re-asks on invalid input", { timeout: TIMEOUT },
 
 	assert.deepEqual(sentTexts(env), ["age?", "digits 1-120 only", "digits 1-120 only", "age: 42"]);
 });
+
+test("cv.form.int rejects a blank answer instead of reading it as 0", {
+	timeout: TIMEOUT,
+}, async () => {
+	const countForm = createConversation(async (cv, ctx) => {
+		const count = await cv.form.int({ question: "how many?", invalid: "a number please" });
+		await ctx.send(`count: ${count}`);
+	});
+
+	const bot = new Composer<Context>()
+		.install(conversation({ countForm }))
+		.command("go", (ctx) => ctx.conversation.enter("countForm"));
+
+	const env = createTestEnv(bot);
+	const user = env.createUser();
+
+	await user.sendCommand("go");
+	await flush();
+	await user.sendMessage("   ");
+	await flush();
+	await user.sendMessage("3");
+	await flush();
+
+	assert.deepEqual(sentTexts(env), ["how many?", "a number please", "count: 3"]);
+});

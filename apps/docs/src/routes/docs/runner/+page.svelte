@@ -82,7 +82,7 @@ await s.idle();                               // resolves when everything drains
 		<tr><td><code>chatKey</code></td><td><code>(update: Update) =&gt; number | undefined</code></td><td>default sequentialization key (chat id → user id)</td></tr>
 		<tr><td><code>RunnerOptions</code></td><td>interface</td><td>see below</td></tr>
 		<tr><td><code>RunnerHandle</code></td><td><code>&#123; stop(): Promise&lt;void&gt; &#125;</code></td><td>stop polling, drain in-flight</td></tr>
-		<tr><td><code>RunnerBot</code></td><td>interface</td><td>the bot surface <code>run</code> needs (<code>api.getUpdates</code>, <code>handleUpdate</code>)</td></tr>
+		<tr><td><code>RunnerBot</code></td><td>interface</td><td>the bot surface <code>run</code> needs (<code>api.getUpdates</code>, <code>handleUpdate</code>, optional <code>init</code> — called before the first poll so <code>ctx.me</code> is set)</td></tr>
 		<tr><td><code>Scheduler</code></td><td>interface</td><td><code>submit</code> / <code>idle</code> / <code>whenBelow</code> / <code>size</code></td></tr>
 	</tbody>
 </table>
@@ -96,7 +96,7 @@ await s.idle();                               // resolves when everything drains
 		<tr><td><code>limit</code></td><td><code>number</code></td><td><code>100</code></td><td>getUpdates batch size</td></tr>
 		<tr><td><code>timeout</code></td><td><code>number</code></td><td><code>30</code></td><td>long-poll timeout (seconds)</td></tr>
 		<tr><td><code>allowedUpdates</code></td><td><code>string[]</code></td><td>—</td><td>restrict update types</td></tr>
-		<tr><td><code>onError</code></td><td><code>(error, update?) =&gt; void</code></td><td>—</td><td>handler / polling error callback</td></tr>
+		<tr><td><code>onError</code></td><td><code>(error, update?) =&gt; void</code></td><td><code>console.error</code></td><td>handler / polling error callback. failed polls retry with a 3s → 30s backoff</td></tr>
 	</tbody>
 </table>
 

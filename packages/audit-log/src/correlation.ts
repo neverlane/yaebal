@@ -96,7 +96,21 @@ export function beginCall(params: Record<string, unknown> | undefined): {
 	return { callId: tracking.callId, attempt: 1 };
 }
 
-/** call from `api.after`/`api.onError`: closes out the tracking {@link beginCall}
+/** call from `api.onError`: the call's identity and elapsed time so far, *without* closing it
+ * out — core runs error hooks once per failed attempt, and another hook (e.g. `@yaebal/again`)
+ * may still ask for a retry, whose `api.before` must find the same `callId`. */
+export function peekCall(
+	params: Record<string, unknown> | undefined,
+): { callId: string; durationMs: number } | undefined {
+	if (params === undefined) return undefined;
+
+	const tracking = callTracking.get(params);
+	if (!tracking) return undefined;
+
+	return { callId: tracking.callId, durationMs: Date.now() - tracking.start };
+}
+
+/** call from `api.after`: closes out the tracking {@link beginCall}
  * opened, returning the call's total elapsed time across every attempt. `undefined` if
  * `params` has no tracked entry (a no-arg method, or the reference broke — see {@link
  * beginCall}'s caveats). */

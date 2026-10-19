@@ -275,6 +275,11 @@ await ctx.reply("pick one", {
 			<td>auto-wraps into rows of <code>columns</code>; no argument disables it</td>
 		</tr>
 		<tr>
+			<td><code>pattern</code></td>
+			<td><code>(sizes: number[]) =&gt; this</code></td>
+			<td>re-flows every button added so far by row sizes — <code>[1, 2, 1]</code>; sizes past the end repeat the last one</td>
+		</tr>
+		<tr>
 			<td><code>build</code></td>
 			<td><code>() =&gt; InlineKeyboardMarkup</code></td>
 			<td>returns the finished markup; does not mutate the builder</td>
@@ -372,6 +377,11 @@ await ctx.reply("pick one", {
 			<td><code>columns</code></td>
 			<td><code>(columns?: number) =&gt; this</code></td>
 			<td>auto-wraps into rows of <code>columns</code>; no argument disables it</td>
+		</tr>
+		<tr>
+			<td><code>pattern</code></td>
+			<td><code>(sizes: number[]) =&gt; this</code></td>
+			<td>re-flows every button added so far by row sizes — <code>[1, 2, 1]</code>; sizes past the end repeat the last one</td>
 		</tr>
 		<tr>
 			<td><code>persistent</code></td>

@@ -7,7 +7,7 @@
 
 import { htmlToMarkdown, parseTable, parseListItems, extractSingleLink, stripTags } from "./html.mjs";
 import { parseTypeCell } from "./parse-type.mjs";
-import { extractReturnType, extractEnum, extractLength } from "./parse-return-type.mjs";
+import { extractConst, extractEnum, extractLength, extractReturnType } from "./parse-return-type.mjs";
 
 const API_URL = "https://core.telegram.org/bots/api";
 
@@ -133,7 +133,8 @@ function parseField(name, typeHtml, descriptionHtml, required) {
 	};
 
 	if (type.type === "string") {
-		const enumeration = extractEnum(descriptionHtml);
+		const constant = required ? extractConst(descriptionHtml) : undefined;
+		const enumeration = constant === undefined ? extractEnum(descriptionHtml) : [constant];
 		if (enumeration) field.enum = enumeration;
 
 		const length = extractLength(descriptionHtml);

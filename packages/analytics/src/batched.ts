@@ -49,10 +49,23 @@ export function batched<T>(
 	const onDrop = options.onDrop;
 
 	let buffer: T[] = [];
+	// items already handed to a queued/retrying send — still held in memory, so they count
+	// against `maxBuffered` until their batch settles
+	let inFlight = 0;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 	// the in-flight send-with-retry chain, if any — serializes drains so a slow retry can't be
 	// raced past by a later, faster-succeeding batch (which would send events out of order).
 	let sending: Promise<void> = Promise.resolve();
+
+	/** a throwing `onDrop` must not reject the `sending` chain — every later batch would be
+	 * silently skipped behind it. */
+	function drop(items: T[], reason: DropReason): void {
+		try {
+			onDrop?.(items, reason);
+		} catch {
+			// observability hook only
+		}
+	}
 
 	function disarmTimer(): void {
 		if (timer) clearTimeout(timer);
@@ -66,7 +79,7 @@ export function batched<T>(
 				return;
 			} catch {
 				if (attempt >= maxRetries) {
-					onDrop?.(batch, "retries-exhausted");
+					drop(batch, "retries-exhausted");
 					return;
 				}
 				await new Promise((resolve) => setTimeout(resolve, retryDelayMs * 2 ** attempt));
@@ -80,13 +93,18 @@ export function batched<T>(
 
 		const batch = buffer;
 		buffer = [];
-		sending = sending.then(() => sendWithRetry(batch));
+		inFlight += batch.length;
+		sending = sending.then(() =>
+			sendWithRetry(batch).finally(() => {
+				inFlight -= batch.length;
+			}),
+		);
 		return sending;
 	}
 
 	function push(item: T): void {
-		if (buffer.length >= maxBuffered) {
-			onDrop?.([item], "backpressure");
+		if (buffer.length + inFlight >= maxBuffered) {
+			drop([item], "backpressure");
 			return;
 		}
 

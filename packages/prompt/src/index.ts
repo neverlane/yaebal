@@ -1,4 +1,10 @@
-import type { Context, FormatResult, Message, Plugin } from "@yaebal/core";
+import {
+	COMMAND_UPDATES,
+	type Context,
+	type FormatResult,
+	type Message,
+	type Plugin,
+} from "@yaebal/core";
 
 export interface PromptControl {
 	/** send `question`, then run `handler` on the next message in this chat. */
@@ -13,9 +19,21 @@ export interface PromptControl {
 export type PromptHandler = (ctx: Context & PromptControl) => unknown | Promise<unknown>;
 
 export interface PromptOptions {
-	/** prompt key for an update. defaults to per-chat (`ctx.chat.id`). */
+	/**
+	 * prompt key for an update. defaults to per user per chat (`"<chat>:<user>"`), so in a group
+	 * only the member who was asked can answer; pass `(ctx) => ctx.chat?.id.toString()` for the
+	 * old shared per-chat behavior.
+	 */
 	getKey?: (ctx: Context) => string | undefined;
 }
+
+/** `"<chat>:<user>"` — the asked member's answer, not whoever in the group types next. */
+const perChatUser = (ctx: Context): string | undefined => {
+	const chat = ctx.chat?.id;
+	if (chat === undefined) return undefined;
+	const from = ctx.from?.id;
+	return from === undefined ? String(chat) : `${chat}:${from}`;
+};
 
 /**
  * prompt plugin: `ctx.prompt(question, handler)` sends a question and runs the
@@ -28,7 +46,7 @@ export interface PromptOptions {
  */
 export function prompt(options: PromptOptions = {}): Plugin<Context, PromptControl> {
 	const pending = new Map<string, PromptHandler>();
-	const getKey = options.getKey ?? ((ctx: Context) => ctx.chat?.id?.toString());
+	const getKey = options.getKey ?? perChatUser;
 
 	const plugin: Plugin<Context, PromptControl> = (composer) =>
 		composer
@@ -39,15 +57,20 @@ export function prompt(options: PromptOptions = {}): Plugin<Context, PromptContr
 					extra: Record<string, unknown> = {},
 				) => {
 					const key = getKey(ctx);
-					if (key !== undefined) pending.set(key, handler);
 
-					return ctx.send(question, extra);
+					// armed only once the question is out — a failed send must not eat the user's
+					// next message as the answer to a question they never saw
+					return ctx.send(question, extra).then((sent) => {
+						if (key !== undefined) pending.set(key, handler);
+						return sent;
+					});
 				},
 			}))
 			.use(async (ctx, next) => {
 				const key = getKey(ctx);
 
-				if (key !== undefined && ctx.message) {
+				// fresh messages only: an edit of some older message is not an answer
+				if (key !== undefined && COMMAND_UPDATES.has(ctx.updateType)) {
 					const handler = pending.get(key);
 
 					if (handler) {

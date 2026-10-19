@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { setRemoteAddr } from "./remote-addr.js";
 
 /** options for the node {@link serve} helper. */
 export interface ServeOptions {
@@ -12,9 +13,9 @@ export interface ServeOptions {
 
 /**
  * translate a node request into a whatwg `Request` (body streamed for non-GET/HEAD).
- * also stamps `x-panel-remote-addr` with the raw socket address, so a handler behind
- * this `serve()` (unlike an arbitrary edge/serverless host) has a client key it doesn't
- * have to trust a spoofable `x-forwarded-for` for — see `PanelOptions.trustProxy`.
+ * also records the raw socket address for it (out of band, not as a header a client could
+ * forge), so a handler behind this `serve()` has a rate-limit key it doesn't have to trust a
+ * spoofable `x-forwarded-for` for — see `PanelOptions.trustProxy`.
  */
 function toRequest(req: IncomingMessage): Request {
 	const host = req.headers.host ?? "localhost";
@@ -24,9 +25,8 @@ function toRequest(req: IncomingMessage): Request {
 	const hasBody = method !== "GET" && method !== "HEAD";
 
 	const headers = { ...req.headers } as Record<string, string>;
-	if (req.socket.remoteAddress) headers["x-panel-remote-addr"] = req.socket.remoteAddress;
 
-	return new Request(url, {
+	const request = new Request(url, {
 		method,
 		headers,
 		// node streams are async-iterable, which `Request` accepts as a body source
@@ -34,6 +34,9 @@ function toRequest(req: IncomingMessage): Request {
 		// required by undici when streaming a request body
 		duplex: "half",
 	} as RequestInit);
+
+	if (req.socket.remoteAddress) setRemoteAddr(request, req.socket.remoteAddress);
+	return request;
 }
 
 /**

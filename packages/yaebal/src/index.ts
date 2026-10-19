@@ -229,6 +229,8 @@ export const richContext: ContextFactory = (api, update, updateType, me) => {
 type QueryHead<Q extends string> = Q extends `${infer H}:${string}` ? H : Q;
 type RichFor<Q extends string> =
 	QueryHead<Q> extends keyof ContextByType ? ContextByType[QueryHead<Q>] : Record<never, never>;
+/** per query, so an array of queries types the handler as a union of exact pairs — not a cross product. */
+type OnContext<C, Q extends string> = Q extends unknown ? Filtered<C, Q> & RichFor<Q> : never;
 
 /**
  * a {@link CoreBot} whose routers type the handler context to the matching
@@ -278,10 +280,17 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
 	): Bot<C & Add>;
 	override install<Add extends object>(plugin: (bot: CoreBot<C>) => CoreBot<C & Add>): Bot<C & Add>;
+	/**
+	 * a feature module written against yaebal's own `Bot` — its handlers see the rich
+	 * per-update contexts (`ctx.react`, `ctx.answer`, …), unlike a bare `Composer`:
+	 * `const ping = <C extends Context>(bot: Bot<C>) => bot.command("ping", (ctx) => ctx.react("👍"));`
+	 */
+	override install<Add extends object>(plugin: (bot: Bot<C>) => Bot<C & Add>): Bot<C & Add>;
 	override install<Add extends object>(
 		plugin:
 			| ((composer: Composer<C>) => Composer<C & Add>)
-			| ((bot: CoreBot<C>) => CoreBot<C & Add>),
+			| ((bot: CoreBot<C>) => CoreBot<C & Add>)
+			| ((bot: Bot<C>) => Bot<C & Add>),
 	): Bot<C & Add> {
 		const out = (plugin as (bot: CoreBot<C>) => CoreBot<C & Add>)(this);
 
@@ -295,8 +304,8 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 	}
 
 	override on<Q extends FilterQuery>(
-		query: Q,
-		...handlers: Middleware<Filtered<C, Q> & RichFor<Q>>[]
+		query: Q | readonly Q[],
+		...handlers: Middleware<OnContext<C, Q>>[]
 	): this {
 		return super.on(query, ...(handlers as unknown as Middleware<Filtered<C, Q>>[]));
 	}
@@ -331,7 +340,7 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 	}
 
 	override command(
-		name: string,
+		name: string | readonly string[],
 		...handlers: Middleware<
 			C & { command: string; args: string[]; payload: string } & ContextByType["message"]
 		>[]
@@ -345,7 +354,7 @@ export class Bot<C extends Context = Context> extends CoreBot<C> {
 	}
 
 	override hears(
-		trigger: string | RegExp,
+		trigger: string | RegExp | readonly (string | RegExp)[],
 		...handlers: Middleware<C & { match: string | RegExpMatchArray } & ContextByType["message"]>[]
 	): this {
 		return super.hears(

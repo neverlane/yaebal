@@ -23,7 +23,11 @@ export interface AutoRetryEvent {
 export interface AutoRetryOptions {
 	/** max retries after the first attempt. defaults to 3. */
 	maxRetries?: number;
-	/** cap on a single wait, in ms. defaults to 30_000. */
+	/**
+	 * cap on a single wait, in ms. defaults to 30_000. backoff waits are clamped to it; a
+	 * telegram `retry_after` longer than this is not retried at all — retrying before it runs
+	 * out only earns another 429 — so the error reaches the caller instead.
+	 */
 	maxDelayMs?: number;
 	/** base for exponential backoff, in ms. attempt 1 waits 2 * base. defaults to 1_000. */
 	baseDelayMs?: number;
@@ -58,11 +62,14 @@ export function decideRetry(
 	// 429: respect Telegram's structured response_parameters.retry_after.
 	if (error.code === 429) {
 		const retryAfterMs = getRetryAfterMs(error);
-		const delayMs = retryAfterMs ?? 2 ** attempt * baseDelayMs;
-		const capped = Math.min(
-			delayMs + (retryAfterMs === undefined ? 0 : retryAfterPaddingMs),
-			maxDelayMs,
-		);
+		if (retryAfterMs !== undefined && retryAfterMs + retryAfterPaddingMs > maxDelayMs) {
+			return undefined;
+		}
+
+		const capped =
+			retryAfterMs === undefined
+				? Math.min(2 ** attempt * baseDelayMs, maxDelayMs)
+				: retryAfterMs + retryAfterPaddingMs;
 
 		return {
 			retry: true,

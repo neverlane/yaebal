@@ -43,6 +43,16 @@ bot.on("message:photo", (ctx) => {
   const file = FileId.from(ctx.photo.at(-1)!.file_id);
   return ctx.reply(\`stored on DC \${file.dcId} (\${DC_NAMES[file.dcId] ?? "?"})\`);
 });`;
+
+	const inlineId = `import { InlineMessageId } from "@yaebal/file-id";
+
+bot.on("chosen_inline_result", (ctx) => {
+  const raw = ctx.update.chosen_inline_result.inline_message_id;
+  if (raw === undefined) return; // only sent when the result had a reply_markup
+
+  const id = InlineMessageId.from(raw);
+  console.log(id.kind, id.dcId, id.messageId, id.ownerId);
+});`;
 </script>
 
 <svelte:head>
@@ -65,6 +75,18 @@ bot.on("message:photo", (ctx) => {
 <p>forwards keep the original upload's <code>file_id</code> internals, so this works on forwarded media too.</p>
 <Code code={dcExample} title="dc-bot.ts" />
 
+<h2>inline_message_id</h2>
+<p>
+	the <code>inline_message_id</code> on <code>chosen_inline_result</code> and inline-message
+	callbacks is the same kind of blob — an mtproto <code>InputBotInlineMessageID</code> behind
+	url-safe base64. <code>InlineMessageId</code> decodes both layouts: <code>"legacy"</code>
+	(20 bytes, owner and message id packed into one long) and <code>"modern"</code> (24 bytes, a
+	64-bit owner id). <code>ownerId</code> is an mtproto peer id — groups and channels lack the
+	bot api's <code>-100</code> prefix there. telegram only sends the id when the chosen result
+	carries a <code>reply_markup</code>.
+</p>
+<Code code={inlineId} title="inline-id.ts" />
+
 <h2>api</h2>
 <table>
 	<thead>
@@ -80,6 +102,11 @@ bot.on("message:photo", (ctx) => {
 			<td><code>FileUniqueId</code></td>
 			<td>class</td>
 			<td>the same treatment for <code>file_unique_id</code> strings.</td>
+		</tr>
+		<tr>
+			<td><code>InlineMessageId</code></td>
+			<td>class</td>
+			<td><code>InlineMessageId.from(string)</code> decodes an <code>inline_message_id</code>: <code>kind</code>, <code>dcId</code>, <code>messageId</code>, <code>ownerId</code>, <code>accessHash</code>; <code>.toString()</code> round-trips. functional form: <code>parseInlineMessageId</code> / <code>serializeInlineMessageId</code>.</td>
 		</tr>
 		<tr>
 			<td><code>parseFileId</code> / <code>serializeFileId</code> / <code>parseFileUniqueId</code> / <code>serializeFileUniqueId</code> / <code>fileUniqueIdFromFileId</code></td>

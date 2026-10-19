@@ -77,6 +77,12 @@ await loadUserFixed(1);`;
 		["not enough rights to …", "the bot lacks the specific admin permission for that action", "check getChatMember for the bot itself before attempting the action"],
 		["message to delete not found", "deleting a message already deleted or older than 48h", "treat as success — the end state (message gone) is already true"],
 	];
+
+	const debugEnv = `# everything
+YAEBAL_DEBUG='yaebal:*' node bot.js
+
+# api calls and dispatch timing only
+YAEBAL_DEBUG='yaebal:api,yaebal:update' node bot.js`;
 </script>
 
 <svelte:head>
@@ -87,6 +93,22 @@ await loadUserFixed(1);`;
 <p class="lead">
 	symptom-driven fixes for the telegram failures users hit most often in real bots.
 </p>
+
+<h2>see what the bot is doing</h2>
+<p>
+	set <code>YAEBAL_DEBUG</code> to print what happens on the wire — no code change, no extra
+	dependency, stderr only, and the bot token never appears in a line:
+</p>
+<Code code={debugEnv} title="terminal" lang="sh" />
+<table>
+	<thead><tr><th>namespace</th><th>prints</th></tr></thead>
+	<tbody>
+		<tr><td><code>yaebal:api</code></td><td>one line per api call — method, outcome, duration — plus retries</td></tr>
+		<tr><td><code>yaebal:api:raw</code></td><td>request params and response bodies (noisy — for when the short line isn't enough)</td></tr>
+		<tr><td><code>yaebal:update</code></td><td>every dispatched update: id, type, handling time, whether it threw</td></tr>
+		<tr><td><code>yaebal:polling</code></td><td>long-poll batches and <code>getUpdates</code> failures</td></tr>
+	</tbody>
+</table>
 
 <h2>error text → cause → fix</h2>
 <p>search this table for the exact wording Telegram (or Node) gave you:</p>
@@ -132,7 +154,7 @@ await loadUserFixed(1);`;
 		<tr><td><code>409 conflict</code></td><td>stop old containers, local dev processes, and duplicate <code>bot.start()</code> calls</td></tr>
 		<tr><td>webhook is set</td><td>call <code>deleteWebhook</code> or switch the app to webhook mode</td></tr>
 		<tr><td>groups only deliver commands</td><td>botfather privacy mode is enabled; disable it only if the bot must read all group messages</td></tr>
-		<tr><td><code>chat_member</code> / reactions never arrive</td><td>pass explicit <code>allowedUpdates</code></td></tr>
+		<tr><td><code>chat_member</code> / reactions never arrive</td><td>register them with <code>on()</code> (yaebal then requests them automatically) or pass explicit <code>allowedUpdates</code>; a previous <code>allowed_updates</code> persists on telegram's side until changed</td></tr>
 	</tbody>
 </table>
 <Code code={allowedUpdates} title="allowed-updates.ts" />

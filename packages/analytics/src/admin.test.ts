@@ -85,3 +85,14 @@ test("an adapter with no query() is rejected at construction, not on first comma
 	const noQuery: AnalyticsAdapter = { track: () => {} };
 	assert.throws(() => analyticsAdmin({ isAdmin: () => true, adapter: noQuery }), /query\(\)/);
 });
+
+test("an Object.prototype member name isn't mistaken for a window", { timeout: 5000 }, async () => {
+	const bot = new Composer<Context>().install(
+		analyticsAdmin({ isAdmin: () => true, adapter: seededStore() }),
+	);
+
+	const env = createTestEnv(bot);
+	await env.createUser().sendCommand("analytics", "constructor");
+
+	assert.match(env.lastApiCall("sendMessage")?.params?.text as string, /^usage:/);
+});

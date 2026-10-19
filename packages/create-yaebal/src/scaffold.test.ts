@@ -374,3 +374,35 @@ test("commands map to package managers", () => {
 	assert.equal(defaultPackageManager("bun"), "bun");
 	assert.equal(defaultPackageManager("node"), "pnpm");
 });
+
+test("renderFiles: node/deno scripts load .env (regression: BOT_TOKEN in .env was never read)", () => {
+	const node = JSON.parse(
+		renderFiles({ name: "b", runtime: "node", plugins: [] })["package.json"] ?? "{}",
+	);
+	assert.match(node.scripts.dev, /--env-file-if-exists=\.env/);
+	assert.match(node.scripts.start, /--env-file-if-exists=\.env/);
+	assert.equal(node.engines.node, ">=22.9");
+
+	const deno = JSON.parse(
+		renderFiles({ name: "b", runtime: "deno", plugins: [] })["package.json"] ?? "{}",
+	);
+	// `=` form: a bare `--env-file src/index.ts` would take the entry point as the env file
+	assert.match(deno.scripts.dev, /--env-file=\.env src\/index\.ts$/);
+	assert.match(deno.scripts.start, /--env-file=\.env src\/index\.ts$/);
+	assert.match(runCommand("deno", "dev"), /--env-file=\.env/);
+});
+
+test("renderFiles: deploy configs use a valid app name for scoped / dotted names (regression)", () => {
+	const name = "@acme/my.bot";
+	const compose = renderFiles({ name, runtime: "node", plugins: [], deploy: "compose" });
+	assert.match(compose["compose.yaml"] ?? "", /^ {2}my-bot:$/m);
+
+	const fly = renderFiles({ name, runtime: "node", plugins: [], deploy: "fly" });
+	assert.match(fly["fly.toml"] ?? "", /^app = "my-bot"$/m);
+
+	const cf = renderFiles({ name, runtime: "node", plugins: [], deploy: "cloudflare" });
+	assert.match(cf["wrangler.jsonc"] ?? "", /"name": "my-bot"/);
+
+	// package.json keeps the real npm name
+	assert.equal(JSON.parse(compose["package.json"] ?? "{}").name, name);
+});

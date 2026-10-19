@@ -326,3 +326,18 @@ test("callbacks with handler works", async () => {
 	assert.equal(env.lastApiCall()?.method, "sendMessage");
 	assert.deepEqual(env.lastApiCall()?.params, { chat_id: user.pmChat.id, text: "profile" });
 });
+
+test("validate command name with a leading slash should fail", () => {
+	assert.throws(
+		() => validateTomlConfig({ commands: [{ name: "/start", reply: "hi" }] }),
+		/commands\[0\]\.name must not start with "\/"/,
+	);
+});
+
+test("install doesn't resolve a handler name to an Object.prototype member", () => {
+	const bot = new Composer();
+	assert.throws(
+		() => installToml(bot, { commands: [{ name: "start", handler: "toString" }] }, { handlers: {} }),
+		/Missing handler "toString"/,
+	);
+});

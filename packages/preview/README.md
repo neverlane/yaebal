@@ -69,7 +69,7 @@ add `spoiler: true` to cover picture media.
 | option   | default      | meaning                                 |
 |:---------|:-------------|:----------------------------------------|
 | `theme`  | `"light"`    | `"light"` (green wallpaper) or `"dark"` |
-| `width`  | `380`        | canvas width in px                      |
+| `width`  | `380`        | canvas width in px (at least `332`)     |
 | `avatar` | name initial | override the incoming avatar glyph      |
 
 ---

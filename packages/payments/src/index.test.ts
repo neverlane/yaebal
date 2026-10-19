@@ -162,3 +162,47 @@ test("cancelSubscription()/reactivateSubscription() edit the subscription via th
 		is_canceled: false,
 	});
 });
+
+test("payments(): a false decision still sends the error_message Telegram requires", async () => {
+	const bot = new Composer<Context>().install(payments({ onPreCheckout: () => false }));
+	const env = createTestEnv(bot);
+	await env.createUser().sendPreCheckoutQuery();
+
+	const params = env.lastApiCall("answerPreCheckoutQuery")?.params;
+	assert.equal(params?.ok, false);
+	assert.equal(typeof params?.error_message, "string");
+	assert.ok((params?.error_message as string).length > 0);
+});
+
+test("payments(): a throwing onPreCheckout still declines the query, then rethrows", async () => {
+	const errors: unknown[] = [];
+	const bot = new Composer<Context>()
+		.use(async (_ctx, next) => {
+			try {
+				await next();
+			} catch (error) {
+				errors.push(error);
+			}
+		})
+		.install(
+			payments({
+				onPreCheckout: () => {
+					throw new Error("db down");
+				},
+			}),
+		);
+	const env = createTestEnv(bot);
+	await env.createUser().sendPreCheckoutQuery();
+
+	const params = env.lastApiCall("answerPreCheckoutQuery")?.params;
+	assert.equal(params?.ok, false);
+	assert.ok(params?.error_message);
+	assert.equal((errors[0] as Error | undefined)?.message, "db down");
+});
+
+test("invoice(): a subscription can't be turned into sendInvoice params", () => {
+	const builder = invoice("pro", "monthly", "sub:pro").price("pro", 100).subscription();
+
+	assert.throws(() => builder.toSendInvoiceParams(1), /toCreateInvoiceLinkParams/);
+	assert.equal(builder.toCreateInvoiceLinkParams().subscription_period, SUBSCRIPTION_PERIOD_SECONDS);
+});

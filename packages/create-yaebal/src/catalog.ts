@@ -101,7 +101,7 @@ export const DEPLOYS: Choice<DeployTarget>[] = [
 	{
 		value: "docker",
 		label: "docker",
-		hint: "multi-stage Dockerfile — any host that runs a container",
+		hint: "single-stage Dockerfile — any host that runs a container",
 	},
 	{
 		value: "compose",
@@ -135,6 +135,8 @@ export interface PluginDef {
 	id: string;
 	/** npm package added to dependencies */
 	dep: string;
+	/** third-party packages the plugin needs next to it (its peer dependencies) */
+	extraDeps?: string[];
 	/** one-line description shown in pickers */
 	hint: string;
 	wire: WireKind;
@@ -270,6 +272,29 @@ export const PLUGINS: PluginDef[] = [
 		wire: "install",
 		import: 'import { auditLog } from "@yaebal/audit-log";',
 		install: "auditLog()",
+	},
+	{
+		id: "otel",
+		dep: "@yaebal/otel",
+		extraDeps: ["@opentelemetry/api"],
+		hint: "opentelemetry tracing — a span per update, a child span per api call",
+		wire: "install",
+		import: 'import { otel } from "@yaebal/otel";',
+		install: "otel()",
+		showcase: `// spans reach a backend once an sdk is registered (before the bot starts), e.g.:
+// import { NodeSDK } from "@opentelemetry/sdk-node";
+// new NodeSDK({ serviceName: "my-bot", traceExporter: new OTLPTraceExporter() }).start();`,
+	},
+	{
+		id: "sentry",
+		dep: "@yaebal/sentry",
+		extraDeps: ["@sentry/node"],
+		hint: "sentry error tracking — a scope per update, update and api breadcrumbs",
+		wire: "dep",
+		import: 'import { sentry } from "@yaebal/sentry";',
+		showcase: `// import * as Sentry from "@sentry/node";
+// Sentry.init({ dsn: process.env.SENTRY_DSN });
+// bot.install(sentry({ sentry: Sentry }))`,
 	},
 	{
 		id: "cron",

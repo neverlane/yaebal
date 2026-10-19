@@ -44,6 +44,8 @@
 		{ "path": "./packages/filters" },
 		{ "path": "./packages/guards" },
 		{ "path": "./packages/audit-log" },
+		{ "path": "./packages/otel" },
+		{ "path": "./packages/sentry" },
 		{ "path": "./packages/ephemeral" },
 		{ "path": "./packages/hydrate" },
 		{ "path": "./packages/test" },

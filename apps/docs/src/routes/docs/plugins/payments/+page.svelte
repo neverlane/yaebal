@@ -111,7 +111,7 @@ await env.createUser().sendSuccessfulPayment({ invoice_payload: "plan:pro" });`;
 	</thead>
 	<tbody>
 		<tr><td><code>true</code> / nothing</td><td><code>{"{ ok: true }"}</code></td></tr>
-		<tr><td><code>false</code></td><td><code>{"{ ok: false }"}</code> (generic decline)</td></tr>
+		<tr><td><code>false</code></td><td><code>{"{ ok: false }"}</code> with a default <code>error_message</code> — telegram requires one on every decline</td></tr>
 		<tr><td>a <code>string</code></td><td><code>{"{ ok: false, error_message: <string> }"}</code></td></tr>
 		<tr><td><code>{"{ ok, errorMessage? }"}</code></td><td>full control</td></tr>
 	</tbody>

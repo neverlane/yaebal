@@ -175,7 +175,7 @@ export function openaiCompatible(options: OpenAiCompatibleOptions): AiModel {
 }
 
 export interface AnthropicModelOptions {
-	/** model name, e.g. `"claude-sonnet-5"`. */
+	/** model name, e.g. `"claude-sonnet-5-5"`. */
 	model: string;
 	apiKey: string;
 	/** api root, default `https://api.anthropic.com`. */
@@ -282,7 +282,7 @@ interface AiSdkModule {
 
 /**
  * bridge to the vercel ai sdk: pass any `LanguageModel` (`openai("gpt-4o")`,
- * `anthropic("claude-sonnet-5")`, `ollama(...)`, …) and the whole provider ecosystem works.
+ * `anthropic("claude-sonnet-5-5")`, `ollama(...)`, …) and the whole provider ecosystem works.
  * the `ai` package is an optional peer — it's imported lazily on first use, so bots that
  * use the built-in adapters never load it.
  */

@@ -109,6 +109,6 @@ export function resolveEventDef(
 	events: EventsCatalog | undefined,
 	name: string,
 ): EventDef | undefined {
-	const def = events?.[name];
+	const def = events && Object.hasOwn(events, name) ? events[name] : undefined;
 	return def === true || def === undefined ? undefined : def;
 }

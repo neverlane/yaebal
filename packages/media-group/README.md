@@ -61,6 +61,11 @@ bot.install(mediaGroup()).on("message", async (ctx) => {
   workers or serverless instances, route each chat's updates to one instance.
 - in handler mode album parts never reach middleware installed after this plugin — use
   pass-through mode when albums should flow through the chain.
+- albums flush from a timer, after the first part's own trip through the chain has finished — so
+  middleware installed *before* this plugin that does work after `await next()` has already run.
+  the classic case is `session()`: changes made in the album handler are not saved on their own.
+  call `await saveSession(ctx)` at the end of the handler, or install pass-through `mediaGroup()`
+  *before* `session()` so the resumed chain loads and saves the session itself.
 - the context the album arrives on is the first part's context. enrichments from plugins
   installed *before* this one are present on it at runtime; to see their types in handler mode,
   pin the context explicitly: `mediaGroup<Context & { session: MySession }>(...)`.

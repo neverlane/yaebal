@@ -95,34 +95,56 @@ export function projectDirName(name: string): string {
 	return trimmed.startsWith("@") && slash !== -1 ? trimmed.slice(slash + 1) : trimmed;
 }
 
-/** spawn a command, inheriting stdio, resolving to its exit code. */
-export function exec(cmd: string, args: string[], cwd: string): Promise<number> {
+/**
+ * spawn a command, inheriting stdio, resolving to its exit code. `stdoutToStderr` sends the
+ * child's stdout to our stderr instead — for `--json`, whose stdout must stay pure json.
+ */
+export function exec(
+	cmd: string,
+	args: string[],
+	cwd: string,
+	stdoutToStderr = false,
+): Promise<number> {
 	return new Promise((resolve) => {
-		const child = spawn(cmd, args, { cwd, stdio: "inherit", shell: process.platform === "win32" });
+		const child = spawn(cmd, args, {
+			cwd,
+			stdio: stdoutToStderr ? ["inherit", 2, "inherit"] : "inherit",
+			shell: process.platform === "win32",
+		});
 
 		child.on("error", () => resolve(1));
-		child.on("close", (code) => resolve(code ?? 0));
+		// a null code means the child was killed by a signal — that's a failure, not success
+		child.on("close", (code) => resolve(code ?? 1));
 	});
 }
 
 /** `git init` + an initial commit; best-effort, never throws. */
-export async function gitInit(cwd: string): Promise<boolean> {
-	const init = await exec("git", ["init", "-q"], cwd);
+export async function gitInit(cwd: string, stdoutToStderr = false): Promise<boolean> {
+	const init = await exec("git", ["init", "-q"], cwd, stdoutToStderr);
 	if (init !== 0) return false;
 
-	await exec("git", ["add", "-A"], cwd);
-	await exec("git", ["commit", "-q", "-m", "init: scaffold with create-yaebal"], cwd);
+	await exec("git", ["add", "-A"], cwd, stdoutToStderr);
+	await exec(
+		"git",
+		["commit", "-q", "-m", "init: scaffold with create-yaebal"],
+		cwd,
+		stdoutToStderr,
+	);
 
 	return true;
 }
 
 /** run the package manager's install in `cwd`. deno is a no-op (no lockfile). */
-export async function installDeps(pm: PackageManager, cwd: string): Promise<boolean> {
+export async function installDeps(
+	pm: PackageManager,
+	cwd: string,
+	stdoutToStderr = false,
+): Promise<boolean> {
 	if (pm === "deno") {
-		const code = await exec("deno", ["cache", "src/index.ts"], cwd);
+		const code = await exec("deno", ["cache", "src/index.ts"], cwd, stdoutToStderr);
 		return code === 0;
 	}
 
-	const code = await exec(pm, ["install"], cwd);
+	const code = await exec(pm, ["install"], cwd, stdoutToStderr);
 	return code === 0;
 }

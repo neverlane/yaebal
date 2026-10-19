@@ -1,6 +1,8 @@
 import type { ApiOptions, Context, Plugin } from "@yaebal/core";
 import { createApi, media } from "@yaebal/core";
 import { PANEL_HTML } from "./panel-html.js";
+import { remoteAddrOf } from "./remote-addr.js";
+import { applyHistoryLimit, newestFirst } from "./store-util.js";
 
 /** keep at most this many messages per chat in the in-memory store. */
 const MAX_HISTORY = 1000;
@@ -319,6 +321,8 @@ export interface MessagePatch {
 	text?: string;
 	edited?: boolean;
 	deleted?: boolean;
+	/** the operator who edited/deleted it from the panel — the audit trail for that change. */
+	operator?: string;
 }
 
 export interface SearchOptions {
@@ -451,7 +455,7 @@ export class MemoryPanelStore implements PanelStore {
 					: m.date < before,
 			);
 		}
-		if (options.limit !== undefined) list = list.slice(-options.limit);
+		list = applyHistoryLimit(list, options.limit);
 
 		// copy every message too — callers must not be able to corrupt the store by mutating
 		// the array (or its entries) this returns.
@@ -505,6 +509,7 @@ export class MemoryPanelStore implements PanelStore {
 		if (patch.text !== undefined) message.text = patch.text;
 		if (patch.edited !== undefined) message.edited = patch.edited;
 		if (patch.deleted !== undefined) message.deleted = patch.deleted;
+		if (patch.operator !== undefined) message.operator = patch.operator;
 
 		this.#emit({ type: "chat", chatId });
 	}
@@ -525,14 +530,11 @@ export class MemoryPanelStore implements PanelStore {
 
 		for (const chatId of chatIds) {
 			for (const message of this.#messages.get(chatId) ?? []) {
-				if (!message.text.toLowerCase().includes(q)) continue;
-
-				out.push({ chatId, message: { ...message } });
-				if (out.length >= limit) return out;
+				if (message.text.toLowerCase().includes(q)) out.push({ chatId, message: { ...message } });
 			}
 		}
 
-		return out;
+		return newestFirst(out, limit);
 	}
 
 	subscribe(listener: (event: PanelEvent) => void): () => void {
@@ -557,7 +559,17 @@ function scopedChatId(chat: unknown, scope: RecorderScope): number | undefined {
 	return matches ? id : undefined;
 }
 
-function chatIdentity(chatId: number, user: unknown): PanelChatRecord {
+function chatIdentity(chatId: number, user: unknown, chat?: unknown): PanelChatRecord {
+	// a group/supergroup/channel is named by its own title — never by whichever member sent
+	// this update, or the chat would rename itself after every message's author.
+	if (isRecord(chat) && stringValue(chat.type) !== undefined && chat.type !== "private") {
+		const username = stringValue(chat.username);
+		return {
+			id: chatId,
+			name: stringValue(chat.title) ?? (username ? `@${username}` : `chat ${chatId}`),
+		};
+	}
+
 	const out: PanelChatRecord = { id: chatId };
 
 	if (isRecord(user)) {
@@ -611,7 +623,7 @@ function eventRecord(
 
 		const data = stringValue(query.data);
 		return {
-			chat: chatIdentity(chatId, query.from),
+			chat: chatIdentity(chatId, query.from, message?.chat),
 			message: eventMessage("callback", "button clicked", data ?? "callback query", data),
 		};
 	}
@@ -624,7 +636,7 @@ function eventRecord(
 		const next = reactionCount(reaction.new_reaction) ?? 0;
 		const detail = `changed to ${next} reaction${next === 1 ? "" : "s"}`;
 		return {
-			chat: chatIdentity(chatId, reaction.user),
+			chat: chatIdentity(chatId, reaction.user, reaction.chat),
 			message: eventMessage("reaction", "message reaction", detail),
 		};
 	}
@@ -637,7 +649,7 @@ function eventRecord(
 		const next = reactionCount(reaction.reactions) ?? 0;
 		const detail = `${next} reaction type${next === 1 ? "" : "s"}`;
 		return {
-			chat: chatIdentity(chatId, reaction.chat),
+			chat: chatIdentity(chatId, undefined, reaction.chat),
 			message: eventMessage("reaction_count", "reaction count", detail),
 		};
 	}
@@ -676,7 +688,7 @@ function eventRecord(
 			: undefined;
 
 		return {
-			chat: chatIdentity(chatId, member.from),
+			chat: chatIdentity(chatId, member.from, member.chat),
 			message: eventMessage("chat_member", "chat member", next ?? "updated"),
 		};
 	}
@@ -707,13 +719,14 @@ export async function recordTelegramUpdate(
 		const chatId = scopedChatId(rawMessage.chat, scope);
 		const message = toPanelMessage("in", rawMessage);
 		if (chatId !== undefined && message) {
-			await store.record(chatIdentity(chatId, rawMessage.from), message);
+			await store.record(chatIdentity(chatId, rawMessage.from, rawMessage.chat), message);
 			recorded = true;
 		}
 	}
 
-	if (isRecord(update.edited_message)) {
-		const edited = update.edited_message;
+	// channel post edits mirror `channel_post` above, so an edited channel post is patched too
+	const edited = update.edited_message ?? update.edited_channel_post;
+	if (isRecord(edited)) {
 		const chatId = scopedChatId(edited.chat, scope);
 		const messageId = numberValue(edited.message_id);
 		if (chatId !== undefined && messageId !== undefined) {
@@ -814,7 +827,8 @@ const SEND_METHODS: Record<AttachmentType, { method: string; field: string }> = 
 
 /** choose how to send an operator-uploaded file: explicit `type`, else infer from mime. */
 function pickSendKind(type: string, mime: string): AttachmentType {
-	if (type && type in SEND_METHODS) return type as AttachmentType;
+	// own keys only — `"constructor" in SEND_METHODS` is true via the prototype
+	if (type && Object.hasOwn(SEND_METHODS, type)) return type as AttachmentType;
 	if (mime.startsWith("image/")) return mime === "image/gif" ? "animation" : "photo";
 	if (mime.startsWith("video/")) return "video";
 	if (mime === "audio/ogg") return "voice";
@@ -850,19 +864,22 @@ function recordResult(
 	result: unknown,
 	operator: string | undefined,
 	onError: ((error: unknown, context: string) => void) | undefined,
+	anyChat = false,
 ): void {
 	if (!result || typeof result !== "object") return;
 
 	const raw = result as Record<string, unknown>;
 	const chat = raw.chat as { id?: number; type?: string } | undefined;
-	if (chat?.id === undefined || chat.type !== "private") return;
+	// `anyChat`: a send the operator made from the panel — they picked this chat, so it's in
+	// scope whatever its type (a group recorded via `recorder({ chats: "all" })`, say).
+	if (chat?.id === undefined || (!anyChat && chat.type !== "private")) return;
 
 	const message = toPanelMessage("out", raw);
 	if (!message) return;
 	if (operator) message.operator = operator;
 
 	try {
-		const outcome = store.record(chatIdentity(chat.id, raw.chat), message);
+		const outcome = store.record(chatIdentity(chat.id, raw.chat, raw.chat), message);
 		if (outcome instanceof Promise) outcome.catch(reportError(onError, "record"));
 	} catch (error) {
 		reportError(onError, "record")(error);
@@ -941,10 +958,11 @@ export interface PanelOptions {
 	 */
 	rateLimit?: { max?: number; windowMs?: number } | false;
 	/**
-	 * derive a client key for rate limiting. defaults to the socket address `serve()` stamps
-	 * on the request (`x-panel-remote-addr`), falling back to a single shared bucket when
-	 * that's absent (e.g. mounted directly on bun/deno/an edge runtime without going through
-	 * `@yaebal/panel/serve`) — supply your own to use that platform's client-ip mechanism.
+	 * derive a client key for rate limiting. defaults to the socket address `serve()` recorded
+	 * for the request, falling back to a single shared bucket when there is none (mounted
+	 * directly on bun/deno/an edge runtime) — supply your own to use that platform's client-ip
+	 * mechanism, e.g. bun's `server.requestIP(request)?.address`. no request header is trusted
+	 * for this unless `trustProxy` is on.
 	 */
 	clientKey?: (request: Request) => string;
 	/**
@@ -1041,9 +1059,9 @@ function createLimiter(config: PanelOptions["rateLimit"]) {
 	};
 }
 
-/** client key from the socket address `serve()` stamps — see {@link PanelOptions.clientKey}. */
+/** client key from the socket address `serve()` recorded — see {@link PanelOptions.clientKey}. */
 function defaultClientKey(request: Request): string {
-	return request.headers.get("x-panel-remote-addr") ?? "shared";
+	return remoteAddrOf(request) ?? "shared";
 }
 
 /** client key trusting proxy-supplied headers — only used when `trustProxy: true`. */
@@ -1062,6 +1080,12 @@ function isSecureRequest(request: Request, trustProxy: boolean): boolean {
 }
 
 const SESSION_COOKIE = "panel_session";
+
+/** proxied telegram files: sandboxed, scriptless — see the `/api/file` route. */
+const FILE_CSP =
+	"default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox";
+/** media the panel renders inline (`<img>`/`<video>`/`<audio>`); anything else downloads. svg is not inline-safe. */
+const INLINE_FILE_TYPE = /^(?:image\/(?:jpeg|png|gif|webp|avif|bmp)|video\/|audio\/)/i;
 
 function cookieSessionId(request: Request): string | undefined {
 	const cookie = request.headers.get("cookie");
@@ -1407,15 +1431,18 @@ export function panelHandler(
 			const upstream = await fetch(api.fileUrl(file.file_path));
 			if (!upstream.ok || !upstream.body) return finish(json({ error: "download failed" }, 502));
 
-			return finish(
-				new Response(upstream.body, {
-					headers: {
-						"content-type": upstream.headers.get("content-type") ?? "application/octet-stream",
-						"cache-control": "private, max-age=86400",
-						"x-content-type-options": "nosniff",
-					},
-				}),
-			);
+			const type = upstream.headers.get("content-type") ?? "application/octet-stream";
+			const headers: Record<string, string> = {
+				"content-type": type,
+				"cache-control": "private, max-age=86400",
+				"x-content-type-options": "nosniff",
+				// these bytes are whatever a chat user sent (an .html or .svg document, say) —
+				// never let them run as a page on the panel's own, cookie-authenticated origin
+				"content-security-policy": FILE_CSP,
+			};
+			if (!INLINE_FILE_TYPE.test(type)) headers["content-disposition"] = "attachment";
+
+			return finish(new Response(upstream.body, { headers }));
 		}
 
 		const exportMatch = path.match(/^\/api\/chats\/(-?\d+)\/export$/);
@@ -1504,7 +1531,11 @@ export function panelHandler(
 				message_id: messageId,
 				text: body.text,
 			});
-			await store.updateMessage(chatId, messageId, { text: body.text, edited: true });
+			await store.updateMessage(chatId, messageId, {
+				text: body.text,
+				edited: true,
+				operator: operatorName,
+			});
 			return finish(json({ ok: true }));
 		}
 
@@ -1515,7 +1546,7 @@ export function panelHandler(
 			const chatId = Number(deleteMsgMatch[1]);
 			const messageId = Number(deleteMsgMatch[2]);
 			await api.call("deleteMessage", { chat_id: chatId, message_id: messageId });
-			await store.updateMessage(chatId, messageId, { deleted: true });
+			await store.updateMessage(chatId, messageId, { deleted: true, operator: operatorName });
 			return finish(json({ ok: true }));
 		}
 
@@ -1583,7 +1614,9 @@ export function panelHandler(
 				if (typeof caption === "string" && caption) params.caption = caption;
 
 				const result = await api.call(method, params);
-				if (options.recordSends !== false) recordResult(store, result, operatorName, onError);
+				if (options.recordSends !== false) {
+					recordResult(store, result, operatorName, onError, true);
+				}
 
 				return finish(json({ ok: true }));
 			}
@@ -1610,7 +1643,7 @@ export function panelHandler(
 			if (options.recordSends !== false) {
 				// record from the api result when it's a real message, else fall back to the text
 				if (result && typeof result === "object" && "chat" in result) {
-					recordResult(store, result, operatorName, onError);
+					recordResult(store, result, operatorName, onError, true);
 				} else {
 					const fallback = toPanelMessage("out", {
 						text: body.text,

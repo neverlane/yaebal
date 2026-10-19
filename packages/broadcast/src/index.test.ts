@@ -146,3 +146,128 @@ test("broadcast can pause and resume queued jobs", async () => {
 	assert(events.includes("job_paused"));
 	assert(events.includes("job_resumed"));
 });
+
+test("concurrent deliveries waiting on the rate limit don't wake together and burst", {
+	timeout: 5000,
+}, async () => {
+	const sentAt: number[] = [];
+	const client = new Broadcast(fakeApi().api, {
+		concurrency: 4,
+		rateLimit: { limit: 1, windowMs: 40 },
+	}).type("tick", () => {
+		sentAt.push(Date.now());
+	});
+
+	const job = await client.start("tick", [[], [], [], []] as const);
+	await job.wait();
+	await client.stop();
+
+	for (let i = 1; i < sentAt.length; i++) {
+		const gap = (sentAt[i] as number) - (sentAt[i - 1] as number);
+		assert.ok(gap >= 30, `sends ${i - 1} and ${i} were only ${gap}ms apart`);
+	}
+});
+
+test("a one-off sendMessage job drops its inline type once it completes", {
+	timeout: 5000,
+}, async () => {
+	const client = new Broadcast(fakeApi().api, { rateLimit: false });
+	await client.sendMessage([1], "hi");
+	await client.stop();
+
+	await assert.rejects(
+		client.start("@yaebal/broadcast:sendMessage:1" as never, [[1, 0]] as never),
+		/is not registered/,
+	);
+});
+
+test("claim() picks by priority, then dueAt, then index", { timeout: 5000 }, () => {
+	const storage = new MemoryBroadcastStorage();
+	const base = { jobId: "j", type: "t", args: [], status: "queued" as const, attempts: 0 };
+	const at = { maxAttempts: 1, createdAt: 0, updatedAt: 0 };
+	storage.createJob({
+		id: "j",
+		type: "t",
+		status: "queued",
+		total: 4,
+		sent: 0,
+		failed: 0,
+		skipped: 0,
+		retried: 0,
+		priority: 0,
+		createdAt: 0,
+		updatedAt: 0,
+	});
+	storage.addDeliveries("j", [
+		{ ...base, ...at, id: "a", index: 0, priority: 0, dueAt: 5 },
+		{ ...base, ...at, id: "b", index: 1, priority: 1, dueAt: 9 },
+		{ ...base, ...at, id: "c", index: 2, priority: 1, dueAt: 3 },
+		{ ...base, ...at, id: "d", index: 3, priority: 1, dueAt: 3 },
+	]);
+
+	const order = [1, 2, 3, 4].map(() => storage.claim("w", 10, 1000)?.id);
+	assert.deepEqual(order, ["c", "d", "b", "a"]);
+});
+
+test("storeResults keeps each delivery's api result", { timeout: 5_000 }, async () => {
+	const { api } = fakeApi();
+	const storage = new MemoryBroadcastStorage();
+	const client = new Broadcast(api, { storage, rateLimit: false }).run();
+	const job = await client.queueMessage([1, 2], "hi", { storeResults: true });
+	await job.wait();
+
+	const deliveries = await storage.listDeliveries(job.id);
+	assert.deepEqual(
+		deliveries.map((d) => d.result),
+		[{ message_id: 1 }, { message_id: 1 }],
+	);
+	await client.stop();
+});
+
+test("a job's own onEvent sees only that job's events", { timeout: 5_000 }, async () => {
+	const { api } = fakeApi();
+	const client = new Broadcast(api, { rateLimit: false }).run();
+	const mine: string[] = [];
+	const first = await client.queueMessage([1], "a", { onEvent: (e) => mine.push(e.type) });
+	await client.queueMessage([2], "b");
+	await first.wait();
+	await client.stop({ drain: true });
+
+	assert.ok(mine.includes("job_created") && mine.includes("job_completed"));
+	assert.equal(mine.filter((type) => type === "delivery_sent").length, 1);
+});
+
+test("a pause landing while deliveries are written is not overwritten to queued", {
+	timeout: 5_000,
+}, async () => {
+	const { api, sentTo } = fakeApi();
+	const storage = new MemoryBroadcastStorage();
+	const client = new Broadcast(api, { storage, rateLimit: false }).run();
+
+	let pause: Promise<void> | undefined;
+	async function* targets() {
+		yield 1;
+		pause = client.pause("slow"); // the operator hits pause mid-creation
+		await pause;
+		yield 2;
+	}
+	await client.queueMessage(targets(), "hi", { id: "slow" });
+
+	assert.equal((await storage.getJob("slow"))?.status, "paused");
+	assert.equal((await storage.getJob("slow"))?.total, 2);
+	assert.deepEqual(sentTo, [], "nothing goes out while paused");
+	await client.stop();
+});
+
+test("memory storage drops the oldest finished jobs past keepFinished", {
+	timeout: 5_000,
+}, async () => {
+	const { api } = fakeApi();
+	const storage = new MemoryBroadcastStorage({ keepFinished: 2 });
+	const client = new Broadcast(api, { storage, rateLimit: false }).run();
+	for (const id of ["j1", "j2", "j3"]) await (await client.queueMessage([1], "x", { id })).wait();
+	await client.stop({ drain: true });
+
+	assert.equal(await storage.getJob("j1"), undefined);
+	assert.ok(await storage.getJob("j3"));
+});

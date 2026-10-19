@@ -13,7 +13,7 @@ import type {
 export type * from "./types.js";
 
 function validateInitial(def: MachineDef<Context, MachineEvent, object>): void {
-	if (!(def.initial in def.states)) {
+	if (!Object.hasOwn(def.states, def.initial)) {
 		throw new Error(`state-machine: initial state "${def.initial}" is not declared in states`);
 	}
 }
@@ -114,7 +114,7 @@ export function stateMachine<
 	const now = options.now ?? Date.now;
 
 	const requireState = (name: string): StateNodeDef<C, Event, MCtx> => {
-		const node = def.states[name];
+		const node = Object.hasOwn(def.states, name) ? def.states[name] : undefined;
 		if (!node) throw new Error(`state-machine: unknown state "${name}"`);
 		return node;
 	};
@@ -143,7 +143,7 @@ export function stateMachine<
 			};
 
 			// self-heal: a snapshot pointing at a state a deploy removed doesn't shadow the key forever.
-			if (snapshot && !(snapshot.state in def.states)) {
+			if (snapshot && !Object.hasOwn(def.states, snapshot.state)) {
 				resetFrom = snapshot.state;
 				snapshot = undefined;
 				if (key !== undefined) await storage.delete(key);
@@ -161,7 +161,10 @@ export function stateMachine<
 			): Promise<void> => {
 				if (!snapshot) return;
 				const node = requireState(snapshot.state);
-				if (node.onEnter) await node.onEnter(mctx, { from, event });
+				if (!node.onEnter) return;
+				await node.onEnter(mctx, { from, event });
+				// onEnter may mutate `ctx.machine.context` too — persist what it wrote
+				await persist();
 			};
 
 			const activate = async (
@@ -176,8 +179,6 @@ export function stateMachine<
 				await persist();
 				await fireEnter(from, event);
 			};
-
-			if (!snapshot) await activate(resetFrom, undefined);
 
 			const active = (): MachineSnapshot => {
 				if (!snapshot) throw new Error("state-machine: no active snapshot");
@@ -196,12 +197,15 @@ export function stateMachine<
 				},
 				can(type) {
 					const node = requireState(active().state);
-					return node.on?.[type] !== undefined;
+					return node.on !== undefined && Object.hasOwn(node.on, type);
 				},
 				async send(event) {
 					const current = active();
 					const node = requireState(current.state);
-					const raw = node.on?.[event.type as Event["type"]];
+					const raw =
+						node.on && Object.hasOwn(node.on, event.type)
+							? node.on[event.type as Event["type"]]
+							: undefined;
 					if (!raw) return false;
 
 					const candidates = (Array.isArray(raw) ? raw : [raw]) as ReadonlyArray<
@@ -210,7 +214,7 @@ export function stateMachine<
 
 					for (const transition of candidates) {
 						if (transition.guard && !(await transition.guard(mctx, event))) continue;
-						if (!(transition.target in def.states)) {
+						if (!Object.hasOwn(def.states, transition.target)) {
 							throw new Error(
 								`state-machine: transition targets unknown state "${transition.target}"`,
 							);
@@ -232,6 +236,11 @@ export function stateMachine<
 					await activate(active().state, undefined);
 				},
 			};
+
+			// attach before the first activation: the initial state's `onEnter` already sees
+			// `ctx.machine` (derive only merges the return value after this function resolves)
+			(ctx as { machine?: unknown }).machine = control;
+			if (!snapshot) await activate(resetFrom, undefined);
 
 			return { machine: control };
 		});

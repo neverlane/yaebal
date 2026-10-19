@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/preview",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"description": "yaebal preview — render a telegram-style chat (with reply/forward/reactions/link-preview, custom themes, and message grouping) from plain objects to an SVG string. zero deps, zero runtime.",
 	"type": "module",
 	"main": "./lib/index.js",

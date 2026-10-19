@@ -214,6 +214,9 @@ export class Cron<Jobs extends string = never> {
 	 * `CronStoppedError` it aborts with to the job that was still running. */
 	readonly #activeControllers = new Map<AbortController, string>();
 	#running = false;
+	/** bumped when `stop()` aborts in-flight runs — a run waiting out a retry delay compares it
+	 * to give up instead of starting a fresh attempt after `stop()` has resolved. */
+	#stopEpoch = 0;
 
 	constructor(options: CronClientOptions = {}) {
 		this.#options = normalizeOptions(options);
@@ -322,6 +325,7 @@ export class Cron<Jobs extends string = never> {
 			job.pending = false;
 		}
 
+		this.#stopEpoch++;
 		for (const [controller, jobName] of this.#activeControllers) {
 			controller.abort(new CronStoppedError(jobName));
 		}
@@ -550,6 +554,10 @@ export class Cron<Jobs extends string = never> {
 			return "skipped";
 		}
 
+		// claimed before awaiting the lock, so a second fire arriving while `acquireLock` is still
+		// pending sees this one under its overlap policy instead of slipping past it
+		job.activeRuns++;
+
 		let release: (() => void) | undefined;
 		const acquireLock = this.#options.acquireLock;
 		if (acquireLock) {
@@ -560,19 +568,19 @@ export class Cron<Jobs extends string = never> {
 				acquired = false; // a broken lock hook must never wedge the schedule
 			}
 			if (acquired === false) {
+				job.activeRuns--;
 				this.#emit({
 					type: "run_skipped",
 					name: job.name,
 					reason: "lock",
 					at: this.#options.now(),
 				});
-				if (fromSchedule) this.#safeArm(job);
+				if (!this.#firePending(job) && fromSchedule) this.#safeArm(job);
 				return "skipped";
 			}
 			if (typeof acquired === "function") release = acquired;
 		}
 
-		job.activeRuns++;
 		const run = ++job.run;
 
 		const runPromise = this.#runWithRetries(job, run, scheduledFor).finally(() => {
@@ -586,16 +594,7 @@ export class Cron<Jobs extends string = never> {
 			}
 			this.#persistLastRunAt(job);
 
-			if (job.pending) {
-				job.pending = false;
-				const waiters = job.waiters;
-				job.waiters = [];
-				void this.#fire(job, this.#options.now(), false).then((outcome) => {
-					for (const resolve of waiters) resolve(outcome);
-				});
-			} else if (fromSchedule) {
-				this.#safeArm(job);
-			}
+			if (!this.#firePending(job) && fromSchedule) this.#safeArm(job);
 		});
 
 		this.#inFlight.add(runPromise);
@@ -605,8 +604,22 @@ export class Cron<Jobs extends string = never> {
 		return "ran";
 	}
 
+	/** fire the one run queued behind the current one (`overlap: "wait"`), if any. */
+	#firePending(job: JobEntry): boolean {
+		if (!job.pending) return false;
+
+		job.pending = false;
+		const waiters = job.waiters;
+		job.waiters = [];
+		void this.#fire(job, this.#options.now(), false).then((outcome) => {
+			for (const resolve of waiters) resolve(outcome);
+		});
+		return true;
+	}
+
 	async #runWithRetries(job: JobEntry, run: number, scheduledFor: number): Promise<void> {
 		const maxAttempts = 1 + job.retries;
+		const epoch = this.#stopEpoch;
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			const startedAt = this.#options.now();
@@ -694,7 +707,7 @@ export class Cron<Jobs extends string = never> {
 				at: this.#options.now(),
 			});
 
-			if (attempt < maxAttempts) {
+			if (attempt < maxAttempts && this.#stopEpoch === epoch) {
 				const delay =
 					typeof job.retryDelayMs === "function"
 						? Math.max(0, job.retryDelayMs(attempt))
@@ -709,7 +722,8 @@ export class Cron<Jobs extends string = never> {
 					at: this.#options.now(),
 				});
 				if (delay > 0) await sleep(delay);
-				continue;
+				// `stop()` aborted us mid-backoff — this was the last attempt
+				if (this.#stopEpoch === epoch) continue;
 			}
 
 			job.failures++;

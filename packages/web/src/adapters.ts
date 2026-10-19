@@ -1,4 +1,5 @@
 import {
+	MAX_BODY,
 	type UpdateSink,
 	type WebhookExecutionContext,
 	type WebhookHandler,
@@ -28,6 +29,7 @@ import {
 /** a node `IncomingMessage`-shaped stream, without importing `node:http`. */
 interface NodeReadable {
 	on(event: string, listener: (arg: unknown) => void): unknown;
+	destroy?(): unknown;
 }
 
 function isNodeReadable(v: unknown): v is NodeReadable {
@@ -49,17 +51,28 @@ const toBytes = (chunk: unknown): Uint8Array =>
 			? chunk
 			: new Uint8Array(chunk as ArrayBuffer);
 
-function collectNodeStream(stream: NodeReadable): Promise<Uint8Array> {
+/** `undefined` once the stream goes over `cap` bytes — reading stops there, it isn't buffered whole. */
+function collectNodeStream(stream: NodeReadable, cap: number): Promise<Uint8Array | undefined> {
 	return new Promise((resolve, reject) => {
 		const chunks: Uint8Array[] = [];
 		let total = 0;
+		let done = false;
 
 		stream.on("data", (chunk) => {
+			if (done) return;
 			const bytes = toBytes(chunk);
-			chunks.push(bytes);
 			total += bytes.byteLength;
+			if (total > cap) {
+				done = true;
+				stream.destroy?.();
+				resolve(undefined);
+				return;
+			}
+			chunks.push(bytes);
 		});
 		stream.on("end", () => {
+			if (done) return;
+			done = true;
 			const out = new Uint8Array(total);
 			let offset = 0;
 			for (const chunk of chunks) {
@@ -68,15 +81,21 @@ function collectNodeStream(stream: NodeReadable): Promise<Uint8Array> {
 			}
 			resolve(out);
 		});
-		stream.on("error", (error) => reject(error));
+		stream.on("error", (error) => {
+			if (done) return;
+			done = true;
+			reject(error);
+		});
 	});
 }
 
 /**
  * normalise whatever a framework hands us as a body into a UTF-8 string:
  * already-parsed objects re-serialise to JSON, raw buffers/streams are read out.
+ * raw streams are capped while reading — `undefined` means the body went over `cap` —
+ * since the webhook's own size check only sees the body after it was buffered here.
  */
-async function readBody(source: unknown): Promise<string> {
+async function readBody(source: unknown, cap: number): Promise<string | undefined> {
 	if (source === undefined || source === null) return "";
 	if (typeof source === "string") return source;
 	if (source instanceof Uint8Array) return new TextDecoder().decode(source);
@@ -84,15 +103,26 @@ async function readBody(source: unknown): Promise<string> {
 
 	if (isAsyncIterable(source)) {
 		let text = "";
+		let total = 0;
 		const decoder = new TextDecoder();
-		for await (const chunk of source) text += decoder.decode(toBytes(chunk), { stream: true });
+		for await (const chunk of source) {
+			const bytes = toBytes(chunk);
+			total += bytes.byteLength;
+			if (total > cap) return undefined;
+			text += decoder.decode(bytes, { stream: true });
+		}
 		return text + decoder.decode();
 	}
-	if (isNodeReadable(source)) return new TextDecoder().decode(await collectNodeStream(source));
+	if (isNodeReadable(source)) {
+		const bytes = await collectNodeStream(source, cap);
+		return bytes === undefined ? undefined : new TextDecoder().decode(bytes);
+	}
 
 	// a parsed body object (fastify, express.json, azure) — round-trip it.
 	return JSON.stringify(source);
 }
+
+const tooLarge = (): Response => new Response("payload too large", { status: 413 });
 
 type HeaderBag = Record<string, string | string[] | undefined> | Headers | undefined;
 
@@ -276,9 +306,11 @@ export function expressAdapter(
 	options?: WebhookOptions,
 ): (req: NodeRequestLike, res: NodeResponse) => Promise<void> {
 	const handler = webhookCallback(bot, options);
+	const cap = options?.maxBodyBytes ?? MAX_BODY;
 	return async (req, res) => {
 		const source = req.body ?? req.rawBody ?? req;
-		const body = await readBody(source);
+		const body = await readBody(source, cap);
+		if (body === undefined) return sendNode(tooLarge(), res);
 		const response = await fetchBridge(handler, {
 			method: req.method,
 			path: req.originalUrl ?? req.url,
@@ -315,8 +347,9 @@ export function fastifyAdapter(
 	options?: WebhookOptions,
 ): (request: FastifyRequest, reply: FastifyReply) => Promise<void> {
 	const handler = webhookCallback(bot, options);
+	const cap = options?.maxBodyBytes ?? MAX_BODY;
 	return async (request, reply) => {
-		const body = await readBody(request.body ?? "");
+		const body = (await readBody(request.body ?? "", cap)) ?? "";
 		const response = await fetchBridge(handler, {
 			method: request.method,
 			path: request.url,
@@ -351,16 +384,20 @@ export function koaAdapter(
 	options?: WebhookOptions,
 ): (ctx: KoaContext) => Promise<void> {
 	const handler = webhookCallback(bot, options);
+	const cap = options?.maxBodyBytes ?? MAX_BODY;
 	return async (ctx) => {
 		const source = ctx.request?.body ?? ctx.req;
-		const body = await readBody(source);
-		const response = await fetchBridge(handler, {
-			method: ctx.method,
-			path: ctx.url,
-			host: headerValue(ctx.headers, "host"),
-			headers: ctx.headers,
-			body,
-		});
+		const body = await readBody(source, cap);
+		const response =
+			body === undefined
+				? tooLarge()
+				: await fetchBridge(handler, {
+						method: ctx.method,
+						path: ctx.url,
+						host: headerValue(ctx.headers, "host"),
+						headers: ctx.headers,
+						body,
+					});
 		const flat = await flatten(response);
 		ctx.status = flat.status;
 		for (const [key, value] of Object.entries(flat.headers)) ctx.set(key, value);
@@ -435,14 +472,18 @@ export function azureAdapter(
 	options?: WebhookOptions,
 ): (context: AzureContext, req: AzureRequest) => Promise<void> {
 	const handler = webhookCallback(bot, options);
+	const cap = options?.maxBodyBytes ?? MAX_BODY;
 	return async (context, req) => {
-		const body = await readBody(req.rawBody ?? req.body ?? "");
-		const response = await fetchBridge(handler, {
-			method: req.method,
-			path: req.url,
-			headers: req.headers,
-			body,
-		});
+		const body = await readBody(req.rawBody ?? req.body ?? "", cap);
+		const response =
+			body === undefined
+				? tooLarge()
+				: await fetchBridge(handler, {
+						method: req.method,
+						path: req.url,
+						headers: req.headers,
+						body,
+					});
 		const flat = await flatten(response);
 		context.res = { status: flat.status, headers: flat.headers, body: flat.body };
 	};

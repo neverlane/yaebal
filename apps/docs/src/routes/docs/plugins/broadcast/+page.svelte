@@ -103,7 +103,14 @@ const failed = await broadcaster.listDeliveries(job.id, { status: "failed" });`;
 <p>
 	<code>MemoryBroadcastStorage</code> is for tests, examples and single-process bots. production bots
 	can implement <code>BroadcastStorage</code> on top of redis, postgres, sqlite or another queue/database.
-	for multi-worker delivery, make <code>claim(workerId, now, leaseMs)</code> atomic.
+	for multi-worker delivery, make <code>claim(workerId, now, leaseMs)</code> atomic. the memory
+	store keeps the last <code>keepFinished</code> (default 1000) finished jobs and drops older ones.
+</p>
+<p>
+	every <code>start</code> / <code>queue*</code> call also takes <code>onEvent</code> (that job's
+	events only) and <code>storeResults</code> (keep each delivery's api result, readable via
+	<code>listDeliveries</code>). client-wide <code>concurrency</code> / <code>rateLimit</code> belong to
+	<code>new Broadcast(api, …)</code> or the one-shot <code>broadcast()</code> function.
 </p>
 
 <h2>behavior</h2>

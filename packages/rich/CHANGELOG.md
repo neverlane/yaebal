@@ -1,5 +1,18 @@
 # @yaebal/rich
 
+## 1.2.0
+
+### minor changes
+
+- ai: rich: true | "markdown" | "html" answers as telegram rich messages — streamed through rich drafts, 32768 characters per message, plain-text fallback when the markup is rejected; group-mode streams report their finalized message in result.messages and onPart. rich: RICH_MARKDOWN_PROMPT, a system prompt that keeps model output inside the rich markdown grammar.
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - @yaebal/core@0.4.3
+  - @yaebal/types@10.3.2
+
 ## 1.1.0
 
 ### minor changes

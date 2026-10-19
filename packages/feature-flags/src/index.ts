@@ -129,10 +129,15 @@ export function featureFlags<const F extends FlagsCatalog>(
 				isEnabled: (key) => engine.isEnabled(key, evalContext, cache),
 				getVariant: (key) =>
 					engine.getVariant(key, evalContext, cache) as Promise<FlagValue<F, typeof key>>,
-				setOverride: (key, value, opts) => engine.setOverride(key, value, evalContext, opts),
-				clearOverride: (key) => engine.clearOverride(key, evalContext),
-				setGlobalOverride: (key, value, opts) => engine.setGlobalOverride(key, value, opts),
-				clearGlobalOverride: (key) => engine.clearGlobalOverride(key),
+				// a write invalidates this update's memoized reads, so a check right after it sees it
+				setOverride: (key, value, opts) =>
+					engine.setOverride(key, value, evalContext, opts).finally(() => cache.clear()),
+				clearOverride: (key) =>
+					engine.clearOverride(key, evalContext).finally(() => cache.clear()),
+				setGlobalOverride: (key, value, opts) =>
+					engine.setGlobalOverride(key, value, opts).finally(() => cache.clear()),
+				clearGlobalOverride: (key) =>
+					engine.clearGlobalOverride(key).finally(() => cache.clear()),
 				snapshot: () =>
 					engine.snapshot(evalContext) as Promise<{ [K in keyof F & string]: FlagValue<F, K> }>,
 			};

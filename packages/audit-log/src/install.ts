@@ -5,6 +5,7 @@ import {
 	currentCorrelation,
 	endCall,
 	newCorrelationId,
+	peekCall,
 	runWithCorrelation,
 } from "./correlation.js";
 import { serializeError } from "./errors.js";
@@ -142,7 +143,7 @@ function installAuditLog<C extends Context>(
 		target.api.onError((method, error, attempt, params) => {
 			if (!isLogged(method)) return undefined;
 
-			const tracking = endCall(params);
+			const tracking = peekCall(params);
 			const correlation = correlate ? currentCorrelation() : undefined;
 
 			logger.log({

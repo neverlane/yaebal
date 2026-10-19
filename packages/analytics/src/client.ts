@@ -39,6 +39,9 @@ function redactProps(
 /** a synthetic event name used only for `onError` reports about `flush()`/`identify()` failures
  * that aren't tied to a single tracked event — never forwarded to an adapter's `track()`. */
 const FLUSH_EVENT = "$flush";
+/** the fixed names `autoTrack` emits — accepted even when a typed catalog doesn't declare them,
+ * so `autoTrack` keeps working alongside `events` (declare one to validate its props as usual). */
+const AUTO_TRACK_EVENTS = new Set(["command_used", "callback_query", "message_received"]);
 const IDENTIFY_EVENT = "$identify";
 
 /**
@@ -125,7 +128,7 @@ export function createAnalytics<const C extends EventsCatalog = EventsCatalog>(
 	): Promise<void> {
 		const timestamp = now();
 
-		if (events && !(name in events)) {
+		if (events && !Object.hasOwn(events, name) && !AUTO_TRACK_EVENTS.has(name)) {
 			reportError(
 				new TypeError(`analytics: event ${JSON.stringify(name)} is not declared in the catalog`),
 				{ name, properties, userId, chatId, timestamp },

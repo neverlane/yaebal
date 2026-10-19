@@ -57,10 +57,29 @@ const unique = FileUniqueId.from(msg.document.file_unique_id);
 unique.kind; // "photo" | "document" | "web" | "secure" | "encrypted" | "temp"
 ```
 
+## inline_message_id
+
+`inline_message_id` (on `chosen_inline_result`, inline-message callbacks, and the edit methods)
+is the same kind of blob — an mtproto `InputBotInlineMessageID` behind url-safe base64:
+
+```ts
+import { InlineMessageId } from "@yaebal/file-id";
+
+const id = InlineMessageId.from(ctx.chosenInlineResult.inline_message_id!);
+id.kind;      // "legacy" (20 bytes) | "modern" (24 bytes, 64-bit owner ids)
+id.dcId;      // the data center serving the message
+id.messageId; // number
+id.ownerId;   // bigint — an mtproto peer id, not a bot api chat.id (no -100 prefix)
+id.toString() === ctx.chosenInlineResult.inline_message_id; // round-trips
+```
+
+telegram only sends `inline_message_id` when the chosen result carries a `reply_markup`.
+
 ## functional api
 
 every class entry point exists as a free function: `parseFileId` / `serializeFileId` /
-`fileUniqueIdFromFileId` / `parseFileUniqueId` / `serializeFileUniqueId`. the encoding
+`fileUniqueIdFromFileId` / `parseFileUniqueId` / `serializeFileUniqueId` /
+`parseInlineMessageId` / `serializeInlineMessageId`. the encoding
 primitives (`base64urlEncode/Decode`, `rleEncode/Decode`, `packTlString/unpackTlString`,
 `BinaryReader`/`BinaryWriter`) are exported too.
 

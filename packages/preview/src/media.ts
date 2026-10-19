@@ -142,6 +142,8 @@ export function pollBlock(poll: LoosePoll, w: number, base: string, p: Palette):
 	const h = 26 + opts.length * rowH + 16;
 	const closed = poll.is_closed;
 	const isQuiz = poll.type === "quiz";
+	// a quiz marks its *correct* answer(s) when known, not whichever got the most votes
+	const correct = isQuiz ? poll.correct_option_ids : undefined;
 
 	return {
 		w,
@@ -176,7 +178,9 @@ export function pollBlock(poll: LoosePoll, w: number, base: string, p: Palette):
 			opts.forEach((o, i) => {
 				const oy = y + 26 + i * rowH;
 				const p_ = pct[i] ?? 0;
-				const winning = (closed || isQuiz) && (o.voter_count ?? 0) > 0 && p_ === Math.max(...pct);
+				const winning = correct
+					? correct.includes(i)
+					: (closed || isQuiz) && (o.voter_count ?? 0) > 0 && p_ === Math.max(...pct);
 
 				s += `<text x="${round(x)}" y="${round(oy + 12)}" font-size="13" fill="${base}" font-family="${FONT}">${esc(ellipsize(o.text ?? "", w - 40))}</text>`;
 				if (winning)
@@ -200,13 +204,15 @@ export function webpageBlock(
 	w: number,
 	base: string,
 	p: Palette,
+	clip: string,
 ): Block {
 	const innerW = w - 12;
-	const descLines = description
-		? wrapPlainText(description, Math.max(10, Math.floor(innerW / 6.2))).slice(0, 3)
-		: [];
 	const thumb = src ? 56 : 0;
 	const textW = innerW - (thumb ? thumb + 8 : 0);
+	// wrap to the column left of the thumbnail, not the full card, or lines run under it
+	const descLines = description
+		? wrapPlainText(description, Math.max(10, Math.floor(textW / 6.2))).slice(0, 3)
+		: [];
 
 	const siteH = site ? 15 : 0;
 	const titleH = title ? 17 : 0;
@@ -234,8 +240,9 @@ export function webpageBlock(
 			});
 
 			if (thumb) {
+				// `clip` comes from the render's IdScope — a src-derived id collided between two cards
+				// with the same thumbnail (or two inlined SVGs) and clipped the image away
 				const tx = x + w - thumb;
-				const clip = `wp${Math.abs(hash(src ?? "")) % 100000}`;
 				s += `<clipPath id="${clip}"><rect x="${round(tx)}" y="${round(y)}" width="${thumb}" height="${thumb}" rx="8"/></clipPath><image href="${esc(src ?? "")}" x="${round(tx)}" y="${round(y)}" width="${thumb}" height="${thumb}" clip-path="url(#${clip})" preserveAspectRatio="xMidYMid slice"/>`;
 			}
 

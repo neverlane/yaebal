@@ -1,8 +1,9 @@
 import { type Api, createApi, type FileReader, withReplyEnvelope } from "./api.js";
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
+import { createDebug, type DebugLogger } from "./debug.js";
 import { delay } from "./delay.js";
-import type { Update, UpdateName, User } from "./telegram-types.js";
+import { type Update, type UpdateName, type User, updateNames } from "./telegram-types.js";
 import type { HandleUpdateOptions } from "./webhook.js";
 
 export type BotPlugin<In extends Context = Context, Out extends object = Record<never, never>> = <
@@ -51,10 +52,19 @@ export interface PollingErrorInfo {
 
 type PollingErrorHandler = (error: unknown, info: PollingErrorInfo) => unknown | Promise<unknown>;
 
+/** update types telegram only sends when `allowed_updates` asks for them by name. */
+const OPT_IN_UPDATES: ReadonlySet<string> = new Set([
+	"chat_member",
+	"message_reaction",
+	"message_reaction_count",
+]);
+
 /** server-side long-poll window (seconds) requested from getUpdates. */
 const POLL_TIMEOUT_S = 30;
 /** grace on top of the window before a silent, hung connection is aborted and retried. */
 const POLL_GRACE_MS = 15_000;
+/** cap on the offset-confirming `getUpdates` a mid-batch stop sends, so shutdown can't hang on it. */
+const CONFIRM_TIMEOUT_MS = 5_000;
 /** pause before retrying after a failed getUpdates — doubles per consecutive failure. */
 const POLL_RETRY_MS = 3_000;
 /** ceiling for that backoff, so a long outage retries every 30s instead of every 3s. */
@@ -108,6 +118,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	readonly api: Api;
 	#running = false;
 	#offset = 0;
+	/** the offset the last `getUpdates` carried — updates below it are confirmed to telegram. */
+	#sentOffset = 0;
 	#info?: User;
 	#pollAbort?: AbortController;
 	#pollingPromise?: Promise<void>;
@@ -125,6 +137,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		);
 	};
 	#handle?: Middleware<Context>;
+	readonly #logUpdate: DebugLogger = createDebug("yaebal:update");
+	readonly #logPolling: DebugLogger = createDebug("yaebal:polling");
 	#initPromise?: Promise<User>;
 	#initSignal?: AbortSignal;
 
@@ -240,6 +254,22 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	/**
+	 * the `allowed_updates` this bot should request: the `allowedUpdates` option when set;
+	 * otherwise `undefined` (telegram's default set) — unless a handler is registered for an
+	 * update type that default leaves out (`chat_member`, `message_reaction`,
+	 * `message_reaction_count`), in which case it's the default set plus those. `start()` sends
+	 * this; pass it to `setWebhook` on webhook deployments for the same effect.
+	 */
+	allowedUpdates(): UpdateName[] | undefined {
+		if (this.#options.allowedUpdates) return this.#options.allowedUpdates;
+
+		const registered = this.registeredUpdates();
+		if (![...OPT_IN_UPDATES].some((name) => registered.has(name as UpdateName))) return undefined;
+
+		return updateNames.filter((name) => !OPT_IN_UPDATES.has(name) || registered.has(name));
+	}
+
+	/**
 	 * replace the default polling-error handler (a `console.error`). called when a `getUpdates`
 	 * long poll fails; polling retries either way, backing off 3s → 30s while failures repeat and
 	 * resetting on the first success. the second argument carries the consecutive-failure count and
@@ -251,6 +281,19 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	onPollingError(handler: PollingErrorHandler): this {
 		this.#pollingErrorHandler = handler;
 		return this;
+	}
+
+	/**
+	 * build the context this bot hands its middleware for `update`: the configured
+	 * `contextFactory` (the rich per-update contexts on `yaebal`'s `Bot`) or a base
+	 * {@link Context}. `api` defaults to the bot's own client — test harnesses pass a mock so
+	 * a dispatched update behaves exactly like a live one without touching the network.
+	 */
+	createContext(update: Update, api: Api = this.api): Context {
+		const updateType = detectUpdateType(update);
+		return this.#options.contextFactory
+			? this.#options.contextFactory(api, update, updateType, this.#info)
+			: new Context({ api, update, updateType, me: this.#info });
 	}
 
 	/**
@@ -267,14 +310,15 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 			? withReplyEnvelope(this.api, options.replyEnvelope)
 			: this.api;
 		const updateType = detectUpdateType(update);
+		const started = this.#logUpdate ? Date.now() : 0;
 		let ctx: Context | undefined;
 
 		try {
-			ctx = this.#options.contextFactory
-				? this.#options.contextFactory(api, update, updateType, this.#info)
-				: new Context({ api, update, updateType, me: this.#info });
+			ctx = this.createContext(update, api);
 			await this.#handle(ctx, async () => {});
+			this.#logUpdate?.(`${update.update_id} ${updateType} ${Date.now() - started}ms`);
 		} catch (error) {
+			this.#logUpdate?.(`${update.update_id} ${updateType} threw after ${Date.now() - started}ms`);
 			// a throwing contextFactory lands here too — hand the error handler a
 			// bare context so it still sees the update.
 			await this.#errorHandler(
@@ -315,6 +359,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	async #poll(abort: AbortController): Promise<void> {
+		const allowedUpdates = this.allowedUpdates();
 		try {
 			let info: User;
 			try {
@@ -345,14 +390,13 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				const hangTimer = setTimeout(() => poll.abort(), POLL_TIMEOUT_S * 1000 + POLL_GRACE_MS);
 
 				try {
+					this.#sentOffset = this.#offset;
 					updates = await this.api.call<Update[]>(
 						"getUpdates",
 						{
 							offset: this.#offset,
 							timeout: POLL_TIMEOUT_S,
-							...(this.#options.allowedUpdates
-								? { allowed_updates: this.#options.allowedUpdates }
-								: {}),
+							...(allowedUpdates ? { allowed_updates: allowedUpdates } : {}),
 						},
 						{ signal: poll.signal },
 					);
@@ -361,6 +405,9 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 					const aborted = isAbortError(error);
 					failures++;
+					this.#logPolling?.(
+						`getUpdates failed (attempt ${failures}${aborted ? ", hang abort" : ""})`,
+					);
 					// a hang abort already cost the full poll window — go straight back out on the
 					// wire instead of adding a pause on top; a real failure backs off exponentially.
 					const retryInMs = aborted
@@ -379,6 +426,8 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 				}
 
 				failures = 0;
+				if (updates.length > 0)
+					this.#logPolling?.(`batch of ${updates.length}, offset ${this.#offset}`);
 
 				for (const update of updates) {
 					if (abort.signal.aborted) break;
@@ -389,7 +438,35 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		} finally {
 			this.#running = false;
 			this.#pollAbort = undefined;
+			await this.#confirmHandled();
 			await this.#runStopHandlers();
+		}
+	}
+
+	/**
+	 * telegram confirms updates only when the next `getUpdates` carries a higher offset. a stop
+	 * mid-batch leaves the already-handled part of it unconfirmed, and the next process would get
+	 * those updates again — so send the offset once more, without waiting for anything new.
+	 * best effort: a failure here only means a redelivery, never a reason to fail the shutdown.
+	 */
+	async #confirmHandled(): Promise<void> {
+		if (this.#offset <= this.#sentOffset) return;
+
+		// a plain timer, not AbortSignal.timeout(): that one is unref'd, so a request that never
+		// settles would let the event loop drain mid-shutdown instead of giving up after the cap
+		const cap = new AbortController();
+		const timer = setTimeout(() => cap.abort(), CONFIRM_TIMEOUT_MS);
+		try {
+			this.#sentOffset = this.#offset;
+			await this.api.call(
+				"getUpdates",
+				{ offset: this.#offset, limit: 1, timeout: 0 },
+				{ signal: cap.signal },
+			);
+		} catch {
+			// redelivered on the next start — handlers already have to tolerate that
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 

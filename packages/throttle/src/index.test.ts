@@ -4,6 +4,7 @@ import type { Api, BeforeHook, ErrorHook } from "@yaebal/core";
 import { TelegramError } from "@yaebal/core";
 import {
 	createThrottleHandle,
+	MemoryThrottleStorage,
 	memoryThrottleStorage,
 	reserve,
 	ThrottleAbortError,
@@ -220,4 +221,24 @@ test("installed throttle observes Telegram retry_after errors", async () => {
 	await before?.("sendMessage", { chat_id: 1 });
 
 	assert.ok(Date.now() - start >= 6);
+});
+
+test("sweep prunes a custom-window bucket by its own window", () => {
+	const storage = new MemoryThrottleStorage();
+	const limited = [{ key: "private:1", limit: 1, windowMs: 10_000 }];
+
+	assert.equal(storage.take(limited, 0).ok, true);
+	storage.sweep(2_000); // past the default 1s private window, still inside the 10s one
+	assert.equal(storage.take(limited, 2_000).ok, false, "the hit inside the window must survive");
+	assert.equal(storage.take(limited, 10_000).ok, true);
+});
+
+test("idle buckets are swept automatically, without a manual sweep()", () => {
+	const storage = new MemoryThrottleStorage();
+	for (let chat = 1; chat <= 100; chat++)
+		storage.take([{ key: `private:${chat}`, limit: 1, windowMs: 1_000 }], 0);
+	assert.equal(storage.snapshot().buckets, 100);
+
+	storage.take([{ key: "private:1", limit: 1, windowMs: 1_000 }], 120_000);
+	assert.equal(storage.snapshot().buckets, 1);
 });

@@ -1,5 +1,14 @@
 # @yaebal/session
 
+## 1.0.3
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - @yaebal/core@0.4.3
+  - @yaebal/sklad@0.1.2
+
 ## 1.0.2
 
 ### patch changes

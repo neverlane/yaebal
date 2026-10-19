@@ -47,7 +47,7 @@ retry policy:
 ```ts
 autoRetry({
 	maxRetries: 3,
-	maxDelayMs: 30_000,
+	maxDelayMs: 30_000, // a longer telegram retry_after is thrown, not retried early
 	baseDelayMs: 1_000,
 	retryAfterPaddingMs: 0,
 	jitter: 0.2,

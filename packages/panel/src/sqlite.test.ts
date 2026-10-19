@@ -195,3 +195,20 @@ test("SqlitePanelStore: retention keeps at most maxHistory messages per chat", {
 	);
 	store.close();
 });
+
+test("SqlitePanelStore.close() leaves a caller-provided db open (regression)", {
+	skip,
+}, async () => {
+	const { DatabaseSync } = await import("node:sqlite");
+	const db = new DatabaseSync(":memory:");
+	const store = new Store({ db });
+
+	store.close();
+	// still usable — the store didn't open it, so it must not close it
+	assert.doesNotThrow(() => db.prepare("SELECT 1").get());
+	db.close();
+
+	const owned = new Store();
+	owned.close();
+	assert.throws(() => owned.chats()); // its own db is closed
+});

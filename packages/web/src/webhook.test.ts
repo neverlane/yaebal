@@ -131,3 +131,34 @@ test("dedupe drops a redelivered update_id", async () => {
 
 	assert.equal(runs, 2);
 });
+
+test("dedupe lets a redelivery of a failed update run again", async () => {
+	let runs = 0;
+	const bot = new Bot("123:abc").use(dedupe());
+	bot.onError(() => {});
+	bot.on("message", () => {
+		runs++;
+		if (runs === 1) throw new Error("transient");
+	});
+
+	await bot.handleUpdate(messageUpdate(9, 1) as never); // fails → webhook answers 500
+	await bot.handleUpdate(messageUpdate(9, 1) as never); // telegram's retry must run
+	await bot.handleUpdate(messageUpdate(9, 1) as never); // succeeded once — now a duplicate
+
+	assert.equal(runs, 2);
+});
+
+test("setWebhook falls back to the bot's derived allowed_updates", async () => {
+	let params: Record<string, unknown> | undefined;
+	const bot = new Bot("123:abc").on("chat_member", () => {});
+	(bot as unknown as { api: { call: unknown } }).api.call = async (
+		_method: string,
+		p?: Record<string, unknown>,
+	) => {
+		params = p;
+		return true;
+	};
+
+	await setWebhook(bot, "https://yaebal.mom/hook");
+	assert.ok((params?.allowed_updates as string[]).includes("chat_member"));
+});

@@ -58,7 +58,9 @@ const filterQueryString = requiredString.superRefine((query, ctx) => {
 
 const commandSchema = z
 	.object({
-		name: requiredString,
+		name: requiredString.refine((name) => !name.startsWith("/"), {
+			message: 'must not start with "/" (write name = "start", not "/start")',
+		}),
 		description: z.string().min(1).max(256).optional(),
 		...responseShape,
 	})

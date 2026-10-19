@@ -225,3 +225,42 @@ test("adapters forward the secret token and honour a wrong one", async () => {
 	);
 	assert.equal(status, 401);
 });
+
+test("expressAdapter stops reading a raw stream past maxBodyBytes and answers 413", async () => {
+	const { bot, seen } = sink();
+	const handler = expressAdapter(bot, { maxBodyBytes: 64 });
+
+	const listeners: Record<string, ((arg: unknown) => void)[]> = {};
+	let destroyed = false;
+	const req = {
+		method: "POST",
+		url: "/",
+		headers: { host: "x" },
+		on(event: string, cb: (arg: unknown) => void) {
+			const list = listeners[event] ?? [];
+			listeners[event] = list;
+			list.push(cb);
+		},
+		destroy() {
+			destroyed = true;
+		},
+	};
+
+	let status = 0;
+	const done = handler(
+		req as never,
+		{
+			set statusCode(v: number) {
+				status = v;
+			},
+			setHeader() {},
+			end() {},
+		} as never,
+	);
+	for (let i = 0; i < 10; i++) for (const cb of listeners.data ?? []) cb(new Uint8Array(32));
+	await done;
+
+	assert.equal(status, 413);
+	assert.equal(destroyed, true, "the request stream is torn down instead of drained into memory");
+	assert.deepEqual(seen, []);
+});

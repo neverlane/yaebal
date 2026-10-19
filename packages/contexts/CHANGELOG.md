@@ -1,5 +1,15 @@
 # @yaebal/contexts
 
+## 1.0.4
+
+### patch changes
+
+- breaking (types only): 176 fields the bot api pins to one value — MessageOrigin*.type, BotCommandScope*.type, ChatMember*.status, InputMedia*.type, ReactionType\*.type and more — are string literals now, so their unions narrow. an object kept in a variable before being passed (const media = { type: "photo", media }) widens to string: write type: "photo" as const or annotate the variable. emoji in field descriptions are no longer dropped. contexts: ctx.editText / editCaption with a format result keep their extra params.
+- updated dependencies
+- updated dependencies
+  - @yaebal/core@0.4.3
+  - @yaebal/types@10.3.2
+
 ## 1.0.3
 
 ### patch changes

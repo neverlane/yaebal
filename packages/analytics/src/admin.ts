@@ -61,18 +61,19 @@ export function analyticsAdmin<C extends Context>(
 
 	if (!adapter.query) {
 		throw new Error(
-			"analyticsAdmin: `adapter` has no `query()` — pass a queryable adapter (memoryAdapter, " +
-				"sqliteAdapter, or clickhouseAdapter), the same instance given to `analytics({ adapters })`",
+			"analyticsAdmin: `adapter` has no `query()` — pass a queryable adapter (memoryAdapter or " +
+				"sqliteAdapter), the same instance given to `analytics({ adapters })`",
 		);
 	}
 	const query = adapter.query.bind(adapter);
 
 	const branch = new Composer<C>().command(commandName, async (ctx) => {
 		const [arg] = ctx.args;
-		const windowLabel = arg && arg in WINDOWS ? arg : defaultWindow;
+		const known = arg !== undefined && Object.hasOwn(WINDOWS, arg);
+		const windowLabel = arg !== undefined && known ? arg : defaultWindow;
 		const windowMs = WINDOWS[windowLabel] ?? WINDOWS[DEFAULT_WINDOW_LABEL] ?? 0;
 
-		if (arg && !(arg in WINDOWS)) {
+		if (arg && !known) {
 			await ctx.reply(
 				`usage: /${commandName} | /${commandName} <${Object.keys(WINDOWS).join("|")}>`,
 			);

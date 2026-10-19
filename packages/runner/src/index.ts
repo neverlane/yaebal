@@ -159,6 +159,13 @@ export interface RunnerBot {
 		): Promise<Update[]>;
 	};
 	handleUpdate(update: Update): Promise<void>;
+	/**
+	 * resolve the bot's own account before polling (core `Bot.init()`), so `ctx.me` is set and
+	 * `/cmd@other_bot` in groups is told apart from `/cmd@this_bot`. optional for custom sinks.
+	 */
+	init?(): Promise<unknown>;
+	/** core `Bot.allowedUpdates()` — used when `options.allowedUpdates` isn't set. */
+	allowedUpdates?(): readonly string[] | undefined;
 }
 
 export interface RunnerOptions {
@@ -170,9 +177,16 @@ export interface RunnerOptions {
 	limit?: number;
 	/** long-poll timeout (seconds). defaults to 30. */
 	timeout?: number;
-	/** restrict update types (telegram `allowed_updates`). */
+	/**
+	 * restrict update types (telegram `allowed_updates`). defaults to the bot's own
+	 * `allowedUpdates()` — telegram's default set plus any withheld type a handler is registered
+	 * for (`chat_member`, `message_reaction*`).
+	 */
 	allowedUpdates?: string[];
-	/** called on a handler or polling error. */
+	/**
+	 * called on a handler or polling error. defaults to `console.error` — a silently failing
+	 * poll (a revoked token, a 409 from a second instance) would otherwise look like an idle bot.
+	 */
 	onError?: (error: unknown, update?: Update) => void;
 }
 
@@ -180,6 +194,12 @@ export interface RunnerHandle {
 	/** stop polling and wait for in-flight updates to drain. */
 	stop(): Promise<void>;
 }
+
+/** pause before retrying a failed poll — doubles per consecutive failure, capped. */
+const RETRY_MS = 3_000;
+const RETRY_MAX_MS = 30_000;
+/** cap on the offset-confirming `getUpdates` sent on stop, so `stop()` can't hang on it. */
+const CONFIRM_TIMEOUT_MS = 5_000;
 
 /** sleep, cut short by `signal` so `stop()` never waits out a retry backoff. */
 const delay = (ms: number, signal: AbortSignal) =>
@@ -200,46 +220,78 @@ const delay = (ms: number, signal: AbortSignal) =>
 export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 	const concurrency = options.concurrency ?? 50;
 	const seqBy = options.sequentializeBy ?? chatKey;
+	const allowedUpdates = options.allowedUpdates ?? bot.allowedUpdates?.();
 	const scheduler = createScheduler(concurrency);
 	// aborts the in-flight long poll (and any retry backoff) so stop() returns promptly
 	// instead of waiting out the full `timeout` window.
 	const abort = new AbortController();
 
+	const onError =
+		options.onError ??
+		((error: unknown, update?: Update) =>
+			console.error(
+				update ? `[yaebal/runner] update ${update.update_id} failed:` : "[yaebal/runner]",
+				error,
+			));
+
 	let stopped = false;
 	let offset = 0;
+	/** the offset the last `getUpdates` carried — everything below it is confirmed to telegram. */
+	let sentOffset = 0;
+	let failures = 0;
 
 	const safe = async (update: Update) => {
 		try {
 			await bot.handleUpdate(update);
 		} catch (error) {
-			options.onError?.(error, update);
+			onError(error, update);
 		}
 	};
 
+	const backoff = () => {
+		failures++;
+		return delay(Math.min(RETRY_MS * 2 ** (failures - 1), RETRY_MAX_MS), abort.signal);
+	};
+
 	const loop = async () => {
+		while (bot.init && !stopped) {
+			try {
+				await bot.init();
+				failures = 0;
+				break;
+			} catch (error) {
+				if (stopped) return;
+				onError(error);
+				await backoff();
+			}
+		}
+
 		while (!stopped) {
 			if (scheduler.size() >= concurrency) await scheduler.whenBelow(concurrency);
 			if (stopped) break;
 
 			let updates: Update[];
 			try {
+				sentOffset = offset;
 				updates = await bot.api.getUpdates(
 					{
 						offset,
 						limit: options.limit ?? 100,
 						timeout: options.timeout ?? 30,
-						...(options.allowedUpdates ? { allowed_updates: options.allowedUpdates } : {}),
+						...(allowedUpdates ? { allowed_updates: allowedUpdates } : {}),
 					},
 					{ signal: abort.signal },
 				);
 			} catch (error) {
 				if (stopped) break;
 
-				options.onError?.(error);
-				await delay(3000, abort.signal);
+				onError(error);
+				await backoff();
 
 				continue;
 			}
+
+			failures = 0;
 
 			for (const update of updates) {
 				offset = update.update_id + 1;
@@ -256,6 +308,18 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 			abort.abort();
 			await loopDone;
 			await scheduler.idle();
+
+			// a stop during the backpressure wait leaves the last batch handled but unconfirmed —
+			// send its offset once more, or the next start gets those updates again.
+			if (offset > sentOffset) {
+				sentOffset = offset;
+				await bot.api
+					.getUpdates(
+						{ offset, limit: 1, timeout: 0 },
+						{ signal: AbortSignal.timeout(CONFIRM_TIMEOUT_MS) },
+					)
+					.catch(() => {});
+			}
 		},
 	};
 }

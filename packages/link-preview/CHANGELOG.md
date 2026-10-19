@@ -1,5 +1,12 @@
 # @yaebal/link-preview
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+  - @yaebal/types@10.3.2
+
 ## 0.0.3
 
 ### patch changes

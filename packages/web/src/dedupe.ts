@@ -5,7 +5,8 @@ export interface DedupeOptions {
 	 * how many recent `update_id`s to remember (default 4096). telegram redelivers
 	 * an update whenever the webhook doesn't answer 200 in time, so under the
 	 * `onError: "fail"` / `onTimeout: "fail"` policies the same update can arrive
-	 * twice — this drops the repeat before it re-runs your side effects.
+	 * twice — this drops the repeat before it re-runs your side effects. an update whose
+	 * handling *threw* is forgotten again, so the redelivery that `"fail"` asks for still runs.
 	 */
 	capacity?: number;
 	/** custom identity (default `ctx.update.update_id`). return `undefined` to skip the check. */
@@ -39,6 +40,11 @@ export function dedupe(options: DedupeOptions = {}): Middleware<Context> {
 			if (evicted !== undefined) seen.delete(evicted);
 		}
 
-		return next();
+		// a failed run must stay retryable — only in-flight and finished updates are duplicates.
+		// (its stale `order` entry can evict a retried id a little early — a weaker guard, never a lost update.)
+		return Promise.resolve(next()).catch((error: unknown) => {
+			seen.delete(id);
+			throw error;
+		});
 	};
 }

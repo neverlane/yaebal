@@ -708,3 +708,69 @@ test("typed keys: a typo'd flag key doesn't typecheck (enforced by `pnpm typeche
 	// @ts-expect-error — "new-uii" isn't a key of the catalog above; still rejects at runtime too
 	await assert.rejects(() => client.isEnabled("new-uii", {}), /unknown flag/);
 });
+
+test("a custom bucketKey drives percentage and variant rollout too, not just overrides", {
+	timeout: 5000,
+}, async () => {
+	const flags = createFlags({
+		flags: {
+			beta: { default: false, rules: [{ percentage: 50 }] },
+			color: {
+				default: "red",
+				variants: [
+					{ value: "red", weight: 1 },
+					{ value: "blue", weight: 1 },
+				],
+			},
+		},
+		bucketKey: () => "everyone",
+	});
+
+	// one shared bucket — every user must land on the same side of each rollout
+	const beta = new Set<boolean>();
+	const color = new Set<string>();
+	for (let userId = 1; userId <= 40; userId++) {
+		beta.add(await flags.isEnabled("beta", { userId }));
+		color.add(await flags.getVariant("color", { userId }));
+	}
+	assert.equal(beta.size, 1);
+	assert.equal(color.size, 1);
+});
+
+test("ctx.flags reads after a write in the same update see the write", { timeout: 5000 }, async () => {
+	const bot = new Composer<Context>()
+		.install(featureFlags({ flags: { "new-ui": false } }))
+		.command("optin", async (ctx) => {
+			const before = await ctx.flags.isEnabled("new-ui");
+			await ctx.flags.setOverride("new-ui", true);
+			const after = await ctx.flags.isEnabled("new-ui");
+			await ctx.reply(`${before}->${after}`);
+		});
+
+	const env = createTestEnv(bot);
+	await env.createUser().sendCommand("optin");
+
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "false->true");
+});
+
+test("an Object.prototype member name is an unknown flag", { timeout: 5000 }, async () => {
+	const flags = createFlags({ flags: { "new-ui": true } });
+	await assert.rejects(flags.isEnabled("constructor" as never, {}), /unknown flag "constructor"/);
+});
+
+test("a boolean flag rejects a non-boolean override instead of leaking it through isEnabled", {
+	timeout: 5000,
+}, async () => {
+	const bot = new Composer<Context>()
+		.install(featureFlags({ flags: { "new-ui": false } }))
+		.install(flagsAdmin({ isAdmin: () => true }))
+		.command("check", async (ctx) => ctx.reply(String(await ctx.flags.isEnabled("new-ui"))));
+
+	const env = createTestEnv(bot);
+	const user = env.createUser();
+	await user.sendCommand("flags", "set new-ui on");
+	assert.match(env.lastApiCall("sendMessage")?.params?.text as string, /boolean flag/);
+
+	await user.sendCommand("check");
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "false");
+});

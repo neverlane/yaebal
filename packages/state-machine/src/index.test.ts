@@ -260,3 +260,66 @@ test("can() reports whether the current state declares a transition for an event
 
 	assert.deepEqual(seen, [true, false]); // "created" declares PAY, not SHIP
 });
+
+test("onEnter sees ctx.machine on first activation and its context mutations persist", { timeout: 5000 }, async () => {
+	const storage = new MemoryStorage<MachineSnapshot>();
+	const machine = defineMachine<Context, { type: "GO" }, { visits: number }>({
+		initial: "idle",
+		context: () => ({ visits: 0 }),
+		states: {
+			idle: {
+				onEnter: (ctx) => {
+					ctx.machine.context.visits++;
+				},
+				on: { GO: { target: "busy" } },
+			},
+			busy: {
+				onEnter: (ctx) => {
+					ctx.machine.context.visits += 10;
+				},
+			},
+		},
+	});
+
+	const bot = new Composer<Context>()
+		.install(stateMachine(machine, { storage }))
+		.command("go", (ctx) => ctx.machine.send({ type: "GO" }))
+		.command("noop", () => {});
+	const env = createTestEnv(bot);
+	const user = env.createUser();
+	const key = `${user.pmChat.id}:${user.id}`;
+
+	await user.sendCommand("noop");
+	assert.deepEqual((await storage.get(key))?.context, { visits: 1 });
+
+	await user.sendCommand("go");
+	assert.deepEqual(await storage.get(key), {
+		state: "busy",
+		context: { visits: 11 },
+		updatedAt: (await storage.get(key))?.updatedAt,
+	});
+});
+
+test("Object.prototype member names are not states or events", { timeout: 5000 }, async () => {
+	assert.throws(
+		() => defineMachine({ initial: "toString", states: { idle: {} } }),
+		/initial state "toString"/,
+	);
+
+	const storage = new MemoryStorage<MachineSnapshot>();
+	const bot = new Composer<Context>()
+		.install(stateMachine(defineMachine({ initial: "idle", states: { idle: {} } }), { storage }))
+		.command("probe", (ctx) =>
+			ctx.reply(`${ctx.machine.state}:${ctx.machine.can("constructor")}`),
+		);
+	const env = createTestEnv(bot);
+	const user = env.createUser();
+	await storage.set(`${user.pmChat.id}:${user.id}`, {
+		state: "constructor",
+		context: {},
+		updatedAt: 0,
+	});
+
+	await user.sendCommand("probe");
+	assert.deepEqual(sentTexts(env), ["idle:false"]);
+});

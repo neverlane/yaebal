@@ -98,8 +98,8 @@ export function evaluateLocal(
 	definition: FlagDefinition,
 	key: string,
 	evalContext: FlagEvalContext,
+	bucketId: string = defaultBucketId(evalContext),
 ): LocalResult<boolean> {
-	const bucketId = defaultBucketId(evalContext);
 
 	for (const rule of definition.rules ?? []) {
 		if (ruleMatches(rule, key, bucketId, evalContext)) {
@@ -119,8 +119,8 @@ export function pickVariant<T>(
 	definition: VariantDefinition<T>,
 	key: string,
 	evalContext: FlagEvalContext,
+	bucketId: string = defaultBucketId(evalContext),
 ): LocalResult<T> {
-	const bucketId = defaultBucketId(evalContext);
 
 	for (const rule of definition.rules ?? []) {
 		if (targetingMatches(rule, evalContext)) return { value: rule.value, matchedRule: true };

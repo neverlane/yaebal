@@ -48,11 +48,11 @@ any provider works through one of four doors:
 openaiCompatible({ model: "llama3.2", baseUrl: "http://localhost:11434/v1" });
 
 // 2. anthropic, natively
-anthropicModel({ model: "claude-sonnet-5", apiKey: process.env.ANTHROPIC_API_KEY! });
+anthropicModel({ model: "claude-sonnet-5-5", apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // 3. the whole vercel ai sdk ecosystem (needs `pnpm add ai` + a provider package)
 import { anthropic } from "@ai-sdk/anthropic";
-ai({ model: anthropic("claude-sonnet-5") });
+ai({ model: anthropic("claude-sonnet-5-5") });
 
 // 4. anything that yields strings
 customModel(async function* ({ messages }) {
@@ -85,6 +85,13 @@ when used.
 - **formatting** — `parseMode` applies to finalized messages only; in-flight previews stay
   plain so a half-open `**bold` can never 400 the stream. if telegram rejects the finished
   entities, the text is resent plain instead of being lost.
+- **rich messages** — `rich: true` (markdown) or `rich: "html"` answers as telegram rich
+  messages: the model's markdown renders natively — headings, lists, code blocks, tables, math
+  — and streams live through `sendRichMessageDraft` (opening with the native `<tg-thinking>`
+  placeholder), finalized via `sendRichMessage`; groups grow a rich message by edits. the
+  per-message budget becomes 32768 characters. markup telegram rejects is resent as plain text.
+  pair it with `RICH_MARKDOWN_PROMPT` from `@yaebal/rich` in `system` so the model stays inside
+  the grammar telegram parses.
 - **memory** — on by default, keyed per user per chat, windowed (default 32 turns). pass any
   `@yaebal/sklad` `StorageAdapter` to persist it (redis, file, …), or `memory: false` for
   stateless calls.
@@ -101,6 +108,8 @@ when used.
 | `memory` | `true` | `false`, or `{ storage, key, window }` |
 | `limits.perUser` | off | `"20/h"`-style budget per user |
 | `parseMode` | plain | `"MarkdownV2"` / `"HTML"` for finalized messages |
+| `rich` | off | `true` / `"markdown"` / `"html"` — answer as rich messages (also per call) |
+| `streaming.thinking` | `"Thinking…"` | label of the `<tg-thinking>` placeholder in rich drafts |
 | `streaming.intervalMs` | 500 draft / 1200 edit | min gap between preview updates |
 | `streaming.drafts` | `true` | opt out of drafts in private chats |
 | `streaming.cursor` | `"▍"` | in-flight cursor for edit mode, `""` disables |
@@ -120,7 +129,6 @@ to `false` and can be overridden per `replyStream` call. groups still use edit p
 import { chatKey, run } from "@yaebal/runner";
 
 // after installing ai({ model, streaming: { canStop: true, keepOnStop: true } })
-await bot.init();
 const runner = run(bot, {
   sequentializeBy: (update) => update.stopped_message_generation ? undefined : chatKey(update),
 });

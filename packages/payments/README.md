@@ -79,7 +79,7 @@ payments({
 | return | effect |
 |---|---|
 | `true` / nothing | `{ ok: true }` |
-| `false` | `{ ok: false }` (generic decline) |
+| `false` | `{ ok: false }` with a generic `error_message` (telegram requires one) |
 | a `string` | `{ ok: false, error_message: <string> }` |
 | `{ ok, errorMessage? }` | full control |
 

@@ -189,9 +189,8 @@ env.callsTo("setMyCommands");`;
 </p>
 <Code code={shadow} title="shadow.ts" />
 <div class="note">
-	since <code>plugin()</code> wires <code>command()</code> by name alone (no scope awareness at
-	runtime), the explicit def's handler wins globally, not just inside its scope — a menu-only
-	shadow (no handlers) falls back to the unscoped handler instead. two <em>explicit</em> scopes
+	the explicit def's handler runs inside its scope and the unscoped one everywhere else; a
+	menu-only shadow (no handlers) always falls back to the unscoped handler. two <em>explicit</em> scopes
 	can never share a name: nothing at runtime could pick between two differing handlers, so that
 	stays a <code>duplicate command name</code> error.
 </div>
@@ -343,9 +342,11 @@ env.callsTo("setMyCommands");`;
 	<code>setMyCommands</code>. skip both during local development against a production token to
 	avoid overwriting the live menu.
 	<br /><br />
-	<strong>scope affects the menu, not the handlers.</strong> a command scoped to
-	<code>all_chat_administrators</code> is still executable by anyone who types it — guard the
-	handler itself (for example with <a href="/docs/plugins/filters"><code>@yaebal/filters</code></a>).
+	<strong>scope applies to the handlers too.</strong> a scoped command runs only where its menu
+	would show: private/group chats, a specific chat or member, and the administrator scopes only
+	for admins (one <code>getChatMember</code> call per such command; anonymous admins count).
+	outside its scope it falls back to an unscoped handler of the same name, or the update moves on
+	down the chain.
 	<br /><br />
 	<strong><code>bot.install()</code>, not <code>bot.use()</code>.</strong> the plugin is installed
 	via <code>bot.install(cmd.plugin())</code> — <code>install</code> is the method that threads the

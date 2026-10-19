@@ -187,7 +187,7 @@ test("canStop/keepOnStop (bot api 10.3) ride along on every draft push", async (
 test("structured blocks append and survive finalization without mutating the input", async () => {
 	const { api, calls } = mockApi();
 	const draft = new RichMessageDraft(api, 1, 9);
-	const input = { blocks: [{ type: "paragraph", text: "hello" }], is_rtl: false };
+	const input = { blocks: [{ type: "paragraph" as const, text: "hello" }], is_rtl: false };
 	await draft.rewrite(input);
 	await draft.write({ blocks: [{ type: "anchor", name: "end" }] });
 	await draft.send();
@@ -206,8 +206,8 @@ test("drafts preserve and merge referenced file ids through pushes and finalizat
 	const draft = new RichMessageDraft(api, 1, 9, { keepAliveMs: 1000 });
 	t.mock.timers.enable({ apis: ["setInterval"] });
 	t.after(() => draft.cancel());
-	const photo = { id: "photo1", media: { type: "photo", media: "photo-file-id" } };
-	const file = { id: "file1", media: { type: "document", media: "document-file-id" } };
+	const photo = { id: "photo1", media: { type: "photo" as const, media: "photo-file-id" } };
+	const file = { id: "file1", media: { type: "document" as const, media: "document-file-id" } };
 	await draft.rewrite({ html: '<img src="tg://photo?id=photo1">', media: [photo] });
 	await draft.write({ html: '<tg-document src="tg://document?id=file1">', media: [file] });
 	t.mock.timers.tick(1000);

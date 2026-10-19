@@ -173,7 +173,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 
 	let gitOk = false;
 	if (selections.git) {
-		gitOk = await gitInit(target);
+		gitOk = await gitInit(target, args.json === true);
 		log(gitOk ? c.dim("  • initialised git repository") : c.dim("  • skipped git (not available)"));
 	}
 
@@ -196,7 +196,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<void
 	if (selections.install) {
 		log(c.dim(`  • installing dependencies with ${installPackageManager}…`));
 
-		installOk = await installDeps(installPackageManager, target);
+		installOk = await installDeps(installPackageManager, target, args.json === true);
 		if (!installOk) log(c.red("  • install failed — run it manually"));
 	}
 

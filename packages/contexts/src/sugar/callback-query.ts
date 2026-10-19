@@ -1,4 +1,5 @@
 import type * as t from "@yaebal/types";
+import { type Formatted, isFormatted } from "../formatted.js";
 import { CallbackQueryContextBase } from "../generated/callback-query.js";
 
 type AnswerExtra = Omit<t.AnswerCallbackQueryParams, "callback_query_id" | "text">;
@@ -28,14 +29,19 @@ export class CallbackQueryContext extends CallbackQueryContextBase {
 	}
 
 	/** Edit the attached message's text. Pass a string for the common case. */
-	override editText(text: string, params?: EditExtra): Promise<t.Message | boolean>;
+	override editText(text: string | Formatted, params?: EditExtra): Promise<t.Message | boolean>;
 	override editText(
 		params: Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
 	): Promise<t.Message | boolean>;
 	override editText(
-		a: string | Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
+		a: string | Formatted | Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
 		b?: EditExtra,
 	): Promise<t.Message | boolean> {
-		return super.editText(typeof a === "string" ? { text: a, ...b } : a);
+		// a format result is the positional text, not the params object — keep `b`
+		return super.editText(
+			typeof a === "string" || isFormatted(a)
+				? ({ text: a, ...b } as Omit<t.EditMessageTextParams, "chat_id" | "message_id">)
+				: a,
+		);
 	}
 }

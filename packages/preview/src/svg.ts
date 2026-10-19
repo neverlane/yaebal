@@ -83,10 +83,11 @@ export function meta(
 	p: Palette,
 	scrim: boolean,
 	edited?: boolean,
+	pinned?: boolean,
 ): string {
-	if (!time && !status && !edited) return "";
+	if (!time && !status && !edited && !pinned) return "";
 
-	const label = metaLabel(time, edited);
+	const label = metaLabel(time, edited, pinned);
 	const tickW = out && status ? 15 : 0;
 	const tw = label.length * (11 * 0.55);
 
@@ -110,8 +111,10 @@ export function meta(
 /** the exact text `meta()` renders — shared so the width reserved for it (see `metaWidth`) can
  * never drift out of sync with what actually gets drawn (an "edited" prefix is longer than a
  * bare time, and a stale estimate here would let the label overlap the message text). */
-const metaLabel = (time: string, edited?: boolean): string =>
-	edited ? `edited${time ? ` ${time}` : ""}` : time;
+const metaLabel = (time: string, edited?: boolean, pinned?: boolean): string => {
+	const label = edited ? `edited${time ? ` ${time}` : ""}` : time;
+	return pinned ? `📌${label ? ` ${label}` : ""}` : label;
+};
 
 /** measured width of a meta (time/ticks) label, for reserving inline space next to text. */
 export const metaWidth = (
@@ -119,4 +122,5 @@ export const metaWidth = (
 	out: boolean,
 	hasStatus: boolean,
 	edited?: boolean,
-): number => metaLabel(time, edited).length * 6 + (out && hasStatus ? 16 : 0);
+	pinned?: boolean,
+): number => metaLabel(time, edited, pinned).length * 6 + (out && hasStatus ? 16 : 0);

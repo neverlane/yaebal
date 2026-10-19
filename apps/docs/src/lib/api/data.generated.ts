@@ -2565,7 +2565,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "emoji",
 				"type": "string",
 				"required": false,
-				"description": "Emoji on which the dice throw animation is based. Currently, must be one of “”, “”, “”, “”, “”, or “”. Dice can have values 1-6 for “”, “” and “”, values 1-5 for “” and “”, and values 1-64 for “”. Defaults to “”."
+				"description": "Emoji on which the dice throw animation is based. Currently, must be one of “🎲”, “🎯”, “🏀”, “⚽”, “🎳”, or “🎰”. Dice can have values 1-6 for “🎲”, “🎯” and “🎳”, values 1-5 for “🏀” and “⚽”, and values 1-64 for “🎰”. Defaults to “🎲”."
 			},
 			{
 				"name": "disable_notification",
@@ -10713,7 +10713,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"user\"",
 				"required": true,
 				"description": "Type of the message origin, always “user”"
 			},
@@ -10745,7 +10745,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"hidden_user\"",
 				"required": true,
 				"description": "Type of the message origin, always “hidden_user”"
 			},
@@ -10777,7 +10777,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat\"",
 				"required": true,
 				"description": "Type of the message origin, always “chat”"
 			},
@@ -10815,7 +10815,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"channel\"",
 				"required": true,
 				"description": "Type of the message origin, always “channel”"
 			},
@@ -11498,7 +11498,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"live_photo\"",
 				"required": true,
 				"description": "Type of the paid media, always “live_photo”"
 			},
@@ -11524,7 +11524,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the paid media, always “photo”"
 			},
@@ -11550,7 +11550,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"preview\"",
 				"required": true,
 				"description": "Type of the paid media, always “preview”"
 			},
@@ -11588,7 +11588,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the paid media, always “video”"
 			},
@@ -11667,7 +11667,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "value",
 				"type": "number",
 				"required": true,
-				"description": "Value of the dice, 1-6 for “”, “” and “” base emoji, 1-5 for “” and “” base emoji, 1-64 for “” base emoji"
+				"description": "Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji"
 			}
 		],
 		"variants": [],
@@ -12717,7 +12717,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"solid\"",
 				"required": true,
 				"description": "Type of the background fill, always “solid”"
 			},
@@ -12743,7 +12743,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"gradient\"",
 				"required": true,
 				"description": "Type of the background fill, always “gradient”"
 			},
@@ -12781,7 +12781,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"freeform_gradient\"",
 				"required": true,
 				"description": "Type of the background fill, always “freeform_gradient”"
 			},
@@ -12825,7 +12825,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"fill\"",
 				"required": true,
 				"description": "Type of the background, always “fill”"
 			},
@@ -12857,7 +12857,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"wallpaper\"",
 				"required": true,
 				"description": "Type of the background, always “wallpaper”"
 			},
@@ -12901,7 +12901,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pattern\"",
 				"required": true,
 				"description": "Type of the background, always “pattern”"
 			},
@@ -12951,7 +12951,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat_theme\"",
 				"required": true,
 				"description": "Type of the background, always “chat_theme”"
 			},
@@ -14683,7 +14683,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "pay",
 				"type": "boolean",
 				"required": false,
-				"description": "<em>Optional</em>. Specify <em>True</em>, to send a <a href=\"https://core.telegram.org/bots/api/#payments\" target=\"_blank\" rel=\"noopener noreferrer\">Pay button</a>. Substrings “” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.<br><br><strong>NOTE:</strong> This type of button <strong>must</strong> always be the first button in the first row and can only be used in invoice messages."
+				"description": "<em>Optional</em>. Specify <em>True</em>, to send a <a href=\"https://core.telegram.org/bots/api/#payments\" target=\"_blank\" rel=\"noopener noreferrer\">Pay button</a>. Substrings “⭐” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.<br><br><strong>NOTE:</strong> This type of button <strong>must</strong> always be the first button in the first row and can only be used in invoice messages."
 			},
 			{
 				"name": "disabled",
@@ -15294,7 +15294,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"creator\"",
 				"required": true,
 				"description": "The member's status in the chat, always “creator”"
 			},
@@ -15332,7 +15332,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"administrator\"",
 				"required": true,
 				"description": "The member's status in the chat, always “administrator”"
 			},
@@ -15478,7 +15478,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"member\"",
 				"required": true,
 				"description": "The member's status in the chat, always “member”"
 			},
@@ -15516,7 +15516,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"restricted\"",
 				"required": true,
 				"description": "The member's status in the chat, always “restricted”"
 			},
@@ -15656,7 +15656,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"left\"",
 				"required": true,
 				"description": "The member's status in the chat, always “left”"
 			},
@@ -15682,7 +15682,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "status",
-				"type": "string",
+				"type": "\"kicked\"",
 				"required": true,
 				"description": "The member's status in the chat, always “kicked”"
 			},
@@ -16170,7 +16170,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"location\"",
 				"required": true,
 				"description": "Type of the area, always “location”"
 			},
@@ -16208,7 +16208,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"suggested_reaction\"",
 				"required": true,
 				"description": "Type of the area, always “suggested_reaction”"
 			},
@@ -16246,7 +16246,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"link\"",
 				"required": true,
 				"description": "Type of the area, always “link”"
 			},
@@ -16272,7 +16272,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"weather\"",
 				"required": true,
 				"description": "Type of the area, always “weather”"
 			},
@@ -16310,7 +16310,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"unique_gift\"",
 				"required": true,
 				"description": "Type of the area, always “unique_gift”"
 			},
@@ -16411,7 +16411,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"emoji\"",
 				"required": true,
 				"description": "Type of the reaction, always “emoji”"
 			},
@@ -16419,7 +16419,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "emoji",
 				"type": "string",
 				"required": true,
-				"description": "Reaction emoji. Currently, it can be one of &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;."
+				"description": "Reaction emoji. Currently, it can be one of &quot;❤&quot;, &quot;👍&quot;, &quot;👎&quot;, &quot;🔥&quot;, &quot;🥰&quot;, &quot;👏&quot;, &quot;😁&quot;, &quot;🤔&quot;, &quot;🤯&quot;, &quot;😱&quot;, &quot;🤬&quot;, &quot;😢&quot;, &quot;🎉&quot;, &quot;🤩&quot;, &quot;🤮&quot;, &quot;💩&quot;, &quot;🙏&quot;, &quot;👌&quot;, &quot;🕊&quot;, &quot;🤡&quot;, &quot;🥱&quot;, &quot;🥴&quot;, &quot;😍&quot;, &quot;🐳&quot;, &quot;❤‍🔥&quot;, &quot;🌚&quot;, &quot;🌭&quot;, &quot;💯&quot;, &quot;🤣&quot;, &quot;⚡&quot;, &quot;🍌&quot;, &quot;🏆&quot;, &quot;💔&quot;, &quot;🤨&quot;, &quot;😐&quot;, &quot;🍓&quot;, &quot;🍾&quot;, &quot;💋&quot;, &quot;🖕&quot;, &quot;😈&quot;, &quot;😴&quot;, &quot;😭&quot;, &quot;🤓&quot;, &quot;👻&quot;, &quot;👨‍💻&quot;, &quot;👀&quot;, &quot;🎃&quot;, &quot;🙈&quot;, &quot;😇&quot;, &quot;😨&quot;, &quot;🤝&quot;, &quot;✍&quot;, &quot;🤗&quot;, &quot;🫡&quot;, &quot;🎅&quot;, &quot;🎄&quot;, &quot;☃&quot;, &quot;💅&quot;, &quot;🤪&quot;, &quot;🗿&quot;, &quot;🆒&quot;, &quot;💘&quot;, &quot;🙉&quot;, &quot;🦄&quot;, &quot;😘&quot;, &quot;💊&quot;, &quot;🙊&quot;, &quot;😎&quot;, &quot;👾&quot;, &quot;🤷‍♂&quot;, &quot;🤷&quot;, &quot;🤷‍♀&quot;, &quot;😡&quot;."
 			}
 		],
 		"variants": [],
@@ -16437,7 +16437,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"custom_emoji\"",
 				"required": true,
 				"description": "Type of the reaction, always “custom_emoji”"
 			},
@@ -16463,7 +16463,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"paid\"",
 				"required": true,
 				"description": "Type of the reaction, always “paid”"
 			}
@@ -17237,7 +17237,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"regular\"",
 				"required": true,
 				"description": "Type of the gift, always “regular”"
 			},
@@ -17341,7 +17341,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"unique\"",
 				"required": true,
 				"description": "Type of the gift, always “unique”"
 			},
@@ -17600,7 +17600,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"default\"",
 				"required": true,
 				"description": "Scope type, must be <em>default</em>"
 			}
@@ -17620,7 +17620,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"all_private_chats\"",
 				"required": true,
 				"description": "Scope type, must be <em>all_private_chats</em>"
 			}
@@ -17640,7 +17640,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"all_group_chats\"",
 				"required": true,
 				"description": "Scope type, must be <em>all_group_chats</em>"
 			}
@@ -17660,7 +17660,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"all_chat_administrators\"",
 				"required": true,
 				"description": "Scope type, must be <em>all_chat_administrators</em>"
 			}
@@ -17680,7 +17680,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat\"",
 				"required": true,
 				"description": "Scope type, must be <em>chat</em>"
 			},
@@ -17706,7 +17706,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat_administrators\"",
 				"required": true,
 				"description": "Scope type, must be <em>chat_administrators</em>"
 			},
@@ -17732,7 +17732,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat_member\"",
 				"required": true,
 				"description": "Scope type, must be <em>chat_member</em>"
 			},
@@ -17842,7 +17842,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"commands\"",
 				"required": true,
 				"description": "Type of the button, must be <em>commands</em>"
 			}
@@ -17862,7 +17862,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"web_app\"",
 				"required": true,
 				"description": "Type of the button, must be <em>web_app</em>"
 			},
@@ -17894,7 +17894,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"default\"",
 				"required": true,
 				"description": "Type of the button, must be <em>default</em>"
 			}
@@ -17932,7 +17932,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"premium\"",
 				"required": true,
 				"description": "Source of the boost, always “premium”"
 			},
@@ -17958,7 +17958,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"gift_code\"",
 				"required": true,
 				"description": "Source of the boost, always “gift_code”"
 			},
@@ -17984,7 +17984,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"giveaway\"",
 				"required": true,
 				"description": "Source of the boost, always “giveaway”"
 			},
@@ -18504,7 +18504,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"animation\"",
 				"required": true,
 				"description": "Type of the media, must be <em>animation</em>"
 			},
@@ -18588,7 +18588,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"audio\"",
 				"required": true,
 				"description": "Type of the media, must be <em>audio</em>"
 			},
@@ -18661,7 +18661,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"document\"",
 				"required": true,
 				"description": "Type of the media, must be <em>document</em>"
 			},
@@ -18722,7 +18722,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"link\"",
 				"required": true,
 				"description": "Type of the media, must be <em>link</em>"
 			},
@@ -18748,7 +18748,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"live_photo\"",
 				"required": true,
 				"description": "Type of the media, must be <em>live_photo</em>"
 			},
@@ -18814,7 +18814,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"location\"",
 				"required": true,
 				"description": "Type of the media, must be <em>location</em>"
 			},
@@ -18853,7 +18853,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the media, must be <em>photo</em>"
 			},
@@ -18915,7 +18915,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"sticker\"",
 				"required": true,
 				"description": "Type of the media, must be <em>sticker</em>"
 			},
@@ -18947,7 +18947,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"venue\"",
 				"required": true,
 				"description": "Type of the media, must be <em>venue</em>"
 			},
@@ -19016,7 +19016,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the media, must be <em>video</em>"
 			},
@@ -19120,7 +19120,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"voice_note\"",
 				"required": true,
 				"description": "Type of the media, must be <em>voice_note</em>"
 			},
@@ -19213,7 +19213,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"live_photo\"",
 				"required": true,
 				"description": "Type of the media, must be <em>live_photo</em>"
 			},
@@ -19245,7 +19245,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the media, must be <em>photo</em>"
 			},
@@ -19271,7 +19271,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the media, must be <em>video</em>"
 			},
@@ -19356,7 +19356,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"static\"",
 				"required": true,
 				"description": "Type of the profile photo, must be <em>static</em>"
 			},
@@ -19382,7 +19382,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"animated\"",
 				"required": true,
 				"description": "Type of the profile photo, must be <em>animated</em>"
 			},
@@ -19431,7 +19431,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the content, must be <em>photo</em>"
 			},
@@ -19457,7 +19457,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the content, must be <em>video</em>"
 			},
@@ -20021,7 +20021,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"bold\"",
 				"required": true,
 				"description": "Type of the rich text, always “bold”"
 			},
@@ -20047,7 +20047,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"italic\"",
 				"required": true,
 				"description": "Type of the rich text, always “italic”"
 			},
@@ -20073,7 +20073,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"underline\"",
 				"required": true,
 				"description": "Type of the rich text, always “underline”"
 			},
@@ -20099,7 +20099,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"strikethrough\"",
 				"required": true,
 				"description": "Type of the rich text, always “strikethrough”"
 			},
@@ -20125,7 +20125,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"spoiler\"",
 				"required": true,
 				"description": "Type of the rich text, always “spoiler”"
 			},
@@ -20151,7 +20151,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"date_time\"",
 				"required": true,
 				"description": "Type of the rich text, always “date_time”"
 			},
@@ -20189,7 +20189,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"text_mention\"",
 				"required": true,
 				"description": "Type of the rich text, always “text_mention”"
 			},
@@ -20221,7 +20221,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"subscript\"",
 				"required": true,
 				"description": "Type of the rich text, always “subscript”"
 			},
@@ -20247,7 +20247,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"superscript\"",
 				"required": true,
 				"description": "Type of the rich text, always “superscript”"
 			},
@@ -20273,7 +20273,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"marked\"",
 				"required": true,
 				"description": "Type of the rich text, always “marked”"
 			},
@@ -20299,7 +20299,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"code\"",
 				"required": true,
 				"description": "Type of the rich text, always “code”"
 			},
@@ -20325,7 +20325,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"custom_emoji\"",
 				"required": true,
 				"description": "Type of the rich text, always “custom_emoji”"
 			},
@@ -20357,7 +20357,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mathematical_expression\"",
 				"required": true,
 				"description": "Type of the rich text, always “mathematical_expression”"
 			},
@@ -20383,7 +20383,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"url\"",
 				"required": true,
 				"description": "Type of the rich text, always “url”"
 			},
@@ -20415,7 +20415,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"email_address\"",
 				"required": true,
 				"description": "Type of the rich text, always “email_address”"
 			},
@@ -20447,7 +20447,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"phone_number\"",
 				"required": true,
 				"description": "Type of the rich text, always “phone_number”"
 			},
@@ -20479,7 +20479,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"bank_card_number\"",
 				"required": true,
 				"description": "Type of the rich text, always “bank_card_number”"
 			},
@@ -20511,7 +20511,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mention\"",
 				"required": true,
 				"description": "Type of the rich text, always “mention”"
 			},
@@ -20543,7 +20543,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"hashtag\"",
 				"required": true,
 				"description": "Type of the rich text, always “hashtag”"
 			},
@@ -20575,7 +20575,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"cashtag\"",
 				"required": true,
 				"description": "Type of the rich text, always “cashtag”"
 			},
@@ -20607,7 +20607,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"bot_command\"",
 				"required": true,
 				"description": "Type of the rich text, always “bot_command”"
 			},
@@ -20639,7 +20639,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"button\"",
 				"required": true,
 				"description": "Type of the rich text, always “button”"
 			},
@@ -20665,7 +20665,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"anchor\"",
 				"required": true,
 				"description": "Type of the rich text, always “anchor”"
 			},
@@ -20691,7 +20691,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"anchor_link\"",
 				"required": true,
 				"description": "Type of the rich text, always “anchor_link”"
 			},
@@ -20723,7 +20723,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"reference\"",
 				"required": true,
 				"description": "Type of the rich text, always “reference”"
 			},
@@ -20755,7 +20755,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"reference_link\"",
 				"required": true,
 				"description": "Type of the rich text, always “reference_link”"
 			},
@@ -20974,7 +20974,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"paragraph\"",
 				"required": true,
 				"description": "Type of the block, always “paragraph”"
 			},
@@ -21000,7 +21000,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"heading\"",
 				"required": true,
 				"description": "Type of the block, always “heading”"
 			},
@@ -21032,7 +21032,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pre\"",
 				"required": true,
 				"description": "Type of the block, always “pre”"
 			},
@@ -21064,7 +21064,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"footer\"",
 				"required": true,
 				"description": "Type of the block, always “footer”"
 			},
@@ -21090,7 +21090,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"divider\"",
 				"required": true,
 				"description": "Type of the block, always “divider”"
 			}
@@ -21110,7 +21110,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mathematical_expression\"",
 				"required": true,
 				"description": "Type of the block, always “mathematical_expression”"
 			},
@@ -21136,7 +21136,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"anchor\"",
 				"required": true,
 				"description": "Type of the block, always “anchor”"
 			},
@@ -21162,7 +21162,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"list\"",
 				"required": true,
 				"description": "Type of the block, always “list”"
 			},
@@ -21188,7 +21188,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"blockquote\"",
 				"required": true,
 				"description": "Type of the block, always “blockquote”"
 			},
@@ -21220,7 +21220,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"expandable_blockquote\"",
 				"required": true,
 				"description": "Type of the block, always “expandable_blockquote”"
 			},
@@ -21252,7 +21252,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pullquote\"",
 				"required": true,
 				"description": "Type of the block, always “pullquote”"
 			},
@@ -21284,7 +21284,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"collage\"",
 				"required": true,
 				"description": "Type of the block, always “collage”"
 			},
@@ -21316,7 +21316,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"slideshow\"",
 				"required": true,
 				"description": "Type of the block, always “slideshow”"
 			},
@@ -21348,7 +21348,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"table\"",
 				"required": true,
 				"description": "Type of the block, always “table”"
 			},
@@ -21398,7 +21398,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"details\"",
 				"required": true,
 				"description": "Type of the block, always “details”"
 			},
@@ -21436,7 +21436,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"map\"",
 				"required": true,
 				"description": "Type of the block, always “map”"
 			},
@@ -21486,7 +21486,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"buttons\"",
 				"required": true,
 				"description": "Type of the block, always “buttons”"
 			},
@@ -21518,7 +21518,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"animation\"",
 				"required": true,
 				"description": "Type of the block, always “animation”"
 			},
@@ -21556,7 +21556,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"audio\"",
 				"required": true,
 				"description": "Type of the block, always “audio”"
 			},
@@ -21588,7 +21588,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"document\"",
 				"required": true,
 				"description": "Type of the block, always “document”"
 			},
@@ -21620,7 +21620,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the block, always “photo”"
 			},
@@ -21658,7 +21658,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the block, always “video”"
 			},
@@ -21696,7 +21696,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"voice_note\"",
 				"required": true,
 				"description": "Type of the block, always “voice_note”"
 			},
@@ -21728,7 +21728,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"thinking\"",
 				"required": true,
 				"description": "Type of the block, always “thinking”"
 			},
@@ -21841,7 +21841,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"paragraph\"",
 				"required": true,
 				"description": "Type of the block, always “paragraph”"
 			},
@@ -21867,7 +21867,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"heading\"",
 				"required": true,
 				"description": "Type of the block, always “heading”"
 			},
@@ -21899,7 +21899,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pre\"",
 				"required": true,
 				"description": "Type of the block, always “pre”"
 			},
@@ -21931,7 +21931,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"footer\"",
 				"required": true,
 				"description": "Type of the block, always “footer”"
 			},
@@ -21957,7 +21957,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"divider\"",
 				"required": true,
 				"description": "Type of the block, always “divider”"
 			}
@@ -21977,7 +21977,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mathematical_expression\"",
 				"required": true,
 				"description": "Type of the block, always “mathematical_expression”"
 			},
@@ -22003,7 +22003,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"anchor\"",
 				"required": true,
 				"description": "Type of the block, always “anchor”"
 			},
@@ -22029,7 +22029,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"list\"",
 				"required": true,
 				"description": "Type of the block, always “list”"
 			},
@@ -22055,7 +22055,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"blockquote\"",
 				"required": true,
 				"description": "Type of the block, always “blockquote”"
 			},
@@ -22087,7 +22087,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"expandable_blockquote\"",
 				"required": true,
 				"description": "Type of the block, always “expandable_blockquote”"
 			},
@@ -22119,7 +22119,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pullquote\"",
 				"required": true,
 				"description": "Type of the block, always “pullquote”"
 			},
@@ -22151,7 +22151,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"collage\"",
 				"required": true,
 				"description": "Type of the block, always “collage”"
 			},
@@ -22183,7 +22183,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"slideshow\"",
 				"required": true,
 				"description": "Type of the block, always “slideshow”"
 			},
@@ -22215,7 +22215,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"table\"",
 				"required": true,
 				"description": "Type of the block, always “table”"
 			},
@@ -22265,7 +22265,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"details\"",
 				"required": true,
 				"description": "Type of the block, always “details”"
 			},
@@ -22303,7 +22303,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"map\"",
 				"required": true,
 				"description": "Type of the block, always “map”"
 			},
@@ -22353,7 +22353,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"buttons\"",
 				"required": true,
 				"description": "Type of the block, always “buttons”"
 			},
@@ -22385,7 +22385,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"animation\"",
 				"required": true,
 				"description": "Type of the block, always “animation”"
 			},
@@ -22417,7 +22417,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"audio\"",
 				"required": true,
 				"description": "Type of the block, always “audio”"
 			},
@@ -22449,7 +22449,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"document\"",
 				"required": true,
 				"description": "Type of the block, always “document”"
 			},
@@ -22481,7 +22481,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the block, always “photo”"
 			},
@@ -22513,7 +22513,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the block, always “video”"
 			},
@@ -22545,7 +22545,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"voice_note\"",
 				"required": true,
 				"description": "Type of the block, always “voice_note”"
 			},
@@ -22577,7 +22577,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"thinking\"",
 				"required": true,
 				"description": "Type of the block, always “thinking”"
 			},
@@ -22722,7 +22722,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"article\"",
 				"required": true,
 				"description": "Type of the result, must be <em>article</em>"
 			},
@@ -22796,7 +22796,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the result, must be <em>photo</em>"
 			},
@@ -22894,7 +22894,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"gif\"",
 				"required": true,
 				"description": "Type of the result, must be <em>gif</em>"
 			},
@@ -22998,7 +22998,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mpeg4_gif\"",
 				"required": true,
 				"description": "Type of the result, must be <em>mpeg4_gif</em>"
 			},
@@ -23102,7 +23102,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the result, must be <em>video</em>"
 			},
@@ -23212,7 +23212,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"audio\"",
 				"required": true,
 				"description": "Type of the result, must be <em>audio</em>"
 			},
@@ -23292,7 +23292,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"voice\"",
 				"required": true,
 				"description": "Type of the result, must be <em>voice</em>"
 			},
@@ -23366,7 +23366,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"document\"",
 				"required": true,
 				"description": "Type of the result, must be <em>document</em>"
 			},
@@ -23464,7 +23464,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"location\"",
 				"required": true,
 				"description": "Type of the result, must be <em>location</em>"
 			},
@@ -23562,7 +23562,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"venue\"",
 				"required": true,
 				"description": "Type of the result, must be <em>venue</em>"
 			},
@@ -23666,7 +23666,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"contact\"",
 				"required": true,
 				"description": "Type of the result, must be <em>contact</em>"
 			},
@@ -23746,7 +23746,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"game\"",
 				"required": true,
 				"description": "Type of the result, must be <em>game</em>"
 			},
@@ -23784,7 +23784,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"photo\"",
 				"required": true,
 				"description": "Type of the result, must be <em>photo</em>"
 			},
@@ -23864,7 +23864,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"gif\"",
 				"required": true,
 				"description": "Type of the result, must be <em>gif</em>"
 			},
@@ -23938,7 +23938,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"mpeg4_gif\"",
 				"required": true,
 				"description": "Type of the result, must be <em>mpeg4_gif</em>"
 			},
@@ -24012,7 +24012,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"sticker\"",
 				"required": true,
 				"description": "Type of the result, must be <em>sticker</em>"
 			},
@@ -24056,7 +24056,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"document\"",
 				"required": true,
 				"description": "Type of the result, must be <em>document</em>"
 			},
@@ -24130,7 +24130,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"video\"",
 				"required": true,
 				"description": "Type of the result, must be <em>video</em>"
 			},
@@ -24210,7 +24210,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"voice\"",
 				"required": true,
 				"description": "Type of the result, must be <em>voice</em>"
 			},
@@ -24278,7 +24278,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"audio\"",
 				"required": true,
 				"description": "Type of the result, must be <em>audio</em>"
 			},
@@ -25035,7 +25035,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "currency",
-				"type": "string",
+				"type": "\"XTR\"",
 				"required": true,
 				"description": "Three-letter ISO 4217 <a href=\"https://core.telegram.org/bots/payments#supported-currencies\" target=\"_blank\" rel=\"noopener noreferrer\">currency</a> code, or “XTR” for payments in <a href=\"https://t.me/BotNews/90\" target=\"_blank\" rel=\"noopener noreferrer\">Telegram Stars</a>. Currently, always “XTR”."
 			},
@@ -25216,7 +25216,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"pending\"",
 				"required": true,
 				"description": "Type of the state, always “pending”"
 			}
@@ -25236,7 +25236,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"succeeded\"",
 				"required": true,
 				"description": "Type of the state, always “succeeded”"
 			},
@@ -25268,7 +25268,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"failed\"",
 				"required": true,
 				"description": "Type of the state, always “failed”"
 			}
@@ -25353,7 +25353,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"user\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “user”"
 			},
@@ -25427,7 +25427,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"chat\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “chat”"
 			},
@@ -25459,7 +25459,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"affiliate_program\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “affiliate_program”"
 			},
@@ -25491,7 +25491,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"fragment\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “fragment”"
 			},
@@ -25517,7 +25517,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"telegram_ads\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “telegram_ads”"
 			}
@@ -25537,7 +25537,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"telegram_api\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “telegram_api”"
 			},
@@ -25563,7 +25563,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "string",
+				"type": "\"other\"",
 				"required": true,
 				"description": "Type of the transaction partner, always “other”"
 			}
@@ -25846,7 +25846,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"data\"",
 				"required": true,
 				"description": "Error source, must be <em>data</em>"
 			},
@@ -25890,7 +25890,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"front_side\"",
 				"required": true,
 				"description": "Error source, must be <em>front_side</em>"
 			},
@@ -25928,7 +25928,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"reverse_side\"",
 				"required": true,
 				"description": "Error source, must be <em>reverse_side</em>"
 			},
@@ -25966,7 +25966,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"selfie\"",
 				"required": true,
 				"description": "Error source, must be <em>selfie</em>"
 			},
@@ -26004,7 +26004,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"file\"",
 				"required": true,
 				"description": "Error source, must be <em>file</em>"
 			},
@@ -26042,7 +26042,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"files\"",
 				"required": true,
 				"description": "Error source, must be <em>files</em>"
 			},
@@ -26080,7 +26080,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"translation_file\"",
 				"required": true,
 				"description": "Error source, must be <em>translation_file</em>"
 			},
@@ -26118,7 +26118,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"translation_files\"",
 				"required": true,
 				"description": "Error source, must be <em>translation_files</em>"
 			},
@@ -26156,7 +26156,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "source",
-				"type": "string",
+				"type": "\"unspecified\"",
 				"required": true,
 				"description": "Error source, must be <em>unspecified</em>"
 			},

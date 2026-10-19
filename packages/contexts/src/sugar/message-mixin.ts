@@ -1,5 +1,6 @@
 import type { Api } from "@yaebal/core";
 import type * as t from "@yaebal/types";
+import { type Formatted, isFormatted } from "../formatted.js";
 import { messageReplyParameters } from "../reply-parameters.js";
 
 /** A friendly reaction: an emoji string, a `{ emoji }` / `{ custom_emoji_id }` shorthand, or a raw `ReactionType`. */
@@ -93,10 +94,14 @@ function targetUser(ctx: MessageFields, userId: number | undefined, method: stri
 export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 	abstract class Sugared extends Base {
 		/** Send a new message to this chat. Pass a string for the common case. */
-		send(text: string, params?: SendExtra): Promise<t.Message>;
+		send(text: string | Formatted, params?: SendExtra): Promise<t.Message>;
 		send(params: Omit<t.SendMessageParams, "chat_id">): Promise<t.Message>;
-		send(a: string | Omit<t.SendMessageParams, "chat_id">, b?: SendExtra): Promise<t.Message> {
-			const params = typeof a === "string" ? { text: a, ...b } : a;
+		send(
+			a: string | Formatted | Omit<t.SendMessageParams, "chat_id">,
+			b?: SendExtra,
+		): Promise<t.Message> {
+			// a format result is the positional text, not the params object — keep `b`
+			const params = typeof a === "string" || isFormatted(a) ? { text: a, ...b } : a;
 			return this.api.call<t.Message>("sendMessage", {
 				chat_id: this.chat.id,
 				...routing(this),
@@ -105,10 +110,14 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 		}
 
 		/** Reply to this message. Pass a string for the common case. */
-		reply(text: string, params?: SendExtra): Promise<t.Message>;
+		reply(text: string | Formatted, params?: SendExtra): Promise<t.Message>;
 		reply(params: Omit<t.SendMessageParams, "chat_id">): Promise<t.Message>;
-		reply(a: string | Omit<t.SendMessageParams, "chat_id">, b?: SendExtra): Promise<t.Message> {
-			const params = typeof a === "string" ? { text: a, ...b } : a;
+		reply(
+			a: string | Formatted | Omit<t.SendMessageParams, "chat_id">,
+			b?: SendExtra,
+		): Promise<t.Message> {
+			// a format result is the positional text, not the params object — keep `b`
+			const params = typeof a === "string" || isFormatted(a) ? { text: a, ...b } : a;
 			return this.api.call<t.Message>("sendMessage", {
 				chat_id: this.chat.id,
 				...messageReplyParameters(this),
@@ -118,15 +127,16 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 		}
 
 		/** Edit this message's text. Pass a string for the common case. */
-		editText(text: string, params?: EditExtra): Promise<t.Message | boolean>;
+		editText(text: string | Formatted, params?: EditExtra): Promise<t.Message | boolean>;
 		editText(
 			params: Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
 		): Promise<t.Message | boolean>;
 		editText(
-			a: string | Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
+			a: string | Formatted | Omit<t.EditMessageTextParams, "chat_id" | "message_id">,
 			b?: EditExtra,
 		): Promise<t.Message | boolean> {
-			const params = typeof a === "string" ? { text: a, ...b } : a;
+			// a format result is the positional text, not the params object — keep `b`
+			const params = typeof a === "string" || isFormatted(a) ? { text: a, ...b } : a;
 			return this.api.call<t.Message | boolean>("editMessageText", {
 				chat_id: this.chat.id,
 				message_id: this.message_id,
@@ -136,15 +146,15 @@ export function MessageSugar<TBase extends Ctor<MessageFields>>(Base: TBase) {
 		}
 
 		/** Edit this message's caption. Pass a string for the common case. */
-		editCaption(caption: string, params?: CaptionExtra): Promise<t.Message | boolean>;
+		editCaption(caption: string | Formatted, params?: CaptionExtra): Promise<t.Message | boolean>;
 		editCaption(
 			params: Omit<t.EditMessageCaptionParams, "chat_id" | "message_id">,
 		): Promise<t.Message | boolean>;
 		editCaption(
-			a: string | Omit<t.EditMessageCaptionParams, "chat_id" | "message_id">,
+			a: string | Formatted | Omit<t.EditMessageCaptionParams, "chat_id" | "message_id">,
 			b?: CaptionExtra,
 		): Promise<t.Message | boolean> {
-			const params = typeof a === "string" ? { caption: a, ...b } : a;
+			const params = typeof a === "string" || isFormatted(a) ? { caption: a, ...b } : a;
 			return this.api.call<t.Message | boolean>("editMessageCaption", {
 				chat_id: this.chat.id,
 				message_id: this.message_id,

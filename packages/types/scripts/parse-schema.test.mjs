@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { decodeEntities, htmlToMarkdown, stripTags } from "./lib/html.mjs";
 import { parseTypeCell } from "./lib/parse-type.mjs";
-import { extractReturnType, extractEnum, extractLength } from "./lib/parse-return-type.mjs";
+import { extractConst, extractReturnType, extractEnum, extractLength } from "./lib/parse-return-type.mjs";
 import { parseSchema, parseVersion } from "./lib/parse-schema.mjs";
 
 test("decodeEntities handles named and numeric entities", () => {
@@ -257,4 +257,18 @@ test("parseSchema preserves plain strings and recursive arrays in rich-text unio
 		{ type: "array", array: { type: "reference", reference: "RichText" } },
 		{ type: "reference", reference: "RichTextBold" },
 	]);
+});
+
+test("extractConst: a discriminator's single fixed value", () => {
+	assert.equal(extractConst("Scope type, must be <em>chat</em>"), "chat");
+	assert.equal(extractConst("Type of the message origin, always “hidden_user”"), "hidden_user");
+	assert.equal(extractConst("The member's status in the chat, always “creator”"), "creator");
+	assert.equal(extractConst("Unique identifier for the target chat"), undefined);
+});
+
+test("htmlToMarkdown keeps emoji drawn as images", () => {
+	assert.equal(
+		htmlToMarkdown('one of "<img class="emoji" src="//telegram.org/img/emoji/40/E29DA4.png" alt="❤" />"'),
+		'one of "❤"',
+	);
 });

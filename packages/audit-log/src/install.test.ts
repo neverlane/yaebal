@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { Composer, type Context, type Middleware } from "@yaebal/core";
-import { apiError, createTestEnv, type TestEnv } from "@yaebal/test";
+import { Composer, type Context, createApi, type Middleware } from "@yaebal/core";
+import { apiError, createTestEnv, type TestEnv, withFetch } from "@yaebal/test";
 import {
 	type AuditEvent,
 	type AuditLogHandle,
@@ -433,4 +433,40 @@ test("a direct-install target with no onStart/onStop (a bare {use, api} pair) ne
 	const bot = new Composer<Context>();
 	const env = createTestEnv(bot);
 	assert.doesNotThrow(() => attachAuditLog(bot, env, { sinks: [{ write() {} }] }));
+});
+
+test("a retried call keeps its callId and counts attempts across api.error", {
+	timeout: 5000,
+}, async () => {
+	// a real core Api, not the test env's mock: core derives `params` once per logical call and
+	// reuses it across retries, which is what call tracking keys on
+	const sink = recordingSink();
+	const api = createApi("1:test");
+	auditLog({ use: () => {}, api }, { sinks: [sink] });
+	api.onError((_method, _error, attempt) => (attempt < 2 ? { retry: true } : undefined));
+
+	let requests = 0;
+	await withFetch(
+		async () => {
+			requests++;
+			const body =
+				requests === 1
+					? { ok: false, error_code: 500, description: "Internal Server Error" }
+					: { ok: true, result: true };
+			return new Response(JSON.stringify(body), { status: requests === 1 ? 500 : 200 });
+		},
+		() => api.call("sendChatAction", { chat_id: 1, action: "typing" }),
+	);
+
+	const events = sink.events as Extract<AuditEvent, { kind: "api.call" | "api.error" | "api.result" }>[];
+	assert.deepEqual(
+		events.map((e) => [e.kind, "attempt" in e ? e.attempt : undefined]),
+		[
+			["api.call", 1],
+			["api.error", 1],
+			["api.call", 2],
+			["api.result", undefined],
+		],
+	);
+	assert.equal(new Set(events.map((e) => e.callId)).size, 1);
 });

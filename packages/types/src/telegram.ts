@@ -124,7 +124,7 @@ export type BackgroundFill = BackgroundFillSolid | BackgroundFillGradient | Back
 /** The background is a freeform gradient that rotates after every message in the chat. */
 export interface BackgroundFillFreeformGradient {
 	/** Type of the background fill, always “freeform_gradient” */
-	type: string;
+	type: "freeform_gradient";
 	/** A list of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format */
 	colors: number[];
 }
@@ -132,7 +132,7 @@ export interface BackgroundFillFreeformGradient {
 /** The background is a gradient fill. */
 export interface BackgroundFillGradient {
 	/** Type of the background fill, always “gradient” */
-	type: string;
+	type: "gradient";
 	/** Top color of the gradient in the RGB24 format */
 	top_color: number;
 	/** Bottom color of the gradient in the RGB24 format */
@@ -144,7 +144,7 @@ export interface BackgroundFillGradient {
 /** The background is filled using the selected color. */
 export interface BackgroundFillSolid {
 	/** Type of the background fill, always “solid” */
-	type: string;
+	type: "solid";
 	/** The color of the background fill in the RGB24 format */
 	color: number;
 }
@@ -155,7 +155,7 @@ export type BackgroundType = BackgroundTypeFill | BackgroundTypeWallpaper | Back
 /** The background is taken directly from a built-in chat theme. */
 export interface BackgroundTypeChatTheme {
 	/** Type of the background, always “chat_theme” */
-	type: string;
+	type: "chat_theme";
 	/** Name of the chat theme, which is usually an emoji */
 	theme_name: string;
 }
@@ -163,7 +163,7 @@ export interface BackgroundTypeChatTheme {
 /** The background is automatically filled based on the selected colors. */
 export interface BackgroundTypeFill {
 	/** Type of the background, always “fill” */
-	type: string;
+	type: "fill";
 	/** The background fill */
 	fill: BackgroundFill;
 	/** Dimming of the background in dark themes, as a percentage; 0-100 */
@@ -173,7 +173,7 @@ export interface BackgroundTypeFill {
 /** The background is a .PNG or .TGV (gzipped subset of SVG with MIME type “application/x-tgwallpattern”) pattern to be combined with the background fill chosen by the user. */
 export interface BackgroundTypePattern {
 	/** Type of the background, always “pattern” */
-	type: string;
+	type: "pattern";
 	/** Document with the pattern */
 	document: Document;
 	/** The background fill that is combined with the pattern */
@@ -189,7 +189,7 @@ export interface BackgroundTypePattern {
 /** The background is a wallpaper in the JPEG format. */
 export interface BackgroundTypeWallpaper {
 	/** Type of the background, always “wallpaper” */
-	type: string;
+	type: "wallpaper";
 	/** Document with the wallpaper */
 	document: Document;
 	/** Dimming of the background in dark themes, as a percentage; 0-100 */
@@ -234,25 +234,25 @@ export type BotCommandScope = BotCommandScopeDefault | BotCommandScopeAllPrivate
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering all group and supergroup chat administrators. */
 export interface BotCommandScopeAllChatAdministrators {
 	/** Scope type, must be *all\_chat\_administrators* */
-	type: string;
+	type: "all_chat_administrators";
 }
 
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering all group and supergroup chats. */
 export interface BotCommandScopeAllGroupChats {
 	/** Scope type, must be *all\_group\_chats* */
-	type: string;
+	type: "all_group_chats";
 }
 
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering all private chats. */
 export interface BotCommandScopeAllPrivateChats {
 	/** Scope type, must be *all\_private\_chats* */
-	type: string;
+	type: "all_private_chats";
 }
 
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering a specific chat. */
 export interface BotCommandScopeChat {
 	/** Scope type, must be *chat* */
-	type: string;
+	type: "chat";
 	/** Unique identifier for the target chat or username of the target supergroup in the format `@username`. Channel direct messages chats and channel chats aren't supported. */
 	chat_id: number | string;
 }
@@ -260,7 +260,7 @@ export interface BotCommandScopeChat {
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering all administrators of a specific group or supergroup chat. */
 export interface BotCommandScopeChatAdministrators {
 	/** Scope type, must be *chat\_administrators* */
-	type: string;
+	type: "chat_administrators";
 	/** Unique identifier for the target chat or username of the target supergroup in the format `@username`. Channel direct messages chats and channel chats aren't supported. */
 	chat_id: number | string;
 }
@@ -268,7 +268,7 @@ export interface BotCommandScopeChatAdministrators {
 /** Represents the [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands, covering a specific member of a group or supergroup chat. */
 export interface BotCommandScopeChatMember {
 	/** Scope type, must be *chat\_member* */
-	type: string;
+	type: "chat_member";
 	/** Unique identifier for the target chat or username of the target supergroup in the format `@username`. Channel direct messages chats and channel chats aren't supported. */
 	chat_id: number | string;
 	/** Unique identifier of the target user */
@@ -278,7 +278,7 @@ export interface BotCommandScopeChatMember {
 /** Represents the default [scope](https://core.telegram.org/bots/api/#botcommandscope) of bot commands. Default commands are used if no commands with a [narrower scope](https://core.telegram.org/bots/api/#determining-list-of-commands) are specified for the user. */
 export interface BotCommandScopeDefault {
 	/** Scope type, must be *default* */
-	type: string;
+	type: "default";
 }
 
 /** This object represents the bot's description. */
@@ -524,7 +524,7 @@ export type ChatBoostSource = ChatBoostSourcePremium | ChatBoostSourceGiftCode |
 /** The boost was obtained by the creation of Telegram Premium gift codes to boost a chat. Each such code boosts the chat 4 times for the duration of the corresponding Telegram Premium subscription. */
 export interface ChatBoostSourceGiftCode {
 	/** Source of the boost, always “gift_code” */
-	source: string;
+	source: "gift_code";
 	/** User for which the gift code was created */
 	user: User;
 }
@@ -532,7 +532,7 @@ export interface ChatBoostSourceGiftCode {
 /** The boost was obtained by the creation of a Telegram Premium or a Telegram Star giveaway. This boosts the chat 4 times for the duration of the corresponding Telegram Premium subscription for Telegram Premium giveaways and *prize\_star\_count* / 500 times for one year for Telegram Star giveaways. */
 export interface ChatBoostSourceGiveaway {
 	/** Source of the boost, always “giveaway” */
-	source: string;
+	source: "giveaway";
 	/** Identifier of a message in the chat with the giveaway; the message could have been deleted already. May be 0 if the message isn't sent yet. */
 	giveaway_message_id: number;
 	/** *Optional*. User that won the prize in the giveaway if any; for Telegram Premium giveaways only */
@@ -546,7 +546,7 @@ export interface ChatBoostSourceGiveaway {
 /** The boost was obtained by subscribing to Telegram Premium or by gifting a Telegram Premium subscription to another user. */
 export interface ChatBoostSourcePremium {
 	/** Source of the boost, always “premium” */
-	source: string;
+	source: "premium";
 	/** User that boosted the chat */
 	user: User;
 }
@@ -727,7 +727,7 @@ export type ChatMember = ChatMemberOwner | ChatMemberAdministrator | ChatMemberM
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that has some additional privileges. */
 export interface ChatMemberAdministrator {
 	/** The member's status in the chat, always “administrator” */
-	status: string;
+	status: "administrator";
 	/** Information about the user */
 	user: User;
 	/** *True*, if the bot is allowed to edit administrator privileges of that user */
@@ -775,7 +775,7 @@ export interface ChatMemberAdministrator {
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that was banned in the chat and can't return to the chat or view chat messages. */
 export interface ChatMemberBanned {
 	/** The member's status in the chat, always “kicked” */
-	status: string;
+	status: "kicked";
 	/** Information about the user */
 	user: User;
 	/** Date when restrictions will be lifted for this user; Unix time. If 0, then the user is banned forever. */
@@ -785,7 +785,7 @@ export interface ChatMemberBanned {
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that isn't currently a member of the chat, but may join it themselves. */
 export interface ChatMemberLeft {
 	/** The member's status in the chat, always “left” */
-	status: string;
+	status: "left";
 	/** Information about the user */
 	user: User;
 }
@@ -793,7 +793,7 @@ export interface ChatMemberLeft {
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that has no additional privileges or restrictions. */
 export interface ChatMemberMember {
 	/** The member's status in the chat, always “member” */
-	status: string;
+	status: "member";
 	/** *Optional*. Tag of the member */
 	tag?: string;
 	/** Information about the user */
@@ -805,7 +805,7 @@ export interface ChatMemberMember {
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that owns the chat and has all administrator privileges. */
 export interface ChatMemberOwner {
 	/** The member's status in the chat, always “creator” */
-	status: string;
+	status: "creator";
 	/** Information about the user */
 	user: User;
 	/** *True*, if the user's presence in the chat is hidden */
@@ -817,7 +817,7 @@ export interface ChatMemberOwner {
 /** Represents a [chat member](https://core.telegram.org/bots/api/#chatmember) that is under certain restrictions in the chat. Supergroups only. */
 export interface ChatMemberRestricted {
 	/** The member's status in the chat, always “restricted” */
-	status: string;
+	status: "restricted";
 	/** *Optional*. Tag of the member */
 	tag?: string;
 	/** Information about the user */
@@ -1063,7 +1063,7 @@ export interface CopyTextButton {
 export interface Dice {
 	/** Emoji on which the dice throw animation is based */
 	emoji: string;
-	/** Value of the dice, 1-6 for “”, “” and “” base emoji, 1-5 for “” and “” base emoji, 1-64 for “” base emoji */
+	/** Value of the dice, 1-6 for “🎲”, “🎯” and “🎳” base emoji, 1-5 for “🏀” and “⚽” base emoji, 1-64 for “🎰” base emoji */
 	value: number;
 }
 
@@ -1469,7 +1469,7 @@ export interface InlineKeyboardButton {
 	copy_text?: CopyTextButton;
 	/** *Optional*. Description of the game that will be launched when the user presses the button.  **NOTE:** This type of button **must** always be the first button in the first row. */
 	callback_game?: CallbackGame;
-	/** *Optional*. Specify *True*, to send a [Pay button](https://core.telegram.org/bots/api/#payments). Substrings “” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.  **NOTE:** This type of button **must** always be the first button in the first row and can only be used in invoice messages. */
+	/** *Optional*. Specify *True*, to send a [Pay button](https://core.telegram.org/bots/api/#payments). Substrings “⭐” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.  **NOTE:** This type of button **must** always be the first button in the first row and can only be used in invoice messages. */
 	pay?: boolean;
 	/** *Optional*. If set, then the button is disabled and does nothing */
 	disabled?: DisabledButton;
@@ -1505,7 +1505,7 @@ export type InlineQueryResult = InlineQueryResultCachedAudio | InlineQueryResult
 /** Represents a link to an article or web page. */
 export interface InlineQueryResultArticle {
 	/** Type of the result, must be *article* */
-	type: string;
+	type: "article";
 	/** Unique identifier for this result, 1-64 Bytes */
 	id: string;
 	/** Title of the result */
@@ -1529,7 +1529,7 @@ export interface InlineQueryResultArticle {
 /** Represents a link to an MP3 audio file. By default, this audio file will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the audio. */
 export interface InlineQueryResultAudio {
 	/** Type of the result, must be *audio* */
-	type: string;
+	type: "audio";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL for the audio file */
@@ -1555,7 +1555,7 @@ export interface InlineQueryResultAudio {
 /** Represents a link to an MP3 audio file stored on the Telegram servers. By default, this audio file will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the audio. */
 export interface InlineQueryResultCachedAudio {
 	/** Type of the result, must be *audio* */
-	type: string;
+	type: "audio";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier for the audio file */
@@ -1575,7 +1575,7 @@ export interface InlineQueryResultCachedAudio {
 /** Represents a link to a file stored on the Telegram servers. By default, this file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the file. */
 export interface InlineQueryResultCachedDocument {
 	/** Type of the result, must be *document* */
-	type: string;
+	type: "document";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** Title for the result */
@@ -1599,7 +1599,7 @@ export interface InlineQueryResultCachedDocument {
 /** Represents a link to an animated GIF file stored on the Telegram servers. By default, this animated GIF file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with specified content instead of the animation. */
 export interface InlineQueryResultCachedGif {
 	/** Type of the result, must be *gif* */
-	type: string;
+	type: "gif";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier for the GIF file */
@@ -1623,7 +1623,7 @@ export interface InlineQueryResultCachedGif {
 /** Represents a link to a video animation (H.264/MPEG-4 AVC video without sound) stored on the Telegram servers. By default, this animated MPEG-4 file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the animation. */
 export interface InlineQueryResultCachedMpeg4Gif {
 	/** Type of the result, must be *mpeg4\_gif* */
-	type: string;
+	type: "mpeg4_gif";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier for the MPEG4 file */
@@ -1647,7 +1647,7 @@ export interface InlineQueryResultCachedMpeg4Gif {
 /** Represents a link to a photo stored on the Telegram servers. By default, this photo will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the photo. */
 export interface InlineQueryResultCachedPhoto {
 	/** Type of the result, must be *photo* */
-	type: string;
+	type: "photo";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier of the photo */
@@ -1673,7 +1673,7 @@ export interface InlineQueryResultCachedPhoto {
 /** Represents a link to a sticker stored on the Telegram servers. By default, this sticker will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the sticker. */
 export interface InlineQueryResultCachedSticker {
 	/** Type of the result, must be *sticker* */
-	type: string;
+	type: "sticker";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier of the sticker */
@@ -1687,7 +1687,7 @@ export interface InlineQueryResultCachedSticker {
 /** Represents a link to a video file stored on the Telegram servers. By default, this video file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the video. */
 export interface InlineQueryResultCachedVideo {
 	/** Type of the result, must be *video* */
-	type: string;
+	type: "video";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier for the video file */
@@ -1713,7 +1713,7 @@ export interface InlineQueryResultCachedVideo {
 /** Represents a link to a voice message stored on the Telegram servers. By default, this voice message will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the voice message. */
 export interface InlineQueryResultCachedVoice {
 	/** Type of the result, must be *voice* */
-	type: string;
+	type: "voice";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid file identifier for the voice message */
@@ -1735,7 +1735,7 @@ export interface InlineQueryResultCachedVoice {
 /** Represents a contact with a phone number. By default, this contact will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the contact. */
 export interface InlineQueryResultContact {
 	/** Type of the result, must be *contact* */
-	type: string;
+	type: "contact";
 	/** Unique identifier for this result, 1-64 Bytes */
 	id: string;
 	/** Contact's phone number */
@@ -1761,7 +1761,7 @@ export interface InlineQueryResultContact {
 /** Represents a link to a file. By default, this file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the file. Currently, only **.PDF** and **.ZIP** files can be sent using this method. */
 export interface InlineQueryResultDocument {
 	/** Type of the result, must be *document* */
-	type: string;
+	type: "document";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** Title for the result */
@@ -1793,7 +1793,7 @@ export interface InlineQueryResultDocument {
 /** Represents a [Game](https://core.telegram.org/bots/api/#game). */
 export interface InlineQueryResultGame {
 	/** Type of the result, must be *game* */
-	type: string;
+	type: "game";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** Short name of the game */
@@ -1805,7 +1805,7 @@ export interface InlineQueryResultGame {
 /** Represents a link to an animated GIF file. By default, this animated GIF file will be sent by the user with optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the animation. */
 export interface InlineQueryResultGif {
 	/** Type of the result, must be *gif* */
-	type: string;
+	type: "gif";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL for the GIF file */
@@ -1839,7 +1839,7 @@ export interface InlineQueryResultGif {
 /** Represents a location on a map. By default, the location will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the location. */
 export interface InlineQueryResultLocation {
 	/** Type of the result, must be *location* */
-	type: string;
+	type: "location";
 	/** Unique identifier for this result, 1-64 Bytes */
 	id: string;
 	/** Location latitude in degrees */
@@ -1871,7 +1871,7 @@ export interface InlineQueryResultLocation {
 /** Represents a link to a video animation (H.264/MPEG-4 AVC video without sound). By default, this animated MPEG-4 file will be sent by the user with optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the animation. */
 export interface InlineQueryResultMpeg4Gif {
 	/** Type of the result, must be *mpeg4\_gif* */
-	type: string;
+	type: "mpeg4_gif";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL for the MPEG4 file */
@@ -1905,7 +1905,7 @@ export interface InlineQueryResultMpeg4Gif {
 /** Represents a link to a photo. By default, this photo will be sent by the user with optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the photo. */
 export interface InlineQueryResultPhoto {
 	/** Type of the result, must be *photo* */
-	type: string;
+	type: "photo";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL of the photo. Photo must be in **JPEG** format. Photo size must not exceed 5MB. */
@@ -1937,7 +1937,7 @@ export interface InlineQueryResultPhoto {
 /** Represents a venue. By default, the venue will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the venue. */
 export interface InlineQueryResultVenue {
 	/** Type of the result, must be *venue* */
-	type: string;
+	type: "venue";
 	/** Unique identifier for this result, 1-64 Bytes */
 	id: string;
 	/** Latitude of the venue location in degrees */
@@ -1971,7 +1971,7 @@ export interface InlineQueryResultVenue {
 /** Represents a link to a page containing an embedded video player or a video file. By default, this video file will be sent by the user with an optional caption. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the video.  If an InlineQueryResultVideo message contains an embedded video (e.g., YouTube), you **must** replace its content using *input\_message\_content*. */
 export interface InlineQueryResultVideo {
 	/** Type of the result, must be *video* */
-	type: string;
+	type: "video";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL for the embedded video player or video file */
@@ -2007,7 +2007,7 @@ export interface InlineQueryResultVideo {
 /** Represents a link to a voice recording in an .OGG container encoded with OPUS. By default, this voice recording will be sent by the user. Alternatively, you can use *input\_message\_content* to send a message with the specified content instead of the the voice message. */
 export interface InlineQueryResultVoice {
 	/** Type of the result, must be *voice* */
-	type: string;
+	type: "voice";
 	/** Unique identifier for this result, 1-64 bytes */
 	id: string;
 	/** A valid URL for the voice recording */
@@ -2153,7 +2153,7 @@ export type InputMedia = InputMediaAnimation | InputMediaAudio | InputMediaDocum
 /** Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to be sent. */
 export interface InputMediaAnimation {
 	/** Type of the media, must be *animation* */
-	type: string;
+	type: "animation";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2179,7 +2179,7 @@ export interface InputMediaAnimation {
 /** Represents an audio file to be treated as music to be sent. */
 export interface InputMediaAudio {
 	/** Type of the media, must be *audio* */
-	type: string;
+	type: "audio";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2201,7 +2201,7 @@ export interface InputMediaAudio {
 /** Represents a general file to be sent. */
 export interface InputMediaDocument {
 	/** Type of the media, must be *document* */
-	type: string;
+	type: "document";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2219,7 +2219,7 @@ export interface InputMediaDocument {
 /** Represents an HTTP link to be sent. */
 export interface InputMediaLink {
 	/** Type of the media, must be *link* */
-	type: string;
+	type: "link";
 	/** HTTP URL of the link */
 	url: string;
 }
@@ -2227,7 +2227,7 @@ export interface InputMediaLink {
 /** Represents a live photo to be sent. */
 export interface InputMediaLivePhoto {
 	/** Type of the media, must be *live\_photo* */
-	type: string;
+	type: "live_photo";
 	/** Video of the live photo to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
 	media: InputFile | string;
 	/** The static photo to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
@@ -2247,7 +2247,7 @@ export interface InputMediaLivePhoto {
 /** Represents a location to be sent. */
 export interface InputMediaLocation {
 	/** Type of the media, must be *location* */
-	type: string;
+	type: "location";
 	/** Latitude of the location */
 	latitude: number;
 	/** Longitude of the location */
@@ -2259,7 +2259,7 @@ export interface InputMediaLocation {
 /** Represents a photo to be sent. */
 export interface InputMediaPhoto {
 	/** Type of the media, must be *photo* */
-	type: string;
+	type: "photo";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Caption of the photo to be sent, 0-1024 characters after entities parsing */
@@ -2277,7 +2277,7 @@ export interface InputMediaPhoto {
 /** Represents a sticker file to be sent. */
 export interface InputMediaSticker {
 	/** Type of the media, must be *sticker* */
-	type: string;
+	type: "sticker";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a .WEBP sticker from the Internet, or pass “attach://<file_attach_name>” to upload a new .WEBP, .TGS, or .WEBM sticker using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Emoji associated with the sticker; only for just uploaded stickers */
@@ -2287,7 +2287,7 @@ export interface InputMediaSticker {
 /** Represents a venue to be sent. */
 export interface InputMediaVenue {
 	/** Type of the media, must be *venue* */
-	type: string;
+	type: "venue";
 	/** Latitude of the location */
 	latitude: number;
 	/** Longitude of the location */
@@ -2309,7 +2309,7 @@ export interface InputMediaVenue {
 /** Represents a video to be sent. */
 export interface InputMediaVideo {
 	/** Type of the media, must be *video* */
-	type: string;
+	type: "video";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2341,7 +2341,7 @@ export interface InputMediaVideo {
 /** Represents a voice message file to be sent. */
 export interface InputMediaVoiceNote {
 	/** Type of the media, must be *voice\_note* */
-	type: string;
+	type: "voice_note";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass "attach://<file_attach_name>" to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Caption of the voice message to be sent, 0-1024 characters after entities parsing */
@@ -2363,7 +2363,7 @@ export type InputPaidMedia = InputPaidMediaLivePhoto | InputPaidMediaPhoto | Inp
 /** The paid media to send is a live photo. */
 export interface InputPaidMediaLivePhoto {
 	/** Type of the media, must be *live\_photo* */
-	type: string;
+	type: "live_photo";
 	/** Video of the live photo to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
 	media: InputFile | string;
 	/** The static photo to send. Pass a file_id to send a file that exists on the Telegram servers (recommended) or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files). Sending live photos by a URL is currently unsupported. */
@@ -2373,7 +2373,7 @@ export interface InputPaidMediaLivePhoto {
 /** The paid media to send is a photo. */
 export interface InputPaidMediaPhoto {
 	/** Type of the media, must be *photo* */
-	type: string;
+	type: "photo";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 }
@@ -2381,7 +2381,7 @@ export interface InputPaidMediaPhoto {
 /** The paid media to send is a video. */
 export interface InputPaidMediaVideo {
 	/** Type of the media, must be *video* */
-	type: string;
+	type: "video";
 	/** File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	media: InputFile | string;
 	/** *Optional*. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2424,7 +2424,7 @@ export type InputProfilePhoto = InputProfilePhotoStatic | InputProfilePhotoAnima
 /** An animated profile photo in the MPEG4 format. */
 export interface InputProfilePhotoAnimated {
 	/** Type of the profile photo, must be *animated* */
-	type: string;
+	type: "animated";
 	/** The animated profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	animation: InputFile | string;
 	/** *Optional*. Timestamp in seconds of the frame that will be used as the static profile photo. Defaults to 0.0. */
@@ -2434,7 +2434,7 @@ export interface InputProfilePhotoAnimated {
 /** A static profile photo in the .JPG format. */
 export interface InputProfilePhotoStatic {
 	/** Type of the profile photo, must be *static* */
-	type: string;
+	type: "static";
 	/** The static profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	photo: InputFile | string;
 }
@@ -2445,7 +2445,7 @@ export type InputRichBlock = InputRichBlockParagraph | InputRichBlockSectionHead
 /** A block with an anchor, corresponding to the HTML tag `<a>` with the attribute `name`. */
 export interface InputRichBlockAnchor {
 	/** Type of the block, always “anchor” */
-	type: string;
+	type: "anchor";
 	/** The name of the anchor */
 	name: string;
 }
@@ -2453,7 +2453,7 @@ export interface InputRichBlockAnchor {
 /** A block with an animation, corresponding to the HTML tag `<video>`. */
 export interface InputRichBlockAnimation {
 	/** Type of the block, always “animation” */
-	type: string;
+	type: "animation";
 	/** The animation. Caption is ignored. */
 	animation: InputMediaAnimation;
 	/** *Optional*. Caption of the block */
@@ -2463,7 +2463,7 @@ export interface InputRichBlockAnimation {
 /** A block with a music file, corresponding to the HTML tag `<audio>`. */
 export interface InputRichBlockAudio {
 	/** Type of the block, always “audio” */
-	type: string;
+	type: "audio";
 	/** The audio. Caption is ignored. */
 	audio: InputMediaAudio;
 	/** *Optional*. Caption of the block */
@@ -2473,7 +2473,7 @@ export interface InputRichBlockAudio {
 /** A block quotation, corresponding to the HTML tag `<blockquote>`. */
 export interface InputRichBlockBlockQuotation {
 	/** Type of the block, always “blockquote” */
-	type: string;
+	type: "blockquote";
 	/** Content of the block */
 	blocks: InputRichBlock[];
 	/** *Optional*. Credit of the block */
@@ -2483,7 +2483,7 @@ export interface InputRichBlockBlockQuotation {
 /** A block containing a list of buttons that are shown in one row, corresponding to the custom HTML tag `<tg-button-row>`. */
 export interface InputRichBlockButtons {
 	/** Type of the block, always “buttons” */
-	type: string;
+	type: "buttons";
 	/** List of 1-8 buttons to send */
 	buttons: RichMessageButton[];
 	/** *Optional*. Horizontal alignment of the buttons. Currently, must be one of “left”, “center”, or “right”. */
@@ -2493,7 +2493,7 @@ export interface InputRichBlockButtons {
 /** A collage, corresponding to the custom HTML tag `<tg-collage>`. */
 export interface InputRichBlockCollage {
 	/** Type of the block, always “collage” */
-	type: string;
+	type: "collage";
 	/** Elements of the collage */
 	blocks: InputRichBlock[];
 	/** *Optional*. Caption of the block */
@@ -2503,7 +2503,7 @@ export interface InputRichBlockCollage {
 /** An expandable block for details disclosure, corresponding to the HTML tag `<details>`. */
 export interface InputRichBlockDetails {
 	/** Type of the block, always “details” */
-	type: string;
+	type: "details";
 	/** Always shown summary of the block */
 	summary: RichText;
 	/** Content of the block */
@@ -2515,13 +2515,13 @@ export interface InputRichBlockDetails {
 /** A divider, corresponding to the HTML tag `<hr/>`. */
 export interface InputRichBlockDivider {
 	/** Type of the block, always “divider” */
-	type: string;
+	type: "divider";
 }
 
 /** A block with a general file, corresponding to the custom HTML tag `<tg-document>`. */
 export interface InputRichBlockDocument {
 	/** Type of the block, always “document” */
-	type: string;
+	type: "document";
 	/** The document. Caption is ignored. */
 	document: InputMediaDocument;
 	/** *Optional*. Caption of the block */
@@ -2531,7 +2531,7 @@ export interface InputRichBlockDocument {
 /** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"expandable"`. */
 export interface InputRichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
-	type: string;
+	type: "expandable_blockquote";
 	/** Content of the block */
 	text: RichText;
 	/** *Optional*. Credit of the block */
@@ -2541,7 +2541,7 @@ export interface InputRichBlockExpandableBlockQuotation {
 /** A footer, corresponding to the HTML tag `<footer>`. */
 export interface InputRichBlockFooter {
 	/** Type of the block, always “footer” */
-	type: string;
+	type: "footer";
 	/** Text of the block */
 	text: RichText;
 }
@@ -2549,7 +2549,7 @@ export interface InputRichBlockFooter {
 /** A list of blocks, corresponding to the HTML tag `<ul>` or `<ol>` with multiple nested tags `<li>`. */
 export interface InputRichBlockList {
 	/** Type of the block, always “list” */
-	type: string;
+	type: "list";
 	/** Items of the list */
 	items: InputRichBlockListItem[];
 }
@@ -2571,7 +2571,7 @@ export interface InputRichBlockListItem {
 /** A block with a map, corresponding to the custom HTML tag `<tg-map>`. The map's width and height must not exceed 10000 in total. The width and height ratio must be at most 20. */
 export interface InputRichBlockMap {
 	/** Type of the block, always “map” */
-	type: string;
+	type: "map";
 	/** Location of the center of the map */
 	location: Location;
 	/** *Optional*. Map zoom level; 0-24 */
@@ -2587,7 +2587,7 @@ export interface InputRichBlockMap {
 /** A block with a mathematical expression in LaTeX format, corresponding to the custom HTML tag `<tg-math-block>`. */
 export interface InputRichBlockMathematicalExpression {
 	/** Type of the block, always “mathematical_expression” */
-	type: string;
+	type: "mathematical_expression";
 	/** The mathematical expression in LaTeX format */
 	expression: string;
 }
@@ -2595,7 +2595,7 @@ export interface InputRichBlockMathematicalExpression {
 /** A text paragraph, corresponding to the HTML tag `<p>`. */
 export interface InputRichBlockParagraph {
 	/** Type of the block, always “paragraph” */
-	type: string;
+	type: "paragraph";
 	/** Text of the block */
 	text: RichText;
 }
@@ -2603,7 +2603,7 @@ export interface InputRichBlockParagraph {
 /** A block with a photo, corresponding to the HTML tag `<img>`. */
 export interface InputRichBlockPhoto {
 	/** Type of the block, always “photo” */
-	type: string;
+	type: "photo";
 	/** The photo. Caption is ignored. */
 	photo: InputMediaPhoto;
 	/** *Optional*. Caption of the block */
@@ -2613,7 +2613,7 @@ export interface InputRichBlockPhoto {
 /** A preformatted text block, corresponding to the nested HTML tags `<pre>` and `<code>`. */
 export interface InputRichBlockPreformatted {
 	/** Type of the block, always “pre” */
-	type: string;
+	type: "pre";
 	/** Text of the block */
 	text: RichText;
 	/** *Optional*. The programming language of the text */
@@ -2623,7 +2623,7 @@ export interface InputRichBlockPreformatted {
 /** A quotation with centered text, loosely corresponding to the HTML tag `<aside>`. */
 export interface InputRichBlockPullQuotation {
 	/** Type of the block, always “pullquote” */
-	type: string;
+	type: "pullquote";
 	/** Text of the block */
 	text: RichText;
 	/** *Optional*. Credit of the block */
@@ -2633,7 +2633,7 @@ export interface InputRichBlockPullQuotation {
 /** A section heading, corresponding to the HTML tags `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>`, or `<h6>`. */
 export interface InputRichBlockSectionHeading {
 	/** Type of the block, always “heading” */
-	type: string;
+	type: "heading";
 	/** Text of the block */
 	text: RichText;
 	/** Relative size of the text font; 1-6, 1 is the largest, 6 is the smallest */
@@ -2643,7 +2643,7 @@ export interface InputRichBlockSectionHeading {
 /** A slideshow, corresponding to the custom HTML tag `<tg-slideshow>`. */
 export interface InputRichBlockSlideshow {
 	/** Type of the block, always “slideshow” */
-	type: string;
+	type: "slideshow";
 	/** Elements of the slideshow */
 	blocks: InputRichBlock[];
 	/** *Optional*. Caption of the block */
@@ -2653,7 +2653,7 @@ export interface InputRichBlockSlideshow {
 /** A table, corresponding to the HTML tag `<table>`. */
 export interface InputRichBlockTable {
 	/** Type of the block, always “table” */
-	type: string;
+	type: "table";
 	/** Cells of the table */
 	cells: RichBlockTableCell[][];
 	/** *Optional*. Pass *True* if the table has borders */
@@ -2669,7 +2669,7 @@ export interface InputRichBlockTable {
 /** A block with a “Thinking…” placeholder, corresponding to the custom HTML tag `<tg-thinking>`. The block may be used only in [sendRichMessageDraft](https://core.telegram.org/bots/api/#sendrichmessagedraft), therefore it can't be received in messages. See [https://t.me/addemoji/AIActions](https://t.me/addemoji/AIActions) for examples of custom emoji that are recommended for usage in the block. */
 export interface InputRichBlockThinking {
 	/** Type of the block, always “thinking” */
-	type: string;
+	type: "thinking";
 	/** Text of the block. See [https://t.me/addemoji/AIActions](https://t.me/addemoji/AIActions) for examples of custom emoji that are recommended for usage in the block. */
 	text: RichText;
 }
@@ -2677,7 +2677,7 @@ export interface InputRichBlockThinking {
 /** A block with a video, corresponding to the HTML tag `<video>`. */
 export interface InputRichBlockVideo {
 	/** Type of the block, always “video” */
-	type: string;
+	type: "video";
 	/** The video. Caption is ignored. */
 	video: InputMediaVideo;
 	/** *Optional*. Caption of the block */
@@ -2687,7 +2687,7 @@ export interface InputRichBlockVideo {
 /** A block with a voice note, corresponding to the HTML tag `<audio>`. */
 export interface InputRichBlockVoiceNote {
 	/** Type of the block, always “voice_note” */
-	type: string;
+	type: "voice_note";
 	/** The voice note. Caption is ignored. */
 	voice_note: InputMediaVoiceNote;
 	/** *Optional*. Caption of the block */
@@ -2744,7 +2744,7 @@ export type InputStoryContent = InputStoryContentPhoto | InputStoryContentVideo;
 /** Describes a photo to post as a story. */
 export interface InputStoryContentPhoto {
 	/** Type of the content, must be *photo* */
-	type: string;
+	type: "photo";
 	/** The photo to post as a story. The photo must be of the size 1080x1920 and must not exceed 10 MB. The photo can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	photo: InputFile | string;
 }
@@ -2752,7 +2752,7 @@ export interface InputStoryContentPhoto {
 /** Describes a video to post as a story. */
 export interface InputStoryContentVideo {
 	/** Type of the content, must be *video* */
-	type: string;
+	type: "video";
 	/** The video to post as a story. The video must be of the size 720x1280, streamable, encoded with H.265 codec, with key frames added each second in the MPEG4 format, and must not exceed 30 MB. The video can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the video was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
 	video: InputFile | string;
 	/** *Optional*. Precise duration of the video in seconds; 0-60 */
@@ -3016,19 +3016,19 @@ export type MenuButton = MenuButtonCommands | MenuButtonWebApp | MenuButtonDefau
 /** Represents a menu button, which opens the bot's list of commands. */
 export interface MenuButtonCommands {
 	/** Type of the button, must be *commands* */
-	type: string;
+	type: "commands";
 }
 
 /** Describes that no specific value for the menu button was set. */
 export interface MenuButtonDefault {
 	/** Type of the button, must be *default* */
-	type: string;
+	type: "default";
 }
 
 /** Represents a menu button, which launches a [Web App](/bots/webapps). */
 export interface MenuButtonWebApp {
 	/** Type of the button, must be *web\_app* */
-	type: string;
+	type: "web_app";
 	/** Text on the button */
 	text: string;
 	/** Description of the Web App that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method [answerWebAppQuery](https://core.telegram.org/bots/api/#answerwebappquery). Alternatively, a `t.me` link to a Web App of the bot can be specified in the object instead of the Web App's URL, in which case the Web App will be opened as if the user pressed the link. */
@@ -3329,7 +3329,7 @@ export type MessageOrigin = MessageOriginUser | MessageOriginHiddenUser | Messag
 /** The message was originally sent to a channel chat. */
 export interface MessageOriginChannel {
 	/** Type of the message origin, always “channel” */
-	type: string;
+	type: "channel";
 	/** Date the message was sent originally in Unix time */
 	date: number;
 	/** Channel chat to which the message was originally sent */
@@ -3343,7 +3343,7 @@ export interface MessageOriginChannel {
 /** The message was originally sent on behalf of a chat to a group chat. */
 export interface MessageOriginChat {
 	/** Type of the message origin, always “chat” */
-	type: string;
+	type: "chat";
 	/** Date the message was sent originally in Unix time */
 	date: number;
 	/** Chat that sent the message originally */
@@ -3355,7 +3355,7 @@ export interface MessageOriginChat {
 /** The message was originally sent by an unknown user. */
 export interface MessageOriginHiddenUser {
 	/** Type of the message origin, always “hidden_user” */
-	type: string;
+	type: "hidden_user";
 	/** Date the message was sent originally in Unix time */
 	date: number;
 	/** Name of the user that sent the message originally */
@@ -3365,7 +3365,7 @@ export interface MessageOriginHiddenUser {
 /** The message was originally sent by a known user. */
 export interface MessageOriginUser {
 	/** Type of the message origin, always “user” */
-	type: string;
+	type: "user";
 	/** Date the message was sent originally in Unix time */
 	date: number;
 	/** User that sent the message originally */
@@ -3420,7 +3420,7 @@ export type OwnedGift = OwnedGiftRegular | OwnedGiftUnique;
 /** Describes a regular gift owned by a user or a chat. */
 export interface OwnedGiftRegular {
 	/** Type of the gift, always “regular” */
-	type: string;
+	type: "regular";
 	/** Information about the regular gift */
 	gift: Gift;
 	/** *Optional*. Unique identifier of the gift for the bot; for gifts received on behalf of business accounts only */
@@ -3454,7 +3454,7 @@ export interface OwnedGiftRegular {
 /** Describes a unique gift received and owned by a user or a chat. */
 export interface OwnedGiftUnique {
 	/** Type of the gift, always “unique” */
-	type: string;
+	type: "unique";
 	/** Information about the unique gift */
 	gift: UniqueGift;
 	/** *Optional*. Unique identifier of the received gift for the bot; for gifts received on behalf of business accounts only */
@@ -3497,7 +3497,7 @@ export interface PaidMediaInfo {
 /** The paid media is a [live photo](https://core.telegram.org/bots/api/#livephoto). */
 export interface PaidMediaLivePhoto {
 	/** Type of the paid media, always “live_photo” */
-	type: string;
+	type: "live_photo";
 	/** The photo */
 	live_photo: LivePhoto;
 }
@@ -3505,7 +3505,7 @@ export interface PaidMediaLivePhoto {
 /** The paid media is a photo. */
 export interface PaidMediaPhoto {
 	/** Type of the paid media, always “photo” */
-	type: string;
+	type: "photo";
 	/** The photo */
 	photo: PhotoSize[];
 }
@@ -3513,7 +3513,7 @@ export interface PaidMediaPhoto {
 /** The paid media isn't available before the payment. */
 export interface PaidMediaPreview {
 	/** Type of the paid media, always “preview” */
-	type: string;
+	type: "preview";
 	/** *Optional*. Media width as defined by the sender */
 	width?: number;
 	/** *Optional*. Media height as defined by the sender */
@@ -3533,7 +3533,7 @@ export interface PaidMediaPurchased {
 /** The paid media is a video. */
 export interface PaidMediaVideo {
 	/** Type of the paid media, always “video” */
-	type: string;
+	type: "video";
 	/** The video */
 	video: Video;
 }
@@ -3558,7 +3558,7 @@ export type PassportElementError = PassportElementErrorDataField | PassportEleme
 /** Represents an issue in one of the data fields that was provided by the user. The error is considered resolved when the field's value changes. */
 export interface PassportElementErrorDataField {
 	/** Error source, must be *data* */
-	source: string;
+	source: "data";
 	/** The section of the user's Telegram Passport which has the error, one of “personal_details”, “passport”, “driver_license”, “identity_card”, “internal_passport”, “address” */
 	type: "personal_details" | "passport" | "driver_license" | "identity_card" | "internal_passport" | "address";
 	/** Name of the data field which has the error */
@@ -3572,7 +3572,7 @@ export interface PassportElementErrorDataField {
 /** Represents an issue with a document scan. The error is considered resolved when the file with the document scan changes. */
 export interface PassportElementErrorFile {
 	/** Error source, must be *file* */
-	source: string;
+	source: "file";
 	/** The section of the user's Telegram Passport which has the issue, one of “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration” */
 	type: "utility_bill" | "bank_statement" | "rental_agreement" | "passport_registration" | "temporary_registration";
 	/** Base64-encoded file hash */
@@ -3584,7 +3584,7 @@ export interface PassportElementErrorFile {
 /** Represents an issue with a list of scans. The error is considered resolved when the list of files containing the scans changes. */
 export interface PassportElementErrorFiles {
 	/** Error source, must be *files* */
-	source: string;
+	source: "files";
 	/** The section of the user's Telegram Passport which has the issue, one of “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration” */
 	type: "utility_bill" | "bank_statement" | "rental_agreement" | "passport_registration" | "temporary_registration";
 	/** List of base64-encoded file hashes */
@@ -3596,7 +3596,7 @@ export interface PassportElementErrorFiles {
 /** Represents an issue with the front side of a document. The error is considered resolved when the file with the front side of the document changes. */
 export interface PassportElementErrorFrontSide {
 	/** Error source, must be *front\_side* */
-	source: string;
+	source: "front_side";
 	/** The section of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport” */
 	type: "passport" | "driver_license" | "identity_card" | "internal_passport";
 	/** Base64-encoded hash of the file with the front side of the document */
@@ -3608,7 +3608,7 @@ export interface PassportElementErrorFrontSide {
 /** Represents an issue with the reverse side of a document. The error is considered resolved when the file with reverse side of the document changes. */
 export interface PassportElementErrorReverseSide {
 	/** Error source, must be *reverse\_side* */
-	source: string;
+	source: "reverse_side";
 	/** The section of the user's Telegram Passport which has the issue, one of “driver_license”, “identity_card” */
 	type: "driver_license" | "identity_card";
 	/** Base64-encoded hash of the file with the reverse side of the document */
@@ -3620,7 +3620,7 @@ export interface PassportElementErrorReverseSide {
 /** Represents an issue with the selfie with a document. The error is considered resolved when the file with the selfie changes. */
 export interface PassportElementErrorSelfie {
 	/** Error source, must be *selfie* */
-	source: string;
+	source: "selfie";
 	/** The section of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport” */
 	type: "passport" | "driver_license" | "identity_card" | "internal_passport";
 	/** Base64-encoded hash of the file with the selfie */
@@ -3632,7 +3632,7 @@ export interface PassportElementErrorSelfie {
 /** Represents an issue with one of the files that constitute the translation of a document. The error is considered resolved when the file changes. */
 export interface PassportElementErrorTranslationFile {
 	/** Error source, must be *translation\_file* */
-	source: string;
+	source: "translation_file";
 	/** Type of element of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration” */
 	type: "passport" | "driver_license" | "identity_card" | "internal_passport" | "utility_bill" | "bank_statement" | "rental_agreement" | "passport_registration" | "temporary_registration";
 	/** Base64-encoded file hash */
@@ -3644,7 +3644,7 @@ export interface PassportElementErrorTranslationFile {
 /** Represents an issue with the translated version of a document. The error is considered resolved when a file with the document translation change. */
 export interface PassportElementErrorTranslationFiles {
 	/** Error source, must be *translation\_files* */
-	source: string;
+	source: "translation_files";
 	/** Type of element of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration” */
 	type: "passport" | "driver_license" | "identity_card" | "internal_passport" | "utility_bill" | "bank_statement" | "rental_agreement" | "passport_registration" | "temporary_registration";
 	/** List of base64-encoded file hashes */
@@ -3656,7 +3656,7 @@ export interface PassportElementErrorTranslationFiles {
 /** Represents an issue in an unspecified place. The error is considered resolved when new data is added. */
 export interface PassportElementErrorUnspecified {
 	/** Error source, must be *unspecified* */
-	source: string;
+	source: "unspecified";
 	/** Type of element of the user's Telegram Passport which has the issue */
 	type: string;
 	/** Base64-encoded element hash */
@@ -3875,7 +3875,7 @@ export type ReactionType = ReactionTypeEmoji | ReactionTypeCustomEmoji | Reactio
 /** The reaction is based on a custom emoji. */
 export interface ReactionTypeCustomEmoji {
 	/** Type of the reaction, always “custom_emoji” */
-	type: string;
+	type: "custom_emoji";
 	/** Custom emoji identifier */
 	custom_emoji_id: string;
 }
@@ -3883,21 +3883,21 @@ export interface ReactionTypeCustomEmoji {
 /** The reaction is based on an emoji. */
 export interface ReactionTypeEmoji {
 	/** Type of the reaction, always “emoji” */
-	type: string;
-	/** Reaction emoji. Currently, it can be one of "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "". */
+	type: "emoji";
+	/** Reaction emoji. Currently, it can be one of "❤", "👍", "👎", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "❤‍🔥", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👨‍💻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "✍", "🤗", "🫡", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷‍♂", "🤷", "🤷‍♀", "😡". */
 	emoji: string;
 }
 
 /** The reaction is paid. */
 export interface ReactionTypePaid {
 	/** Type of the reaction, always “paid” */
-	type: string;
+	type: "paid";
 }
 
 /** This object contains basic information about a refunded payment. */
 export interface RefundedPayment {
 	/** Three-letter ISO 4217 [currency](/bots/payments#supported-currencies) code, or “XTR” for payments in [Telegram Stars](https://t.me/BotNews/90). Currently, always “XTR”. */
-	currency: string;
+	currency: "XTR";
 	/** Total refunded price in the *smallest units* of the currency (integer, **not** float/double). For example, for a price of `US$ 1.45`, `total_amount = 145`. See the *exp* parameter in [currencies.json](/bots/payments/currencies.json), it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). */
 	total_amount: number;
 	/** Bot-specified invoice payload */
@@ -3972,19 +3972,19 @@ export type RevenueWithdrawalState = RevenueWithdrawalStatePending | RevenueWith
 /** The withdrawal failed and the transaction was refunded. */
 export interface RevenueWithdrawalStateFailed {
 	/** Type of the state, always “failed” */
-	type: string;
+	type: "failed";
 }
 
 /** The withdrawal is in progress. */
 export interface RevenueWithdrawalStatePending {
 	/** Type of the state, always “pending” */
-	type: string;
+	type: "pending";
 }
 
 /** The withdrawal succeeded. */
 export interface RevenueWithdrawalStateSucceeded {
 	/** Type of the state, always “succeeded” */
-	type: string;
+	type: "succeeded";
 	/** Date the withdrawal was completed in Unix time */
 	date: number;
 	/** An HTTPS URL that can be used to see transaction details */
@@ -3997,7 +3997,7 @@ export type RichBlock = RichBlockParagraph | RichBlockSectionHeading | RichBlock
 /** A block with an anchor, corresponding to the HTML tag `<a>` with the attribute `name`. */
 export interface RichBlockAnchor {
 	/** Type of the block, always “anchor” */
-	type: string;
+	type: "anchor";
 	/** The name of the anchor */
 	name: string;
 }
@@ -4005,7 +4005,7 @@ export interface RichBlockAnchor {
 /** A block with an animation, corresponding to the HTML tag `<video>`. */
 export interface RichBlockAnimation {
 	/** Type of the block, always “animation” */
-	type: string;
+	type: "animation";
 	/** The animation */
 	animation: Animation;
 	/** *Optional*. *True*, if the media preview is covered by a spoiler animation */
@@ -4017,7 +4017,7 @@ export interface RichBlockAnimation {
 /** A block with a music file, corresponding to the HTML tag `<audio>`. */
 export interface RichBlockAudio {
 	/** Type of the block, always “audio” */
-	type: string;
+	type: "audio";
 	/** The audio */
 	audio: Audio;
 	/** *Optional*. Caption of the block */
@@ -4027,7 +4027,7 @@ export interface RichBlockAudio {
 /** A block quotation, corresponding to the HTML tag `<blockquote>`. */
 export interface RichBlockBlockQuotation {
 	/** Type of the block, always “blockquote” */
-	type: string;
+	type: "blockquote";
 	/** Content of the block */
 	blocks: RichBlock[];
 	/** *Optional*. Credit of the block */
@@ -4037,7 +4037,7 @@ export interface RichBlockBlockQuotation {
 /** A block containing a list of buttons that are shown in one row, corresponding to the custom HTML tag `<tg-button-row>`. */
 export interface RichBlockButtons {
 	/** Type of the block, always “buttons” */
-	type: string;
+	type: "buttons";
 	/** The buttons */
 	buttons: RichMessageButton[];
 	/** *Optional*. Horizontal alignment of the buttons. Currently, must be one of “left”, “center”, or “right”. */
@@ -4055,7 +4055,7 @@ export interface RichBlockCaption {
 /** A collage, corresponding to the custom HTML tag `<tg-collage>`. */
 export interface RichBlockCollage {
 	/** Type of the block, always “collage” */
-	type: string;
+	type: "collage";
 	/** Elements of the collage */
 	blocks: RichBlock[];
 	/** *Optional*. Caption of the block */
@@ -4065,7 +4065,7 @@ export interface RichBlockCollage {
 /** An expandable block for details disclosure, corresponding to the HTML tag `<details>`. */
 export interface RichBlockDetails {
 	/** Type of the block, always “details” */
-	type: string;
+	type: "details";
 	/** Always shown summary of the block */
 	summary: RichText;
 	/** Content of the block */
@@ -4077,13 +4077,13 @@ export interface RichBlockDetails {
 /** A divider, corresponding to the HTML tag `<hr/>`. */
 export interface RichBlockDivider {
 	/** Type of the block, always “divider” */
-	type: string;
+	type: "divider";
 }
 
 /** A block with a general file, corresponding to the custom HTML tag `<tg-document>`. */
 export interface RichBlockDocument {
 	/** Type of the block, always “document” */
-	type: string;
+	type: "document";
 	/** The document */
 	document: Document;
 	/** *Optional*. Caption of the block */
@@ -4093,7 +4093,7 @@ export interface RichBlockDocument {
 /** A block quotation, corresponding to the HTML tag `<blockquote>` with custom attribute `"expandable"`. */
 export interface RichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
-	type: string;
+	type: "expandable_blockquote";
 	/** Content of the block */
 	text: RichText;
 	/** *Optional*. Credit of the block */
@@ -4103,7 +4103,7 @@ export interface RichBlockExpandableBlockQuotation {
 /** A footer, corresponding to the HTML tag `<footer>`. */
 export interface RichBlockFooter {
 	/** Type of the block, always “footer” */
-	type: string;
+	type: "footer";
 	/** Text of the block */
 	text: RichText;
 }
@@ -4111,7 +4111,7 @@ export interface RichBlockFooter {
 /** A list of blocks, corresponding to the HTML tag `<ul>` or `<ol>` with multiple nested tags `<li>`. */
 export interface RichBlockList {
 	/** Type of the block, always “list” */
-	type: string;
+	type: "list";
 	/** Items of the list */
 	items: RichBlockListItem[];
 }
@@ -4135,7 +4135,7 @@ export interface RichBlockListItem {
 /** A block with a map, corresponding to the custom HTML tag `<tg-map>`. */
 export interface RichBlockMap {
 	/** Type of the block, always “map” */
-	type: string;
+	type: "map";
 	/** Location of the center of the map */
 	location: Location;
 	/** Map zoom level */
@@ -4151,7 +4151,7 @@ export interface RichBlockMap {
 /** A block with a mathematical expression in LaTeX format, corresponding to the custom HTML tag `<tg-math-block>`. */
 export interface RichBlockMathematicalExpression {
 	/** Type of the block, always “mathematical_expression” */
-	type: string;
+	type: "mathematical_expression";
 	/** The mathematical expression in LaTeX format */
 	expression: string;
 }
@@ -4159,7 +4159,7 @@ export interface RichBlockMathematicalExpression {
 /** A text paragraph, corresponding to the HTML tag `<p>`. */
 export interface RichBlockParagraph {
 	/** Type of the block, always “paragraph” */
-	type: string;
+	type: "paragraph";
 	/** Text of the block */
 	text: RichText;
 }
@@ -4167,7 +4167,7 @@ export interface RichBlockParagraph {
 /** A block with a photo, corresponding to the HTML tag `<img>`. */
 export interface RichBlockPhoto {
 	/** Type of the block, always “photo” */
-	type: string;
+	type: "photo";
 	/** Available sizes of the photo */
 	photo: PhotoSize[];
 	/** *Optional*. *True*, if the media preview is covered by a spoiler animation */
@@ -4179,7 +4179,7 @@ export interface RichBlockPhoto {
 /** A preformatted text block, corresponding to the nested HTML tags `<pre>` and `<code>`. */
 export interface RichBlockPreformatted {
 	/** Type of the block, always “pre” */
-	type: string;
+	type: "pre";
 	/** Text of the block */
 	text: RichText;
 	/** *Optional*. The programming language of the text */
@@ -4189,7 +4189,7 @@ export interface RichBlockPreformatted {
 /** A quotation with centered text, loosely corresponding to the HTML tag `<aside>`. */
 export interface RichBlockPullQuotation {
 	/** Type of the block, always “pullquote” */
-	type: string;
+	type: "pullquote";
 	/** Text of the block */
 	text: RichText;
 	/** *Optional*. Credit of the block */
@@ -4199,7 +4199,7 @@ export interface RichBlockPullQuotation {
 /** A section heading, corresponding to the HTML tags `<h1>`, `<h2>`, `<h3>`, `<h4>`, `<h5>`, or `<h6>`. */
 export interface RichBlockSectionHeading {
 	/** Type of the block, always “heading” */
-	type: string;
+	type: "heading";
 	/** Text of the block */
 	text: RichText;
 	/** Relative size of the text font; 1-6, 1 is the largest, 6 is the smallest */
@@ -4209,7 +4209,7 @@ export interface RichBlockSectionHeading {
 /** A slideshow, corresponding to the custom HTML tag `<tg-slideshow>`. */
 export interface RichBlockSlideshow {
 	/** Type of the block, always “slideshow” */
-	type: string;
+	type: "slideshow";
 	/** Elements of the slideshow */
 	blocks: RichBlock[];
 	/** *Optional*. Caption of the block */
@@ -4219,7 +4219,7 @@ export interface RichBlockSlideshow {
 /** A table, corresponding to the HTML tag `<table>`. */
 export interface RichBlockTable {
 	/** Type of the block, always “table” */
-	type: string;
+	type: "table";
 	/** Cells of the table */
 	cells: RichBlockTableCell[][];
 	/** *Optional*. *True*, if the table has borders */
@@ -4251,7 +4251,7 @@ export interface RichBlockTableCell {
 /** A block with a “Thinking…” placeholder, corresponding to the custom HTML tag `<tg-thinking>`. The block may be used only in [sendRichMessageDraft](https://core.telegram.org/bots/api/#sendrichmessagedraft), therefore it can't be received in messages. See [https://t.me/addemoji/AIActions](https://t.me/addemoji/AIActions) for examples of custom emoji that are recommended for usage in the block. */
 export interface RichBlockThinking {
 	/** Type of the block, always “thinking” */
-	type: string;
+	type: "thinking";
 	/** Text of the block. See [https://t.me/addemoji/AIActions](https://t.me/addemoji/AIActions) for examples of custom emoji that are recommended for usage in the block. */
 	text: RichText;
 }
@@ -4259,7 +4259,7 @@ export interface RichBlockThinking {
 /** A block with a video, corresponding to the HTML tag `<video>`. */
 export interface RichBlockVideo {
 	/** Type of the block, always “video” */
-	type: string;
+	type: "video";
 	/** The video */
 	video: Video;
 	/** *Optional*. *True*, if the media preview is covered by a spoiler animation */
@@ -4271,7 +4271,7 @@ export interface RichBlockVideo {
 /** A block with a voice note, corresponding to the HTML tag `<audio>`. */
 export interface RichBlockVoiceNote {
 	/** Type of the block, always “voice_note” */
-	type: string;
+	type: "voice_note";
 	/** The voice note */
 	voice_note: Voice;
 	/** *Optional*. Caption of the block */
@@ -4318,7 +4318,7 @@ export type RichText = string | RichText[] | RichTextBold | RichTextItalic | Ric
 /** An anchor. */
 export interface RichTextAnchor {
 	/** Type of the rich text, always “anchor” */
-	type: string;
+	type: "anchor";
 	/** The name of the anchor */
 	name: string;
 }
@@ -4326,7 +4326,7 @@ export interface RichTextAnchor {
 /** A link to an anchor. */
 export interface RichTextAnchorLink {
 	/** Type of the rich text, always “anchor_link” */
-	type: string;
+	type: "anchor_link";
 	/** The link text */
 	text: RichText;
 	/** The name of the anchor. If the name is empty, then the link brings back to the top of the message. */
@@ -4336,7 +4336,7 @@ export interface RichTextAnchorLink {
 /** A text with a bank card number. */
 export interface RichTextBankCardNumber {
 	/** Type of the rich text, always “bank_card_number” */
-	type: string;
+	type: "bank_card_number";
 	/** The text */
 	text: RichText;
 	/** The bank card number */
@@ -4346,7 +4346,7 @@ export interface RichTextBankCardNumber {
 /** A bold text. */
 export interface RichTextBold {
 	/** Type of the rich text, always “bold” */
-	type: string;
+	type: "bold";
 	/** The text */
 	text: RichText;
 }
@@ -4354,7 +4354,7 @@ export interface RichTextBold {
 /** A bot command. */
 export interface RichTextBotCommand {
 	/** Type of the rich text, always “bot_command” */
-	type: string;
+	type: "bot_command";
 	/** The text */
 	text: RichText;
 	/** The bot command */
@@ -4364,7 +4364,7 @@ export interface RichTextBotCommand {
 /** A button. */
 export interface RichTextButton {
 	/** Type of the rich text, always “button” */
-	type: string;
+	type: "button";
 	/** The button */
 	button: RichMessageButton;
 }
@@ -4372,7 +4372,7 @@ export interface RichTextButton {
 /** A cashtag. */
 export interface RichTextCashtag {
 	/** Type of the rich text, always “cashtag” */
-	type: string;
+	type: "cashtag";
 	/** The text */
 	text: RichText;
 	/** The cashtag */
@@ -4382,7 +4382,7 @@ export interface RichTextCashtag {
 /** A monowidth text. */
 export interface RichTextCode {
 	/** Type of the rich text, always “code” */
-	type: string;
+	type: "code";
 	/** The text */
 	text: RichText;
 }
@@ -4390,7 +4390,7 @@ export interface RichTextCode {
 /** A custom emoji. */
 export interface RichTextCustomEmoji {
 	/** Type of the rich text, always “custom_emoji” */
-	type: string;
+	type: "custom_emoji";
 	/** Unique identifier of the custom emoji. Use [getCustomEmojiStickers](https://core.telegram.org/bots/api/#getcustomemojistickers) to get full information about the sticker. */
 	custom_emoji_id: string;
 	/** Alternative emoji for the custom emoji */
@@ -4400,7 +4400,7 @@ export interface RichTextCustomEmoji {
 /** Formatted date and time. */
 export interface RichTextDateTime {
 	/** Type of the rich text, always “date_time” */
-	type: string;
+	type: "date_time";
 	/** The text */
 	text: RichText;
 	/** The Unix time associated with the entity */
@@ -4412,7 +4412,7 @@ export interface RichTextDateTime {
 /** A text with an email address. */
 export interface RichTextEmailAddress {
 	/** Type of the rich text, always “email_address” */
-	type: string;
+	type: "email_address";
 	/** The text */
 	text: RichText;
 	/** The email address */
@@ -4422,7 +4422,7 @@ export interface RichTextEmailAddress {
 /** A hashtag. */
 export interface RichTextHashtag {
 	/** Type of the rich text, always “hashtag” */
-	type: string;
+	type: "hashtag";
 	/** The text */
 	text: RichText;
 	/** The hashtag */
@@ -4432,7 +4432,7 @@ export interface RichTextHashtag {
 /** An italicized text. */
 export interface RichTextItalic {
 	/** Type of the rich text, always “italic” */
-	type: string;
+	type: "italic";
 	/** The text */
 	text: RichText;
 }
@@ -4440,7 +4440,7 @@ export interface RichTextItalic {
 /** A marked text. */
 export interface RichTextMarked {
 	/** Type of the rich text, always “marked” */
-	type: string;
+	type: "marked";
 	/** The text */
 	text: RichText;
 }
@@ -4448,7 +4448,7 @@ export interface RichTextMarked {
 /** A mathematical expression. */
 export interface RichTextMathematicalExpression {
 	/** Type of the rich text, always “mathematical_expression” */
-	type: string;
+	type: "mathematical_expression";
 	/** The expression in LaTeX format */
 	expression: string;
 }
@@ -4456,7 +4456,7 @@ export interface RichTextMathematicalExpression {
 /** A mention by a username. */
 export interface RichTextMention {
 	/** Type of the rich text, always “mention” */
-	type: string;
+	type: "mention";
 	/** The text */
 	text: RichText;
 	/** The username */
@@ -4466,7 +4466,7 @@ export interface RichTextMention {
 /** A text with a phone number. */
 export interface RichTextPhoneNumber {
 	/** Type of the rich text, always “phone_number” */
-	type: string;
+	type: "phone_number";
 	/** The text */
 	text: RichText;
 	/** The phone number */
@@ -4476,7 +4476,7 @@ export interface RichTextPhoneNumber {
 /** A reference. */
 export interface RichTextReference {
 	/** Type of the rich text, always “reference” */
-	type: string;
+	type: "reference";
 	/** Text of the reference */
 	text: RichText;
 	/** The name of the reference */
@@ -4486,7 +4486,7 @@ export interface RichTextReference {
 /** A link to a reference. */
 export interface RichTextReferenceLink {
 	/** Type of the rich text, always “reference_link” */
-	type: string;
+	type: "reference_link";
 	/** The link text */
 	text: RichText;
 	/** The name of the reference */
@@ -4496,7 +4496,7 @@ export interface RichTextReferenceLink {
 /** A text covered by a spoiler. */
 export interface RichTextSpoiler {
 	/** Type of the rich text, always “spoiler” */
-	type: string;
+	type: "spoiler";
 	/** The text */
 	text: RichText;
 }
@@ -4504,7 +4504,7 @@ export interface RichTextSpoiler {
 /** A strikethrough text. */
 export interface RichTextStrikethrough {
 	/** Type of the rich text, always “strikethrough” */
-	type: string;
+	type: "strikethrough";
 	/** The text */
 	text: RichText;
 }
@@ -4512,7 +4512,7 @@ export interface RichTextStrikethrough {
 /** A subscript text. */
 export interface RichTextSubscript {
 	/** Type of the rich text, always “subscript” */
-	type: string;
+	type: "subscript";
 	/** The text */
 	text: RichText;
 }
@@ -4520,7 +4520,7 @@ export interface RichTextSubscript {
 /** A superscript text. */
 export interface RichTextSuperscript {
 	/** Type of the rich text, always “superscript” */
-	type: string;
+	type: "superscript";
 	/** The text */
 	text: RichText;
 }
@@ -4528,7 +4528,7 @@ export interface RichTextSuperscript {
 /** A mention of a Telegram user by their identifier. */
 export interface RichTextTextMention {
 	/** Type of the rich text, always “text_mention” */
-	type: string;
+	type: "text_mention";
 	/** The text */
 	text: RichText;
 	/** The mentioned user */
@@ -4538,7 +4538,7 @@ export interface RichTextTextMention {
 /** An underlined text. */
 export interface RichTextUnderline {
 	/** Type of the rich text, always “underline” */
-	type: string;
+	type: "underline";
 	/** The text */
 	text: RichText;
 }
@@ -4546,7 +4546,7 @@ export interface RichTextUnderline {
 /** A text with a link. */
 export interface RichTextUrl {
 	/** Type of the rich text, always “url” */
-	type: string;
+	type: "url";
 	/** The text */
 	text: RichText;
 	/** URL of the link */
@@ -4733,7 +4733,7 @@ export type StoryAreaType = StoryAreaTypeLocation | StoryAreaTypeSuggestedReacti
 /** Describes a story area pointing to an HTTP or tg:// link. Currently, a story can have up to 3 link areas. */
 export interface StoryAreaTypeLink {
 	/** Type of the area, always “link” */
-	type: string;
+	type: "link";
 	/** HTTP or tg:// URL to be opened when the area is clicked */
 	url: string;
 }
@@ -4741,7 +4741,7 @@ export interface StoryAreaTypeLink {
 /** Describes a story area pointing to a location. Currently, a story can have up to 10 location areas. */
 export interface StoryAreaTypeLocation {
 	/** Type of the area, always “location” */
-	type: string;
+	type: "location";
 	/** Location latitude in degrees */
 	latitude: number;
 	/** Location longitude in degrees */
@@ -4753,7 +4753,7 @@ export interface StoryAreaTypeLocation {
 /** Describes a story area pointing to a suggested reaction. Currently, a story can have up to 5 suggested reaction areas. */
 export interface StoryAreaTypeSuggestedReaction {
 	/** Type of the area, always “suggested_reaction” */
-	type: string;
+	type: "suggested_reaction";
 	/** Type of the reaction */
 	reaction_type: ReactionType;
 	/** *Optional*. Pass *True* if the reaction area has a dark background */
@@ -4765,7 +4765,7 @@ export interface StoryAreaTypeSuggestedReaction {
 /** Describes a story area pointing to a unique gift. Currently, a story can have at most 1 unique gift area. */
 export interface StoryAreaTypeUniqueGift {
 	/** Type of the area, always “unique_gift” */
-	type: string;
+	type: "unique_gift";
 	/** Unique name of the gift */
 	name: string;
 }
@@ -4773,7 +4773,7 @@ export interface StoryAreaTypeUniqueGift {
 /** Describes a story area containing weather information. Currently, a story can have up to 3 weather areas. */
 export interface StoryAreaTypeWeather {
 	/** Type of the area, always “weather” */
-	type: string;
+	type: "weather";
 	/** Temperature, in degree Celsius */
 	temperature: number;
 	/** Emoji representing the weather */
@@ -4910,7 +4910,7 @@ export type TransactionPartner = TransactionPartnerUser | TransactionPartnerChat
 /** Describes the affiliate program that issued the affiliate commission received via this transaction. */
 export interface TransactionPartnerAffiliateProgram {
 	/** Type of the transaction partner, always “affiliate_program” */
-	type: string;
+	type: "affiliate_program";
 	/** *Optional*. Information about the bot that sponsored the affiliate program */
 	sponsor_user?: User;
 	/** The number of Telegram Stars received by the bot for each 1000 Telegram Stars received by the affiliate program sponsor from referred users */
@@ -4920,7 +4920,7 @@ export interface TransactionPartnerAffiliateProgram {
 /** Describes a transaction with a chat. */
 export interface TransactionPartnerChat {
 	/** Type of the transaction partner, always “chat” */
-	type: string;
+	type: "chat";
 	/** Information about the chat */
 	chat: Chat;
 	/** *Optional*. The gift sent to the chat by the bot */
@@ -4930,7 +4930,7 @@ export interface TransactionPartnerChat {
 /** Describes a withdrawal transaction with Fragment. */
 export interface TransactionPartnerFragment {
 	/** Type of the transaction partner, always “fragment” */
-	type: string;
+	type: "fragment";
 	/** *Optional*. State of the transaction if the transaction is outgoing */
 	withdrawal_state?: RevenueWithdrawalState;
 }
@@ -4938,19 +4938,19 @@ export interface TransactionPartnerFragment {
 /** Describes a transaction with an unknown source or recipient. */
 export interface TransactionPartnerOther {
 	/** Type of the transaction partner, always “other” */
-	type: string;
+	type: "other";
 }
 
 /** Describes a withdrawal transaction to the Telegram Ads platform. */
 export interface TransactionPartnerTelegramAds {
 	/** Type of the transaction partner, always “telegram_ads” */
-	type: string;
+	type: "telegram_ads";
 }
 
 /** Describes a transaction with payment for [paid broadcasting](https://core.telegram.org/bots/api/#paid-broadcasts). */
 export interface TransactionPartnerTelegramApi {
 	/** Type of the transaction partner, always “telegram_api” */
-	type: string;
+	type: "telegram_api";
 	/** The number of successful requests that exceeded regular limits and were therefore billed */
 	request_count: number;
 }
@@ -4958,7 +4958,7 @@ export interface TransactionPartnerTelegramApi {
 /** Describes a transaction with a user. */
 export interface TransactionPartnerUser {
 	/** Type of the transaction partner, always “user” */
-	type: string;
+	type: "user";
 	/** Type of the transaction, currently one of “invoice_payment” for payments via invoices, “paid_media_payment” for payments for paid media, “gift_purchase” for gifts sent by the bot, “premium_purchase” for Telegram Premium subscriptions gifted by the bot, “business_account_transfer” for direct transfers from managed business accounts */
 	transaction_type: "invoice_payment" | "paid_media_payment" | "gift_purchase" | "premium_purchase" | "business_account_transfer";
 	/** Information about the user */
@@ -6822,7 +6822,7 @@ export interface SendDiceParams {
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** Emoji on which the dice throw animation is based. Currently, must be one of “”, “”, “”, “”, “”, or “”. Dice can have values 1-6 for “”, “” and “”, values 1-5 for “” and “”, and values 1-64 for “”. Defaults to “”. */
+	/** Emoji on which the dice throw animation is based. Currently, must be one of “🎲”, “🎯”, “🏀”, “⚽”, “🎳”, or “🎰”. Dice can have values 1-6 for “🎲”, “🎯” and “🎳”, values 1-5 for “🏀” and “⚽”, and values 1-64 for “🎰”. Defaults to “🎲”. */
 	emoji?: string;
 	/** Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound. */
 	disable_notification?: boolean;

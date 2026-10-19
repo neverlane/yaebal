@@ -288,3 +288,45 @@ test("advanceOn can advance from a message and stop fallthrough", async () => {
 	assert.equal(findCall(calls, "sendMessage").params.text, "done");
 	assert.equal((await storage.get("flow:advance_test:9"))?.status, "completed");
 });
+
+test("a bot only sees the flows installed on its own chain", async () => {
+	const { api } = fakeApi();
+	const tourA = createOnboarding({ id: "tour_a" }).step("a1", { text: "a1" }).build();
+	createOnboarding({ id: "tour_b" }).step("b1", { text: "b1" }).build(); // another bot's flow
+
+	let seen: readonly string[] = [];
+	const mw = entry(
+		new Composer<Context>().install(tourA).command("list", (ctx) => {
+			seen = [...ctx.onboarding.list];
+		}),
+	);
+
+	await mw(msgCtx(api, "/list", 3), noop);
+	assert.deepEqual(seen, ["tour_a"]);
+});
+
+test("exitAll ends running flows without opting the user out", async () => {
+	const { api } = fakeApi();
+	const storage = memoryStorage();
+	const flow = createOnboarding({ id: "exit_test", storage })
+		.step("one", { text: "one" })
+		.step("two", { text: "two" })
+		.build();
+	let result = "";
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(flow)
+			.command("go", async (ctx) => {
+				result = await ctx.onboarding.exit_test.start();
+			})
+			.command("quit", (ctx) => ctx.onboarding.exitAll()),
+	);
+
+	await mw(msgCtx(api, "/go", 9), noop);
+	await mw(msgCtx(api, "/quit", 9), noop);
+	assert.notEqual((await storage.get("global:9"))?.disabled, true);
+
+	await mw(msgCtx(api, "/go", 9), noop);
+	assert.notEqual(result, "opted-out", "a later start still works");
+});

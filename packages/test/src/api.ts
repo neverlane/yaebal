@@ -1,6 +1,7 @@
 import {
 	type AfterHook,
 	type Api,
+	applyFormatFields,
 	type BeforeHook,
 	type ErrorAction,
 	type ErrorHook,
@@ -188,7 +189,9 @@ export function mockApi(options: MockApiOptions = {}): MockApi {
 
 	const call = async (method: string, rawParams?: Record<string, unknown>): Promise<never> => {
 		for (let attempt = 1; ; attempt++) {
-			let p = normalizeParams(rawParams);
+			// mirror the real client: format/fmt results split into text + entities before hooks run,
+			// so recorded params look exactly like what telegram would receive
+			let p = normalizeParams(applyFormatFields(method, rawParams));
 			for (const hook of hooks.before) {
 				const next = await hook(method, p);
 				if (next !== undefined) p = next;

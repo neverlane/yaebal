@@ -225,6 +225,22 @@ export function matchQuery(ctx: Context, query: string): boolean {
 export class Composer<C extends Context = Context> {
 	protected middlewares: Middleware<C>[] = [];
 	protected decorations: object[] = [];
+	/** update types named by `on()` / scoped `derive()` here — see {@link registeredUpdates}. */
+	protected registered = new Set<string>();
+	/** composers merged in via `extend()`, walked lazily so later registrations on them count. */
+	protected extended: Composer<Context>[] = [];
+
+	/**
+	 * every update type this composer (and anything it `extend()`ed) explicitly handles —
+	 * collected from `on()` queries and scoped `derive()`. raw `use()`, `filter()` and `guard()`
+	 * can't be read, so this is a lower bound: `Bot.start()` uses it only to *add* the update
+	 * types telegram withholds by default (`chat_member`, `message_reaction*`), never to drop any.
+	 */
+	registeredUpdates(): Set<UpdateName> {
+		const out = new Set(this.registered as Set<UpdateName>);
+		for (const child of this.extended) for (const name of child.registeredUpdates()) out.add(name);
+		return out;
+	}
 
 	/** raw middleware. call `next()` to continue the chain. */
 	use(...middleware: Middleware<C>[]): this {
@@ -232,12 +248,24 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/** handle a specific update, optionally narrowed by a filter query. */
-	on<Q extends FilterQuery>(query: Q, ...handlers: Middleware<Filtered<C, Q>>[]): this {
+	/**
+	 * handle a specific update, optionally narrowed by a filter query. an array matches any of
+	 * its queries — `on(["message:photo", "message:video"], …)` — and the handler sees the union
+	 * of their narrowed contexts.
+	 */
+	on<Q extends FilterQuery>(
+		query: Q | readonly Q[],
+		...handlers: Middleware<Filtered<C, Q>>[]
+	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+		const queries: readonly string[] = typeof query === "string" ? [query] : query;
+		for (const q of queries) {
+			const [head = ""] = q.split(":", 1);
+			if (head !== "") this.registered.add(head);
+		}
 
 		this.middlewares.push((ctx, next) =>
-			matchQuery(ctx, query as string) ? handler(ctx, next) : next(),
+			queries.some((q) => matchQuery(ctx, q)) ? handler(ctx, next) : next(),
 		);
 
 		return this;
@@ -249,14 +277,15 @@ export class Composer<C extends Context = Context> {
 	 * strips a trailing `@botname` — and when the bot's username is known (`ctx.me`,
 	 * filled by long polling) a mismatching mention (`/cmd@other_bot`) is skipped.
 	 * exposes `ctx.command`, whitespace-split `ctx.args`, and the raw trimmed
-	 * remainder as `ctx.payload` (deep-link parameters arrive intact).
+	 * remainder as `ctx.payload` (deep-link parameters arrive intact). pass an array to route
+	 * several aliases to one handler — `ctx.command` tells them apart.
 	 */
 	command(
-		name: string,
+		name: string | readonly string[],
 		...handlers: Middleware<C & { command: string; args: string[]; payload: string }>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
-		const wanted = name.toLowerCase();
+		const wanted = new Set((typeof name === "string" ? [name] : name).map((n) => n.toLowerCase()));
 
 		this.middlewares.push((ctx, next) => {
 			if (!COMMAND_UPDATES.has(ctx.updateType)) return next();
@@ -266,7 +295,7 @@ export class Composer<C extends Context = Context> {
 
 			const [head = ""] = text.slice(1).split(/\s/, 1);
 			const [base = "", mention] = head.split("@");
-			if (base.toLowerCase() !== wanted) return next();
+			if (!wanted.has(base.toLowerCase())) return next();
 
 			const username = ctx.me?.username;
 			if (mention && username && mention.toLowerCase() !== username.toLowerCase()) return next();
@@ -281,12 +310,17 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/** match message text/caption against a string or regex; exposes `ctx.match`. */
+	/**
+	 * match message text/caption against a string or regex (or an array of them — the first
+	 * match wins); exposes `ctx.match`.
+	 */
 	hears(
-		trigger: string | RegExp,
+		trigger: string | RegExp | readonly (string | RegExp)[],
 		...handlers: Middleware<C & { match: string | RegExpMatchArray }>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+		const triggers: readonly (string | RegExp)[] =
+			typeof trigger === "string" || trigger instanceof RegExp ? [trigger] : trigger;
 
 		this.middlewares.push((ctx, next) => {
 			// the update's own message only — a callback query (whose rich context carries
@@ -295,18 +329,15 @@ export class Composer<C extends Context = Context> {
 			const text = msg?.text ?? msg?.caption;
 			if (text === undefined) return next();
 
-			if (typeof trigger === "string") {
-				if (text !== trigger) return next();
+			for (const t of triggers) {
+				const match = typeof t === "string" ? (text === t ? text : null) : matchOf(text, t);
+				if (match === null) continue;
 
-				Object.assign(ctx as object, { match: text });
-			} else {
-				const m = matchOf(text, trigger);
-				if (!m) return next();
-
-				Object.assign(ctx as object, { match: m });
+				Object.assign(ctx as object, { match });
+				return handler(ctx, next);
 			}
 
-			return handler(ctx, next);
+			return next();
 		});
 
 		return this;
@@ -419,6 +450,18 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
+	/**
+	 * build-time conditional registration: `fn` runs once, now, only if `condition` holds —
+	 * `when(process.env.NODE_ENV !== "production", (c) => c.use(verboseLogger))`. unlike
+	 * `guard`/`filter` nothing is checked per update. returns `this` either way, so whatever `fn`
+	 * adds isn't part of the chain's type — for an optional, typed field use a `derive` that
+	 * returns `{}` when off.
+	 */
+	when(condition: boolean, fn: (composer: this) => unknown): this {
+		if (condition) fn(this);
+		return this;
+	}
+
 	/** apply a plugin. its required context (`In`) is checked at compile time. */
 	install<Add extends object>(
 		plugin: (composer: Composer<C>) => Composer<C & Add>,
@@ -453,6 +496,7 @@ export class Composer<C extends Context = Context> {
 		const scoped = typeof a !== "function";
 		const only: UpdateName[] | null = scoped ? (Array.isArray(a) ? a : [a]) : null;
 		const fn = (scoped ? b : a) as (ctx: C) => object | Promise<object>;
+		for (const name of only ?? []) this.registered.add(name);
 
 		this.middlewares.push(async (ctx, next) => {
 			if (!only || only.includes(ctx.updateType)) Object.assign(ctx as object, await fn(ctx));
@@ -470,6 +514,7 @@ export class Composer<C extends Context = Context> {
 
 	/** merge another composer in, inheriting its full context type. */
 	extend<C2 extends Context>(other: Composer<C2>): Composer<C & C2> {
+		this.extended.push(other as unknown as Composer<Context>);
 		this.middlewares.push(other.toMiddleware() as unknown as Middleware<C>);
 		return this as unknown as Composer<C & C2>;
 	}

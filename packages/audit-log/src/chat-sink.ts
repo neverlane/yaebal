@@ -62,9 +62,10 @@ function eventSignature(event: AuditEvent): string {
  *
  * never loops on its own traffic: the `sendMessage` this sink makes is itself an
  * outgoing api call, which — if audit-log's own `api.*` logging is on — produces new
- * `api.call`/`api.result` events on the very same logger. this sink recognizes and
- * silently drops those (tracked by the `params` object reference it just sent) before
- * they'd otherwise re-trigger a send under a permissive `minLevel`.
+ * `api.call`/`api.result`/`api.error` events on the very same logger. this sink recognizes
+ * and silently drops every `sendMessage` event aimed at its own `chatId` before it'd
+ * otherwise re-trigger a send (a failing alert, or any alert under a permissive `minLevel`).
+ * matched by content, not by the `params` reference: redaction hands sinks a deep clone.
  */
 export function chatSink(target: ChatSinkTarget, options: ChatSinkOptions): AuditSink {
 	const minRank = LEVEL_RANK[options.minLevel ?? "error"];
@@ -73,7 +74,7 @@ export function chatSink(target: ChatSinkTarget, options: ChatSinkOptions): Audi
 	const format = options.format ?? defaultChatFormat;
 	const now = options.now ?? Date.now;
 
-	const ownParams = new WeakSet<object>();
+	const ownChatId = String(options.chatId);
 	const lastSeenBySignature = new Map<string, number>();
 	let lastSentAt = 0;
 
@@ -83,8 +84,8 @@ export function chatSink(target: ChatSinkTarget, options: ChatSinkOptions): Audi
 
 			if (
 				(event.kind === "api.call" || event.kind === "api.result" || event.kind === "api.error") &&
-				event.params !== undefined &&
-				ownParams.has(event.params)
+				event.method === "sendMessage" &&
+				String(event.params?.chat_id) === ownChatId
 			) {
 				return;
 			}
@@ -98,9 +99,7 @@ export function chatSink(target: ChatSinkTarget, options: ChatSinkOptions): Audi
 			lastSeenBySignature.set(signature, t);
 			lastSentAt = t;
 
-			const params = { chat_id: options.chatId, text: format(event) };
-			ownParams.add(params);
-			await target.api.sendMessage(params);
+			await target.api.sendMessage({ chat_id: options.chatId, text: format(event) });
 		},
 	};
 }

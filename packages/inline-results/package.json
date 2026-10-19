@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/inline-results",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal inline-results — typed builders for every InlineQueryResult / InputMessageContent variant.",
 	"type": "module",
 	"main": "./lib/index.js",

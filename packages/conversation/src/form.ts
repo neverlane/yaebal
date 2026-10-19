@@ -72,7 +72,10 @@ export function buildForm<C extends Context>(cv: Conversation<C>): FormApi<C> {
 		ask<number>({
 			...options,
 			parse: (text) => {
-				const n = Number(text.trim());
+				const trimmed = text.trim();
+				// Number("") is 0 — a blank answer is no answer, not zero
+				if (trimmed === "") return undefined;
+				const n = Number(trimmed);
 				if (!Number.isFinite(n) || !Number.isInteger(n)) return undefined;
 				if (options.min !== undefined && n < options.min) return undefined;
 				if (options.max !== undefined && n > options.max) return undefined;

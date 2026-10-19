@@ -122,6 +122,19 @@ export function extractEnum(descriptionHtml) {
 	return values.length >= 2 ? values : undefined;
 }
 
+/**
+ * a discriminator field's one fixed value — `MessageOriginUser.type`: `always “user”`,
+ * `BotCommandScopeChat.type`: `must be <em>chat</em>`, `ChatMemberOwner.status`: `always
+ * “creator”`. rendered as a single-literal enum, so the unions these objects form narrow on it.
+ * `undefined` when the description doesn't pin the value.
+ */
+export function extractConst(descriptionHtml) {
+	const m =
+		descriptionHtml.match(/\bmust be <em>([a-z][a-z0-9_]*)<\/em>/i) ??
+		descriptionHtml.match(/\balways [“"]([a-z][a-z0-9_]*)[”"]/i);
+	return m?.[1];
+}
+
 /** `"1-4096 characters"` -> { min_len: 1, max_len: 4096 }; `undefined` when no such range is stated. */
 export function extractLength(descriptionHtml) {
 	const m = stripTags(descriptionHtml).match(/\b(\d+)-(\d+)\s+characters?\b/);

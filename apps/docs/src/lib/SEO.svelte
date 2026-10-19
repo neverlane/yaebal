@@ -130,6 +130,11 @@
 			description:
 				"design durable yaebal broadcast jobs with retry, rate limits, recipient accounting, pause, resume, cancel, leases, and operator visibility.",
 		},
+		"/docs/ux-patterns": {
+			title: "telegram bot ux patterns with yaebal",
+			description:
+				"button-first telegram bot ux: a /start that works, edit-in-place navigation, back and home, toggle labels, confirmed destructive actions, answered callbacks, progress and empty states, with yaebal code.",
+		},
 		"/docs/recipes": {
 			title: "yaebal telegram bot recipes",
 			description:
@@ -342,6 +347,16 @@
 			title: "@yaebal/analytics — typed telegram bot event tracking",
 			description:
 				"typed ctx.track events and funnels from yaebal bot middleware, with auto-capture, privacy controls, an in-chat admin surface, and adapters for posthog, plausible, sqlite, clickhouse, http, or a console sink.",
+		},
+		"/docs/plugins/sentry": {
+			title: "@yaebal/sentry — sentry error tracking for telegram bots",
+			description:
+				"report telegram bot errors to sentry from yaebal: an isolation scope per update with chat and user, captured handler failures, and breadcrumbs for every update and bot api call.",
+		},
+		"/docs/plugins/otel": {
+			title: "@yaebal/otel — opentelemetry tracing for telegram bots",
+			description:
+				"trace yaebal telegram bots with opentelemetry: a span per update, a child span per bot api call and retry, custom spans via ctx.otel, for jaeger, tempo, honeycomb or any otel backend.",
 		},
 		"/docs/plugins/audit-log": {
 			title: "@yaebal/audit-log — correlated, redacted audit logging for telegram bots",

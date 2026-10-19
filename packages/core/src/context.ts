@@ -1,4 +1,4 @@
-import type { Api } from "./api.js";
+import { type Api, TelegramError } from "./api.js";
 import { type FormatResult, isFormatResult } from "./format.js";
 import { isMediaSource, type MediaSource } from "./media.js";
 import type {
@@ -290,6 +290,45 @@ export class Context {
 					: {}),
 			...extra,
 		});
+	}
+
+	/**
+	 * show a screen: on a button press, edit the message the button belongs to; otherwise send
+	 * a new message — so one handler serves both "open this screen" (`/settings`) and "redraw it"
+	 * (a tap inside it) without a send/edit branch. telegram's "message is not modified" counts
+	 * as shown; a message that can't be edited as text (media, too old, gone) gets a fresh one
+	 * instead. resolves to the sent message, or `true` after an in-place edit.
+	 */
+	show(text: SendText, extra?: Record<string, unknown>): Promise<Message | true>;
+	/** object form: full `sendMessage` / `editMessageText` params (minus chat/message ids). */
+	show(params: SendParams): Promise<Message | true>;
+	async show(
+		text: SendText | SendParams,
+		extra: Record<string, unknown> = {},
+	): Promise<Message | true> {
+		const target = this.callbackQuery?.message;
+		// date 0 marks an InaccessibleMessage; a media message has no text to edit
+		if (target && target.date !== 0 && "text" in target && target.text !== undefined) {
+			const body =
+				typeof text !== "string" && !isPureFormatResult(text)
+					? { ...extra, ...resolveTextParam(text) }
+					: { ...resolveText(text), ...extra };
+			try {
+				await this.api.call("editMessageText", {
+					chat_id: target.chat.id,
+					message_id: target.message_id,
+					...this.businessRouting(),
+					...body,
+				});
+				return true;
+			} catch (error) {
+				if (!(error instanceof TelegramError) || error.code !== 400) throw error;
+				if (/not modified/i.test(error.description)) return true;
+				// not editable after all — fall through to a fresh message
+			}
+		}
+
+		return this.send(text as SendText, extra);
 	}
 
 	/**

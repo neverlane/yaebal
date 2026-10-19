@@ -76,6 +76,25 @@ function decorate(button: InlineKeyboardButton, deco?: ButtonDecoration): Inline
 }
 
 /** fluent inline keyboard. `.row()` ends a row; buttons accumulate into the current one. */
+/**
+ * re-flow `buttons` into rows of `sizes` — `[1, 2, 1]` → one, two, one per row. buttons past
+ * the pattern keep using its last size, so `[2]` is a two-column grid.
+ */
+function reflow<T>(buttons: T[], sizes: readonly number[]): T[][] {
+	if (sizes.length === 0 || sizes.some((size) => !Number.isInteger(size) || size < 1)) {
+		throw new Error(`pattern() needs positive integer row sizes, got ${JSON.stringify(sizes)}`);
+	}
+
+	const rows: T[][] = [];
+	let index = 0;
+	for (let i = 0; index < buttons.length; i++) {
+		const size = sizes[Math.min(i, sizes.length - 1)] as number;
+		rows.push(buttons.slice(index, index + size));
+		index += size;
+	}
+	return rows;
+}
+
 export class InlineKeyboard {
 	#rows: InlineKeyboardButton[][] = [];
 	#current: InlineKeyboardButton[] = [];
@@ -97,6 +116,16 @@ export class InlineKeyboard {
 	/** appends raw button objects — useful for buttons built from dynamic data (e.g. `.add(...items.map(...))`). */
 	add(...buttons: InlineKeyboardButton[]): this {
 		for (const button of buttons) this.#push(button);
+		return this;
+	}
+
+	/**
+	 * lay every button added so far out by row sizes — `pattern([1, 2, 1])` for an asymmetric
+	 * menu without counting `.row()` calls. sizes past the end repeat the last one.
+	 */
+	pattern(sizes: readonly number[]): this {
+		this.#rows = reflow([...this.#rows.flat(), ...this.#current], sizes);
+		this.#current = [];
 		return this;
 	}
 
@@ -252,6 +281,16 @@ export class Keyboard {
 	/** appends raw button objects — useful for buttons built from dynamic data (e.g. `.add(...items.map(...))`). */
 	add(...buttons: KeyboardButton[]): this {
 		for (const button of buttons) this.#push(button);
+		return this;
+	}
+
+	/**
+	 * lay every button added so far out by row sizes — `pattern([1, 2, 1])` for an asymmetric
+	 * menu without counting `.row()` calls. sizes past the end repeat the last one.
+	 */
+	pattern(sizes: readonly number[]): this {
+		this.#rows = reflow([...this.#rows.flat(), ...this.#current], sizes);
+		this.#current = [];
 		return this;
 	}
 

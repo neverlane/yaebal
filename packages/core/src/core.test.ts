@@ -1,12 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { InputFile } from "@yaebal/types";
-import { createApi, encodeRequest, HttpError, TelegramError, withReplyEnvelope } from "./api.js";
+import {
+	type Api,
+	createApi,
+	encodeRequest,
+	HttpError,
+	TelegramError,
+	withReplyEnvelope,
+} from "./api.js";
 import { Bot, type BotPlugin } from "./bot.js";
 import { Composer } from "./composer.js";
-import type { Context } from "./context.js";
+import { Context } from "./context.js";
+import { debugEnabled } from "./debug.js";
 import { bold, format } from "./format.js";
 import { isMediaSource, media } from "./media.js";
+import type { Update } from "./telegram-types.js";
 import { webhookCallback } from "./webhook.js";
 
 test("typed API methods forward cancellation, including webhook fallback", async (t) => {
@@ -1207,4 +1216,168 @@ test("multipart extraction honors nested builders' toJSON without flattening upl
 	const file = encoded.body.get("_file0");
 	assert.ok(file instanceof Blob);
 	assert.deepEqual(new Uint8Array(await file.arrayBuffer()), bytes);
+});
+
+test("on/command/hears accept arrays", { timeout: 5_000 }, async () => {
+	const seen: string[] = [];
+	const bot = new Composer<Context>()
+		.on(["message:photo", "message:video"], (ctx) => {
+			seen.push(`media:${ctx.update.update_id}`);
+		})
+		.command(["start", "help"], (ctx) => {
+			seen.push(`command:${ctx.command}`);
+		})
+		.hears(["hi", /^hey (\w+)$/], (ctx) => {
+			seen.push(`hears:${typeof ctx.match === "string" ? ctx.match : ctx.match[1]}`);
+		});
+	const mw = bot.toMiddleware();
+	const chat = { id: 1, type: "private" as const };
+	const run = (update_id: number, message: Record<string, unknown>) =>
+		mw(
+			new Context({
+				api: {} as Api,
+				update: { update_id, message: { message_id: 1, date: 0, chat, ...message } } as Update,
+				updateType: "message",
+			}),
+			async () => {},
+		);
+
+	await run(1, { photo: [{ file_id: "p", file_unique_id: "p", width: 1, height: 1 }] });
+	await run(2, { video: { file_id: "v" } });
+	await run(3, { text: "/help me" });
+	await run(4, { text: "/Start" });
+	await run(5, { text: "hi" });
+	await run(6, { text: "hey you" });
+	await run(7, { text: "nope" });
+
+	assert.deepEqual(seen, [
+		"media:1",
+		"media:2",
+		"command:help",
+		"command:Start",
+		"hears:hi",
+		"hears:you",
+	]);
+});
+
+test("when() registers at build time only when its condition holds", async () => {
+	const seen: string[] = [];
+	const bot = new Composer<Context>()
+		.when(true, (c) =>
+			c.use((_ctx, next) => {
+				seen.push("on");
+				return next();
+			}),
+		)
+		.when(false, (c) =>
+			c.use((_ctx, next) => {
+				seen.push("off");
+				return next();
+			}),
+		);
+
+	await bot.toMiddleware()(
+		new Context({
+			api: {} as Api,
+			update: {
+				update_id: 1,
+				message: { message_id: 1, date: 0, chat: { id: 1, type: "private" } },
+			} as Update,
+			updateType: "message",
+		}),
+		async () => {},
+	);
+
+	assert.deepEqual(seen, ["on"]);
+	// `this` flows through: a Bot stays a Bot down the chain
+	const chained: Bot = new Bot("123:test").when(true, () => {});
+	assert.equal(typeof chained.start, "function");
+});
+
+test("debugEnabled matches exact namespaces and * prefixes", () => {
+	assert.equal(debugEnabled("yaebal:api", undefined), false);
+	assert.equal(debugEnabled("yaebal:api", "yaebal:*"), true);
+	assert.equal(debugEnabled("yaebal:api:raw", "yaebal:api"), false);
+	assert.equal(debugEnabled("yaebal:api:raw", "yaebal:update, yaebal:api:*"), true);
+	assert.equal(debugEnabled("yaebal:polling", " , "), false);
+});
+
+test("YAEBAL_DEBUG=yaebal:api logs one line per call and never the token", async (t) => {
+	const previous = process.env.YAEBAL_DEBUG;
+	process.env.YAEBAL_DEBUG = "yaebal:api";
+	t.after(() => {
+		if (previous === undefined) delete process.env.YAEBAL_DEBUG;
+		else process.env.YAEBAL_DEBUG = previous;
+	});
+	const lines: string[] = [];
+	t.mock.method(console, "error", (...args: unknown[]) => lines.push(args.join(" ")));
+	t.mock.method(
+		globalThis,
+		"fetch",
+		async () => new Response(JSON.stringify({ ok: true, result: { message_id: 1 } })),
+	);
+
+	const api = createApi("123:secret-token");
+	await api.call("sendMessage", { chat_id: 1, text: "hi" });
+
+	assert.equal(lines.length, 1);
+	assert.match(lines[0] ?? "", /^\[yaebal:api\] <- sendMessage ok \d+ms$/);
+	assert.ok(!lines.join("\n").includes("secret-token"));
+});
+
+test("show() edits the pressed button's message, and sends everywhere else", async () => {
+	const calls: { method: string; params: Record<string, unknown> }[] = [];
+	let failEdit: string | undefined;
+	const fakeApi = {
+		call: async (method: string, params: Record<string, unknown>) => {
+			calls.push({ method, params });
+			if (method === "editMessageText" && failEdit) {
+				throw new TelegramError(method, 400, failEdit);
+			}
+			return { message_id: 9 };
+		},
+	} as unknown as Api;
+	const chat = { id: 1, type: "private" as const };
+	const press = (message: Record<string, unknown>) =>
+		new Context({
+			api: fakeApi,
+			update: {
+				update_id: 1,
+				callback_query: {
+					id: "q",
+					chat_instance: "c",
+					from: { id: 1, is_bot: false, first_name: "u" },
+					message: { message_id: 5, date: 1, chat, ...message },
+				},
+			} as Update,
+			updateType: "callback_query",
+		});
+
+	assert.equal(
+		await press({ text: "old" }).show("new", { reply_markup: { inline_keyboard: [] } }),
+		true,
+	);
+	assert.deepEqual(calls.at(-1), {
+		method: "editMessageText",
+		params: { chat_id: 1, message_id: 5, text: "new", reply_markup: { inline_keyboard: [] } },
+	});
+
+	failEdit = "Bad Request: message is not modified";
+	assert.equal(await press({ text: "same" }).show("same"), true);
+	assert.equal(calls.at(-1)?.method, "editMessageText", "a no-op edit isn't retried as a send");
+
+	await press({ photo: [] }).show("caption-less media can't be edited as text");
+	assert.equal(calls.at(-1)?.method, "sendMessage");
+
+	failEdit = "Bad Request: message can't be edited";
+	await press({ text: "too old" }).show("fresh");
+	assert.equal(calls.at(-1)?.method, "sendMessage");
+
+	const command = new Context({
+		api: fakeApi,
+		update: { update_id: 2, message: { message_id: 1, date: 0, chat, text: "/menu" } } as Update,
+		updateType: "message",
+	});
+	await command.show(bold("menu"));
+	assert.equal(calls.at(-1)?.method, "sendMessage");
 });

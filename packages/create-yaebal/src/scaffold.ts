@@ -68,10 +68,12 @@ interface PluginIdentifiers {
 	contextType: string;
 }
 
+// node and deno never read `.env` on their own (bun does) — load it explicitly, without
+// failing when it's absent (env vars set some other way, e.g. on a host, still work).
 const SCRIPTS: Record<Runtime, Scripts> = {
 	node: {
-		dev: "node --watch --experimental-strip-types src/index.ts",
-		start: "node --experimental-strip-types src/index.ts",
+		dev: "node --env-file-if-exists=.env --watch --experimental-strip-types src/index.ts",
+		start: "node --env-file-if-exists=.env --experimental-strip-types src/index.ts",
 		typecheck: "tsc --noEmit",
 	},
 	bun: {
@@ -80,8 +82,8 @@ const SCRIPTS: Record<Runtime, Scripts> = {
 		typecheck: "tsc --noEmit",
 	},
 	deno: {
-		dev: "deno run --watch --allow-net --allow-env src/index.ts",
-		start: "deno run --allow-net --allow-env src/index.ts",
+		dev: "deno run --watch --allow-net --allow-env --env-file=.env src/index.ts",
+		start: "deno run --allow-net --allow-env --env-file=.env src/index.ts",
 		typecheck: "tsc --noEmit",
 	},
 };
@@ -232,7 +234,7 @@ bot.command("ask", async (ctx) => {
 \tawait new Promise((resolve) => setTimeout(resolve, 800)); // stand in for a real llm stream
 
 \tawait draft.send(document([paragraph("here's your (fake) streamed answer ✨")]));
-		});`,
+});`,
 	},
 	broadcast: {
 		plugins: ["broadcast"],
@@ -791,6 +793,21 @@ ${pnpmSetup}${ciSetupStep(pm)}
 `;
 }
 
+/**
+ * the name infra configs call the app by: no npm scope, and only lowercase letters, digits and
+ * dashes — `@org/my.bot` is valid for package.json but an invalid fly app / worker name, and a
+ * compose service key starting with `@` isn't even valid yaml.
+ */
+function deployName(name: string): string {
+	const unscoped = name.trim().replace(/^@[^/]*\//, "");
+	return (
+		unscoped
+			.toLowerCase()
+			.replace(/[^a-z0-9-]+/g, "-")
+			.replace(/^-+|-+$/g, "") || "bot"
+	);
+}
+
 /** what a `DeployTarget` adds: infra files, plus (serverless targets only) a bootstrap override. */
 interface DeployOutput {
 	files: Record<string, string>;
@@ -805,6 +822,7 @@ interface DeployOutput {
 }
 
 function renderDeployFiles(opts: ScaffoldOptions): DeployOutput {
+	const appName = deployName(opts.name);
 	switch (opts.deploy ?? "none") {
 		case "none":
 			return { files: {} };
@@ -815,7 +833,7 @@ function renderDeployFiles(opts: ScaffoldOptions): DeployOutput {
 				files: {
 					Dockerfile: dockerfile(opts.runtime),
 					".dockerignore": DOCKERIGNORE,
-					"compose.yaml": composeYaml(opts.name),
+					"compose.yaml": composeYaml(appName),
 				},
 			};
 		case "fly":
@@ -823,7 +841,7 @@ function renderDeployFiles(opts: ScaffoldOptions): DeployOutput {
 				files: {
 					Dockerfile: dockerfile(opts.runtime),
 					".dockerignore": DOCKERIGNORE,
-					"fly.toml": flyToml(opts.name),
+					"fly.toml": flyToml(appName),
 				},
 			};
 		case "railway":
@@ -837,7 +855,7 @@ function renderDeployFiles(opts: ScaffoldOptions): DeployOutput {
 		case "cloudflare":
 			return {
 				files: {
-					"wrangler.jsonc": wranglerJsonc(opts.name),
+					"wrangler.jsonc": wranglerJsonc(appName),
 					".dev.vars.example": "BOT_TOKEN=\nSECRET_TOKEN=\n",
 				},
 				bootstrap: `export default {
@@ -955,7 +973,10 @@ ${bootstrap}
 
 	// ── package.json ──────────────────────────────────────────────────────
 	const dependencies: Record<string, string> = { "@yaebal/core": "latest" };
-	for (const p of [...chosen, ...templatePlugins]) dependencies[p.dep] = "latest";
+	for (const p of [...chosen, ...templatePlugins]) {
+		dependencies[p.dep] = "latest";
+		for (const extra of p.extraDeps ?? []) dependencies[extra] = "latest";
+	}
 	if (deployOut.dependencies) Object.assign(dependencies, deployOut.dependencies);
 
 	const pkg = {
@@ -966,7 +987,8 @@ ${bootstrap}
 		scripts: SCRIPTS[opts.runtime],
 		dependencies,
 		devDependencies: { "@types/node": "latest", typescript: "^6.0.3" },
-		engines: opts.runtime === "node" ? { node: ">=22.6" } : undefined,
+		// 22.9: `--env-file-if-exists` (type-stripping itself needs 22.6)
+		engines: opts.runtime === "node" ? { node: ">=22.9" } : undefined,
 	};
 
 	const tsconfig = {
@@ -1088,7 +1110,6 @@ export function scriptCommand(pm: PackageManager, script: string): string {
 	}
 }
 
-/** flush a rendered file map to `targetDir`, creating parent dirs as needed. */
 /**
  * flush a rendered file map to `targetDir`, but atomically: everything is
  * written into a sibling temp directory first, then the whole thing is moved

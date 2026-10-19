@@ -55,8 +55,10 @@ bot.on("chat_boost", async (ctx) => {
 
 <h2>reactions</h2>
 <p>
-	reaction updates are not part of the default update set. add <code>message_reaction</code> to
-	<code>allowedUpdates</code> when polling.
+	reaction updates are not part of telegram's default update set. registering a handler for them
+	(<code>on("message_reaction")</code>) is enough: <code>bot.start()</code>, the runner and
+	<code>setWebhook</code> then request the default set plus <code>message_reaction</code>. an
+	explicit <code>allowedUpdates</code> option always wins.
 </p>
 <Code code={reactions} title="reactions.ts" />
 
@@ -65,8 +67,8 @@ bot.on("chat_boost", async (ctx) => {
 
 <h2>chat boosts</h2>
 <p>
-	<code>chat_boost</code> and <code>removed_chat_boost</code> are also opt-in — add both to
-	<code>allowedUpdates</code> if boost-gated features matter to your bot.
+	<code>chat_boost</code> and <code>removed_chat_boost</code> arrive by default — the bot only
+	has to be an administrator of the chat.
 </p>
 <Code code={boost} title="boost.ts" />
 

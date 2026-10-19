@@ -293,7 +293,7 @@ test("rich replies, edits and markup recovery preserve the whole rich payload", 
 	let handle!: EphemeralMessage;
 	const doc = {
 		html: "<p>personal</p>",
-		media: [{ id: "file", media: { type: "document", media: "file-id" } }],
+		media: [{ id: "file", media: { type: "document" as const, media: "file-id" } }],
 	};
 	const bot = new Composer<Context>()
 		.install(ephemeral({ onExpired: "resend" }))
@@ -355,7 +355,7 @@ test("media edits accept new uploads; caption and markup resend retain media and
 		.sendCommand("go");
 	const { media } = await import("@yaebal/core");
 	const uploaded = {
-		type: "photo",
+		type: "photo" as const,
 		media: media.buffer(new Uint8Array([1]), "photo.jpg"),
 		caption: "original",
 	};

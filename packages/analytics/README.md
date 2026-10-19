@@ -188,7 +188,7 @@ both `"commands"` and `"messages"` enabled.
 ```ts
 import { analyticsAdmin, memoryAdapter } from "@yaebal/analytics";
 
-const store = memoryAdapter(); // or sqliteAdapter/clickhouseAdapter — anything with query()
+const store = memoryAdapter(); // or sqliteAdapter — anything with query()
 
 bot
 	.install(analytics({ adapters: [store] }))

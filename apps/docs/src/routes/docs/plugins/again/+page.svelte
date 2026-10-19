@@ -108,7 +108,7 @@ env.onApi("sendMessage", apiError(429, "Too Many Requests", { retry_after: 0 }),
 	</thead>
 	<tbody>
 		<tr><td><code>maxRetries</code></td><td><code>number</code></td><td><code>3</code></td><td>max retries after the first attempt</td></tr>
-		<tr><td><code>maxDelayMs</code></td><td><code>number</code></td><td><code>30000</code></td><td>cap on one wait in milliseconds</td></tr>
+		<tr><td><code>maxDelayMs</code></td><td><code>number</code></td><td><code>30000</code></td><td>cap on one wait in milliseconds. a telegram <code>retry_after</code> longer than this is not retried — the error is thrown instead of earning another 429</td></tr>
 		<tr><td><code>baseDelayMs</code></td><td><code>number</code></td><td><code>1000</code></td><td>base for exponential backoff</td></tr>
 		<tr><td><code>retryAfterPaddingMs</code></td><td><code>number</code></td><td><code>0</code></td><td>extra safety delay added to Telegram-provided waits</td></tr>
 		<tr><td><code>jitter</code></td><td><code>number | function</code></td><td><code>0</code></td><td>randomize delays or provide a custom delay transform</td></tr>

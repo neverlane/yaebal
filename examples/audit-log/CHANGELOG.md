@@ -1,5 +1,14 @@
 # @yaebal/example-audit-log
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - yaebal@0.2.3
+  - @yaebal/audit-log@1.0.3
+
 ## 0.0.3
 
 ### patch changes

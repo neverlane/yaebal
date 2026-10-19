@@ -93,3 +93,21 @@ test("fileStorage serializes concurrent writes into a consistent document", asyn
 	assert.equal(Object.keys(doc).length, 20);
 	assert.equal(await s.get("k19"), 19);
 });
+
+test("fileStorage treats prototype member names as plain keys", async () => {
+	const path = await tmpPath("store.json");
+	const storage = fileStorage<number>(path);
+
+	assert.equal(await storage.has?.("constructor"), false);
+	assert.equal(await storage.has?.("toString"), false);
+
+	await storage.set("__proto__", 1);
+	await storage.set("k", 2);
+	assert.equal(await storage.get("__proto__"), 1);
+	assert.equal(await storage.has?.("valueOf"), false);
+	assert.deepEqual((await storage.keys?.())?.sort(), ["__proto__", "k"]);
+
+	const reopened = fileStorage<number>(path);
+	assert.equal(await reopened.get("__proto__"), 1);
+	assert.equal(await reopened.has?.("constructor"), false);
+});

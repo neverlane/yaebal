@@ -14,10 +14,10 @@
   });`;
 
 	const versions = [
-		["yaebal", "0.1.x (pre-1.0)"],
-		["grammY", "1.44.x"],
-		["gramio", "0.12.x"],
-		["puregram", "3.6.x"],
+		["yaebal", "0.2.x (pre-1.0)"],
+		["grammY", "1.46.x"],
+		["gramio", "0.15.x"],
+		["puregram", "3.10.x"],
 		["telegraf", "4.16.x"],
 	];
 
@@ -106,11 +106,11 @@
 		[
 			"Bot API freshness",
 			`✅ ${BOT_API_VERSION}`,
-			"✅ 10.1",
-			"✅ 10.0",
-			"⚠️",
+			"✅ 10.3",
+			"✅ 10.3",
+			"✅ 10.3",
 			"❌",
-			`yaebal regenerates from Telegram's schema on a scheduled job. grammY's own release notes show Bot API 10.1 support — tied with yaebal. gramio's own changelog announced Bot API 10.0 "ecosystem-wide", one point release behind. the newest explicit Bot API version we could find mentioned in puregram's release history is 7.1, with nothing more recent confirmed either way. telegraf's own GitHub releases show no Bot API bump past the 7.x era, while the spec has since moved to ${BOT_API_VERSION} — expect real gaps in newer methods and fields.`,
+			`yaebal regenerates from Telegram's schema on a scheduled job. as of october 2026 the other three active libraries caught up: grammY's v1.46.0 release notes name Bot API 10.3, gramio's changelogs cover 10.3 (rich messages, ephemeral messages), and puregram 3.10 pins \`@puregram/api\` 10.3.3. telegraf's own GitHub releases show no Bot API bump past the 7.x era, while the spec has since moved to ${BOT_API_VERSION} — expect real gaps in newer methods and fields.`,
 		],
 	];
 </script>
@@ -146,10 +146,10 @@
 <table>
 	<thead><tr><th>library</th><th>best at</th><th>tradeoff</th></tr></thead>
 	<tbody>
-		<tr><td>yaebal</td><td>type-accumulating composer, generated context shortcuts, broad first-party plugin catalog, playground, tests, Bot API 10.1</td><td>pre-1.0, newer ecosystem, smaller community</td></tr>
-		<tr><td>gramio</td><td>the closest architectural relative — type-accumulating composer via <code>.extend()</code>, generated contexts, its own test package, Bot API 10.0</td><td>no colon-delimited filter-query DSL; smaller first-party plugin catalog outside the core patterns</td></tr>
+		<tr><td>yaebal</td><td>type-accumulating composer, generated context shortcuts, broad first-party plugin catalog, playground, tests, Bot API {BOT_API_VERSION}</td><td>pre-1.0, newer ecosystem, smaller community</td></tr>
+		<tr><td>gramio</td><td>the closest architectural relative — type-accumulating composer via <code>.extend()</code>, generated contexts, its own test package, Bot API 10.3</td><td>no colon-delimited filter-query DSL; smaller first-party plugin catalog outside the core patterns</td></tr>
 		<tr><td>puregram</td><td>codegen'd per-update context classes, type-accumulating <code>.extend()</code>, concurrency + per-chat ordering built into its polling transport</td><td>no official scaffolder or test framework; plugin dependencies are checked at runtime, not compile time</td></tr>
-		<tr><td>grammY</td><td>large plugin ecosystem, mature docs, official multi-worker concurrent runner, filter queries (the pattern yaebal borrows), Bot API 10.1 — tied with yaebal</td><td>context typing needs a manually-declared "flavor" instead of auto-accumulating; no generated per-update context shortcuts</td></tr>
+		<tr><td>grammY</td><td>large plugin ecosystem, mature docs, official multi-worker concurrent runner, filter queries (the pattern yaebal borrows), Bot API 10.3</td><td>context typing needs a manually-declared "flavor" instead of auto-accumulating; no generated per-update context shortcuts</td></tr>
 		<tr><td>telegraf</td><td>the most widely used, huge base of examples and answers, official scaffolder</td><td>weakest native TypeScript story of the five — custom context types are mostly manual, and its own release history shows no Bot API version bump since the 7.x era</td></tr>
 	</tbody>
 </table>

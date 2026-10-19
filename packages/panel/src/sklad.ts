@@ -12,6 +12,7 @@ import type {
 	PanelStore,
 	SearchOptions,
 } from "./index.js";
+import { applyHistoryLimit, newestFirst } from "./store-util.js";
 
 /**
  * the subset of `@yaebal/sklad`'s `StorageAdapter<T>` this bridge needs — typed structurally
@@ -96,6 +97,17 @@ export function skladPanelStore(
 	const listeners = new Set<(event: PanelEvent) => void>();
 	let seq = 0;
 
+	// every write is a read-modify-write of a whole key (the shared index especially), so two
+	// overlapping writes — a recorder awaiting one update while `recordOutgoing` logs a reply,
+	// or a concurrent runner — would each read the old value and the second write would drop
+	// the first's change. serialize them; reads stay unqueued.
+	let queue: Promise<unknown> = Promise.resolve();
+	function exclusive<T>(fn: () => Promise<T>): Promise<T> {
+		const run = queue.then(fn);
+		queue = run.catch(() => {});
+		return run;
+	}
+
 	async function readIndex(): Promise<Map<number, ChatIndexEntry>> {
 		const raw = (await adapter.get(indexKey)) as ChatIndexEntry[] | undefined;
 		return new Map((raw ?? []).map((entry) => [entry.id, entry]));
@@ -118,43 +130,46 @@ export function skladPanelStore(
 	}
 
 	return {
-		async record(chat: PanelChatRecord, message: PanelMessage) {
-			seq += 1;
-			const stored: StoredMessage = { ...message, seq };
+		record: (chat: PanelChatRecord, message: PanelMessage) =>
+			exclusive(async () => {
+				const list = await readHistory(chat.id);
+				// `seq` is only a per-chat pagination tie-breaker, but it must keep growing across a
+				// restart (the counter starts over at 0) — continue from the newest persisted one.
+				seq = Math.max(seq, list.at(-1)?.seq ?? 0) + 1;
+				const stored: StoredMessage = { ...message, seq };
 
-			const list = await readHistory(chat.id);
-			list.push(stored);
-			if (list.length > maxHistory) list.shift();
-			await writeHistory(chat.id, list);
+				list.push(stored);
+				if (list.length > maxHistory) list.shift();
+				await writeHistory(chat.id, list);
 
-			const index = await readIndex();
-			const prev = index.get(chat.id);
-			const next: ChatIndexEntry = {
-				id: chat.id,
-				name: chat.name ?? prev?.name ?? `chat ${chat.id}`,
-				lastText: message.text,
-				lastDate: message.date,
-				status: prev?.status ?? "open",
-				unread: message.direction === "in" ? (prev?.unread ?? 0) + 1 : (prev?.unread ?? 0),
-			};
-			const firstName = chat.firstName ?? prev?.firstName;
-			const lastName = chat.lastName ?? prev?.lastName;
-			const username = chat.username ?? prev?.username;
-			const lastAttachmentType = message.attachments?.[0]?.type;
+				const index = await readIndex();
+				const prev = index.get(chat.id);
+				const next: ChatIndexEntry = {
+					id: chat.id,
+					name: chat.name ?? prev?.name ?? `chat ${chat.id}`,
+					lastText: message.text,
+					lastDate: message.date,
+					status: prev?.status ?? "open",
+					unread: message.direction === "in" ? (prev?.unread ?? 0) + 1 : (prev?.unread ?? 0),
+				};
+				const firstName = chat.firstName ?? prev?.firstName;
+				const lastName = chat.lastName ?? prev?.lastName;
+				const username = chat.username ?? prev?.username;
+				const lastAttachmentType = message.attachments?.[0]?.type;
 
-			if (firstName) next.firstName = firstName;
-			if (lastName) next.lastName = lastName;
-			if (username) next.username = username;
-			if (lastAttachmentType) next.lastAttachmentType = lastAttachmentType;
-			if (message.event?.type) next.lastEventType = message.event.type;
-			if (prev?.assignedTo) next.assignedTo = prev.assignedTo;
-			if (prev?.pinned) next.pinned = prev.pinned;
+				if (firstName) next.firstName = firstName;
+				if (lastName) next.lastName = lastName;
+				if (username) next.username = username;
+				if (lastAttachmentType) next.lastAttachmentType = lastAttachmentType;
+				if (message.event?.type) next.lastEventType = message.event.type;
+				if (prev?.assignedTo) next.assignedTo = prev.assignedTo;
+				if (prev?.pinned) next.pinned = prev.pinned;
 
-			index.set(chat.id, next);
-			await writeIndex(index);
+				index.set(chat.id, next);
+				await writeIndex(index);
 
-			emit({ type: "record", chatId: chat.id, direction: message.direction });
-		},
+				emit({ type: "record", chatId: chat.id, direction: message.direction });
+			}),
 
 		async chats(chatsOptions: ChatsOptions = {}) {
 			const index = await readIndex();
@@ -180,7 +195,7 @@ export function skladPanelStore(
 						: m.date < before,
 				);
 			}
-			if (historyOptions.limit !== undefined) list = list.slice(-historyOptions.limit);
+			list = applyHistoryLimit(list, historyOptions.limit);
 
 			return list.map((m) => ({ ...m }));
 		},
@@ -189,68 +204,75 @@ export function skladPanelStore(
 			return (await readIndex()).get(chatId)?.status;
 		},
 
-		async setStatus(chatId: number, status: PanelChatStatus) {
-			const index = await readIndex();
-			const chat = index.get(chatId);
-			if (!chat) return;
+		setStatus: (chatId: number, status: PanelChatStatus) =>
+			exclusive(async () => {
+				const index = await readIndex();
+				const chat = index.get(chatId);
+				if (!chat) return;
 
-			chat.status = status;
-			await writeIndex(index);
-			emit({ type: "status", chatId, status });
-		},
+				chat.status = status;
+				await writeIndex(index);
+				emit({ type: "status", chatId, status });
+			}),
 
-		async assign(chatId: number, operator: string | null) {
-			const index = await readIndex();
-			const chat = index.get(chatId);
-			if (!chat) return;
+		assign: (chatId: number, operator: string | null) =>
+			exclusive(async () => {
+				const index = await readIndex();
+				const chat = index.get(chatId);
+				if (!chat) return;
 
-			chat.assignedTo = operator ?? undefined;
-			await writeIndex(index);
-			emit({ type: "chat", chatId });
-		},
+				chat.assignedTo = operator ?? undefined;
+				await writeIndex(index);
+				emit({ type: "chat", chatId });
+			}),
 
-		async pin(chatId: number, pinned: boolean) {
-			const index = await readIndex();
-			const chat = index.get(chatId);
-			if (!chat) return;
+		pin: (chatId: number, pinned: boolean) =>
+			exclusive(async () => {
+				const index = await readIndex();
+				const chat = index.get(chatId);
+				if (!chat) return;
 
-			chat.pinned = pinned;
-			await writeIndex(index);
-			emit({ type: "chat", chatId });
-		},
+				chat.pinned = pinned;
+				await writeIndex(index);
+				emit({ type: "chat", chatId });
+			}),
 
-		async markRead(chatId: number) {
-			const index = await readIndex();
-			const chat = index.get(chatId);
-			// only emit on a real transition — see MemoryPanelStore.markRead for why an
-			// unconditional emit here creates a client/server feedback loop.
-			if (!chat || chat.unread === 0) return;
+		markRead: (chatId: number) =>
+			exclusive(async () => {
+				const index = await readIndex();
+				const chat = index.get(chatId);
+				// only emit on a real transition — see MemoryPanelStore.markRead for why an
+				// unconditional emit here creates a client/server feedback loop.
+				if (!chat || chat.unread === 0) return;
 
-			chat.unread = 0;
-			await writeIndex(index);
-			emit({ type: "read", chatId });
-		},
+				chat.unread = 0;
+				await writeIndex(index);
+				emit({ type: "read", chatId });
+			}),
 
-		async updateMessage(chatId: number, messageId: number, patch: MessagePatch) {
-			const list = await readHistory(chatId);
-			const message = list.find((m) => m.id === messageId);
-			if (!message) return;
+		updateMessage: (chatId: number, messageId: number, patch: MessagePatch) =>
+			exclusive(async () => {
+				const list = await readHistory(chatId);
+				const message = list.find((m) => m.id === messageId);
+				if (!message) return;
 
-			if (patch.text !== undefined) message.text = patch.text;
-			if (patch.edited !== undefined) message.edited = patch.edited;
-			if (patch.deleted !== undefined) message.deleted = patch.deleted;
+				if (patch.text !== undefined) message.text = patch.text;
+				if (patch.edited !== undefined) message.edited = patch.edited;
+				if (patch.deleted !== undefined) message.deleted = patch.deleted;
+				if (patch.operator !== undefined) message.operator = patch.operator;
 
-			await writeHistory(chatId, list);
-			emit({ type: "chat", chatId });
-		},
+				await writeHistory(chatId, list);
+				emit({ type: "chat", chatId });
+			}),
 
-		async deleteChat(chatId: number) {
-			const index = await readIndex();
-			index.delete(chatId);
-			await writeIndex(index);
-			await adapter.delete(historyKey(chatId));
-			emit({ type: "deleted", chatId });
-		},
+		deleteChat: (chatId: number) =>
+			exclusive(async () => {
+				const index = await readIndex();
+				index.delete(chatId);
+				await writeIndex(index);
+				await adapter.delete(historyKey(chatId));
+				emit({ type: "deleted", chatId });
+			}),
 
 		async search(query: string, searchOptions: SearchOptions = {}) {
 			const q = query.trim().toLowerCase();
@@ -265,14 +287,11 @@ export function skladPanelStore(
 
 			for (const chatId of chatIds) {
 				for (const message of await readHistory(chatId)) {
-					if (!message.text.toLowerCase().includes(q)) continue;
-
-					out.push({ chatId, message: { ...message } });
-					if (out.length >= limit) return out;
+					if (message.text.toLowerCase().includes(q)) out.push({ chatId, message: { ...message } });
 				}
 			}
 
-			return out;
+			return newestFirst(out, limit);
 		},
 
 		subscribe(listener: (event: PanelEvent) => void) {

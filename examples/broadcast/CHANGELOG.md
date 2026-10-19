@@ -1,5 +1,14 @@
 # @yaebal/example-broadcast
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - @yaebal/broadcast@2.0.0
+  - yaebal@0.2.3
+
 ## 0.0.3
 
 ### patch changes

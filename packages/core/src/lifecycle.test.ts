@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { Bot } from "./bot.js";
+import { Composer } from "./composer.js";
+import type { Context } from "./context.js";
 
 const info = { id: 1, is_bot: true, first_name: "bot" };
 const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
@@ -230,4 +232,32 @@ test("a stop while idle in the long poll sends no extra confirmation", {
 	await bot.stop();
 	await polling;
 	assert.equal(polls, 1);
+});
+
+test("allowedUpdates opts into withheld update types the bot actually handles", () => {
+	const plain = new Bot("123:test").on("message", () => {});
+	assert.equal(plain.allowedUpdates(), undefined, "nothing withheld is handled → telegram default");
+
+	const feature = new Composer<Context>().on("message_reaction", () => {});
+	const bot = new Bot("123:test").on(["message", "chat_member"], () => {}).extend(feature);
+	const allowed = bot.allowedUpdates() ?? [];
+	assert.ok(allowed.includes("chat_member"));
+	assert.ok(allowed.includes("message_reaction"), "extended composers count too");
+	assert.ok(!allowed.includes("message_reaction_count"), "unhandled opt-in types stay off");
+	assert.ok(allowed.includes("callback_query"), "the default set is kept, never narrowed");
+
+	const explicit = new Bot("123:test", { allowedUpdates: ["message"] }).on("chat_member", () => {});
+	assert.deepEqual(explicit.allowedUpdates(), ["message"], "an explicit option always wins");
+});
+
+test("start() sends the derived allowed_updates", { timeout: 5_000 }, async (t) => {
+	let sent: unknown;
+	t.mock.method(globalThis, "fetch", async (_url: unknown, options?: RequestInit) => {
+		sent = (JSON.parse(String(options?.body)) as Record<string, unknown>).allowed_updates;
+		await bot.stop();
+		return new Response(JSON.stringify({ ok: true, result: [] }));
+	});
+	const bot: Bot = new Bot("123:test", { botInfo: info }).derive("chat_member", () => ({}));
+	await bot.start();
+	assert.ok(Array.isArray(sent) && sent.includes("chat_member"));
 });

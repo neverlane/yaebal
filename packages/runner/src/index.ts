@@ -164,6 +164,8 @@ export interface RunnerBot {
 	 * `/cmd@other_bot` in groups is told apart from `/cmd@this_bot`. optional for custom sinks.
 	 */
 	init?(): Promise<unknown>;
+	/** core `Bot.allowedUpdates()` — used when `options.allowedUpdates` isn't set. */
+	allowedUpdates?(): readonly string[] | undefined;
 }
 
 export interface RunnerOptions {
@@ -175,7 +177,11 @@ export interface RunnerOptions {
 	limit?: number;
 	/** long-poll timeout (seconds). defaults to 30. */
 	timeout?: number;
-	/** restrict update types (telegram `allowed_updates`). */
+	/**
+	 * restrict update types (telegram `allowed_updates`). defaults to the bot's own
+	 * `allowedUpdates()` — telegram's default set plus any withheld type a handler is registered
+	 * for (`chat_member`, `message_reaction*`).
+	 */
 	allowedUpdates?: string[];
 	/**
 	 * called on a handler or polling error. defaults to `console.error` — a silently failing
@@ -214,6 +220,7 @@ const delay = (ms: number, signal: AbortSignal) =>
 export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 	const concurrency = options.concurrency ?? 50;
 	const seqBy = options.sequentializeBy ?? chatKey;
+	const allowedUpdates = options.allowedUpdates ?? bot.allowedUpdates?.();
 	const scheduler = createScheduler(concurrency);
 	// aborts the in-flight long poll (and any retry backoff) so stop() returns promptly
 	// instead of waiting out the full `timeout` window.
@@ -271,7 +278,7 @@ export function run(bot: RunnerBot, options: RunnerOptions = {}): RunnerHandle {
 						offset,
 						limit: options.limit ?? 100,
 						timeout: options.timeout ?? 30,
-						...(options.allowedUpdates ? { allowed_updates: options.allowedUpdates } : {}),
+						...(allowedUpdates ? { allowed_updates: allowedUpdates } : {}),
 					},
 					{ signal: abort.signal },
 				);

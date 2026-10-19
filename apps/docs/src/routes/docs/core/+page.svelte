@@ -233,7 +233,8 @@ if (matchQuery(ctx, "message:text")) {
 	<tbody>
 		<tr><td><code>new Bot(token, options?)</code></td><td>creates an API client and a composer-backed bot.</td></tr>
 		<tr><td><code>bot.start()</code></td><td>starts sequential long-polling. resolves when <code>stop()</code> is called.</td></tr>
-		<tr><td><code>bot.stop()</code></td><td>stops the polling loop and resolves after stop handlers run.</td></tr>
+		<tr><td><code>bot.stop()</code></td><td>stops the polling loop and resolves after stop handlers run. a stop mid-batch confirms the updates already handled, so a restart doesn't get them again.</td></tr>
+		<tr><td><code>bot.allowedUpdates()</code></td><td>the <code>allowed_updates</code> the bot requests: the option when set, otherwise telegram's default plus any withheld type (<code>chat_member</code>, <code>message_reaction</code>, <code>message_reaction_count</code>) a handler is registered for. <code>start()</code>, <code>@yaebal/runner</code> and <code>setWebhook</code> use it.</td></tr>
 		<tr><td><code>bot.handleUpdate(update)</code></td><td>runs one update through the frozen middleware chain.</td></tr>
 		<tr><td><code>bot.onStart(handler)</code></td><td>runs after <code>getMe()</code> succeeds in <code>start()</code>.</td></tr>
 		<tr><td><code>bot.onStop(handler)</code></td><td>runs once when <code>stop()</code> is requested or polling exits.</td></tr>
@@ -248,7 +249,7 @@ if (matchQuery(ctx, "message:text")) {
 	<tbody>
 		<tr><td><code>apiRoot?: string</code></td><td>Telegram API root. defaults to <code>https://api.telegram.org</code>.</td></tr>
 		<tr><td><code>readFile?: FileReader</code></td><td>runtime-provided file reader for <code>media.path()</code>. bare core leaves it unset.</td></tr>
-		<tr><td><code>allowedUpdates?: UpdateName[]</code></td><td>update types requested by long polling.</td></tr>
+		<tr><td><code>allowedUpdates?: UpdateName[]</code></td><td>update types requested by long polling. omitted: telegram's default set, plus <code>chat_member</code> / <code>message_reaction</code> / <code>message_reaction_count</code> when a handler is registered for them — see <code>bot.allowedUpdates()</code>.</td></tr>
 		<tr><td><code>contextFactory?: (...) =&gt; Context</code></td><td>builds a custom context per update. the <code>yaebal</code> meta package uses this for rich generated contexts.</td></tr>
 	</tbody>
 </table>

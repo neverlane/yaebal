@@ -3,12 +3,18 @@ import { assertSecretToken, type MediaSource, type WebhookInfo } from "@yaebal/c
 /** minimal bot surface the lifecycle helpers need — just the api client. */
 export interface ApiBot {
 	api: { call(method: string, params?: Record<string, unknown>): Promise<unknown> };
+	/** core `Bot.allowedUpdates()` — `setWebhook` falls back to it when no `allowedUpdates` is passed. */
+	allowedUpdates?(): readonly string[] | undefined;
 }
 
 export interface SetWebhookOptions {
 	/** secret token telegram echoes back in `X-Telegram-Bot-Api-Secret-Token` (pass the same to `webhook`). */
 	secretToken?: string;
-	/** restrict the update types telegram sends (e.g. `["message", "callback_query"]`). */
+	/**
+	 * restrict the update types telegram sends (e.g. `["message", "callback_query"]`). defaults
+	 * to the bot's own `allowedUpdates()`, which opts into `chat_member` / `message_reaction*`
+	 * when handlers for them are registered.
+	 */
 	allowedUpdates?: string[];
 	/** drop updates that piled up while the webhook was unset. */
 	dropPendingUpdates?: boolean;
@@ -35,7 +41,7 @@ export async function setWebhook(
 	await bot.api.call("setWebhook", {
 		url,
 		secret_token: options.secretToken,
-		allowed_updates: options.allowedUpdates,
+		allowed_updates: options.allowedUpdates ?? bot.allowedUpdates?.(),
 		drop_pending_updates: options.dropPendingUpdates,
 		max_connections: options.maxConnections,
 		ip_address: options.ipAddress,

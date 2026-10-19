@@ -132,7 +132,7 @@ await loadUserFixed(1);`;
 		<tr><td><code>409 conflict</code></td><td>stop old containers, local dev processes, and duplicate <code>bot.start()</code> calls</td></tr>
 		<tr><td>webhook is set</td><td>call <code>deleteWebhook</code> or switch the app to webhook mode</td></tr>
 		<tr><td>groups only deliver commands</td><td>botfather privacy mode is enabled; disable it only if the bot must read all group messages</td></tr>
-		<tr><td><code>chat_member</code> / reactions never arrive</td><td>pass explicit <code>allowedUpdates</code></td></tr>
+		<tr><td><code>chat_member</code> / reactions never arrive</td><td>register them with <code>on()</code> (yaebal then requests them automatically) or pass explicit <code>allowedUpdates</code>; a previous <code>allowed_updates</code> persists on telegram's side until changed</td></tr>
 	</tbody>
 </table>
 <Code code={allowedUpdates} title="allowed-updates.ts" />

@@ -2,7 +2,7 @@ import { type Api, createApi, type FileReader, withReplyEnvelope } from "./api.j
 import { Composer, type Middleware } from "./composer.js";
 import { Context } from "./context.js";
 import { delay } from "./delay.js";
-import type { Update, UpdateName, User } from "./telegram-types.js";
+import { type Update, type UpdateName, type User, updateNames } from "./telegram-types.js";
 import type { HandleUpdateOptions } from "./webhook.js";
 
 export type BotPlugin<In extends Context = Context, Out extends object = Record<never, never>> = <
@@ -50,6 +50,13 @@ export interface PollingErrorInfo {
 }
 
 type PollingErrorHandler = (error: unknown, info: PollingErrorInfo) => unknown | Promise<unknown>;
+
+/** update types telegram only sends when `allowed_updates` asks for them by name. */
+const OPT_IN_UPDATES: ReadonlySet<string> = new Set([
+	"chat_member",
+	"message_reaction",
+	"message_reaction_count",
+]);
 
 /** server-side long-poll window (seconds) requested from getUpdates. */
 const POLL_TIMEOUT_S = 30;
@@ -244,6 +251,22 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	/**
+	 * the `allowed_updates` this bot should request: the `allowedUpdates` option when set;
+	 * otherwise `undefined` (telegram's default set) — unless a handler is registered for an
+	 * update type that default leaves out (`chat_member`, `message_reaction`,
+	 * `message_reaction_count`), in which case it's the default set plus those. `start()` sends
+	 * this; pass it to `setWebhook` on webhook deployments for the same effect.
+	 */
+	allowedUpdates(): UpdateName[] | undefined {
+		if (this.#options.allowedUpdates) return this.#options.allowedUpdates;
+
+		const registered = this.registeredUpdates();
+		if (![...OPT_IN_UPDATES].some((name) => registered.has(name as UpdateName))) return undefined;
+
+		return updateNames.filter((name) => !OPT_IN_UPDATES.has(name) || registered.has(name));
+	}
+
+	/**
 	 * replace the default polling-error handler (a `console.error`). called when a `getUpdates`
 	 * long poll fails; polling retries either way, backing off 3s → 30s while failures repeat and
 	 * resetting on the first success. the second argument carries the consecutive-failure count and
@@ -319,6 +342,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	}
 
 	async #poll(abort: AbortController): Promise<void> {
+		const allowedUpdates = this.allowedUpdates();
 		try {
 			let info: User;
 			try {
@@ -355,9 +379,7 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 						{
 							offset: this.#offset,
 							timeout: POLL_TIMEOUT_S,
-							...(this.#options.allowedUpdates
-								? { allowed_updates: this.#options.allowedUpdates }
-								: {}),
+							...(allowedUpdates ? { allowed_updates: allowedUpdates } : {}),
 						},
 						{ signal: poll.signal },
 					);

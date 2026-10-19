@@ -225,6 +225,22 @@ export function matchQuery(ctx: Context, query: string): boolean {
 export class Composer<C extends Context = Context> {
 	protected middlewares: Middleware<C>[] = [];
 	protected decorations: object[] = [];
+	/** update types named by `on()` / scoped `derive()` here — see {@link registeredUpdates}. */
+	protected registered = new Set<string>();
+	/** composers merged in via `extend()`, walked lazily so later registrations on them count. */
+	protected extended: Composer<Context>[] = [];
+
+	/**
+	 * every update type this composer (and anything it `extend()`ed) explicitly handles —
+	 * collected from `on()` queries and scoped `derive()`. raw `use()`, `filter()` and `guard()`
+	 * can't be read, so this is a lower bound: `Bot.start()` uses it only to *add* the update
+	 * types telegram withholds by default (`chat_member`, `message_reaction*`), never to drop any.
+	 */
+	registeredUpdates(): Set<UpdateName> {
+		const out = new Set(this.registered as Set<UpdateName>);
+		for (const child of this.extended) for (const name of child.registeredUpdates()) out.add(name);
+		return out;
+	}
 
 	/** raw middleware. call `next()` to continue the chain. */
 	use(...middleware: Middleware<C>[]): this {
@@ -243,6 +259,10 @@ export class Composer<C extends Context = Context> {
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
 		const queries: readonly string[] = typeof query === "string" ? [query] : query;
+		for (const q of queries) {
+			const [head = ""] = q.split(":", 1);
+			if (head !== "") this.registered.add(head);
+		}
 
 		this.middlewares.push((ctx, next) =>
 			queries.some((q) => matchQuery(ctx, q)) ? handler(ctx, next) : next(),
@@ -464,6 +484,7 @@ export class Composer<C extends Context = Context> {
 		const scoped = typeof a !== "function";
 		const only: UpdateName[] | null = scoped ? (Array.isArray(a) ? a : [a]) : null;
 		const fn = (scoped ? b : a) as (ctx: C) => object | Promise<object>;
+		for (const name of only ?? []) this.registered.add(name);
 
 		this.middlewares.push(async (ctx, next) => {
 			if (!only || only.includes(ctx.updateType)) Object.assign(ctx as object, await fn(ctx));
@@ -481,6 +502,7 @@ export class Composer<C extends Context = Context> {
 
 	/** merge another composer in, inheriting its full context type. */
 	extend<C2 extends Context>(other: Composer<C2>): Composer<C & C2> {
+		this.extended.push(other as unknown as Composer<Context>);
 		this.middlewares.push(other.toMiddleware() as unknown as Middleware<C>);
 		return this as unknown as Composer<C & C2>;
 	}

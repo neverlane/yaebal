@@ -89,8 +89,9 @@ bot.command("mute", async (ctx) => {
 
 <h2>approve or decline join requests</h2>
 <p>
-	join requests are opt-in updates. include <code>chat_join_request</code> in
-	<code>allowedUpdates</code> when using long polling.
+	join requests are part of telegram's default update set — no <code>allowedUpdates</code>
+	change needed (unless you restricted it yourself). the bot must be an admin with the
+	<em>invite users</em> right.
 </p>
 <Code code={join} title="join-request.ts" />
 

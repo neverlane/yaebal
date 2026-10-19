@@ -147,3 +147,18 @@ test("dedupe lets a redelivery of a failed update run again", async () => {
 
 	assert.equal(runs, 2);
 });
+
+test("setWebhook falls back to the bot's derived allowed_updates", async () => {
+	let params: Record<string, unknown> | undefined;
+	const bot = new Bot("123:abc").on("chat_member", () => {});
+	(bot as unknown as { api: { call: unknown } }).api.call = async (
+		_method: string,
+		p?: Record<string, unknown>,
+	) => {
+		params = p;
+		return true;
+	};
+
+	await setWebhook(bot, "https://yaebal.mom/hook");
+	assert.ok((params?.allowed_updates as string[]).includes("chat_member"));
+});

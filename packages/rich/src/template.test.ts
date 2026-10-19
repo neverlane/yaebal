@@ -100,7 +100,7 @@ test("document() result is a RichDocument, so the fluent setters chain onto it",
 });
 
 test("document attachments serialize, compose and validate ids atomically", () => {
-	const media = { id: "photo1", media: { type: "photo", media: "file-id" } };
+	const media = { id: "photo1", media: { type: "photo" as const, media: "file-id" } };
 	const inner = html`<img src="tg://photo?id=photo1">`.media(media);
 	for (const doc of [
 		html`${inner}`,

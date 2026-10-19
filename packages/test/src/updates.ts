@@ -4,7 +4,7 @@
  * reach for them directly when you need an update shape the actors don't
  * cover, or want full control over every field.
  */
-import type { Message, Update, UpdateName, User } from "@yaebal/core";
+import type { ChatMember, Message, Update, UpdateName, User } from "@yaebal/core";
 
 /** the payload type for a given update kind — reuses core's `Update` shape, no extra types package needed. */
 type Payload<K extends UpdateName> = NonNullable<Update[K]>;
@@ -280,9 +280,14 @@ export interface ChatMemberUpdateOptions {
 	chatId?: number;
 	fromId?: number;
 	userId?: number;
-	oldStatus?: string;
-	newStatus?: string;
+	oldStatus?: ChatMember["status"];
+	newStatus?: ChatMember["status"];
 }
+
+/** a membership stub: the status plus the user — the per-status extras (rights, until_date, …)
+ * are left out, so read them off a real update when a test needs them. */
+const memberStub = (status: ChatMember["status"], user: User): ChatMember =>
+	({ status, user }) as ChatMember;
 
 function buildChatMemberUpdate(options: ChatMemberUpdateOptions): Payload<"my_chat_member"> {
 	const {
@@ -298,8 +303,8 @@ function buildChatMemberUpdate(options: ChatMemberUpdateOptions): Payload<"my_ch
 		chat: { id: chatId, type: "group" },
 		from: stubUser(fromId),
 		date: 0,
-		old_chat_member: { status: oldStatus, user },
-		new_chat_member: { status: newStatus, user },
+		old_chat_member: memberStub(oldStatus, user),
+		new_chat_member: memberStub(newStatus, user),
 	};
 }
 

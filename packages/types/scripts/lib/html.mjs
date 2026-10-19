@@ -48,6 +48,8 @@ export function htmlToMarkdown(html) {
 	// drop non-content wrappers before inline conversion so their text doesn't leak in
 	out = out.replace(/<\/?(?:p|div)[^>]*>/gi, "\n\n");
 	out = out.replace(/<br\s*\/?>/gi, "\n");
+	// the docs draw emoji as <img alt="👍"> — keep the emoji itself, not an empty gap
+	out = out.replace(/<img\b[^>]*\balt="([^"]*)"[^>]*>/gi, "$1");
 
 	out = out.replace(/<a\s+[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gis, (_, href, text) => {
 		const inner = decodeEntities(text.replace(/<[^>]+>/g, "")).trim();

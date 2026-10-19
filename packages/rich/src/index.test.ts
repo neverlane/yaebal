@@ -154,14 +154,14 @@ test("rich document attachments upload through helpers and raw API builder seria
 	const api = createApi("123:test");
 	const doc = document("report").media({
 		id: "report",
-		media: { type: "document", media: media.text("hello", "report.txt") },
+		media: { type: "document" as const, media: media.text("hello", "report.txt") },
 	});
 	await sendRichMessage(api, 42, doc);
 	await api.call("sendRichMessage", { chat_id: 42, rich_message: doc });
 	for (const body of bodies) {
 		assert.deepEqual(JSON.parse(String(body.get("rich_message"))), {
 			html: "report",
-			media: [{ id: "report", media: { type: "document", media: "attach://_file0" } }],
+			media: [{ id: "report", media: { type: "document" as const, media: "attach://_file0" } }],
 		});
 		const file = body.get("_file0");
 		assert.ok(file instanceof Blob);

@@ -397,3 +397,26 @@ test("forceReply() sets force_reply on both markups only when asked (bot api 10.
 		false,
 	);
 });
+
+test("pattern() lays buttons out by row sizes, repeating the last one", () => {
+	const inline = new InlineKeyboard()
+		.text("a", "a")
+		.text("b", "b")
+		.row()
+		.text("c", "c")
+		.text("d", "d")
+		.text("e", "e")
+		.text("f", "f")
+		.pattern([1, 2]);
+	assert.deepEqual(
+		inline.build().inline_keyboard.map((row) => row.map((b) => b.text)),
+		[["a"], ["b", "c"], ["d", "e"], ["f"]],
+	);
+
+	const reply = new Keyboard().text("1").text("2").text("3").pattern([3]);
+	assert.deepEqual(
+		reply.build().keyboard.map((row) => row.map((b) => b.text)),
+		[["1", "2", "3"]],
+	);
+	assert.throws(() => new Keyboard().pattern([0]), /positive integer/);
+});

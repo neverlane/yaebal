@@ -53,6 +53,9 @@ const kb = new InlineKeyboard()
   .build();
 ```
 
+for an uneven layout, `pattern(sizes)` re-flows every button added so far by row sizes —
+`.pattern([1, 2, 1])` gives one, two, one; sizes past the end repeat the last one.
+
 `InlineKeyboard`/`Keyboard` instances also implement `toJSON()`, so you can pass the builder
 itself as `reply_markup` and skip the trailing `.build()` — `Api` stringifies the body either way.
 

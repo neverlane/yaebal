@@ -67,8 +67,10 @@ featureFlags({
 });
 ```
 
-percentage rollout hashes `` `${key}:${bucketKey}` `` (fnv-1a, exported as `bucketOf` for testing)
-— stable across restarts and processes, unlike `Math.random()`.
+percentage rollout hashes `` `${key}:${id}` `` (fnv-1a, exported as `bucketOf` for testing) —
+stable across restarts and processes, unlike `Math.random()`. `id` is your `bucketKey` when you
+pass one (so `bucketBy.chat` really rolls out per chat), otherwise the user id, falling back to
+the chat id.
 
 ## multivariate flags
 

@@ -1263,8 +1263,18 @@ test("on/command/hears accept arrays", { timeout: 5_000 }, async () => {
 test("when() registers at build time only when its condition holds", async () => {
 	const seen: string[] = [];
 	const bot = new Composer<Context>()
-		.when(true, (c) => c.use((_ctx, next) => (seen.push("on"), next())))
-		.when(false, (c) => c.use((_ctx, next) => (seen.push("off"), next())));
+		.when(true, (c) =>
+			c.use((_ctx, next) => {
+				seen.push("on");
+				return next();
+			}),
+		)
+		.when(false, (c) =>
+			c.use((_ctx, next) => {
+				seen.push("off");
+				return next();
+			}),
+		);
 
 	await bot.toMiddleware()(
 		new Context({

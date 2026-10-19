@@ -68,7 +68,11 @@ for mass sends, use `@yaebal/broadcast` (built-in pacing) instead of a bare loop
 - handler registered after the first `bot.start()`/`handleUpdate()`? the chain freezes on
   first use — register everything before starting.
 - update type not delivered? if `allowedUpdates` was set (or a previous `setWebhook` set
-  `allowed_updates`), unlisted update types are silently dropped.
+  `allowed_updates`), unlisted update types are silently dropped. `chat_member`,
+  `message_reaction` and `message_reaction_count` are off by default — registering an `on()`
+  handler for them makes `bot.start()` / the runner / `setWebhook` request them; check
+  `bot.allowedUpdates()`.
+- see what happens on the wire: `YAEBAL_DEBUG='yaebal:*'` logs every api call, update and poll.
 - webhook mode: check `getWebhookInfo(bot)` from `@yaebal/web` — `pending_update_count` and
   `last_error_message` say exactly what telegram sees.
 - a filter query like `on("message:text")` doesn't match photos/captions — check the query.

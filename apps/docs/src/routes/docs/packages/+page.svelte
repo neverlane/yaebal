@@ -53,6 +53,7 @@ pnpm add @yaebal/core @yaebal/session @yaebal/keyboard`;
 		["@yaebal/web", "/docs/plugins/web/", "webhooks on any runtime — edge, node/bun/deno servers, serverless, and fetch frameworks; adapters, sequentialize, dedupe, lifecycle"],
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/analytics", "/docs/plugins/analytics/", "ctx.track(event, properties) with pluggable sinks: posthog, plausible, sqlite, clickhouse"],
+		["@yaebal/otel", "/docs/plugins/otel/", "opentelemetry tracing: a span per update, a child span per bot api call, ctx.otel.record"],
 		["@yaebal/audit-log", "/docs/plugins/audit-log/", "correlated, redacted-by-default audit logging — sinks, formatters, filters, sampling, chatSink, auditAdmin"],
 		["@yaebal/media-group", "/docs/plugins/media-group/", "collect albums into one handler call or ctx.mediaGroup"],
 		["@yaebal/split", "/docs/plugins/split/", "long text as multiple messages — entities survive the split"],

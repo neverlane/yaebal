@@ -21,6 +21,7 @@ export const nav: NavSection[] = [
 			{ label: "core concepts", href: "/docs/core" },
 			{ label: "examples", href: "/docs/examples" },
 			{ label: "recipes", href: "/docs/recipes" },
+			{ label: "ux patterns", href: "/docs/ux-patterns", badge: "new" },
 			{ label: "comparison", href: "/docs/comparison" },
 			{ label: "cheat sheet", href: "/docs/cheat-sheet" },
 			{ label: "typed examples", href: "/docs/typed-examples" },
@@ -121,6 +122,7 @@ export const nav: NavSection[] = [
 			{ label: "panel", href: "/docs/plugins/panel" },
 			{ label: "analytics", href: "/docs/plugins/analytics" },
 			{ label: "audit-log", href: "/docs/plugins/audit-log" },
+			{ label: "otel", href: "/docs/plugins/otel" },
 		],
 	},
 	{

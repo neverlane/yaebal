@@ -49,7 +49,9 @@ function resolveHandler<C extends Context>(
 	makeReply: (text: string) => Middleware<C> = replyHandler,
 ): Middleware<C> {
 	if (route.handler !== undefined) {
-		const handler = options.handlers?.[route.handler];
+		const handlers = options.handlers;
+		const handler =
+			handlers && Object.hasOwn(handlers, route.handler) ? handlers[route.handler] : undefined;
 
 		if (!handler)
 			throw new Error(`Missing handler "${route.handler}" referenced in ${kind}[${index}]`);

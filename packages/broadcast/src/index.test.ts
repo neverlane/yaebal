@@ -146,3 +146,65 @@ test("broadcast can pause and resume queued jobs", async () => {
 	assert(events.includes("job_paused"));
 	assert(events.includes("job_resumed"));
 });
+
+test("concurrent deliveries waiting on the rate limit don't wake together and burst", {
+	timeout: 5000,
+}, async () => {
+	const sentAt: number[] = [];
+	const client = new Broadcast(fakeApi().api, {
+		concurrency: 4,
+		rateLimit: { limit: 1, windowMs: 40 },
+	}).type("tick", () => {
+		sentAt.push(Date.now());
+	});
+
+	const job = await client.start("tick", [[], [], [], []] as const);
+	await job.wait();
+	await client.stop();
+
+	for (let i = 1; i < sentAt.length; i++) {
+		const gap = (sentAt[i] as number) - (sentAt[i - 1] as number);
+		assert.ok(gap >= 30, `sends ${i - 1} and ${i} were only ${gap}ms apart`);
+	}
+});
+
+test("a one-off sendMessage job drops its inline type once it completes", {
+	timeout: 5000,
+}, async () => {
+	const client = new Broadcast(fakeApi().api, { rateLimit: false });
+	await client.sendMessage([1], "hi");
+	await client.stop();
+
+	await assert.rejects(
+		client.start("@yaebal/broadcast:sendMessage:1" as never, [[1, 0]] as never),
+		/is not registered/,
+	);
+});
+
+test("claim() picks by priority, then dueAt, then index", { timeout: 5000 }, () => {
+	const storage = new MemoryBroadcastStorage();
+	const base = { jobId: "j", type: "t", args: [], status: "queued" as const, attempts: 0 };
+	const at = { maxAttempts: 1, createdAt: 0, updatedAt: 0 };
+	storage.createJob({
+		id: "j",
+		type: "t",
+		status: "queued",
+		total: 4,
+		sent: 0,
+		failed: 0,
+		skipped: 0,
+		retried: 0,
+		priority: 0,
+		createdAt: 0,
+		updatedAt: 0,
+	});
+	storage.addDeliveries("j", [
+		{ ...base, ...at, id: "a", index: 0, priority: 0, dueAt: 5 },
+		{ ...base, ...at, id: "b", index: 1, priority: 1, dueAt: 9 },
+		{ ...base, ...at, id: "c", index: 2, priority: 1, dueAt: 3 },
+		{ ...base, ...at, id: "d", index: 3, priority: 1, dueAt: 3 },
+	]);
+
+	const order = [1, 2, 3, 4].map(() => storage.claim("w", 10, 1000)?.id);
+	assert.deepEqual(order, ["c", "d", "b", "a"]);
+});

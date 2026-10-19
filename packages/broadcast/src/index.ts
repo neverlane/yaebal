@@ -295,6 +295,7 @@ type NormalizedRetry = Required<Omit<BroadcastRetryOptions, "fixedDelayMs">> & {
 	fixedDelayMs?: number;
 };
 
+const INLINE_TYPE_PREFIX = "@yaebal/broadcast:";
 const DEFAULT_RATE_LIMIT: BroadcastRateLimit = { limit: 25, windowMs: 1_000 };
 const DEFAULT_RETRY: Required<
 	Pick<BroadcastRetryOptions, "attempts" | "baseDelayMs" | "maxDelayMs">
@@ -392,23 +393,28 @@ export class MemoryBroadcastStorage implements BroadcastStorage {
 	}
 
 	claim(workerId: string, now: number, leaseMs: number): BroadcastDeliveryState | undefined {
-		const candidates: BroadcastDeliveryState[] = [];
+		// a single min-scan, not collect-and-sort: claim() runs once per delivery, and sorting every
+		// pending delivery each time made a large broadcast quadratic-times-log in the event loop
+		let delivery: BroadcastDeliveryState | undefined;
 
 		for (const [jobId, bucket] of this.#deliveries) {
 			const job = this.#jobs.get(jobId);
 			if (!job || (job.status !== "queued" && job.status !== "running")) continue;
 
-			for (const delivery of bucket.values()) {
-				const expired = delivery.status === "running" && (delivery.lockUntil ?? 0) <= now;
-				if ((delivery.status === "queued" && delivery.dueAt <= now) || expired) {
-					candidates.push(delivery);
+			for (const candidate of bucket.values()) {
+				const expired = candidate.status === "running" && (candidate.lockUntil ?? 0) <= now;
+				if (!((candidate.status === "queued" && candidate.dueAt <= now) || expired)) continue;
+				if (
+					delivery === undefined ||
+					(candidate.priority - delivery.priority ||
+						delivery.dueAt - candidate.dueAt ||
+						delivery.index - candidate.index) > 0
+				) {
+					delivery = candidate;
 				}
 			}
 		}
 
-		const delivery = candidates.sort(
-			(a, b) => b.priority - a.priority || a.dueAt - b.dueAt || a.index - b.index,
-		)[0];
 		if (!delivery) return undefined;
 
 		const job = this.#jobs.get(delivery.jobId);
@@ -707,6 +713,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		await this.storage.patchJob(jobId, next);
 		this.#emit({ type: "job_cancelled", job: next });
 		this.#resolveWaiters(jobId, resultFromJob(next));
+		this.#releaseInline(next.type);
 	}
 
 	async snapshot(jobId: string): Promise<BroadcastSnapshot> {
@@ -870,8 +877,10 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		this.#emit(
 			total === 0 ? { type: "job_completed", job: queued } : { type: "job_queued", job: queued },
 		);
-		if (total === 0) this.#resolveWaiters(id, resultFromJob(queued));
-		else this.#schedule(0);
+		if (total === 0) {
+			this.#resolveWaiters(id, resultFromJob(queued));
+			this.#releaseInline(type);
+		} else this.#schedule(0);
 
 		return this.#handle(id, type);
 	}
@@ -1061,6 +1070,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		await this.storage.patchJob(jobId, completed);
 		this.#emit({ type: "job_completed", job: completed });
 		this.#resolveWaiters(jobId, resultFromJob(completed));
+		this.#releaseInline(completed.type);
 	}
 
 	#retryFor(type: string): BroadcastRetryOptions | false {
@@ -1100,7 +1110,13 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 
 	#inlineType(method: string): string {
 		this.#inlineTypeId++;
-		return `@yaebal/broadcast:${method}:${this.#inlineTypeId}`;
+		return `${INLINE_TYPE_PREFIX}${method}:${this.#inlineTypeId}`;
+	}
+
+	/** an inline type (`sendMessage`/`copyMessage`/`method`) serves exactly one job — drop it
+	 * once that job is terminal, or every one-off broadcast would pin its closure forever. */
+	#releaseInline(type: string): void {
+		if (type.startsWith(INLINE_TYPE_PREFIX)) this.#types.delete(type);
 	}
 }
 
@@ -1196,8 +1212,11 @@ class LocalRateLimiter {
 			return 0;
 		}
 
-		const first = this.#stamps[0] ?? now;
-		const waitMs = Math.max(1, first + this.#limit.windowMs - now);
+		// `#stamps` also holds reservations already handed to earlier waiters — wait for the slot
+		// that frees up once *this* call is the `limit`-th newest, not just the oldest one, or
+		// concurrent waiters all wake at the same instant and burst past the limit
+		const freeing = this.#stamps[this.#stamps.length - this.#limit.limit] ?? now;
+		const waitMs = Math.max(1, freeing + this.#limit.windowMs - now);
 		this.#stamps.push(now + waitMs);
 		return waitMs;
 	}

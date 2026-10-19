@@ -81,9 +81,13 @@ function maskSpoilers(text: string, entities: MessageEntity[] | undefined): stri
 	return out;
 }
 
+/** the narrowest canvas a media bubble (MW plus avatar, gutter and bubble padding) fits in. */
+const MIN_WIDTH = 332;
+
 /** render a telegram-style chat to an SVG string. */
 export function renderChat(messages: ChatMessage[], options: RenderOptions = {}): string {
-	const W = Math.max(240, Math.round(options.width ?? 380));
+	// photos/videos are a fixed MW wide; below this the bubble (and its media) would overflow
+	const W = Math.max(MIN_WIDTH, Math.round(options.width ?? 380));
 	const p = resolvePalette(options.theme, options.palette);
 	const PAD = 14;
 	const GAP = 10;

@@ -647,3 +647,9 @@ test("a quiz marks its correct option, not the most-voted one (regression)", () 
 	assert.ok(check && four);
 	assert.equal(Number(check[1]) - 1, Number(four[1])); // ✓ sits on the "four" row (y + 13 vs + 12)
 });
+
+test("a canvas narrower than a photo bubble is widened instead of overflowing", () => {
+	const svg = renderChat([{ from: "bot", photo: [{ width: 800, height: 600 }] }], { width: 260 });
+	const width = Number(/viewBox="0 0 (\d+) /.exec(svg)?.[1]);
+	assert.equal(width, 332);
+});

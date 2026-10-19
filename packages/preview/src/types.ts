@@ -136,7 +136,7 @@ export interface RenderOptions {
 	theme?: Theme;
 	/** point overrides layered on top of `theme` — e.g. `{ theme: "dark", palette: { out: "#204020" } }`. */
 	palette?: Partial<Palette>;
-	/** canvas width in px. defaults to `380`. */
+	/** canvas width in px. defaults to `380`; at least `332`, the narrowest canvas a photo bubble fits in. */
 	width?: number;
 	/** scale the whole canvas (viewBox stays 1x, only `width`/`height` attrs scale) — for crisp @2x/@3x rasterization. */
 	scale?: number;

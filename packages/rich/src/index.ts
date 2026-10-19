@@ -226,6 +226,7 @@ export {
 	type RichNode,
 } from "./node.js";
 export { richBlockToPlainText, richMessageToPlainText, richTextToPlainText } from "./plaintext.js";
+export { RICH_MARKDOWN_PROMPT } from "./prompt.js";
 export { escapeFor, type Insertable, render } from "./render.js";
 export {
 	type RichContext,

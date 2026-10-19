@@ -12,10 +12,12 @@ import {
 	resolveModel,
 } from "./model.js";
 import {
+	type AiRichDialect,
 	type AiStreamRenderOptions,
 	type AiStreamResult,
+	deliver,
 	GENERATION_STOPPED,
-	type StreamTarget,
+	MAX_RICH_LENGTH,
 	streamToChat,
 	targetOf,
 } from "./stream.js";
@@ -55,8 +57,10 @@ export {
 	resolveModel,
 } from "./model.js";
 export {
+	type AiRichDialect,
 	type AiStreamRenderOptions,
 	type AiStreamResult,
+	MAX_RICH_LENGTH,
 	type StreamTarget,
 	streamToChat,
 	targetOf,
@@ -74,6 +78,8 @@ export interface AiCallOptions {
 }
 
 export interface AiReplyOptions extends AiCallOptions {
+	/** per-call override of {@link AiOptions.rich}. */
+	rich?: boolean | AiRichDialect;
 	/** override native draft stop behavior for this replyStream call. */
 	canStop?: boolean;
 	keepOnStop?: boolean;
@@ -107,10 +113,18 @@ export interface AiOptions {
 	limits?: AiLimitOptions;
 	/** parse mode for finalized messages (`"MarkdownV2"`, `"HTML"`, …). in-flight ticks stay plain. */
 	parseMode?: string;
+	/**
+	 * answer as telegram rich messages: the model's markdown renders natively (headings, lists,
+	 * code blocks, tables, math), streamed live through rich drafts, with a 32768-character
+	 * budget per message. `true` = markdown, or `"html"` for telegram rich html. wins over
+	 * `parseMode`; markup telegram rejects is resent as plain text. models stay inside the
+	 * supported grammar more reliably with `RICH_MARKDOWN_PROMPT` from `@yaebal/rich` in `system`.
+	 */
+	rich?: boolean | AiRichDialect;
 	/** how streamed replies render: tick interval, draft opt-out, cursor, message budget. */
 	streaming?: Pick<
 		AiStreamRenderOptions,
-		"intervalMs" | "drafts" | "cursor" | "maxLength" | "now" | "canStop" | "keepOnStop"
+		"intervalMs" | "drafts" | "cursor" | "maxLength" | "now" | "canStop" | "keepOnStop" | "thinking"
 	>;
 	/** keep a `typing` chat action alive during non-streamed replies. default on; `false` disables. */
 	typing?: boolean | AiTypingOptions;
@@ -152,45 +166,6 @@ const promptTurns = (prompt: string | AiMessage[]): AiMessage[] =>
 	typeof prompt === "string" ? [{ role: "user", content: prompt }] : prompt;
 
 /** split + send with parse-mode fallback — what `reply()` uses under the hood. */
-async function sendText(
-	target: StreamTarget,
-	text: string,
-	options: {
-		parseMode?: string | undefined;
-		maxLength?: number;
-		onPart?: AiReplyOptions["onPart"];
-	},
-): Promise<Message[]> {
-	const messages: Message[] = [];
-	for (const part of splitText(text, options.maxLength ?? MAX_MESSAGE_LENGTH)) {
-		const params = { chat_id: target.chatId, text: part.text, ...target.sendRouting() };
-		let message: Message;
-		try {
-			message = await target.call<Message>("sendMessage", {
-				...params,
-				...(options.parseMode === undefined ? {} : { parse_mode: options.parseMode }),
-			});
-		} catch (error) {
-			if (options.parseMode === undefined) throw error;
-			message = await target.call<Message>("sendMessage", params);
-		}
-		messages.push(message);
-		await options.onPart?.(message);
-	}
-	return messages;
-}
-
-/**
- * installs `ctx.ai` — see {@link AiApi}. model calls flow through (optional) per-user
- * limits, conversation memory and the system prompt; replies stream into the chat via
- * telegram's native draft mechanism where available.
- *
- * @example
- * const bot = createBot(token).install(
- *   ai({ model: openaiCompatible({ model: "gpt-4o-mini", apiKey }) }),
- * );
- * bot.on("message:text", (ctx) => ctx.ai.replyStream(ctx.text));
- */
 export function ai(options: AiOptions): Plugin<Context, AiControl> {
 	const model = resolveModel(options.model);
 	const generate = generateOf(model);
@@ -296,11 +271,20 @@ export function ai(options: AiOptions): Plugin<Context, AiControl> {
 						const reply = await withTyping(async () =>
 							generate(await buildRequest(prompt, call, call.memory ?? true)),
 						);
-						const messages = await sendText(target, reply.text, {
-							parseMode: options.parseMode,
-							maxLength: options.streaming?.maxLength,
-							onPart: call.onPart,
-						});
+						const rich = call.rich ?? options.rich;
+						const maxLength =
+							options.streaming?.maxLength ??
+							(rich === undefined || rich === false ? MAX_MESSAGE_LENGTH : MAX_RICH_LENGTH);
+						const messages: Message[] = [];
+						for (const part of splitText(reply.text, maxLength)) {
+							messages.push(
+								...(await deliver(target, part.text, {
+									rich,
+									parseMode: options.parseMode,
+									onPart: call.onPart,
+								})),
+							);
+						}
 						await remember(prompt, reply.text, call, true);
 						return { ...reply, messages };
 					},
@@ -338,6 +322,7 @@ export function ai(options: AiOptions): Plugin<Context, AiControl> {
 								canStop,
 								keepOnStop: call.keepOnStop ?? options.streaming?.keepOnStop,
 								parseMode: options.parseMode,
+								rich: call.rich ?? options.rich,
 								signal: controller.signal,
 								onPart: call.onPart,
 								onDraft: (id) => {

@@ -122,6 +122,18 @@ in [`@yaebal/ai`](https://github.com/neverlane/yaebal/tree/master/packages/ai#na
 or concurrent webhooks. close the draft and cancel your provider from the stop handler.
 `keepOnStop` keeps the preview only temporarily; call `send()` to preserve it permanently.
 
+## llm output
+
+models write github-flavored markdown out of habit. `RICH_MARKDOWN_PROMPT` is a system prompt
+listing exactly what telegram's rich parser renders (and the html it doesn't) — prepend it when
+a model's answer becomes a rich message, e.g. with `@yaebal/ai`'s `rich: true`:
+
+```ts
+import { RICH_MARKDOWN_PROMPT } from "@yaebal/rich";
+
+ai({ model, rich: true, system: `${RICH_MARKDOWN_PROMPT}\n\nyou are a concise assistant.` });
+```
+
 ## buttons
 
 bot api 10.3 puts buttons inside the message body: `button()` sits right in the text, `buttons()` lays out a row. every `RichMessageButton` type is covered (`callbackData`, `url`, `webApp`, `loginUrl`, `switchInlineQuery*`, `copyText`, `disabled`), with `style: "success" | "danger" | "primary" | "link"` (`link` is callback-only). callback buttons arrive as an ordinary `callback_query`.

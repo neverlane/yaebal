@@ -40,6 +40,13 @@ sdk or the tui.
 - **`parseMode` applies at finalization only.** in-flight previews are always plain text (a
   half-open `**bold` must never 400 the stream), and a finalization 400 "can't parse entities"
   falls back to resending plain — text is never lost.
+- **`rich` swaps the wire, not the engine.** `rich: true | "markdown" | "html"` routes the same
+  pacing/overflow/stop logic through `sendRichMessageDraft` / `sendRichMessage` /
+  `editMessageText({ rich_message })`, raises the default budget to 32768 and opens rich drafts
+  with `<tg-thinking>` (rich drafts have no empty "Thinking…" form). any 400 on the rich final
+  resends plain, split to 4096. `RICH_MARKDOWN_PROMPT` lives in `@yaebal/rich`, not here.
+- **edit-mode finals are real messages**: the grown preview is pushed to `result.messages` and
+  fires `onPart` when finalized (it used to be dropped, so groups reported zero messages).
 - **native stop is opt-in** via `streaming.canStop`; chat/topic/draft-scoped registrations
   abort the provider signal. `keepOnStop` persists partial text. stop updates need concurrent
   dispatch and must bypass chat sequentialization (see the ai-chat example).

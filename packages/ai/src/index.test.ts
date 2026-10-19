@@ -517,3 +517,103 @@ test("an already aborted request never starts generation or sends a draft", TIME
 	assert.equal(starts, 0);
 	assert.equal(env.apiCalls.length, 0);
 });
+
+test(
+	"replyStream with rich: rich drafts, a thinking placeholder, a final rich message",
+	TIMEOUT,
+	async () => {
+		let at = 0;
+		const { bot, result } = aiBot({
+			model: chunked("# hi\n", "**there**"),
+			memory: false,
+			rich: true,
+			streaming: { now: () => (at += 600) },
+		});
+		const env = createTestEnv(bot);
+
+		await env.createUser().sendMessage("hi");
+
+		assert.equal(env.callsTo("sendMessageDraft").length, 0);
+		const drafts = env.callsTo("sendRichMessageDraft");
+		assert.deepEqual(drafts[0]?.params?.rich_message, {
+			markdown: "<tg-thinking>Thinking…</tg-thinking>",
+		});
+		assert.deepEqual(drafts.at(-1)?.params?.rich_message, { markdown: "# hi\n**there**" });
+		assert.deepEqual(env.lastApiCall("sendRichMessage")?.params?.rich_message, {
+			markdown: "# hi\n**there**",
+		});
+		assert.equal(env.callsTo("sendMessage").length, 0);
+		assert.equal(result()?.messages.length, 1);
+	},
+);
+
+test(
+	"replyStream with rich in a group: rich preview, rich final edit, reported message",
+	TIMEOUT,
+	async () => {
+		let at = 0;
+		const { bot, result } = aiBot({
+			model: chunked("hello ", "world"),
+			memory: false,
+			rich: "html",
+			streaming: { now: () => (at += 2000) },
+		});
+		const env = createTestEnv(bot);
+		const group = env.createChat({ type: "supergroup", title: "girls" });
+
+		await env.createUser().in(group).sendMessage("hi");
+
+		assert.deepEqual(env.callsTo("sendRichMessage")[0]?.params?.rich_message, { html: "hello ▍" });
+		const edits = env.callsTo("editMessageText");
+		assert.deepEqual(edits.at(-1)?.params?.rich_message, { html: "hello world" });
+		assert.equal(edits.at(-1)?.params?.text, undefined);
+		assert.equal(result()?.messages.length, 1, "the finalized preview is a real message");
+	},
+);
+
+test("plain replyStream in a group reports the finalized message too", TIMEOUT, async () => {
+	let at = 0;
+	const parts: unknown[] = [];
+	const bot = new Composer<Context>()
+		.install(
+			ai({
+				model: chunked("hello ", "world"),
+				memory: false,
+				streaming: { now: () => (at += 2000) },
+			}),
+		)
+		.on("message:text", async (ctx) => {
+			const res = await ctx.ai.replyStream(ctx.text, { onPart: (m) => parts.push(m) });
+			parts.push(res.messages.length);
+		});
+	const env = createTestEnv(bot);
+	const group = env.createChat({ type: "supergroup", title: "girls" });
+
+	await env.createUser().in(group).sendMessage("hi");
+
+	assert.equal(parts.length, 2, "onPart fired for the finalized preview");
+	assert.equal(parts[1], 1);
+});
+
+test("rich markup telegram rejects is resent as plain text", TIMEOUT, async () => {
+	const { bot, result } = aiBot({ model: chunked("<broken"), memory: false, rich: true });
+	const env = createTestEnv(bot);
+	env.onApi("sendRichMessage", apiError(400, "Bad Request: can't parse rich message"));
+
+	await env.createUser().sendMessage("hi");
+
+	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "<broken");
+	assert.equal(result()?.messages.length, 1);
+});
+
+test("reply() with rich sends one rich message", TIMEOUT, async () => {
+	const bot = new Composer<Context>()
+		.install(ai({ model: chunked("a ", "b"), memory: false, rich: true, typing: false }))
+		.on("message:text", (ctx) => ctx.ai.reply(ctx.text));
+	const env = createTestEnv(bot);
+
+	await env.createUser().sendMessage("hi");
+
+	assert.deepEqual(env.lastApiCall("sendRichMessage")?.params?.rich_message, { markdown: "a b" });
+	assert.equal(env.callsTo("sendMessage").length, 0);
+});

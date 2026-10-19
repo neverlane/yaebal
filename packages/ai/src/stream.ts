@@ -35,9 +35,100 @@ export function targetOf(ctx: Context): StreamTarget {
 /** shared only by the runtime plugin and renderer. */
 export const GENERATION_STOPPED = Symbol("ai.generationStopped");
 
+/** which rich-message dialect model output is sent as. markdown is what models write natively. */
+export type AiRichDialect = "markdown" | "html";
+
+/** telegram's rich message text limit (bot api: up to 32768 characters). */
+export const MAX_RICH_LENGTH = 32_768;
+
+const richDialectOf = (rich: boolean | AiRichDialect | undefined): AiRichDialect | undefined =>
+	rich === true ? "markdown" : rich === false ? undefined : rich;
+
+const isMessage = (value: unknown): value is Message =>
+	typeof value === "object" && value !== null && "message_id" in value;
+
+/** a 400 — what telegram answers markup it can't parse with, in either text mode. */
+function isBadRequest(error: unknown): boolean {
+	return error instanceof TelegramError && error.code === 400;
+}
+
+export interface DeliverOptions {
+	/** send as a rich message in this dialect (or markdown for `true`). wins over `parseMode`. */
+	rich?: boolean | AiRichDialect | undefined;
+	parseMode?: string | undefined;
+	onPart?: ((message: Message) => unknown) | undefined;
+}
+
+/**
+ * send one finished piece of model output as a new message. rich output that telegram
+ * rejects (a 400) is resent as plain text — split to the plain limit — so an answer is never
+ * lost to a markup mistake; same for a `parseMode` that fails to parse.
+ */
+export async function deliver(
+	target: StreamTarget,
+	text: string,
+	options: DeliverOptions = {},
+): Promise<Message[]> {
+	if (text.length === 0) return [];
+	const dialect = richDialectOf(options.rich);
+	const out: Message[] = [];
+	const land = async (message: Message): Promise<void> => {
+		out.push(message);
+		await options.onPart?.(message);
+	};
+
+	if (dialect !== undefined) {
+		try {
+			await land(
+				await target.call<Message>("sendRichMessage", {
+					chat_id: target.chatId,
+					rich_message: { [dialect]: text },
+					...target.sendRouting(),
+				}),
+			);
+			return out;
+		} catch (error) {
+			if (!isBadRequest(error)) throw error;
+		}
+		for (const part of splitText(text, MAX_MESSAGE_LENGTH)) {
+			await land(await sendPlain(target, part.text, undefined));
+		}
+		return out;
+	}
+
+	await land(await sendPlain(target, text, options.parseMode));
+	return out;
+}
+
+async function sendPlain(
+	target: StreamTarget,
+	text: string,
+	parseMode: string | undefined,
+): Promise<Message> {
+	const params = { chat_id: target.chatId, text, ...target.sendRouting() };
+	try {
+		return await target.call<Message>("sendMessage", {
+			...params,
+			...(parseMode === undefined ? {} : { parse_mode: parseMode }),
+		});
+	} catch (error) {
+		if (parseMode === undefined || !isParseError(error)) throw error;
+		return target.call<Message>("sendMessage", params);
+	}
+}
+
 export interface AiStreamRenderOptions {
-	/** applied at finalization only — in-flight ticks are always plain text. */
+	/** applied at finalization only — in-flight ticks are always plain text. ignored with `rich`. */
 	parseMode?: string;
+	/**
+	 * stream into a telegram rich message instead of plain text — rendered markdown (headings,
+	 * lists, code, tables, math) live while the model writes, and a 32768-character budget per
+	 * message instead of 4096. `true` = markdown. drafts use `sendRichMessageDraft`, finals
+	 * `sendRichMessage`; markup telegram rejects is resent as plain text instead of lost.
+	 */
+	rich?: boolean | AiRichDialect;
+	/** label of the native `<tg-thinking>` placeholder a rich draft opens with. default `"Thinking…"`. */
+	thinking?: string;
 	/** minimum gap between telegram calls while streaming, ms. default 500 (draft) / 1200 (edit). */
 	intervalMs?: number;
 	/** use `sendMessageDraft` in private chats (native "Thinking…" + animation). default true. */
@@ -50,7 +141,7 @@ export interface AiStreamRenderOptions {
 	onDraft?: (draftId: number) => void;
 	/** appended to in-flight edit ticks so the message visibly streams. default `"▍"`, `""` disables. */
 	cursor?: string;
-	/** per-message length budget. default telegram's 4096. */
+	/** per-message length budget. default telegram's 4096 (32768 with `rich`). */
 	maxLength?: number;
 	/** abort the render loop (the model stream should share this signal). */
 	signal?: AbortSignal;
@@ -116,7 +207,12 @@ export async function streamToChat(
 	const intervalMs =
 		options.intervalMs ?? (mode === "draft" ? DRAFT_INTERVAL_MS : EDIT_INTERVAL_MS);
 	const cursor = options.cursor ?? "▍";
-	const maxLength = options.maxLength ?? MAX_MESSAGE_LENGTH;
+	const dialect = richDialectOf(options.rich);
+	const maxLength =
+		options.maxLength ?? (dialect === undefined ? MAX_MESSAGE_LENGTH : MAX_RICH_LENGTH);
+	/** the content params of one call: plain `text`, or a `rich_message` in the chosen dialect. */
+	const body = (text: string): Record<string, unknown> =>
+		dialect === undefined ? { text } : { rich_message: { [dialect]: text } };
 	const now = options.now ?? Date.now;
 
 	const messages: Message[] = [];
@@ -133,29 +229,25 @@ export async function streamToChat(
 	let draftId = nextDraftId();
 	// edit state
 	let editMessageId: number | undefined;
+	/** the preview message being grown by edits — it *is* the final message once finalized. */
+	let editMessage: Message | undefined;
 	let lastPreview = "";
 
 	let lastFlush = -Infinity;
 
-	const sendFinal = async (text: string): Promise<void> => {
-		if (text.length === 0) return;
-		const params = {
-			chat_id: target.chatId,
-			text,
-			...target.sendRouting(),
-		};
-		let message: Message;
-		try {
-			message = await target.call<Message>("sendMessage", {
-				...params,
-				...(options.parseMode === undefined ? {} : { parse_mode: options.parseMode }),
-			});
-		} catch (error) {
-			if (!isParseError(error)) throw error;
-			message = await target.call<Message>("sendMessage", params);
-		}
+	const land = async (message: Message): Promise<void> => {
 		messages.push(message);
 		await options.onPart?.(message);
+	};
+
+	const sendFinal = async (text: string): Promise<void> => {
+		messages.push(
+			...(await deliver(target, text, {
+				rich: dialect,
+				parseMode: options.parseMode,
+				onPart: options.onPart,
+			})),
+		);
 	};
 
 	const finalizeEdit = async (text: string): Promise<void> => {
@@ -169,17 +261,40 @@ export async function streamToChat(
 			text,
 			...target.editRouting(),
 		};
+		// editMessageText answers with the edited message — that's the finalized part
+		let final: unknown = editMessage;
 		if (text.length > 0 && text !== lastPreview) {
-			try {
-				await target.call("editMessageText", {
-					...params,
-					...(options.parseMode === undefined ? {} : { parse_mode: options.parseMode }),
-				});
-			} catch (error) {
-				if (!isParseError(error)) throw error;
-				await target.call("editMessageText", params);
+			const { text: _plain, ...address } = params;
+			if (dialect !== undefined) {
+				try {
+					final = await target.call("editMessageText", { ...address, ...body(text) });
+				} catch (error) {
+					if (!isBadRequest(error)) throw error;
+					// rich markup rejected: keep the answer as plain text, split to the plain limit
+					const [first, ...rest] = splitText(text, MAX_MESSAGE_LENGTH);
+					if (first !== undefined)
+						final = await target.call("editMessageText", { ...address, text: first.text });
+					await land(isMessage(final) ? final : (editMessage as Message));
+					final = undefined;
+					editMessage = undefined;
+					for (const part of rest) await land(await sendPlain(target, part.text, undefined));
+				}
+			} else {
+				try {
+					final = await target.call("editMessageText", {
+						...params,
+						...(options.parseMode === undefined ? {} : { parse_mode: options.parseMode }),
+					});
+				} catch (error) {
+					if (!isParseError(error)) throw error;
+					final = await target.call("editMessageText", params);
+				}
 			}
 		}
+		// an edit answering `true` (no message object) still finalized the preview message
+		const finished = isMessage(final) ? final : editMessage;
+		if (finished !== undefined) await land(finished);
+		editMessage = undefined;
 		editMessageId = undefined;
 		lastPreview = "";
 	};
@@ -192,11 +307,11 @@ export async function streamToChat(
 
 		try {
 			if (mode === "draft") {
-				await target.call("sendMessageDraft", {
+				await target.call(dialect === undefined ? "sendMessageDraft" : "sendRichMessageDraft", {
 					chat_id: target.chatId,
 					draft_id: draftId,
 					...stopParams,
-					text: buffer,
+					...body(buffer),
 					...(target.threadId === undefined ? {} : { message_thread_id: target.threadId }),
 				});
 				return;
@@ -205,17 +320,17 @@ export async function streamToChat(
 			const text = cursor.length > 0 ? buffer + cursor : buffer;
 			if (text === lastPreview) return;
 			if (editMessageId === undefined) {
-				const message = await target.call<Message>("sendMessage", {
-					chat_id: target.chatId,
-					text,
-					...target.sendRouting(),
-				});
+				const message = await target.call<Message>(
+					dialect === undefined ? "sendMessage" : "sendRichMessage",
+					{ chat_id: target.chatId, ...body(text), ...target.sendRouting() },
+				);
 				editMessageId = message.message_id;
+				editMessage = message;
 			} else {
 				await target.call("editMessageText", {
 					chat_id: target.chatId,
 					message_id: editMessageId,
-					text,
+					...body(text),
 					...target.editRouting(),
 				});
 			}
@@ -251,13 +366,16 @@ export async function streamToChat(
 
 	if (mode === "draft" && !options.signal?.aborted) {
 		options.onDraft?.(draftId);
-		// empty draft = telegram's native "Thinking…" placeholder, shown before the first token.
+		// empty draft = telegram's native "Thinking…" placeholder, shown before the first token;
+		// rich drafts have no empty form, they spell it with the `<tg-thinking>` tag instead.
 		try {
-			await target.call("sendMessageDraft", {
+			await target.call(dialect === undefined ? "sendMessageDraft" : "sendRichMessageDraft", {
 				chat_id: target.chatId,
 				draft_id: draftId,
 				...stopParams,
-				text: "",
+				...(dialect === undefined
+					? { text: "" }
+					: body(`<tg-thinking>${options.thinking ?? "Thinking…"}</tg-thinking>`)),
 				...(target.threadId === undefined ? {} : { message_thread_id: target.threadId }),
 			});
 		} catch {

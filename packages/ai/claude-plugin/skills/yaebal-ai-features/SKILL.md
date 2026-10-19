@@ -63,8 +63,8 @@ bot.command("reset", async (ctx) => {
 
 ```typescript
 openaiCompatible({ model: "llama3.2", baseUrl: "http://localhost:11434/v1" }); // any /chat/completions api
-anthropicModel({ model: "claude-sonnet-5", apiKey: process.env.ANTHROPIC_API_KEY! });
-ai({ model: anthropic("claude-sonnet-5") });     // a vercel ai sdk LanguageModel, auto-detected
+anthropicModel({ model: "claude-sonnet-5-5", apiKey: process.env.ANTHROPIC_API_KEY! });
+ai({ model: anthropic("claude-sonnet-5-5") });     // a vercel ai sdk LanguageModel, auto-detected
                                                  // (or wrap explicitly: aiSdk(anthropic("...")))
 customModel(async function* ({ messages }) {     // anything that yields strings
 	yield "hello ";
@@ -80,6 +80,10 @@ lazy-loads the `ai` package only when used.
 - **parse mode is finalization-only by design**: in-flight draft/edit previews stay plain text
   so a half-open `**bold` can never 400 mid-stream. if telegram rejects the finished entities,
   the text is resent plain instead of being lost. don't try to apply markup to previews.
+- **rich answers**: `rich: true` (markdown) or `rich: "html"` sends answers as telegram rich
+  messages — the model's markdown renders natively, streams through rich drafts and gets a
+  32768-char budget. it wins over `parseMode`. put `RICH_MARKDOWN_PROMPT` from `@yaebal/rich`
+  at the start of `system`. rejected markup falls back to plain text automatically.
 - memory is on by default — keyed per user per chat, windowed (32 turns). pass a
   `@yaebal/sklad` `StorageAdapter` via `memory: { storage }` to persist across restarts, or
   `memory: false` for stateless calls.
@@ -92,7 +96,7 @@ lazy-loads the `ai` package only when used.
   `stopped_message_generation`; `keepOnStop` persists the partial answer and memory.
   use concurrent dispatch: `@yaebal/runner` with
   `sequentializeBy: (u) => u.stopped_message_generation ? undefined : chatKey(u)`;
-  initialize with `await bot.init()` and `run(bot, ...)`, not sequential `bot.start()`.
+  drive it with `run(bot, ...)` (the runner calls `bot.init()` itself), not sequential `bot.start()`.
   include the stop update in custom allowed_updates. custom models must honor request.signal.
 - `typing: false` disables the typing action for non-streamed replies.
 

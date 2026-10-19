@@ -7,6 +7,7 @@ import {
 	document,
 	md,
 	paragraph,
+	RICH_MARKDOWN_PROMPT,
 	RichMessageDraft,
 	rich,
 	sendRichMessage,
@@ -167,4 +168,10 @@ test("rich document attachments upload through helpers and raw API builder seria
 		assert.equal(await file.text(), "hello");
 	}
 	assert.equal(bodies.length, 2);
+});
+
+test("RICH_MARKDOWN_PROMPT is exported and names the rich-only constructs", () => {
+	assert.match(RICH_MARKDOWN_PROMPT, /==highlight==/);
+	assert.match(RICH_MARKDOWN_PROMPT, /\|\|spoiler\|\|/);
+	assert.match(RICH_MARKDOWN_PROMPT, /32000 characters/);
 });

@@ -42,11 +42,11 @@ await bot.start();`;
 openaiCompatible({ model: "llama3.2", baseUrl: "http://localhost:11434/v1" });
 
 // 2. anthropic, natively
-anthropicModel({ model: "claude-sonnet-5", apiKey: process.env.ANTHROPIC_API_KEY! });
+anthropicModel({ model: "claude-sonnet-5-5", apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // 3. the whole vercel ai sdk ecosystem (needs \`pnpm add ai\` + a provider package)
 import { anthropic } from "@ai-sdk/anthropic";
-ai({ model: anthropic("claude-sonnet-5") }); // LanguageModel is auto-detected
+ai({ model: anthropic("claude-sonnet-5-5") }); // LanguageModel is auto-detected
 
 // 4. anything that yields strings — the escape hatch
 customModel(async function* ({ messages }) {
@@ -69,7 +69,6 @@ customModel(async function* ({ messages }) {
 	const nativeStop = `import { chatKey, run } from "@yaebal/runner";
 
 // install ai({ model, streaming: { canStop: true, keepOnStop: true } }) first
-await bot.init();
 const runner = run(bot, {
   sequentializeBy: (update) => update.stopped_message_generation ? undefined : chatKey(update),
 });
@@ -136,6 +135,19 @@ bot.on("message:text", (ctx) => ctx.ai.replyStream(ctx.text));
 const env = createTestEnv(bot);
 await env.createUser().sendMessage("hi");
 // assert on the recorded sendMessageDraft / sendMessage calls`;
+
+	const richAnswers = `import { ai, anthropicModel } from "@yaebal/ai";
+import { RICH_MARKDOWN_PROMPT } from "@yaebal/rich";
+
+bot.install(
+  ai({
+    model: anthropicModel({ apiKey: process.env.ANTHROPIC_API_KEY!, model: "claude-sonnet-5-5" }),
+    system: \`\${RICH_MARKDOWN_PROMPT}\\n\\nyou are a concise assistant.\`,
+    rich: true, // or "html"
+  }),
+);
+
+bot.on("message:text", (ctx) => ctx.ai.replyStream(ctx.text));`;
 </script>
 
 <svelte:head>
@@ -250,11 +262,13 @@ await env.createUser().sendMessage("hi");
 		<tr><td><code>memory</code></td><td><code>true</code></td><td><code>false</code>, or <code>{'{ storage, key, window }'}</code></td></tr>
 		<tr><td><code>limits.perUser</code></td><td>off</td><td><code>"20/h"</code>-style budget per user; <code>limits.key</code> repartitions it</td></tr>
 		<tr><td><code>parseMode</code></td><td>plain</td><td><code>"MarkdownV2"</code> / <code>"HTML"</code> for finalized messages only</td></tr>
+		<tr><td><code>rich</code></td><td>off</td><td><code>true</code> / <code>"markdown"</code> / <code>"html"</code> — answer as telegram rich messages; overridable per <code>reply</code> / <code>replyStream</code> call</td></tr>
+		<tr><td><code>streaming.thinking</code></td><td><code>"Thinking…"</code></td><td>label of the <code>&lt;tg-thinking&gt;</code> placeholder a rich draft opens with</td></tr>
 		<tr><td><code>streaming.intervalMs</code></td><td><code>500</code> draft / <code>1200</code> edit</td><td>minimum gap between preview updates, ms</td></tr>
 		<tr><td><code>streaming.drafts</code></td><td><code>true</code></td><td>opt out of <code>sendMessageDraft</code> in private chats</td></tr>
 		<tr><td><code>streaming.canStop</code>, <code>streaming.keepOnStop</code></td><td><code>false</code></td><td>native draft stop button and partial-response persistence</td></tr>
 		<tr><td><code>streaming.cursor</code></td><td><code>"▍"</code></td><td>in-flight cursor for edit mode, <code>""</code> disables</td></tr>
-		<tr><td><code>streaming.maxLength</code></td><td><code>4096</code></td><td>per-message length budget before splitting</td></tr>
+		<tr><td><code>streaming.maxLength</code></td><td><code>4096</code> (<code>32768</code> with <code>rich</code>)</td><td>per-message length budget before splitting</td></tr>
 		<tr><td><code>typing</code></td><td><code>true</code></td><td>typing action during non-streamed replies; <code>{'{ intervalMs }'}</code> tunes the keep-alive</td></tr>
 		<tr><td><code>temperature</code>, <code>maxTokens</code></td><td>provider defaults</td><td>forwarded to the model</td></tr>
 	</tbody>
@@ -296,6 +310,24 @@ await env.createUser().sendMessage("hi");
 	<code>mode</code> is <code>"draft"</code> or <code>"edit"</code>, and <code>aborted</code> is
 	true when the call's <code>signal</code> fired mid-stream. the engine itself is exported as
 	<code>streamToChat(target, source, options)</code> for use outside <code>ctx.ai</code>.
+</p>
+
+<h2>rich messages</h2>
+<p>
+	models write markdown anyway — with <code>rich: true</code> telegram renders it natively instead
+	of showing raw asterisks: headings, lists, code blocks, tables and math, streamed live. private
+	chats stream through <code>sendRichMessageDraft</code> (opening with telegram's
+	<code>&lt;tg-thinking&gt;</code> placeholder) and finalize with <code>sendRichMessage</code>;
+	groups grow one rich message by edits. a message holds up to 32768 characters, so long answers
+	split eight times less often. if telegram rejects the finished markup, the answer is resent as
+	plain text rather than lost.
+</p>
+<Code code={richAnswers} title="rich.ts" />
+<p>
+	<code>RICH_MARKDOWN_PROMPT</code> from <a href="/docs/plugins/rich/"><code>@yaebal/rich</code></a>
+	lists exactly what telegram's rich parser renders — put it at the start of <code>system</code>
+	and the model stops reaching for html it can't use. <code>result.messages</code> reports every
+	finalized message in both modes, including the grown preview in groups.
 </p>
 
 <h2>native stop button</h2>

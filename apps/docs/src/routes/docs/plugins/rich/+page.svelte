@@ -116,6 +116,13 @@ marked / subscript / superscript / dateTime / math / reference / referenceLink
 // no builder needed — auto-detected from plain text unless .noEntityDetection():
 @username  #hashtag  $CASHTAG  /bot_command
 https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
+
+	const llmPrompt = `import { ai } from "@yaebal/ai";
+import { RICH_MARKDOWN_PROMPT } from "@yaebal/rich";
+
+bot.install(
+  ai({ model, rich: true, system: \`\${RICH_MARKDOWN_PROMPT}\\n\\nyou are a concise assistant.\` }),
+);`;
 </script>
 
 <svelte:head>
@@ -219,6 +226,15 @@ https://url  name@email.com  +1 555 0100  4111 1111 1111 1111`;
 	generating there and <code>send()</code> or <code>cancel()</code>. <code>keepOnStop: true</code>
 	keeps the draft visible after the press.
 </p>
+
+<h2>llm output</h2>
+<p>
+	models write github-flavored markdown out of habit. <code>RICH_MARKDOWN_PROMPT</code> is a
+	system prompt listing exactly what telegram's rich parser renders — and the html it doesn't —
+	so prepend it whenever a model's answer becomes a rich message, e.g. with
+	<a href="/docs/plugins/ai/"><code>@yaebal/ai</code></a>'s <code>rich: true</code>.
+</p>
+<Code code={llmPrompt} title="llm.ts" />
 
 <h2>buttons</h2>
 <p>

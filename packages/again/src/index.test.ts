@@ -43,12 +43,21 @@ test("non-Telegram errors are not retried", () => {
 	assert.equal(decideRetry(new Error("socket hang up"), 1), undefined);
 });
 
-test("maxDelayMs caps the wait", () => {
-	assert.deepEqual(
+test("a retry_after longer than maxDelayMs is not retried early", () => {
+	assert.equal(
 		decideRetry(new TelegramError("x", 429, "Too Many Requests", { retry_after: 999 }), 1, {
 			maxDelayMs: 5000,
 		}),
-		{ retry: true, delayMs: 5000, reason: "retry_after", retryAfterMs: 999000 },
+		undefined,
+	);
+});
+
+test("maxDelayMs caps the exponential backoff", () => {
+	assert.deepEqual(
+		decideRetry(new TelegramError("x", 500, "Internal Server Error"), 3, {
+			maxDelayMs: 5000,
+		}),
+		{ retry: true, delayMs: 5000, reason: "internal" },
 	);
 });
 

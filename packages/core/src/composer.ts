@@ -453,20 +453,13 @@ export class Composer<C extends Context = Context> {
 	/**
 	 * build-time conditional registration: `fn` runs once, now, only if `condition` holds —
 	 * `when(process.env.NODE_ENV !== "production", (c) => c.use(verboseLogger))`. unlike
-	 * `guard`/`filter` nothing is checked per update. whatever `fn` adds to the context is typed
-	 * `Partial`, since it may not have been installed.
+	 * `guard`/`filter` nothing is checked per update. returns `this` either way, so whatever `fn`
+	 * adds isn't part of the chain's type — for an optional, typed field use a `derive` that
+	 * returns `{}` when off.
 	 */
-	when<Add extends object = Record<never, never>>(
-		condition: boolean,
-		fn: (composer: Composer<C>) => Composer<C & Add>,
-	): Composer<C & Partial<Add>> {
-		if (condition && (fn(this) as unknown) !== this) {
-			throw new Error(
-				"when(): the callback must chain on (and return) the composer it was given — returning a different composer would silently detach its middleware",
-			);
-		}
-
-		return this as unknown as Composer<C & Partial<Add>>;
+	when(condition: boolean, fn: (composer: this) => unknown): this {
+		if (condition) fn(this);
+		return this;
 	}
 
 	/** apply a plugin. its required context (`In`) is checked at compile time. */

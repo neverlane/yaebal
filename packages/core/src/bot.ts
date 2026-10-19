@@ -211,14 +211,6 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 		return this;
 	}
 
-	override when<Add extends object = Record<never, never>>(
-		condition: boolean,
-		fn: (composer: Composer<C>) => Composer<C & Add>,
-	): Bot<C & Partial<Add>> {
-		super.when(condition, fn);
-		return this as unknown as Bot<C & Partial<Add>>;
-	}
-
 	override extend<C2 extends Context>(other: Composer<C2>): Bot<C & C2> {
 		super.extend(other);
 		return this as unknown as Bot<C & C2>;

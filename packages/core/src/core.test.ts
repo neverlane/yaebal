@@ -1260,16 +1260,11 @@ test("on/command/hears accept arrays", { timeout: 5_000 }, async () => {
 	]);
 });
 
-test("when() registers at build time and types its additions as optional", async () => {
+test("when() registers at build time only when its condition holds", async () => {
 	const seen: string[] = [];
 	const bot = new Composer<Context>()
-		.when(true, (c) => c.derive(() => ({ debug: "on" })))
-		.when(false, (c) => c.derive(() => ({ never: 1 })))
-		.use((ctx) => {
-			const debug: string | undefined = ctx.debug;
-			const never: number | undefined = ctx.never;
-			seen.push(`${debug}:${never}`);
-		});
+		.when(true, (c) => c.use((_ctx, next) => (seen.push("on"), next())))
+		.when(false, (c) => c.use((_ctx, next) => (seen.push("off"), next())));
 
 	await bot.toMiddleware()(
 		new Context({
@@ -1283,8 +1278,10 @@ test("when() registers at build time and types its additions as optional", async
 		async () => {},
 	);
 
-	assert.deepEqual(seen, ["on:undefined"]);
-	assert.throws(() => new Composer().when(true, () => new Composer()), /must chain on/);
+	assert.deepEqual(seen, ["on"]);
+	// `this` flows through: a Bot stays a Bot down the chain
+	const chained: Bot = new Bot("123:test").when(true, () => {});
+	assert.equal(typeof chained.start, "function");
 });
 
 test("debugEnabled matches exact namespaces and * prefixes", () => {

@@ -176,7 +176,7 @@ if (matchQuery(ctx, "message:text")) {
 		<tr><td><code>hears(trigger, ...handlers)</code></td><td>matches text/caption by string or RegExp (or an array of them) and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>callbackQuery(trigger, ...handlers)</code></td><td>matches <code>callback_query.data</code> and adds <code>ctx.match</code>.</td></tr>
 		<tr><td><code>guard(predicate)</code></td><td>continues only when the predicate returns true. a type-guard predicate (<code>ctx is …</code>) narrows the context for everything after it.</td></tr>
-		<tr><td><code>when(condition, (c) =&gt; c…)</code></td><td>build-time conditional registration — the callback runs once, at startup, only when <code>condition</code> holds. what it adds is typed <code>Partial</code>.</td></tr>
+		<tr><td><code>when(condition, (c) =&gt; c…)</code></td><td>build-time conditional registration — the callback runs once, at startup, only when <code>condition</code> holds (e.g. a dev-only logger). returns the same composer; for a typed optional field use a <code>derive</code> instead.</td></tr>
 		<tr><td><code>filter(filter, ...handlers)</code></td><td>runs a composable filter (sync or async, may stage typed data), e.g. from <code>@yaebal/filters</code>.</td></tr>
 	</tbody>
 </table>

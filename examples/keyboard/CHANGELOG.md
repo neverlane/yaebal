@@ -1,5 +1,12 @@
 # @yaebal/example-keyboard
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+  - yaebal@0.2.3
+
 ## 0.0.3
 
 ### patch changes

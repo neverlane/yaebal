@@ -1,5 +1,32 @@
 # yaebal
 
+## 0.2.3
+
+### patch changes
+
+- on, command and hears accept arrays; allowed_updates is derived from the handlers (chat_member and message_reaction updates arrive once you register them, see bot.allowedUpdates()); YAEBAL_DEBUG namespaced logging; when() for build-time conditional middleware; ctx.show() edits the pressed button's message or sends a new one; bot.createContext(); a stop mid-batch confirms the updates already handled. yaebal's Bot installs feature modules written as (bot: Bot<C>) => Bot<C>, with rich context types.
+- updated dependencies
+- updated dependencies
+- updated dependencies
+- updated dependencies
+  - @yaebal/core@0.4.3
+  - @yaebal/file-id@0.1.0
+  - @yaebal/keyboard@0.2.0
+  - @yaebal/web@1.0.3
+  - @yaebal/again@1.0.3
+  - @yaebal/sklad@0.1.2
+  - @yaebal/contexts@1.0.4
+  - @yaebal/auto-answer@1.0.3
+  - @yaebal/files@1.0.3
+  - @yaebal/filters@1.0.3
+  - @yaebal/fmt@1.0.3
+  - @yaebal/hydrate@0.1.4
+  - @yaebal/i18n@1.0.3
+  - @yaebal/session@1.0.3
+  - @yaebal/split@1.0.3
+  - @yaebal/typing@1.0.3
+  - @yaebal/inline-results@0.0.3
+
 ## 0.2.2
 
 ### patch changes

@@ -1,5 +1,20 @@
 # @yaebal/example-media-studio
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+- updated dependencies
+  - yaebal@0.2.3
+  - @yaebal/file-id@0.1.0
+  - @yaebal/media-group@1.0.3
+  - @yaebal/preview@0.1.3
+  - @yaebal/files@1.0.3
+  - @yaebal/media-cache@1.0.3
+  - @yaebal/split@1.0.3
+
 ## 0.0.3
 
 ### patch changes

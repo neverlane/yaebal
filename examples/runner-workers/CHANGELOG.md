@@ -1,5 +1,15 @@
 # @yaebal/example-runner-workers
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - @yaebal/core@0.4.3
+  - @yaebal/runner@0.0.7
+  - @yaebal/workers@1.0.3
+
 ## 0.0.3
 
 ### patch changes

@@ -1,5 +1,12 @@
 # @yaebal/example-core-echo
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+  - @yaebal/core@0.4.3
+
 ## 0.0.3
 
 ### patch changes

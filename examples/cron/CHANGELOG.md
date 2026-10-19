@@ -1,5 +1,15 @@
 # @yaebal/example-cron
 
+## 0.0.4
+
+### patch changes
+
+- updated dependencies
+- updated dependencies
+  - yaebal@0.2.3
+  - @yaebal/cron@1.0.3
+  - @yaebal/sklad@0.1.2
+
 ## 0.0.3
 
 ### patch changes

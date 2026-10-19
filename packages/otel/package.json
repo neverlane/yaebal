@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/otel",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "yaebal otel — opentelemetry tracing: a span per update, a child span per bot api call, custom spans via ctx.otel.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -29,7 +32,14 @@
 	"engines": {
 		"node": ">=20"
 	},
-	"keywords": ["telegram", "telegram-bot", "yaebal", "opentelemetry", "tracing", "otel"],
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"opentelemetry",
+		"tracing",
+		"otel"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",

@@ -18,7 +18,7 @@ ctx.senderChat;  // Chat | undefined — set for anonymous admins / linked-chann
 ctx.me;          // this bot's own account, once known (see /docs/webhooks)
 ctx.is("callback_query"); // puregram-style narrowing check`;
 
-	const send = `import { Bot } from "@yaebal/core";
+	const send = `import { Bot, type Context } from "@yaebal/core";
 
 const bot = new Bot(process.env.BOT_TOKEN!);
 
@@ -31,7 +31,13 @@ bot.on("message:text", async (ctx) => {
 
 bot.on("callback_query", (ctx) =>
   ctx.answerCallbackQuery({ text: "got it" }), // no-op if no query
-);`;
+);
+
+// show(): edit the pressed button's message on a callback, send anywhere else
+const settingsKeyboard = { inline_keyboard: [[{ text: "back", callback_data: "home" }]] };
+const menu = (ctx: Context) => ctx.show("settings", { reply_markup: settingsKeyboard });
+bot.command("settings", menu);
+bot.callbackQuery("settings", menu);`;
 
 	const routing = `import { Bot } from "@yaebal/core";
 
@@ -164,7 +170,9 @@ const bot = new Bot(process.env.BOT_TOKEN!)
 	<em>or</em> a single params object (<code>{'{ text, ...sendMessageParams }'}</code>); the media
 	shortcuts accept a <code>MediaSource</code> or a raw <code>file_id</code>/url string, and their
 	<code>caption</code> accepts a plain string or a <a href="/docs/plugins/fmt">fmt</a> result the
-	same way <code>send</code>'s text does.
+	same way <code>send</code>'s text does. <code>show</code> takes the same arguments as
+	<code>send</code> but redraws in place on a button press — it edits the message the button
+	belongs to, and only sends when there's nothing to edit.
 </p>
 <Code code={send} title="send.ts" />
 <div class="note">

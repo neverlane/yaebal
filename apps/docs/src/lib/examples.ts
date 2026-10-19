@@ -57,15 +57,16 @@ const screens = {
 
 const bot = createBot(process.env.BOT_TOKEN!);
 
+// ctx.show sends on a command and edits the pressed button's message on a tap
 bot.command("start", (ctx) => {
   const screen = screens.home();
-  return ctx.reply(screen.text, { reply_markup: screen.markup });
+  return ctx.show(screen.text, { reply_markup: screen.markup });
 });
 
 bot.callbackQuery(nav, async (ctx) => {
   await ctx.answer(); // stop the spinner — the edited message is the feedback
   const screen = ctx.queryData.to === "settings" ? screens.settings() : screens.home();
-  await ctx.editText(screen.text, { reply_markup: screen.markup });
+  await ctx.show(screen.text, { reply_markup: screen.markup });
 });
 
 bot.callbackQuery(toggle, async (ctx) => {
@@ -73,7 +74,7 @@ bot.callbackQuery(toggle, async (ctx) => {
   prefs[key] = !prefs[key];
   await ctx.answer(prefs[key] ? "on" : "off");
   const screen = screens.settings();
-  await ctx.editText(screen.text, { reply_markup: screen.markup });
+  await ctx.show(screen.text, { reply_markup: screen.markup });
 });
 
 bot.start();`,

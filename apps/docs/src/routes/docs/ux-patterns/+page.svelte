@@ -94,9 +94,11 @@ bot.onStart(() => commands.sync(bot.api)); // pushes the menu only when it chang
 
 <h2>edit in place</h2>
 <p>
-	navigation edits; events send. moving between screens is <code>ctx.editText</code> on the
-	message the button belongs to, so the chat stays clean and "where am i" is always the bottom
-	of the chat. send a new message for things worth keeping in history — a receipt, a shipped
+	navigation edits; events send. moving between screens edits the message the button belongs
+	to, so the chat stays clean and "where am i" is always the bottom of the chat.
+	<code>ctx.show(text, extra)</code> does exactly that: on a button press it edits that message,
+	anywhere else it sends — one screen function serves <code>/settings</code> and the tap that
+	redraws it, and an unchanged screen or an uneditable media message is handled for you. send a new message for things worth keeping in history — a receipt, a shipped
 	order, an error the user must see later. <a href="/docs/plugins/morda/">@yaebal/morda</a> turns
 	this into declared windows with a back stack, if your menus outgrow a few handlers.
 </p>

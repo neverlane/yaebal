@@ -1324,3 +1324,60 @@ test("YAEBAL_DEBUG=yaebal:api logs one line per call and never the token", async
 	assert.match(lines[0] ?? "", /^\[yaebal:api\] <- sendMessage ok \d+ms$/);
 	assert.ok(!lines.join("\n").includes("secret-token"));
 });
+
+test("show() edits the pressed button's message, and sends everywhere else", async () => {
+	const calls: { method: string; params: Record<string, unknown> }[] = [];
+	let failEdit: string | undefined;
+	const fakeApi = {
+		call: async (method: string, params: Record<string, unknown>) => {
+			calls.push({ method, params });
+			if (method === "editMessageText" && failEdit) {
+				throw new TelegramError(method, 400, failEdit);
+			}
+			return { message_id: 9 };
+		},
+	} as unknown as Api;
+	const chat = { id: 1, type: "private" as const };
+	const press = (message: Record<string, unknown>) =>
+		new Context({
+			api: fakeApi,
+			update: {
+				update_id: 1,
+				callback_query: {
+					id: "q",
+					chat_instance: "c",
+					from: { id: 1, is_bot: false, first_name: "u" },
+					message: { message_id: 5, date: 1, chat, ...message },
+				},
+			} as Update,
+			updateType: "callback_query",
+		});
+
+	assert.equal(
+		await press({ text: "old" }).show("new", { reply_markup: { inline_keyboard: [] } }),
+		true,
+	);
+	assert.deepEqual(calls.at(-1), {
+		method: "editMessageText",
+		params: { chat_id: 1, message_id: 5, text: "new", reply_markup: { inline_keyboard: [] } },
+	});
+
+	failEdit = "Bad Request: message is not modified";
+	assert.equal(await press({ text: "same" }).show("same"), true);
+	assert.equal(calls.at(-1)?.method, "editMessageText", "a no-op edit isn't retried as a send");
+
+	await press({ photo: [] }).show("caption-less media can't be edited as text");
+	assert.equal(calls.at(-1)?.method, "sendMessage");
+
+	failEdit = "Bad Request: message can't be edited";
+	await press({ text: "too old" }).show("fresh");
+	assert.equal(calls.at(-1)?.method, "sendMessage");
+
+	const command = new Context({
+		api: fakeApi,
+		update: { update_id: 2, message: { message_id: 1, date: 0, chat, text: "/menu" } } as Update,
+		updateType: "message",
+	});
+	await command.show(bold("menu"));
+	assert.equal(calls.at(-1)?.method, "sendMessage");
+});

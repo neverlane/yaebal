@@ -78,7 +78,7 @@ export default {
   },
 };`;
 
-	const feature = `import type { Bot, Context } from "yaebal";
+	const feature = `import { type Bot, type Context, createBot } from "yaebal";
 
 export const ping = <C extends Context>(bot: Bot<C>) =>
   bot
@@ -86,7 +86,7 @@ export const ping = <C extends Context>(bot: Bot<C>) =>
     .callbackQuery("pong", (ctx) => ctx.answer("pong!"));
 
 // bot.ts
-bot.install(ping);`;
+const bot = createBot(process.env.BOT_TOKEN!).install(ping);`;
 </script>
 
 <svelte:head>

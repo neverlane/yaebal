@@ -3,6 +3,7 @@ import test from "node:test";
 import { Composer, type Context } from "@yaebal/core";
 import { createTestEnv } from "@yaebal/test";
 import { chatSink } from "./chat-sink.js";
+import { auditLog } from "./install.js";
 import { serializeError } from "./errors.js";
 import type { AuditApiErrorEvent } from "./types.js";
 
@@ -92,4 +93,34 @@ test("a custom format() controls the alert text", async () => {
 	await sink.write(undefined, errorEvent());
 
 	assert.equal(env.lastApiCall("sendMessage")?.params?.text, "custom alert");
+});
+
+test("installed alongside auditLog, its own (redacted) alert traffic never re-triggers a send", {
+	timeout: 5000,
+}, async () => {
+	const bot = new Composer<Context>();
+	const env = createTestEnv(bot);
+	let formatted = 0;
+	const sink = chatSink(
+		{ api: env.api },
+		{
+			chatId: 123,
+			minLevel: "info",
+			dedupeWindowMs: 0,
+			throttleMs: 0,
+			format: (event) => {
+				// bounds a regression to a few loops instead of a microtask spin that never yields
+				if (++formatted > 10) throw new Error("alert loop");
+				return event.kind;
+			},
+		},
+	);
+	const handle = auditLog({ use: (...mw) => bot.use(...mw), api: env.api }, { sinks: [sink] });
+
+	await sink.write(undefined, errorEvent());
+	await handle.flush();
+	await new Promise((resolve) => setImmediate(resolve));
+
+	assert.equal(env.callsTo("sendMessage").length, 1);
+	assert.equal(formatted, 1);
 });

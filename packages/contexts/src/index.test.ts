@@ -755,3 +755,34 @@ test("message reply and quote shortcuts preserve ephemeral addressing and visibi
 		assert.equal(call.p?.message_thread_id, 2);
 	}
 });
+
+test("sugar: a format result in the positional slot keeps the extra params", () => {
+	const { api, calls } = recorder();
+	const formatted = { text: "hi", entities: [{ type: "bold" as const, offset: 0, length: 2 }] };
+	const markup = { inline_keyboard: [[{ text: "b", callback_data: "b" }]] };
+
+	const cb = new CallbackQueryContext(api, {
+		update_id: 1,
+		callback_query: {
+			id: "q1",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			message: { message_id: 5, date: 0, chat: { id: 42, type: "private" } },
+			data: "x",
+		},
+	} as never);
+	cb.editText(formatted, { reply_markup: markup });
+	assert.deepEqual(calls[0]?.p.text, formatted);
+	assert.deepEqual(calls[0]?.p.reply_markup, markup, "the keyboard survives a formatted text");
+
+	const msg = new MessageContext(api, {
+		update_id: 2,
+		message: { message_id: 9, date: 0, chat: { id: 42, type: "private" }, text: "x" },
+	} as never);
+	msg.editCaption(formatted, { reply_markup: markup });
+	assert.deepEqual(calls[1]?.p.caption, formatted);
+	assert.deepEqual(calls[1]?.p.reply_markup, markup);
+
+	// the params-object form is untouched: text + reply_markup in one object
+	msg.editText({ text: "plain", reply_markup: markup });
+	assert.deepEqual(calls[2]?.p.reply_markup, markup);
+});

@@ -149,7 +149,14 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 		// a sticker with text/caption/buttons/reply/forward falls through to the normal bubble
 		// pipeline below instead of silently dropping that content.
 		if (m.sticker) {
-			const needsBubble = !!(m.text || m.caption || m.buttons?.length || m.reply || m.forward);
+			const needsBubble = !!(
+				m.text ||
+				m.caption ||
+				m.buttons?.length ||
+				m.reply ||
+				m.forward ||
+				m.webpage
+			);
 
 			if (!needsBubble) {
 				const sz = 116;
@@ -166,7 +173,9 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 					);
 				}
 
-				body.push(meta(out ? W - PAD : sx + sz, y + sz, time, m.status, out, p, false, m.edited));
+				body.push(
+					meta(out ? W - PAD : sx + sz, y + sz, time, m.status, out, p, false, m.edited, m.pinned),
+				);
 				y += sz;
 
 				if (m.reactions?.length) {
@@ -201,6 +210,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 					MW - PADX * 2,
 					base,
 					p,
+					ids.next("c"),
 				),
 				bleed: false,
 			});
@@ -360,7 +370,9 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 			const lastBlockEntry = blocks[blocks.length - 1];
 			const lastIsText = !lastBlockEntry?.bleed && (!!tText || !!cText || !!lastBlockEntry?.header);
 			const metaInline =
-				lastIsText && (time || m.edited) ? metaWidth(time, out, !!m.status, m.edited) + 8 : 0;
+				lastIsText && (time || m.edited || m.pinned)
+					? metaWidth(time, out, !!m.status, m.edited, m.pinned) + 8
+					: 0;
 
 			bubbleW = Math.max(bleedW, padW);
 
@@ -452,7 +464,7 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 				? by + (blocks[0]?.block.h ?? bubbleH)
 				: by + bubbleH - padBot - (LH - 13) + 4;
 
-			body.push(meta(metaRight, metaBottom, time, m.status, out, p, onScrim, m.edited));
+			body.push(meta(metaRight, metaBottom, time, m.status, out, p, onScrim, m.edited, m.pinned));
 
 			y = by + bubbleH;
 		}
@@ -462,8 +474,8 @@ export function renderChat(messages: ChatMessage[], options: RenderOptions = {})
 		const rowX = out ? W - PAD - rowW : PAD + indent;
 
 		// buttons-only messages still show time/status (previously dropped entirely)
-		if (!blocks.length && m.buttons?.length && (time || m.status || m.edited)) {
-			body.push(meta(rowX + rowW - 4, y + 14, time, m.status, out, p, false, m.edited));
+		if (!blocks.length && m.buttons?.length && (time || m.status || m.edited || m.pinned)) {
+			body.push(meta(rowX + rowW - 4, y + 14, time, m.status, out, p, false, m.edited, m.pinned));
 			y += 16;
 		}
 

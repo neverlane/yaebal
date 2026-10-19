@@ -571,3 +571,79 @@ test("the chat() builder produces the same output as an equivalent renderChat ca
 
 	assert.equal(built, direct);
 });
+
+test("webpage thumbnails get scoped clip ids — two cards with one src don't share a clipPath (regression)", () => {
+	const page = { site: "example.com", title: "t", src: "https://example.com/t.png" };
+	const svg = renderChat(
+		[
+			{ from: "bot", text: "one", webpage: page },
+			{ from: "bot", text: "two", webpage: page },
+		],
+		{ idPrefix: "t" },
+	);
+
+	const clips = [...svg.matchAll(/<clipPath id="([^"]+)"><rect x="[^"]+" y="([^"]+)" width="56"/g)];
+	assert.equal(clips.length, 2);
+	assert.notEqual(clips[0]?.[1], clips[1]?.[1]); // distinct ids…
+	assert.notEqual(clips[0]?.[2], clips[1]?.[2]); // …for clip rects at different y
+	for (const c of clips) assert.ok(svg.includes(`clip-path="url(#${c[1]})"`));
+});
+
+test("webpage description wraps beside the thumbnail, not under it (regression)", () => {
+	const description = Array.from({ length: 30 }, () => "word").join(" ");
+	const lines = (src?: string) =>
+		[
+			...renderChat([{ from: "bot", text: "x", webpage: { description, src } }]).matchAll(
+				/>((?:word ?)+)<\/text>/g,
+			),
+		].map((m) => m[1]?.length ?? 0);
+
+	// 252 media width − 2·11 padding − 12 bar gap − (56 thumb + 8 gap) = 154px ≈ 24 chars at 6.2px
+	assert.ok(Math.max(...lines("https://x/t.png")) <= 24, `${lines("https://x/t.png")}`);
+	assert.ok(Math.max(...lines()) > 24); // without a thumbnail the full card width is used
+});
+
+test("ChatMessage.pinned shows a pin next to the time (regression: documented but ignored)", () => {
+	const svg = renderChat([{ from: "bot", text: "hi", time: "12:00", pinned: true }]);
+	assert.ok(svg.includes(">📌 12:00</text>"));
+	assert.ok(renderChat([{ from: "bot", text: "hi", pinned: true }]).includes(">📌</text>"));
+});
+
+test("crlf line endings break lines like \\n (regression)", () => {
+	const lf = renderChat([{ from: "bot", text: "first\nsecond" }], { idPrefix: "a", a11yDesc: "d" });
+	const crlf = renderChat([{ from: "bot", text: "first\r\nsecond" }], {
+		idPrefix: "a",
+		a11yDesc: "d",
+	});
+	assert.equal(crlf, lf);
+});
+
+test("a sticker with a webpage preview keeps the preview instead of dropping it (regression)", () => {
+	const svg = renderChat([
+		{ from: "bot", sticker: { emoji: "🙂" }, webpage: { site: "example.com", title: "Example" } },
+	]);
+	assert.ok(svg.includes("example.com"));
+	assert.ok(svg.includes("Example"));
+});
+
+test("a quiz marks its correct option, not the most-voted one (regression)", () => {
+	const svg = renderChat([
+		{
+			from: "bot",
+			poll: {
+				type: "quiz",
+				question: "2+2?",
+				correct_option_ids: [1],
+				options: [
+					{ text: "five", voter_count: 9 },
+					{ text: "four", voter_count: 1 },
+				],
+			},
+		},
+	]);
+
+	const check = svg.match(/<text x="[^"]+" y="([^"]+)"[^>]*>✓<\/text>/);
+	const four = svg.match(/<text x="[^"]+" y="([^"]+)"[^>]*>four<\/text>/);
+	assert.ok(check && four);
+	assert.equal(Number(check[1]) - 1, Number(four[1])); // ✓ sits on the "four" row (y + 13 vs + 12)
+});

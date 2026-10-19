@@ -72,7 +72,8 @@ function tokenize(text: string, entities: MessageEntity[]): Run[][] {
 	let codeUnitIndex = 0;
 
 	for (const cluster of graphemes(text)) {
-		if (cluster === "\n") {
+		// Intl.Segmenter keeps "\r\n" together as one grapheme — a crlf (or lone cr) breaks too
+		if (cluster === "\n" || cluster === "\r\n" || cluster === "\r") {
 			if (cur) runs.push(cur);
 
 			cur = null;

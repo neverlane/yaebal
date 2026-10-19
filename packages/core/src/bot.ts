@@ -452,15 +452,21 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 	async #confirmHandled(): Promise<void> {
 		if (this.#offset <= this.#sentOffset) return;
 
+		// a plain timer, not AbortSignal.timeout(): that one is unref'd, so a request that never
+		// settles would let the event loop drain mid-shutdown instead of giving up after the cap
+		const cap = new AbortController();
+		const timer = setTimeout(() => cap.abort(), CONFIRM_TIMEOUT_MS);
 		try {
 			this.#sentOffset = this.#offset;
 			await this.api.call(
 				"getUpdates",
 				{ offset: this.#offset, limit: 1, timeout: 0 },
-				{ signal: AbortSignal.timeout(CONFIRM_TIMEOUT_MS) },
+				{ signal: cap.signal },
 			);
 		} catch {
 			// redelivered on the next start — handlers already have to tolerate that
+		} finally {
+			clearTimeout(timer);
 		}
 	}
 

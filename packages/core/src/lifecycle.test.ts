@@ -105,6 +105,9 @@ test("restart waits for the previous polling cycle to finish", async (t) => {
 					],
 				}),
 			);
+		// the offset confirmation a mid-batch stop sends answers right away, like telegram does
+		if (String(options?.body).includes('"timeout":0'))
+			return new Response(JSON.stringify({ ok: true, result: [] }));
 		return new Promise<Response>((_resolve, reject) => {
 			if (options?.signal?.aborted) reject(options.signal.reason);
 			else

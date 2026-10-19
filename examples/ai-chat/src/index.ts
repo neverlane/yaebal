@@ -63,7 +63,6 @@ bot.onError((error, ctx) => {
 
 // regular messages stay ordered per chat; stop events must bypass that queue.
 // sequential bot.start() cannot receive a stop while a handler is still streaming.
-await bot.init();
 const runner = run(bot, {
 	sequentializeBy: (update) => (update.stopped_message_generation ? undefined : chatKey(update)),
 });

@@ -202,3 +202,77 @@ test("run: stop() aborts the in-flight long poll instead of waiting it out", asy
 
 	assert.equal(errors, 0, "the stop-triggered abort is not reported as a polling error");
 });
+
+test("run: resolves the bot's own account before the first poll", { timeout: 5_000 }, async () => {
+	const calls: string[] = [];
+	const bot = {
+		api: {
+			async getUpdates() {
+				calls.push("getUpdates");
+				await tick();
+				return [] as never;
+			},
+			// biome-ignore lint/suspicious/noExplicitAny: test mock
+		} as any,
+		async init() {
+			calls.push("init");
+		},
+		async handleUpdate() {},
+	};
+
+	const handle = run(bot, { timeout: 0 });
+	await tick();
+	await handle.stop();
+
+	assert.equal(calls[0], "init");
+	assert.equal(calls[1], "getUpdates");
+});
+
+test("run: polling errors are logged by default, not swallowed", { timeout: 5_000 }, async (t) => {
+	const logged = t.mock.method(console, "error", () => {});
+	const bot = {
+		api: {
+			async getUpdates() {
+				throw new Error("409: Conflict");
+			},
+			// biome-ignore lint/suspicious/noExplicitAny: test mock
+		} as any,
+		async handleUpdate() {},
+	};
+
+	const handle = run(bot);
+	await tick();
+	await handle.stop();
+
+	assert.equal(logged.mock.callCount(), 1);
+	assert.match(String(logged.mock.calls[0]?.arguments[1]), /409/);
+});
+
+test("run: a stop during backpressure confirms the handled batch", { timeout: 5_000 }, async () => {
+	const polls: Record<string, unknown>[] = [];
+	let release!: () => void;
+	const blocked = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	const bot = {
+		api: {
+			async getUpdates(params: Record<string, unknown>) {
+				polls.push(params);
+				if (polls.length === 1) return [{ update_id: 5, message: { chat: { id: 1 } } }] as never;
+				return [] as never;
+			},
+			// biome-ignore lint/suspicious/noExplicitAny: test mock
+		} as any,
+		handleUpdate: () => blocked,
+	};
+
+	// concurrency 1: the loop parks in whenBelow() while update 5 is still running
+	const handle = run(bot, { concurrency: 1, timeout: 0 });
+	await tick();
+	const stopping = handle.stop();
+	release();
+	await stopping;
+
+	assert.equal(polls.length, 2);
+	assert.deepEqual(polls[1], { offset: 6, limit: 1, timeout: 0 });
+});

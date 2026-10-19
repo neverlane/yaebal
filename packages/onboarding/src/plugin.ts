@@ -20,38 +20,34 @@ import type { AdvanceFor, FlowControl, OnboardingNamespace, OnboardingStorage } 
 
 const NS_MARKER = Symbol.for("@yaebal/onboarding/ns");
 
-const flowRegistry = new Map<string, FlowRuntime>();
-
 interface InternalNamespace extends OnboardingNamespace {
 	[NS_MARKER]: true;
 	"~controls": Map<string, FlowControl>;
 	"~storages": Map<string, OnboardingStorage>;
 	"~scopeKeys": Map<string, string>;
+	/** the flows installed on *this* bot's chain — each install attaches its own. */
+	"~runtimes": Map<string, FlowRuntime>;
 	"~coord": FlowCoordinator;
 	"~ctx": Context;
-}
-
-let defaultStorageInstance: OnboardingStorage | null = null;
-
-function getDefaultStorage(): OnboardingStorage {
-	defaultStorageInstance ??= memoryStorage();
-	return defaultStorageInstance;
 }
 
 export function createOnboardingPlugin(
 	def: FlowDefinition,
 ): Plugin<Context, { onboarding: OnboardingNamespace }> & { advanceFor: AdvanceFor } {
-	const storage = def.opts.storage ?? getDefaultStorage();
+	// in-memory by default, private to this flow — a process-wide store would let two bots that
+	// reuse a flow id (or just share users) read and overwrite each other's progress
+	const storage = def.opts.storage ?? memoryStorage();
 	const flowId = def.opts.id;
 	const rt: FlowRuntime = { def, storage };
-
-	flowRegistry.set(flowId, rt);
 
 	const plugin: Plugin<Context, { onboarding: OnboardingNamespace }> = (composer) =>
 		composer
 			.derive(async (ctx) => {
+				// only flows installed on this chain land on the namespace, each by its own install —
+				// never every flow some other bot in the process ever created
 				const ns = await upsertNamespace(ctx);
-				await renderPending(ns);
+				await attachFlow(ns, flowId, rt);
+				await renderPending(ns, flowId);
 
 				return { onboarding: ns as OnboardingNamespace };
 			})
@@ -117,7 +113,7 @@ async function upsertNamespace(ctx: Context): Promise<InternalNamespace> {
 	const controls = new Map<string, FlowControl>();
 	const storages = new Map<string, OnboardingStorage>();
 	const scopeKeys = new Map<string, string>();
-	let nsRef: InternalNamespace | null = null;
+	const runtimes = new Map<string, FlowRuntime>();
 
 	const canonical = (): { storage: OnboardingStorage; scopeKey: string } | undefined => {
 		const first = storages.entries().next().value;
@@ -199,6 +195,7 @@ async function upsertNamespace(ctx: Context): Promise<InternalNamespace> {
 		"~controls": controls,
 		"~storages": storages,
 		"~scopeKeys": scopeKeys,
+		"~runtimes": runtimes,
 		"~coord": coord,
 		"~ctx": ctx,
 		list: [],
@@ -229,7 +226,8 @@ async function upsertNamespace(ctx: Context): Promise<InternalNamespace> {
 					const scopeKey = scopeKeys.get(id);
 					if (!scopeKey) return;
 
-					const record = { kind: "global" as const, disabled: true };
+					// keep the queue / preempt stack — disabling isn't forgetting what was pending
+					const record = { ...(await loadGlobal(storage, scopeKey)), disabled: true };
 					await storage.set(globalKey(scopeKey), record);
 					const control = controls.get(id);
 					if (control) getInternals(control).globalLocal = record;
@@ -243,7 +241,7 @@ async function upsertNamespace(ctx: Context): Promise<InternalNamespace> {
 					const scopeKey = scopeKeys.get(id);
 					if (!scopeKey) return;
 
-					const record = { kind: "global" as const, disabled: false };
+					const record = { ...(await loadGlobal(storage, scopeKey)), disabled: false };
 					await storage.set(globalKey(scopeKey), record);
 					const control = controls.get(id);
 					if (control) getInternals(control).globalLocal = record;
@@ -257,65 +255,53 @@ async function upsertNamespace(ctx: Context): Promise<InternalNamespace> {
 					await getInternals(control).exitImpl("exitAll");
 				}
 			}
-
-			await ns.disableAll();
 		},
 	};
 
-	nsRef = ns;
-	await refreshNamespace(nsRef);
 	return ns;
 }
 
-async function refreshNamespace(ns: InternalNamespace): Promise<void> {
-	for (const [flowId, rt] of flowRegistry) {
-		const scopeKey = resolveScopeKey(rt.def, ns["~ctx"]);
-		const [globalRec, record] = await Promise.all([
-			loadGlobal(rt.storage, scopeKey),
-			loadRecord(rt.storage, flowId, scopeKey),
-		]);
+async function attachFlow(ns: InternalNamespace, flowId: string, rt: FlowRuntime): Promise<void> {
+	const scopeKey = resolveScopeKey(rt.def, ns["~ctx"]);
+	const [globalRec, record] = await Promise.all([
+		loadGlobal(rt.storage, scopeKey),
+		loadRecord(rt.storage, flowId, scopeKey),
+	]);
 
-		let activeRecord = record;
-		if (
-			record?.status === "active" &&
-			record.stepId &&
-			!rt.def.steps.some((s) => s.id === record.stepId)
-		) {
-			const { step } = resolveCurrentStep(rt.def, ns["~ctx"], record);
-			activeRecord = step ? { ...record, stepId: step.id } : { ...record, status: "completed" };
-			await rt.storage.set(`flow:${flowId}:${scopeKey}`, activeRecord);
-		}
-
-		const control = makeFlowControl(
-			rt,
-			ns["~ctx"],
-			scopeKey,
-			activeRecord,
-			globalRec,
-			ns["~coord"],
-		);
-		ns[flowId] = control;
-		ns["~controls"].set(flowId, control);
-		ns["~storages"].set(flowId, rt.storage);
-		ns["~scopeKeys"].set(flowId, scopeKey);
-		if (!ns.list.includes(flowId)) ns.list.push(flowId);
+	let activeRecord = record;
+	if (
+		record?.status === "active" &&
+		record.stepId &&
+		!rt.def.steps.some((s) => s.id === record.stepId)
+	) {
+		const { step } = resolveCurrentStep(rt.def, ns["~ctx"], record);
+		activeRecord = step ? { ...record, stepId: step.id } : { ...record, status: "completed" };
+		await rt.storage.set(`flow:${flowId}:${scopeKey}`, activeRecord);
 	}
+
+	const control = makeFlowControl(rt, ns["~ctx"], scopeKey, activeRecord, globalRec, ns["~coord"]);
+	ns[flowId] = control;
+	ns["~controls"].set(flowId, control);
+	ns["~storages"].set(flowId, rt.storage);
+	ns["~scopeKeys"].set(flowId, scopeKey);
+	ns["~runtimes"].set(flowId, rt);
+	if (!ns.list.includes(flowId)) ns.list.push(flowId);
 }
 
-async function renderPending(ns: InternalNamespace): Promise<void> {
-	for (const [flowId, control] of ns["~controls"]) {
-		const internals = getInternals(control);
-		const pendingStepId = internals.local.pendingStepId;
-		if (control.status !== "active" || !pendingStepId) continue;
+async function renderPending(ns: InternalNamespace, flowId: string): Promise<void> {
+	const control = ns["~controls"].get(flowId);
+	if (!control) return;
+	const internals = getInternals(control);
+	const pendingStepId = internals.local.pendingStepId;
+	if (control.status !== "active" || !pendingStepId) return;
 
-		const rt = flowRegistry.get(flowId);
-		const step = rt?.def.steps.find((s) => s.id === pendingStepId);
-		if (!rt || !step || !isEligibleForStep(ns["~ctx"], step.config)) continue;
+	const rt = ns["~runtimes"].get(flowId);
+	const step = rt?.def.steps.find((s) => s.id === pendingStepId);
+	if (!rt || !step || !isEligibleForStep(ns["~ctx"], step.config)) return;
 
-		const rendered = await internals.renderStep(step);
-		const idx = rt.def.steps.findIndex((s) => s.id === step.id);
-		if (!rendered.pending && idx >= 0 && idx + 1 >= rt.def.steps.length) {
-			await internals.completeImpl();
-		}
+	const rendered = await internals.renderStep(step);
+	const idx = rt.def.steps.findIndex((s) => s.id === step.id);
+	if (!rendered.pending && idx >= 0 && idx + 1 >= rt.def.steps.length) {
+		await internals.completeImpl();
 	}
 }

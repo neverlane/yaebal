@@ -56,6 +56,9 @@ await ctx.onboarding.welcome.complete();
 ```
 
 `ctx.onboarding` also exposes `active`, `list`, `disableAll()`, `enableAll()`, `exitAll()`, and `flow(id)` for multi-flow bots.
+`exitAll()` ends every running flow; `disableAll()` / `enableAll()` opt the user out of (and back into) onboarding
+altogether. each flow installed on a bot is visible on that bot only, and without a `storage` option it keeps its
+progress in its own in-memory store.
 
 ## storage
 

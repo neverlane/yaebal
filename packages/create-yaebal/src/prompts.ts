@@ -134,9 +134,8 @@ export async function runPrompts(args: ParsedArgs): Promise<Selections | undefin
 
 		ai = sanitizeAgents(ai);
 
-		const ci = isPlugin
-			? false
-			: (args.ci ?? (await confirm(rl, "add a github actions ci workflow?", d.ci)));
+		// plugin packages get a ci workflow too (install → typecheck → test → build)
+		const ci = args.ci ?? (await confirm(rl, "add a github actions ci workflow?", d.ci));
 
 		const git = args.git ?? (await confirm(rl, "initialise a git repository?", d.git));
 

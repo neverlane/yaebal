@@ -88,11 +88,14 @@ export interface SqlitePanelStoreOptions {
  */
 export class SqlitePanelStore implements PanelStore {
 	#db: DatabaseSync;
+	/** whether this store opened `#db` itself — a caller-provided `db` is theirs to close. */
+	#ownsDb: boolean;
 	#listeners = new Set<(event: PanelEvent) => void>();
 	#maxHistory: number;
 	#fts: boolean;
 
 	constructor(options: SqlitePanelStoreOptions = {}) {
+		this.#ownsDb = options.db === undefined;
 		this.#db = options.db ?? new DatabaseSync(options.path ?? ":memory:");
 		this.#maxHistory = options.maxHistory ?? 1000;
 
@@ -488,6 +491,6 @@ export class SqlitePanelStore implements PanelStore {
 
 	/** close the underlying database (no-op if you passed your own `db`). */
 	close(): void {
-		this.#db.close();
+		if (this.#ownsDb) this.#db.close();
 	}
 }

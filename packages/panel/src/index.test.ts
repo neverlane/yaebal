@@ -1108,3 +1108,148 @@ test("handoff() suppresses the bot's own handlers once a chat is handled, and re
 	await mw(ctx(9), noop);
 	assert.equal(nextRan, 2); // released — bot handlers resume
 });
+
+test("GET /api/file never serves a user's file as an active same-origin page (regression)", async () => {
+	const store = new MemoryPanelStore();
+	const api = {
+		sendMessage: () => Promise.resolve({}),
+		call: <T>() => Promise.resolve({ file_path: "documents/x" } as T),
+		fileUrl: (p: string) => `https://files.test/${p}`,
+	};
+
+	const realFetch = globalThis.fetch;
+	let type = "text/html";
+	globalThis.fetch = (async () =>
+		new Response("<script>alert(1)</script>", {
+			headers: { "content-type": type },
+		})) as unknown as typeof fetch;
+
+	try {
+		const handler = panelHandler(api, store, { token: "secret" });
+		const get = () =>
+			handler(
+				new Request("http://x/api/file?id=A", { headers: { authorization: "Bearer secret" } }),
+			);
+
+		for (type of ["text/html", "image/svg+xml", "application/pdf"]) {
+			const res = await get();
+			assert.equal(res.headers.get("content-disposition"), "attachment", type);
+			assert.match(res.headers.get("content-security-policy") ?? "", /sandbox/, type);
+		}
+
+		type = "image/png"; // renderable media stays inline for <img>/<video>/<audio>
+		const res = await get();
+		assert.equal(res.headers.get("content-disposition"), null);
+		assert.match(res.headers.get("content-security-policy") ?? "", /sandbox/);
+	} finally {
+		globalThis.fetch = realFetch;
+	}
+});
+
+test("panel send into a group chat is recorded (regression: only private chats were)", async () => {
+	const store = new MemoryPanelStore();
+	const api = {
+		sendMessage: (p: { chat_id: number | string; text: string }) =>
+			Promise.resolve({
+				message_id: 9,
+				date: 50,
+				chat: { id: p.chat_id, type: "supergroup", title: "Team" },
+				text: p.text,
+			}),
+	};
+	const handler = panelHandler(api, store, { token: "secret" });
+
+	const res = await handler(
+		new Request("http://x/api/chats/-100/send", {
+			method: "POST",
+			headers: { "content-type": "application/json", authorization: "Bearer secret" },
+			body: JSON.stringify({ text: "hello group" }),
+		}),
+	);
+
+	assert.equal(res.status, 200);
+	const hist = store.history(-100);
+	assert.equal(hist.length, 1);
+	assert.equal(hist[0]?.text, "hello group");
+	assert.equal(hist[0]?.operator, "operator");
+	assert.equal(store.chats()[0]?.name, "Team");
+});
+
+test("multipart upload with a prototype-key `type` falls back to mime inference (regression)", async () => {
+	const store = new MemoryPanelStore();
+	const methods: string[] = [];
+	const api = {
+		sendMessage: () => Promise.resolve({}),
+		call: <T>(method: string) => {
+			methods.push(method);
+			return Promise.resolve({} as T);
+		},
+	};
+	const handler = panelHandler(api, store, { token: "secret" });
+
+	const fd = new FormData();
+	fd.append("file", new Blob([new Uint8Array([1])], { type: "image/png" }), "a.png");
+	fd.append("type", "constructor");
+
+	const res = await handler(
+		new Request("http://x/api/chats/1/send", {
+			method: "POST",
+			headers: { authorization: "Bearer secret" },
+			body: fd,
+		}),
+	);
+
+	assert.equal(res.status, 200);
+	assert.deepEqual(methods, ["sendPhoto"]);
+});
+
+test("recordTelegramUpdate patches an edited_channel_post too", async () => {
+	const store = new MemoryPanelStore();
+	const chat = { id: -1001, type: "channel", title: "News" };
+	await recordTelegramUpdate(
+		store,
+		{ update_id: 1, channel_post: { message_id: 3, date: 0, chat, text: "v1" } },
+		{ chats: "all" },
+	);
+	await recordTelegramUpdate(
+		store,
+		{ update_id: 2, edited_channel_post: { message_id: 3, date: 1, chat, text: "v2" } },
+		{ chats: "all" },
+	);
+
+	const hist = store.history(-1001);
+	assert.equal(hist.length, 1);
+	assert.equal(hist[0]?.text, "v2");
+	assert.equal(hist[0]?.edited, true);
+});
+
+test("a group chat is named by its title, not by whoever spoke last (regression)", async () => {
+	const store = new MemoryPanelStore();
+	const chat = { id: -5, type: "group", title: "Book club" };
+	for (const [i, first_name] of ["Ann", "Bob"].entries()) {
+		await recordTelegramUpdate(
+			store,
+			{
+				update_id: i,
+				message: { message_id: i, date: i, chat, from: { id: i, first_name }, text: "hi" },
+			},
+			{ chats: "all" },
+		);
+	}
+
+	const [row] = store.chats();
+	assert.equal(row?.name, "Book club");
+	assert.equal(row?.firstName, undefined); // the UI prefers firstName over name
+});
+
+test("MemoryPanelStore: history limit 0 returns nothing; search is newest-first", () => {
+	const s = new MemoryPanelStore();
+	s.record({ id: 1 }, { direction: "in", text: "hit old", date: 1 });
+	s.record({ id: 2 }, { direction: "in", text: "hit new", date: 9 });
+
+	assert.deepEqual(s.history(1, { limit: 0 }), []);
+	assert.deepEqual(
+		s.search("hit", { limit: 1 }).map((r) => r.message.text),
+		["hit new"],
+	);
+});

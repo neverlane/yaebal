@@ -111,6 +111,16 @@ export class MemoryStorage<T> implements StorageAdapter<T> {
 		this.#map.delete(key);
 		this.#map.set(key, { value: this.#clone ? structuredClone(value) : value, at: this.#now() });
 
+		// under a ttl, keys written once and never read again would otherwise sit in the map
+		// forever — sweep expired entries off the front (oldest writes) on every write
+		if (this.#ttl !== undefined) {
+			const cutoff = this.#now() - this.#ttl;
+			for (const [oldest, entry] of this.#map) {
+				if (entry.at >= cutoff) break;
+				this.#map.delete(oldest);
+			}
+		}
+
 		if (this.#max !== undefined) {
 			while (this.#map.size > this.#max) {
 				const oldest = this.#map.keys().next().value;

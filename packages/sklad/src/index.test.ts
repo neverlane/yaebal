@@ -60,6 +60,18 @@ test("MemoryStorage ttl expires lazily and touch refreshes", () => {
 	assert.equal(s.has("k"), false);
 });
 
+test("MemoryStorage ttl sweeps expired write-once keys on later writes", () => {
+	let clock = 0;
+	const storage = new MemoryStorage<number>({ ttl: 100, now: () => clock });
+
+	for (let i = 0; i < 50; i++) storage.set(`once:${i}`, i);
+	clock = 200;
+	storage.set("fresh", 1);
+
+	assert.equal(storage.size, 1);
+	assert.equal(storage.get("fresh"), 1);
+});
+
 test("MemoryStorage keys lists live keys, optionally by prefix, and clear drops everything", () => {
 	let t = 0;
 	const s = new MemoryStorage<number>({ ttl: 100, now: () => t });

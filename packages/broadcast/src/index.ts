@@ -103,6 +103,8 @@ export interface BroadcastDeliveryState {
 	key?: string;
 	error?: BroadcastErrorInfo;
 	result?: unknown;
+	/** keep the api result on the delivery once sent — set from `storeResults`. */
+	storeResult?: boolean;
 }
 
 export interface BroadcastStorageJobFilter {
@@ -161,7 +163,10 @@ export interface BroadcastStartOptions {
 	delayMs?: number;
 	batchSize?: number;
 	retry?: BroadcastRetryOptions | false;
+	/** keep each delivery's api result (e.g. the sent `Message`) in storage — `listDeliveries` shows it. */
 	storeResults?: boolean;
+	/** this job's events only — progress bars and logs for one broadcast. */
+	onEvent?: (event: BroadcastEvent) => unknown;
 }
 
 export interface BroadcastClientOptions {
@@ -247,17 +252,23 @@ export type BroadcastEvent =
 	| { type: "rate_limited"; waitMs: number; delivery: BroadcastDeliveryState }
 	| { type: "storage_error"; error: unknown };
 
-export interface BroadcastOptions extends BroadcastStartOptions {
+/** options for `client.sendMessage` / `client.queueMessage` — one job on an existing client. */
+export interface BroadcastMessageOptions extends BroadcastStartOptions {
 	/** extra params merged into every sendMessage. chat_id/text always win. */
 	extra?: Omit<SendMessageParams, "chat_id" | "text"> & Record<string, unknown>;
 	/** called for each delivery that permanently fails or is skipped. */
 	onError?: (chatId: ChatId, error: unknown, delivery: BroadcastDeliveryState) => unknown;
-	/** full event stream for progress bars, logs and metrics. */
-	onEvent?: (event: BroadcastEvent) => unknown;
+	/** stop waiting (`sendMessage`) when this aborts. */
+	signal?: AbortSignal;
+}
+
+/**
+ * options for the one-shot {@link broadcast} function, which builds its own client — so the
+ * client-wide `concurrency` / `rateLimit` belong here, not on a single job of a shared client.
+ */
+export interface BroadcastOptions extends BroadcastMessageOptions {
 	concurrency?: number;
 	rateLimit?: BroadcastRateLimit | false;
-	retry?: BroadcastRetryOptions | false;
-	signal?: AbortSignal;
 }
 
 interface RegisteredType {
@@ -342,9 +353,24 @@ export class BroadcastWaitTimeoutError extends Error {
 	}
 }
 
+export interface MemoryBroadcastStorageOptions {
+	/**
+	 * how many finished (completed/cancelled/failed) jobs to keep, with their deliveries, for
+	 * `snapshot`/`listJobs`. older ones are dropped so a long-lived process doesn't hold every
+	 * broadcast it ever ran. default `1000`.
+	 */
+	keepFinished?: number;
+}
+
 export class MemoryBroadcastStorage implements BroadcastStorage {
 	readonly #jobs = new Map<string, BroadcastJobState>();
 	readonly #deliveries = new Map<string, Map<string, BroadcastDeliveryState>>();
+	readonly #finished: string[] = [];
+	readonly #keepFinished: number;
+
+	constructor(options: MemoryBroadcastStorageOptions = {}) {
+		this.#keepFinished = Math.max(0, options.keepFinished ?? 1000);
+	}
 
 	createJob(job: BroadcastJobState): void {
 		if (this.#jobs.has(job.id)) throw new Error(`broadcast: job "${job.id}" already exists`);
@@ -368,7 +394,18 @@ export class MemoryBroadcastStorage implements BroadcastStorage {
 		const job = this.#jobs.get(jobId);
 		if (!job) throw new BroadcastJobNotFoundError(jobId);
 
-		this.#jobs.set(jobId, cloneJob({ ...job, ...patch }));
+		const next = cloneJob({ ...job, ...patch });
+		this.#jobs.set(jobId, next);
+
+		if (isTerminal(next.status) && !isTerminal(job.status)) {
+			this.#finished.push(jobId);
+			while (this.#finished.length > this.#keepFinished) {
+				const oldest = this.#finished.shift();
+				if (oldest === undefined) break;
+				this.#jobs.delete(oldest);
+				this.#deliveries.delete(oldest);
+			}
+		}
 	}
 
 	incrementJob(
@@ -487,8 +524,8 @@ export class MemoryBroadcastStorage implements BroadcastStorage {
 	}
 }
 
-export function memoryBroadcastStorage(): BroadcastStorage {
-	return new MemoryBroadcastStorage();
+export function memoryBroadcastStorage(options?: MemoryBroadcastStorageOptions): BroadcastStorage {
+	return new MemoryBroadcastStorage(options);
 }
 
 export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
@@ -496,6 +533,8 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	readonly storage: BroadcastStorage;
 	readonly #options: NormalizedOptions;
 	readonly #types = new Map<string, RegisteredType>();
+	/** per-job `onEvent` listeners, dropped once their job is terminal. */
+	readonly #jobListeners = new Map<string, (event: BroadcastEvent) => unknown>();
 	readonly #waiters = new Map<string, Set<Waiter>>();
 	readonly #limiter: LocalRateLimiter | undefined;
 	#active = 0;
@@ -607,14 +646,14 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	async queueMessage(
 		chatIds: BroadcastTargets<ChatId>,
 		text: string,
-		options: BroadcastOptions = {},
+		options: BroadcastMessageOptions = {},
 	): Promise<BroadcastJobHandle> {
 		const type = this.#inlineType("sendMessage");
 		const extra = options.extra ?? {};
 		this.#registerInline(
 			type,
 			async ([chatId]: readonly [ChatId, number]) => {
-				await this.api.sendMessage({ ...extra, chat_id: chatId, text });
+				return this.api.sendMessage({ ...extra, chat_id: chatId, text });
 			},
 			{
 				onError: options.onError
@@ -629,7 +668,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	async sendMessage(
 		chatIds: BroadcastTargets<ChatId>,
 		text: string,
-		options: BroadcastOptions = {},
+		options: BroadcastMessageOptions = {},
 	): Promise<BroadcastResult> {
 		const job = await this.queueMessage(chatIds, text, options);
 		return job.wait({ signal: options.signal });
@@ -642,7 +681,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	): Promise<BroadcastJobHandle> {
 		const type = this.#inlineType("copyMessage");
 		this.#registerInline(type, async ([chatId]: readonly [ChatId, number]) => {
-			await this.api.call("copyMessage", { ...params, chat_id: chatId });
+			return this.api.call("copyMessage", { ...params, chat_id: chatId });
 		});
 
 		return this.#enqueue(type, indexedTargets(chatIds), options);
@@ -665,7 +704,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 	): Promise<BroadcastJobHandle> {
 		const type = this.#inlineType(method);
 		this.#registerInline(type, async ([target, index]: readonly [Target, number]) => {
-			await this.api.call(method, buildParams(target, index));
+			return this.api.call(method, buildParams(target, index));
 		});
 
 		return this.#enqueue(type, indexedTargets(targets), options);
@@ -821,6 +860,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		};
 
 		await this.storage.createJob(job);
+		if (options.onEvent) this.#jobListeners.set(id, options.onEvent);
 		this.#emit({ type: "job_created", job: cloneJob(job) });
 
 		const entry = this.#types.get(type);
@@ -852,6 +892,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 				createdAt: now,
 				updatedAt: now,
 				key,
+				...(options.storeResults ? { storeResult: true } : {}),
 			});
 
 			index++;
@@ -864,6 +905,14 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 
 		if (batch.length > 0) await this.storage.addDeliveries(id, batch);
 		this.#counts.queued += total;
+
+		// a pause() or cancel() that landed while the deliveries were being written wins
+		const current = await this.storage.getJob(id);
+		if (current?.status === "paused" || current?.status === "cancelled") {
+			await this.storage.patchJob(id, { total, updatedAt: this.#options.now() });
+			if (current.status === "cancelled") this.#releaseInline(type);
+			return this.#handle(id, type);
+		}
 
 		const queued: BroadcastJobState = {
 			...job,
@@ -983,7 +1032,7 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 				updatedAt: this.#options.now(),
 				lockedBy: undefined,
 				lockUntil: undefined,
-				result: undefined,
+				result: delivery.storeResult ? result : undefined,
 			});
 			this.#counts.completed++;
 			this.#emit({ type: "delivery_sent", delivery: cloneDelivery(delivery), result });
@@ -1106,6 +1155,23 @@ export class Broadcast<Types extends BroadcastTypes = Record<never, never>> {
 		} catch {
 			// observability hooks must never affect delivery.
 		}
+
+		const jobId =
+			"job" in event && event.job
+				? event.job.id
+				: "delivery" in event
+					? event.delivery.jobId
+					: undefined;
+		const listener = jobId === undefined ? undefined : this.#jobListeners.get(jobId);
+		if (!listener || jobId === undefined) return;
+		try {
+			listener(event);
+		} catch {
+			// same rule for a job's own listener
+		}
+		if (event.type === "job_completed" || event.type === "job_cancelled") {
+			this.#jobListeners.delete(jobId);
+		}
 	}
 
 	#inlineType(method: string): string {
@@ -1142,7 +1208,8 @@ export async function broadcast(
 	});
 
 	try {
-		return await client.sendMessage(chatIds, text, options);
+		// the client already streams onEvent — don't subscribe the job a second time
+		return await client.sendMessage(chatIds, text, { ...options, onEvent: undefined });
 	} finally {
 		await client.stop({ drain: true });
 	}

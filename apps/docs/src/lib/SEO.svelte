@@ -348,6 +348,11 @@
 			description:
 				"typed ctx.track events and funnels from yaebal bot middleware, with auto-capture, privacy controls, an in-chat admin surface, and adapters for posthog, plausible, sqlite, clickhouse, http, or a console sink.",
 		},
+		"/docs/plugins/sentry": {
+			title: "@yaebal/sentry — sentry error tracking for telegram bots",
+			description:
+				"report telegram bot errors to sentry from yaebal: an isolation scope per update with chat and user, captured handler failures, and breadcrumbs for every update and bot api call.",
+		},
 		"/docs/plugins/otel": {
 			title: "@yaebal/otel — opentelemetry tracing for telegram bots",
 			description:

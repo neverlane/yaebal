@@ -123,6 +123,7 @@ export const nav: NavSection[] = [
 			{ label: "analytics", href: "/docs/plugins/analytics" },
 			{ label: "audit-log", href: "/docs/plugins/audit-log" },
 			{ label: "otel", href: "/docs/plugins/otel" },
+			{ label: "sentry", href: "/docs/plugins/sentry" },
 		],
 	},
 	{

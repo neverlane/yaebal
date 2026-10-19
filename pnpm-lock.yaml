@@ -1136,6 +1136,15 @@ importers:
         specifier: workspace:*
         version: link:../test
 
+  packages/sentry:
+    devDependencies:
+      '@types/node':
+        specifier: latest
+        version: 26.6.5
+      '@yaebal/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/session:
     dependencies:
       '@yaebal/sklad':

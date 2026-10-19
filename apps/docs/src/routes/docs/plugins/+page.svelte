@@ -55,6 +55,7 @@ const bot = new Bot(token)
 		["@yaebal/panel", "/docs/plugins/panel/", "framework-agnostic operator panel with media, keyboards and events"],
 		["@yaebal/analytics", "/docs/plugins/analytics/", "ctx.track(event, properties) with pluggable sinks: posthog, plausible, sqlite, clickhouse"],
 		["@yaebal/otel", "/docs/plugins/otel/", "opentelemetry tracing: a span per update, a child span per bot api call, ctx.otel.record"],
+		["@yaebal/sentry", "/docs/plugins/sentry/", "sentry error tracking: a scope per update, captured handler failures, update and api breadcrumbs"],
 		["@yaebal/audit-log", "/docs/plugins/audit-log/", "correlated, redacted-by-default audit logging — sinks, formatters, filters, sampling, chatSink, auditAdmin"],
 		["@yaebal/web", "/docs/plugins/web/", "webhooks on any runtime — edge, node servers, serverless, fetch frameworks; adapters, sequentialize, dedupe, lifecycle"],
 		["@yaebal/runner", "/docs/runner/", "concurrent long-polling for scale"],

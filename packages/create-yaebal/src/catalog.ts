@@ -286,6 +286,17 @@ export const PLUGINS: PluginDef[] = [
 // new NodeSDK({ serviceName: "my-bot", traceExporter: new OTLPTraceExporter() }).start();`,
 	},
 	{
+		id: "sentry",
+		dep: "@yaebal/sentry",
+		extraDeps: ["@sentry/node"],
+		hint: "sentry error tracking — a scope per update, update and api breadcrumbs",
+		wire: "dep",
+		import: 'import { sentry } from "@yaebal/sentry";',
+		showcase: `// import * as Sentry from "@sentry/node";
+// Sentry.init({ dsn: process.env.SENTRY_DSN });
+// bot.install(sentry({ sentry: Sentry }))`,
+	},
+	{
 		id: "cron",
 		dep: "@yaebal/cron",
 		hint: "typed cron jobs — timezones, retries, catch-up, distributed locks, /cron admin",

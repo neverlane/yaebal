@@ -5,6 +5,11 @@
 // publish at all. a package whose version already exists on the registry is skipped, so
 // running this on every push to the default branch is a no-op until a version is bumped.
 //
+// one failing package doesn't stop the rest: every pending package is attempted, the failures
+// are listed at the end, and the script exits non-zero if there were any. (it used to stop at
+// the first error, so one package missing its trusted-publisher config on npmjs.com silently
+// held back every package sorted after it.)
+//
 // set DRY_RUN=1 to print the plan without publishing. in CI it also passes --provenance
 // (set NO_PROVENANCE=1 to opt out, e.g. if a package's `repository` field doesn't match).
 // CI authenticates through npm trusted publishing (oidc) — `pnpm publish` hands the packed
@@ -70,6 +75,7 @@ function publish(pkg) {
 
 const published = [];
 const skipped = [];
+const failed = [];
 
 for (const pkg of workspacePackages()) {
 	const id = `${pkg.name}@${pkg.version}`;
@@ -88,8 +94,14 @@ for (const pkg of workspacePackages()) {
 	}
 
 	console.log(`publishing ${id}`);
-	publish(pkg);
-	published.push(id);
+
+	try {
+		publish(pkg);
+		published.push(id);
+	} catch {
+		// pnpm/npm already printed the reason above (stdio is inherited)
+		failed.push(id);
+	}
 }
 
 console.log(
@@ -98,4 +110,14 @@ console.log(
 
 if (published.length > 0) {
 	console.log(published.map((id) => `  + ${id}`).join("\n"));
+}
+
+if (failed.length > 0) {
+	console.error(`\nfailed ${failed.length}:\n${failed.map((id) => `  ✗ ${id}`).join("\n")}`);
+	console.error(
+		"\nan E404 on PUT under trusted publishing means npmjs.com has no trusted publisher for that\n" +
+			"package (settings → trusted publisher → github actions: neverlane/yaebal, release.yml),\n" +
+			"or the package doesn't exist yet — oidc can't create packages, publish the first version by hand.",
+	);
+	process.exit(1);
 }

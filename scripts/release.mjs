@@ -23,7 +23,14 @@ const gate = SKIP_GATE
 
 const STEPS = [
 	...gate,
-	{ label: "publish to npm", command: "node", args: ["scripts/publish-all.mjs"] },
+	// a partial publish still cuts github releases for what did reach npm (auto-release only
+	// releases published versions), then the run fails so the gap is visible.
+	{
+		label: "publish to npm",
+		command: "node",
+		args: ["scripts/publish-all.mjs"],
+		deferFailure: true,
+	},
 	{ label: "github releases", command: "node", args: ["scripts/auto-release.mjs"] },
 ];
 
@@ -53,13 +60,22 @@ async function run(step) {
 
 async function main() {
 	const startedAt = Date.now();
+	const deferred = [];
 
 	for (const [i, step] of STEPS.entries()) {
 		console.log(`\n${CYAN}[${i + 1}/${STEPS.length}] ${step.label}${RESET}`);
 		console.log(`${DIM}$ ${step.command} ${step.args.join(" ")}${RESET}`);
 
-		await run(step);
+		try {
+			await run(step);
+		} catch (error) {
+			if (!step.deferFailure) throw error;
+			console.error(`${RED}✗ ${step.label} failed — continuing, the run fails at the end${RESET}`);
+			deferred.push(error);
+		}
 	}
+
+	if (deferred.length > 0) throw new AggregateError(deferred, "release finished with failures");
 
 	const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
 

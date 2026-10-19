@@ -57,37 +57,64 @@ async function collectDirs(root: string): Promise<string[]> {
  * sync — node's single recursive `fs.watch` is macOS/Windows-only; this is the portable fallback,
  * used unconditionally so behavior doesn't differ by platform. re-scanned after every trigger so a
  * newly created subdirectory picks up its own watcher on the next change.
+ *
+ * the re-scan only diffs: existing watchers stay open, new directories gain one, vanished ones
+ * lose theirs. recreating every watcher per event loops forever on macOS — a fresh FSEvents
+ * watcher replays recent events, each replay re-triggered the recreate, and the debounce in
+ * front of the rebuild never got a quiet window. scans are serialized, and a scan that finishes
+ * after disposal opens nothing, so no watcher outlives the disposer and pins the process.
  */
 async function watchTree(root: string, onChange: () => void): Promise<() => void> {
-	let watchers: FSWatcher[] = [];
+	const watchers = new Map<string, FSWatcher>();
 	let disposed = false;
+	let scan: Promise<void> = Promise.resolve();
 
-	const refresh = async (): Promise<void> => {
-		for (const w of watchers) w.close();
-		watchers = [];
+	const sync = async (): Promise<void> => {
+		const dirs = new Set(await collectDirs(root));
 		if (disposed) return;
 
-		for (const dir of await collectDirs(root)) {
+		for (const [dir, watcher] of watchers) {
+			if (dirs.has(dir)) continue;
+			watcher.close();
+			watchers.delete(dir);
+		}
+
+		for (const dir of dirs) {
+			if (watchers.has(dir)) continue;
+
 			try {
-				watchers.push(
-					fsWatch(dir, () => {
-						if (disposed) return;
-						onChange();
-						void refresh();
-					}),
-				);
+				const watcher = fsWatch(dir, onEvent);
+				// a watched directory removed under us errors on some platforms — drop it quietly;
+				// an unhandled `error` event would crash the dev process instead.
+				watcher.on("error", () => {
+					watcher.close();
+					if (watchers.get(dir) === watcher) watchers.delete(dir);
+				});
+				watchers.set(dir, watcher);
 			} catch {
 				// the directory may have been removed between listing and watching — skip it, the
-				// next refresh (triggered by whatever removed it) will drop it for good.
+				// next scan (triggered by whatever removed it) settles the set.
 			}
 		}
 	};
 
-	await refresh();
+	const resync = (): Promise<void> => {
+		scan = scan.then(sync).catch(() => {});
+		return scan;
+	};
+
+	function onEvent(): void {
+		if (disposed) return;
+		onChange();
+		void resync();
+	}
+
+	await resync();
 
 	return () => {
 		disposed = true;
-		for (const w of watchers) w.close();
+		for (const watcher of watchers.values()) watcher.close();
+		watchers.clear();
 	};
 }
 
@@ -124,11 +151,16 @@ export async function watchRoutes<C extends Context>(
 	let active: Middleware<C> | undefined;
 	let version = 0;
 
+	// returns undefined when a newer rebuild started meanwhile: rebuilds overlap (a slow import, a
+	// burst of saves), and a stale one finishing last must not swap the older route set back in.
 	async function buildAndSwap(
 		buildOptions: LoadOptions<C>,
 		cacheBust?: string,
-	): Promise<LoadResult> {
+	): Promise<LoadResult | undefined> {
+		const built = version;
 		const { resolved, warnings } = await buildRoutes<C>(dir, buildOptions, cacheBust);
+		if (built !== version) return undefined;
+
 		const registry = new Composer<C>();
 		const routes = applyRoutes(registry, resolved);
 
@@ -136,6 +168,7 @@ export async function watchRoutes<C extends Context>(
 			.map((r) => r.def)
 			.filter((d): d is CommandRouteDef<C> => d.kind === "command");
 		const { commands } = await applyCommandsBridge(commandDefs, options, target.api);
+		if (built !== version) return undefined;
 
 		active = registry.toMiddleware();
 		return { routes, commands, warnings };
@@ -146,7 +179,8 @@ export async function watchRoutes<C extends Context>(
 	// note: this must not sit inside `onReload?.(...)`'s argument list — `f?.(x)` short-circuits
 	// evaluating `x` at all when `f` is nullish, which would skip the build entirely whenever
 	// `onReload` isn't passed.
-	const initial = await buildAndSwap(firstBuildOptions);
+	// no watcher exists yet, so nothing can supersede the first build — it always swaps in.
+	const initial = (await buildAndSwap(firstBuildOptions)) as LoadResult;
 	options.onReload?.(initial);
 
 	target.use((ctx, next) => {
@@ -156,10 +190,9 @@ export async function watchRoutes<C extends Context>(
 
 	const triggerRebuild = debounce(() => {
 		version += 1;
-		void buildAndSwap(liveBuildOptions, `v=${version}`).then(
-			(result) => options.onReload?.(result),
-			onError,
-		);
+		void buildAndSwap(liveBuildOptions, `v=${version}`).then((result) => {
+			if (result) options.onReload?.(result);
+		}, onError);
 	}, options.debounceMs ?? 150);
 
 	const stopWatching = await watchTree(dir, triggerRebuild);

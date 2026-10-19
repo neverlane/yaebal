@@ -153,3 +153,48 @@ test("batches are sent in order even when a batch is mid-retry", { timeout: 5000
 
 	assert.deepEqual(order, [[1], [2]]);
 });
+
+test("maxBuffered also counts items held by a batch that's still sending", {
+	timeout: 5000,
+}, async () => {
+	const dropped: number[] = [];
+	// never resolves — the first batch stays in flight forever
+	const buffer = batched<number>(() => new Promise(() => {}), {
+		size: 2,
+		intervalMs: 0,
+		maxBuffered: 3,
+		onDrop: (items) => dropped.push(...items),
+	});
+
+	for (let i = 1; i <= 6; i++) buffer.push(i);
+	await new Promise((resolve) => setImmediate(resolve));
+
+	assert.deepEqual(dropped, [4, 5, 6]);
+});
+
+test("a throwing onDrop doesn't wedge later batches", { timeout: 5000 }, async () => {
+	const sent: number[][] = [];
+	let fail = true;
+	const buffer = batched<number>(
+		async (batch) => {
+			if (fail) throw new Error("down");
+			sent.push(batch);
+		},
+		{
+			size: 1,
+			intervalMs: 0,
+			maxRetries: 0,
+			onDrop: () => {
+				throw new Error("onDrop bug");
+			},
+		},
+	);
+
+	buffer.push(1);
+	await buffer.flush();
+	fail = false;
+	buffer.push(2);
+	await buffer.flush();
+
+	assert.deepEqual(sent, [[2]]);
+});

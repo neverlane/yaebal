@@ -93,3 +93,26 @@ test("without autoTrack, no events fire on their own — ctx.track is still manu
 
 	assert.equal(events.length, 0);
 });
+
+test("autoTrack works alongside a typed events catalog that doesn't declare its events", {
+	timeout: 5000,
+}, async () => {
+	const { adapter, events } = fakeAdapter();
+	const errors: unknown[] = [];
+	const bot = new Composer<Context>()
+		.install(
+			analytics({
+				events: { purchase: true },
+				adapters: [adapter],
+				autoTrack: ["commands"],
+				onError: (error) => errors.push(error),
+			}),
+		)
+		.command("start", (ctx) => ctx.reply("hi"));
+
+	await createTestEnv(bot).createUser().sendCommand("start");
+	await new Promise((resolve) => setImmediate(resolve));
+
+	assert.deepEqual(errors, []);
+	assert.equal(events[0]?.name, "command_used");
+});

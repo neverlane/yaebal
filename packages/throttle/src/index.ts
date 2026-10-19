@@ -217,7 +217,12 @@ export interface ThrottlePlugin extends BotPlugin {
 interface BucketState {
 	stamps: number[];
 	frozenUntil?: number;
+	/** the window the bucket was last taken with — `sweep` prunes by it, never by a guess. */
+	windowMs?: number;
 }
+
+/** how often `MemoryThrottleStorage` sweeps idle buckets on its own, from inside `take`. */
+const AUTO_SWEEP_MS = 60_000;
 
 interface NormalizedOptions {
 	global: BucketLimit | false;
@@ -301,8 +306,15 @@ export class ThrottleAbortError extends Error {
 
 export class MemoryThrottleStorage implements ThrottleStorage {
 	readonly #buckets = new Map<string, BucketState>();
+	#nextSweep = 0;
 
 	take(buckets: readonly ThrottleBucket[], now: number): ThrottleStorageResult {
+		// one bucket per chat ever written to would otherwise accumulate for the process lifetime
+		if (now >= this.#nextSweep) {
+			this.#nextSweep = now + AUTO_SWEEP_MS;
+			this.sweep(now);
+		}
+
 		const normalized = buckets.filter((bucket) => bucket.limit > 0 && bucket.windowMs >= 0);
 		let waitMs = 0;
 		let blockedBy: string | undefined;
@@ -349,6 +361,7 @@ export class MemoryThrottleStorage implements ThrottleStorage {
 			}
 
 			prune(state.stamps, now, bucket.windowMs);
+			state.windowMs = bucket.windowMs;
 
 			const weight = bucket.weight ?? 1;
 			for (let i = 0; i < weight; i++) state.stamps.push(now);
@@ -366,8 +379,7 @@ export class MemoryThrottleStorage implements ThrottleStorage {
 
 	sweep(now: number): void {
 		for (const [key, state] of this.#buckets) {
-			const windowMs = inferWindowMs(key);
-			prune(state.stamps, now, windowMs);
+			prune(state.stamps, now, state.windowMs ?? inferWindowMs(key));
 
 			if ((state.frozenUntil ?? 0) <= now && state.stamps.length === 0) this.#buckets.delete(key);
 		}

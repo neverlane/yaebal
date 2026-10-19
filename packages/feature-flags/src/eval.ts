@@ -1,6 +1,6 @@
 import { isVariantDefinition, normalizeDefinition } from "./catalog.js";
 import { safeProvider } from "./providers/index.js";
-import { evaluateLocal, pickVariant } from "./rules.js";
+import { defaultBucketId, evaluateLocal, pickVariant } from "./rules.js";
 import { defaultBucketKey, type OverrideStore } from "./store.js";
 import type {
 	BucketKeyResolver,
@@ -18,7 +18,7 @@ import type {
 export type EvalCache = Map<string, Promise<{ value: unknown } | undefined>>;
 
 function requireFlag<F extends FlagsCatalog>(flags: F, key: string): FlagConfig {
-	const config = flags[key];
+	const config = Object.hasOwn(flags, key) ? flags[key] : undefined;
 	if (config === undefined) {
 		throw new Error(`feature-flags: unknown flag ${JSON.stringify(key)}`);
 	}
@@ -38,6 +38,16 @@ async function memoized(
 		cache.set(cacheKey, pending);
 	}
 	return pending;
+}
+
+/** a boolean flag's override must be a boolean — `isEnabled` hands it back as-is, so anything
+ * else (a typo'd `/flags set x on`) would surface as a non-boolean through a `boolean` type. */
+function assertOverrideValue(key: string, config: FlagConfig, value: unknown): void {
+	if (!isVariantDefinition(config) && typeof value !== "boolean") {
+		throw new TypeError(
+			`feature-flags: ${JSON.stringify(key)} is a boolean flag — override it with true or false, got ${JSON.stringify(value)}`,
+		);
+	}
 }
 
 export interface FlagsEngineOptions<F extends FlagsCatalog> {
@@ -60,12 +70,17 @@ export class FlagsEngine<F extends FlagsCatalog> {
 	#store: OverrideStore;
 	#provider: FlagProvider | undefined;
 	#bucketKey: BucketKeyResolver;
+	/** the identity percentage/variant rollouts hash — a custom `bucketKey` when one is given
+	 * (so `bucketBy.chat` really rolls out per chat); otherwise the historical `userId ?? chatId`,
+	 * kept so upgrading never reshuffles who's in an existing rollout. */
+	#rolloutId: (evalContext: FlagEvalContext) => string;
 	#onEvaluate: ((event: EvaluationEvent<F>) => void) | undefined;
 
 	constructor(options: FlagsEngineOptions<F>) {
 		this.#flags = options.flags;
 		this.#store = options.store;
 		this.#bucketKey = options.bucketKey ?? defaultBucketKey;
+		this.#rolloutId = options.bucketKey ?? defaultBucketId;
 		this.#onEvaluate = options.onEvaluate;
 		this.#provider = options.provider
 			? safeProvider(
@@ -113,7 +128,12 @@ export class FlagsEngine<F extends FlagsCatalog> {
 			}
 		}
 
-		const { value, matchedRule } = evaluateLocal(normalizeDefinition(config), key, evalContext);
+		const { value, matchedRule } = evaluateLocal(
+			normalizeDefinition(config),
+			key,
+			evalContext,
+			this.#rolloutId(evalContext),
+		);
 		this.#emit(key, value, matchedRule ? "rule" : "default", evalContext);
 		return value;
 	}
@@ -142,7 +162,7 @@ export class FlagsEngine<F extends FlagsCatalog> {
 			return global.value;
 		}
 
-		const { value, matchedRule } = pickVariant(config, key, evalContext);
+		const { value, matchedRule } = pickVariant(config, key, evalContext, this.#rolloutId(evalContext));
 		this.#emit(key, value, matchedRule ? "rule" : "variant", evalContext);
 		return value;
 	}
@@ -153,7 +173,7 @@ export class FlagsEngine<F extends FlagsCatalog> {
 		evalContext: FlagEvalContext,
 		options?: OverrideOptions,
 	): Promise<void> {
-		requireFlag(this.#flags, key);
+		assertOverrideValue(key, requireFlag(this.#flags, key), value);
 		await this.#store.setOverride(this.#bucketKey(evalContext), key, value, options);
 	}
 
@@ -163,7 +183,7 @@ export class FlagsEngine<F extends FlagsCatalog> {
 	}
 
 	async setGlobalOverride(key: string, value: unknown, options?: OverrideOptions): Promise<void> {
-		requireFlag(this.#flags, key);
+		assertOverrideValue(key, requireFlag(this.#flags, key), value);
 		await this.#store.setGlobalOverride(key, value, options);
 	}
 

@@ -232,12 +232,20 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/** handle a specific update, optionally narrowed by a filter query. */
-	on<Q extends FilterQuery>(query: Q, ...handlers: Middleware<Filtered<C, Q>>[]): this {
+	/**
+	 * handle a specific update, optionally narrowed by a filter query. an array matches any of
+	 * its queries — `on(["message:photo", "message:video"], …)` — and the handler sees the union
+	 * of their narrowed contexts.
+	 */
+	on<Q extends FilterQuery>(
+		query: Q | readonly Q[],
+		...handlers: Middleware<Filtered<C, Q>>[]
+	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+		const queries: readonly string[] = typeof query === "string" ? [query] : query;
 
 		this.middlewares.push((ctx, next) =>
-			matchQuery(ctx, query as string) ? handler(ctx, next) : next(),
+			queries.some((q) => matchQuery(ctx, q)) ? handler(ctx, next) : next(),
 		);
 
 		return this;
@@ -249,14 +257,15 @@ export class Composer<C extends Context = Context> {
 	 * strips a trailing `@botname` — and when the bot's username is known (`ctx.me`,
 	 * filled by long polling) a mismatching mention (`/cmd@other_bot`) is skipped.
 	 * exposes `ctx.command`, whitespace-split `ctx.args`, and the raw trimmed
-	 * remainder as `ctx.payload` (deep-link parameters arrive intact).
+	 * remainder as `ctx.payload` (deep-link parameters arrive intact). pass an array to route
+	 * several aliases to one handler — `ctx.command` tells them apart.
 	 */
 	command(
-		name: string,
+		name: string | readonly string[],
 		...handlers: Middleware<C & { command: string; args: string[]; payload: string }>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
-		const wanted = name.toLowerCase();
+		const wanted = new Set((typeof name === "string" ? [name] : name).map((n) => n.toLowerCase()));
 
 		this.middlewares.push((ctx, next) => {
 			if (!COMMAND_UPDATES.has(ctx.updateType)) return next();
@@ -266,7 +275,7 @@ export class Composer<C extends Context = Context> {
 
 			const [head = ""] = text.slice(1).split(/\s/, 1);
 			const [base = "", mention] = head.split("@");
-			if (base.toLowerCase() !== wanted) return next();
+			if (!wanted.has(base.toLowerCase())) return next();
 
 			const username = ctx.me?.username;
 			if (mention && username && mention.toLowerCase() !== username.toLowerCase()) return next();
@@ -281,12 +290,17 @@ export class Composer<C extends Context = Context> {
 		return this;
 	}
 
-	/** match message text/caption against a string or regex; exposes `ctx.match`. */
+	/**
+	 * match message text/caption against a string or regex (or an array of them — the first
+	 * match wins); exposes `ctx.match`.
+	 */
 	hears(
-		trigger: string | RegExp,
+		trigger: string | RegExp | readonly (string | RegExp)[],
 		...handlers: Middleware<C & { match: string | RegExpMatchArray }>[]
 	): this {
 		const handler = compose(handlers as unknown as Middleware<C>[]);
+		const triggers: readonly (string | RegExp)[] =
+			typeof trigger === "string" || trigger instanceof RegExp ? [trigger] : trigger;
 
 		this.middlewares.push((ctx, next) => {
 			// the update's own message only — a callback query (whose rich context carries
@@ -295,18 +309,15 @@ export class Composer<C extends Context = Context> {
 			const text = msg?.text ?? msg?.caption;
 			if (text === undefined) return next();
 
-			if (typeof trigger === "string") {
-				if (text !== trigger) return next();
+			for (const t of triggers) {
+				const match = typeof t === "string" ? (text === t ? text : null) : matchOf(text, t);
+				if (match === null) continue;
 
-				Object.assign(ctx as object, { match: text });
-			} else {
-				const m = matchOf(text, trigger);
-				if (!m) return next();
-
-				Object.assign(ctx as object, { match: m });
+				Object.assign(ctx as object, { match });
+				return handler(ctx, next);
 			}
 
-			return handler(ctx, next);
+			return next();
 		});
 
 		return this;

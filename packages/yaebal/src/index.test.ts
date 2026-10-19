@@ -65,6 +65,24 @@ test("typed routers expose the generated shortcuts + narrowed fields", () => {
 		void ctx.react; // command handlers get the message context
 	});
 
+	// an array of queries types the handler as the union of each query's exact context
+	bot.on(["message:photo", "callback_query:data"], (ctx) => {
+		if ("answer" in ctx) void ctx.callbackQuery.data;
+		else void ctx.message.photo.length;
+	});
+
+	bot.command(["start", "help"], (ctx) => {
+		const name: string = ctx.command;
+
+		void name;
+		void ctx.react;
+	});
+
+	bot.hears(["hi", /^hey/], (ctx) => {
+		void ctx.match;
+		void ctx.react;
+	});
+
 	bot.on("guest_message", (ctx) => {
 		void ctx.answer; // GuestMessageContext shortcut — answerGuestQuery, not sendMessage
 		void ctx.guest_bot_caller_user; // who summoned the guest bot

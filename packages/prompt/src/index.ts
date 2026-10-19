@@ -1,4 +1,10 @@
-import type { Context, FormatResult, Message, Plugin } from "@yaebal/core";
+import {
+	COMMAND_UPDATES,
+	type Context,
+	type FormatResult,
+	type Message,
+	type Plugin,
+} from "@yaebal/core";
 
 export interface PromptControl {
 	/** send `question`, then run `handler` on the next message in this chat. */
@@ -39,15 +45,20 @@ export function prompt(options: PromptOptions = {}): Plugin<Context, PromptContr
 					extra: Record<string, unknown> = {},
 				) => {
 					const key = getKey(ctx);
-					if (key !== undefined) pending.set(key, handler);
 
-					return ctx.send(question, extra);
+					// armed only once the question is out — a failed send must not eat the user's
+					// next message as the answer to a question they never saw
+					return ctx.send(question, extra).then((sent) => {
+						if (key !== undefined) pending.set(key, handler);
+						return sent;
+					});
 				},
 			}))
 			.use(async (ctx, next) => {
 				const key = getKey(ctx);
 
-				if (key !== undefined && ctx.message) {
+				// fresh messages only: an edit of some older message is not an answer
+				if (key !== undefined && COMMAND_UPDATES.has(ctx.updateType)) {
 					const handler = pending.get(key);
 
 					if (handler) {

@@ -101,3 +101,63 @@ test("an unrelated message with no pending prompt falls through", async () => {
 
 	assert.equal(seen, "hello");
 });
+
+test("an edit of an older message is not taken as the answer", async () => {
+	const { api } = fakeApi();
+	let answer = "";
+
+	const mw = entry(
+		new Composer<Context>().install(prompt()).command("ask", (ctx) =>
+			(ctx as Ctx).prompt("name?", (c) => {
+				answer = c.text ?? "";
+			}),
+		),
+	);
+
+	await mw(msgCtx(api, "/ask", 1), noop);
+	const edit = new Context({
+		api,
+		update: {
+			update_id: 2,
+			edited_message: {
+				message_id: 0,
+				date: 0,
+				edit_date: 1,
+				chat: { id: 1, type: "private" },
+				text: "typo fix",
+			},
+		} as never,
+		updateType: "edited_message",
+	});
+	await mw(edit, noop);
+	await mw(msgCtx(api, "Bob", 1), noop);
+
+	assert.equal(answer, "Bob");
+});
+
+test("a question that failed to send doesn't arm its handler", async () => {
+	const api = { call: () => Promise.reject(new Error("blocked by user")) } as never;
+	let answered = false;
+	let fellThrough = 0;
+
+	const mw = entry(
+		new Composer<Context>()
+			.install(prompt())
+			.command("ask", (ctx) =>
+				(ctx as Ctx)
+					.prompt("name?", () => {
+						answered = true;
+					})
+					.catch(() => {}),
+			)
+			.on("message:text", () => {
+				fellThrough++;
+			}),
+	);
+
+	await mw(msgCtx(api, "/ask", 1), noop);
+	await mw(msgCtx(api, "hello", 1), noop);
+
+	assert.equal(answered, false);
+	assert.equal(fellThrough, 1);
+});

@@ -1,5 +1,12 @@
 # @yaebal/panel
 
+## 2.0.1
+
+### patch changes
+
+- updated dependencies [d9e233a]
+  - @yaebal/core@0.4.4
+
 ## 2.0.0
 
 ### major changes

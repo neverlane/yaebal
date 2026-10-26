@@ -1,5 +1,12 @@
 # @yaebal/example-testing-lab
 
+## 0.0.5
+
+### patch changes
+
+- @yaebal/test@1.0.4
+- yaebal@0.2.4
+
 ## 0.0.4
 
 ### patch changes

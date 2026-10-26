@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/otel",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal otel — opentelemetry tracing: a span per update, a child span per bot api call, custom spans via ctx.otel.",
 	"type": "module",
 	"main": "./lib/index.js",

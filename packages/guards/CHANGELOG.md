@@ -1,5 +1,14 @@
 # @yaebal/guards
 
+## 1.0.4
+
+### patch changes
+
+- updated dependencies [d9e233a]
+  - @yaebal/core@0.4.4
+  - @yaebal/cache@1.0.4
+  - @yaebal/filters@1.0.4
+
 ## 1.0.3
 
 ### patch changes

@@ -1,5 +1,13 @@
 # @yaebal/example-panel
 
+## 0.0.5
+
+### patch changes
+
+- @yaebal/again@1.0.4
+- @yaebal/panel@2.0.1
+- yaebal@0.2.4
+
 ## 0.0.4
 
 ### patch changes

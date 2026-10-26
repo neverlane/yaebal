@@ -1,5 +1,13 @@
 # @yaebal/ai
 
+## 0.2.1
+
+### patch changes
+
+- updated dependencies [d9e233a]
+  - @yaebal/core@0.4.4
+  - @yaebal/split@1.0.4
+
 ## 0.2.0
 
 ### minor changes

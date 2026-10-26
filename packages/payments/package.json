@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/payments",
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"description": "yaebal payments — typed invoice builder, pre-checkout/successful-payment hooks and Telegram Stars subscriptions.",
 	"type": "module",
 	"main": "./lib/index.js",

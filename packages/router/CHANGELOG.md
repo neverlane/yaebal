@@ -1,5 +1,13 @@
 # @yaebal/router
 
+## 2.0.1
+
+### patch changes
+
+- updated dependencies [d9e233a]
+  - @yaebal/core@0.4.4
+  - @yaebal/commands@2.0.1
+
 ## 2.0.0
 
 ### patch changes

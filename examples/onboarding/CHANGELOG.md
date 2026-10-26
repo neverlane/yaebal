@@ -1,5 +1,12 @@
 # @yaebal/example-onboarding
 
+## 0.0.5
+
+### patch changes
+
+- @yaebal/onboarding@2.0.1
+- yaebal@0.2.4
+
 ## 0.0.4
 
 ### patch changes

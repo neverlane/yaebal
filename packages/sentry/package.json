@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/sentry",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "yaebal sentry — error tracking: an isolation scope per update with user and chat, breadcrumbs for updates and api calls, ctx.sentry.",
 	"type": "module",
 	"main": "./lib/index.js",

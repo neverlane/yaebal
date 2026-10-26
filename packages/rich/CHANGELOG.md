@@ -1,5 +1,12 @@
 # @yaebal/rich
 
+## 1.2.1
+
+### patch changes
+
+- updated dependencies [d9e233a]
+  - @yaebal/core@0.4.4
+
 ## 1.2.0
 
 ### minor changes

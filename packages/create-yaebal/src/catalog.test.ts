@@ -21,8 +21,9 @@ const packagesDir = join(repoRoot, "packages");
  * - sklad is a storage contract other plugins (session, feature-flags) build on
  * - create-yaebal/yaebal are the scaffolder and the meta package, not `@yaebal/*` plugins
  * - preview is a standalone `renderChat()` svg renderer — no `Plugin<...>`, nothing to `.install()`
+ * - tgcloud is a build step that emits serverless handlers, not a runtime plugin
  */
-const EXCLUDED = new Set(["core", "types", "contexts", "test", "sklad", "preview"]);
+const EXCLUDED = new Set(["core", "types", "contexts", "test", "sklad", "preview", "tgcloud"]);
 
 function publishedYaebalPackages(): string[] {
 	const names: string[] = [];

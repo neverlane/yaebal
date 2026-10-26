@@ -4,12 +4,15 @@
  * package rarely has a compiled `lib/`.
  *
  * a `.ts` file imports its siblings as `.js` (the repo's module resolution).
- * the native stripper rewrites those; a custom loader has to do it itself,
- * or `import("./db.js")` looks for a file that was never emitted.
+ * the loader rewrites those itself, or `import("./db.js")` looks for a file
+ * that was never emitted.
+ *
+ * types are stripped with esbuild, not `node:module.stripTypeScriptTypes` —
+ * that export does not exist on node 20, which this package still supports.
  */
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import { stripTypeScriptTypes } from "node:module";
+import { transformSync } from "esbuild";
 import { fileURLToPath } from "node:url";
 
 export function resolve(specifier, context, next) {
@@ -33,9 +36,10 @@ export function resolve(specifier, context, next) {
 export async function load(url, context, next) {
 	if (!url.startsWith("file:") || !url.endsWith(".ts")) return next(url, context);
 	const source = await readFile(new URL(url), "utf8");
+	const stripped = transformSync(source, { loader: "ts", format: "esm", sourcefile: url });
 	return {
 		format: "module",
 		shortCircuit: true,
-		source: stripTypeScriptTypes(source, { mode: "strip" }),
+		source: stripped.code,
 	};
 }

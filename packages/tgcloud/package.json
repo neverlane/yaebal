@@ -21,7 +21,7 @@
 	"scripts": {
 		"build": "tsc -p tsconfig.json && cp src/strip-types.mjs src/sdk-stub.mjs lib/",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
-		"test": "node --experimental-strip-types --import ./src/register-hook.ts --test lib/*.test.js"
+		"test": "node --import ./lib/register-hook.js --test lib/*.test.js"
 	},
 	"dependencies": {
 		"@yaebal/core": "workspace:*",

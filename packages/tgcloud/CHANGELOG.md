@@ -1,5 +1,11 @@
 # @yaebal/tgcloud
 
+## 0.1.1
+
+### patch changes
+
+- republish `@yaebal/tgcloud`. `0.1.0` was staged by trusted publishing and never became installable, and npm refuses to publish that version again.
+
 ## 0.1.0
 
 ### minor changes

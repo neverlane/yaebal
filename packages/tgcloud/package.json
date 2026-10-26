@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/tgcloud",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal tgcloud — bundle a bot into telegram serverless handlers that call sdk, not the bot api over http.",
 	"type": "module",
 	"main": "./lib/index.js",

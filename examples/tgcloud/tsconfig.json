@@ -1,0 +1,17 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"lib": ["ES2023", "DOM"],
+		"types": ["node"]
+	},
+	"references": [
+		{ "path": "../../packages/core" },
+		{ "path": "../../packages/filters" },
+		{ "path": "../../packages/keyboard" },
+		{ "path": "../../packages/tgcloud" }
+	],
+	"include": ["src/**/*.ts"]
+}

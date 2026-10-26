@@ -62,6 +62,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | [webhook-edge](./webhook-edge/) | `@yaebal/example-webhook-edge` | `serve()` on node, `sequentialize` + `dedupe`, `setWebhook` / `getWebhookInfo`, secret token, path routing | `pnpm --filter @yaebal/example-webhook-edge dev` |
 | [runner-workers](./runner-workers/) | `@yaebal/example-runner-workers` | concurrent polling and worker thread offload | `pnpm --filter @yaebal/example-runner-workers dev` |
 | [testing-lab](./testing-lab/) | `@yaebal/example-testing-lab` | bot factory plus actor-driven tests | `pnpm --filter @yaebal/example-testing-lab test` |
+| [tgcloud](./tgcloud/) | `@yaebal/example-tgcloud` | echo plus a per-chat counter in the serverless sqlite, bundled by `@yaebal/tgcloud` into `handlers/` | `pnpm --filter @yaebal/example-tgcloud dev` |
 | [inline-search](./inline-search/) | `@yaebal/example-inline-search` | core + `@yaebal/contexts` layering: `contextFor`, `inline.answer()`, pagination offset, chosen-result analytics | `pnpm --filter @yaebal/example-inline-search dev` |
 | [payments-stars](./payments-stars/) | `@yaebal/example-payments-stars` | telegram stars invoices, pre-checkout approval, successful payment, refund | `pnpm --filter @yaebal/example-payments-stars dev` |
 | [mini-app](./mini-app/) | `@yaebal/example-mini-app` | HMAC + Ed25519 initData validation, `Authorization: tma` backend, `answerWebAppQuery`, `web_app_data`, direct/attachment-menu links | `pnpm --filter @yaebal/example-mini-app dev` |
@@ -112,6 +113,7 @@ other bot uses the batteries-included [`yaebal`](https://yaebal.mom/docs/yaebal/
 | `@yaebal/state-machine` | `state-machine`                                                                        | package tests plus example smoke               |
 | `@yaebal/split`         | `media-studio`                                                                         | package tests plus example smoke               |
 | `@yaebal/test`          | `testing-lab`                                                                          | real `node:test` suite                         |
+| `@yaebal/tgcloud`       | `tgcloud`                                                                              | example typecheck plus package tests           |
 | `@yaebal/throttle`      | `basic`, `throttle`                                                                    | package tests plus example smoke               |
 | `@yaebal/toml`          | `simple`                                                                               | package tests plus example smoke               |
 | `@yaebal/web`           | `webhook-edge`                                                                         | package tests plus example smoke               |

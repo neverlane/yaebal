@@ -1,0 +1,39 @@
+{
+	"name": "@yaebal/tgcloud",
+	"version": "0.0.1",
+	"description": "yaebal tgcloud — bundle a bot into telegram serverless handlers that call sdk, not the bot api over http.",
+	"type": "module",
+	"main": "./lib/index.js",
+	"types": "./lib/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"import": "./lib/index.js"
+		}
+	},
+	"bin": {
+		"yaebal-tgcloud": "./lib/cli.js"
+	},
+	"files": ["lib", "src"],
+	"scripts": {
+		"build": "tsc -p tsconfig.json && cp src/strip-types.mjs src/sdk-stub.mjs lib/",
+		"typecheck": "tsc -p tsconfig.json --noEmit",
+		"test": "node --experimental-strip-types --import ./src/register-hook.ts --test lib/*.test.js"
+	},
+	"dependencies": {
+		"@yaebal/core": "workspace:*",
+		"esbuild": "^0.25.0"
+	},
+	"devDependencies": {
+		"@types/node": "latest"
+	},
+	"engines": { "node": ">=20" },
+	"keywords": ["telegram", "telegram-bot", "yaebal", "tgcloud", "serverless"],
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/neverlane/yaebal",
+		"directory": "packages/tgcloud"
+	},
+	"publishConfig": { "access": "public" }
+}

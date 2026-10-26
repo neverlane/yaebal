@@ -139,6 +139,12 @@ export interface ApiOptions {
 	apiRoot?: string;
 	/** resolve `media.path()` to bytes. injected per runtime; absent ⇒ path media throws (e.g. edge). */
 	readFile?: FileReader;
+	/**
+	 * transport. defaults to the global `fetch`, read on each call so a runtime
+	 * can still swap it. pass one to pin the client — telegram serverless does,
+	 * because its `sdk` replaces HTTP and the global there isn't the bot api.
+	 */
+	fetch?: typeof fetch;
 }
 
 interface EncodedRequest {
@@ -368,6 +374,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 	const errorHooks: ErrorHook[] = [];
 	const log = createDebug("yaebal:api");
 	const logRaw = createDebug("yaebal:api:raw");
+	const transport = options.fetch ?? ((input, init) => globalThis.fetch(input, init));
 
 	const rawCall = async <T>(
 		method: string,
@@ -376,7 +383,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 		streams: WeakMap<MediaStream, Promise<Uint8Array>>,
 	): Promise<T> => {
 		const { body, contentType } = await encodeRequestWithStreams(params, options.readFile, streams);
-		const res = await fetch(`${apiRoot}/bot${token}/${method}`, {
+		const res = await transport(`${apiRoot}/bot${token}/${method}`, {
 			method: "POST",
 			// for multipart, let fetch set the content-type (with its boundary).
 			headers: contentType ? { "content-type": contentType } : undefined,
@@ -470,7 +477,7 @@ export function createApi(token: string, options: ApiOptions = {}): Api {
 			);
 		}
 
-		const res = await fetch(fileUrl(file.file_path), { signal: callOptions?.signal });
+		const res = await transport(fileUrl(file.file_path), { signal: callOptions?.signal });
 		if (!res.ok) throw new HttpError("downloadFile", res.status, res.statusText);
 
 		return { filePath: file.file_path, bytes: new Uint8Array(await res.arrayBuffer()) };

@@ -20,6 +20,8 @@ export interface BotOptions {
 	 * (or edge) leave it unset and `media.path()` throws — send `media.buffer()`/`url()`.
 	 */
 	readFile?: FileReader;
+	/** transport for bot api calls. defaults to the global `fetch`. */
+	fetch?: typeof fetch;
 	/** update types to request; `undefined` = telegram default. */
 	allowedUpdates?: UpdateName[];
 	/**
@@ -148,7 +150,11 @@ export class Bot<C extends Context = Context> extends Composer<C> {
 
 		this.#options = options;
 		this.#info = options.botInfo;
-		this.api = createApi(token, { apiRoot: options.apiRoot, readFile: options.readFile });
+		this.api = createApi(token, {
+			apiRoot: options.apiRoot,
+			readFile: options.readFile,
+			fetch: options.fetch,
+		});
 	}
 
 	/** bot account info, available after `init()` / `start()` (or via the `botInfo` option). */

@@ -1,5 +1,15 @@
 # @yaebal/example-media-studio
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/files@1.0.5
+- @yaebal/media-cache@1.0.5
+- @yaebal/media-group@1.0.5
+- @yaebal/split@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

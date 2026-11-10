@@ -1,5 +1,13 @@
 # @yaebal/example-ephemeral
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/commands@2.0.2
+- @yaebal/ephemeral@1.1.3
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

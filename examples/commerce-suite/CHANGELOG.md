@@ -1,5 +1,14 @@
 # @yaebal/example-commerce-suite
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/commands@2.0.2
+- @yaebal/pagination@1.0.5
+- @yaebal/ratelimiter@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

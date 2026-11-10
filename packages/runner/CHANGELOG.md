@@ -1,5 +1,11 @@
 # @yaebal/runner
 
+## 0.0.8
+
+### patch changes
+
+- aee2b65: bot api 10.4: widget_query / shared_widget_query contexts, ephemeral callback replies without chat_id, `isTonAddress` rich guard, runner orders widget queries by chat, mcp tables escape union types. core republishes against @yaebal/types 10.4.0.
+
 ## 0.0.7
 
 ### patch changes

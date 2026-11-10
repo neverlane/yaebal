@@ -1,5 +1,12 @@
 # @yaebal/example-mini-app
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/mini-app@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

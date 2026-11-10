@@ -1,5 +1,15 @@
 # @yaebal/ai
 
+## 0.2.2
+
+### patch changes
+
+- aee2b65: bot api 10.4: widget_query / shared_widget_query contexts, ephemeral callback replies without chat_id, `isTonAddress` rich guard, runner orders widget queries by chat, mcp tables escape union types. core republishes against @yaebal/types 10.4.0.
+- updated dependencies [aee2b65]
+- updated dependencies [369dbe3]
+  - @yaebal/core@0.4.5
+  - @yaebal/split@1.0.5
+
 ## 0.2.1
 
 ### patch changes

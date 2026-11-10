@@ -1,5 +1,15 @@
 # @yaebal/example-dialog-quest
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/conversation@1.0.5
+- @yaebal/morda@1.0.6
+- @yaebal/prompt@2.0.2
+- @yaebal/scenes@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

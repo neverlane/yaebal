@@ -40,6 +40,7 @@ export {
 	UserActor,
 	UserInChatScope,
 	UserOnMessageScope,
+	type WidgetQueryOptions,
 } from "./env.js";
 export { withFetch } from "./fetch.js";
 

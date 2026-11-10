@@ -354,6 +354,17 @@ export const PLUGINS: PluginDef[] = [
 		install: "miniApp({ botToken: process.env.BOT_TOKEN! })",
 	},
 	{
+		id: "widget",
+		dep: "@yaebal/widget",
+		hint: "ctx.widget — html widgets (bot api 10.4): json answers, state edits, auto-answer, limit checks",
+		wire: "install",
+		import: 'import { widgets } from "@yaebal/widget";',
+		install: "widgets()",
+		showcase: `// route a widget's taps with bot.widgetQuery(...) and answer through ctx.widget:
+// bot.widgetQuery("ping", (ctx) => ctx.widget.answer({ pong: true }));
+// build the widget itself with defineWidget + widgetClient — see https://yaebal.mom/docs/plugins/widget/`,
+	},
+	{
 		id: "split",
 		dep: "@yaebal/split",
 		hint: "ctx.sendLong / ctx.replyLong — long text as multiple messages, entities included",

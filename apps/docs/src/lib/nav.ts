@@ -49,6 +49,7 @@ export const nav: NavSection[] = [
 			{ label: "message extras", href: "/docs/telegram/message-extras" },
 			{ label: "deep links", href: "/docs/telegram/deep-links" },
 			{ label: "mini apps", href: "/docs/telegram/mini-apps" },
+			{ label: "html widgets", href: "/docs/telegram/widgets", badge: "new" },
 		],
 	},
 	{
@@ -98,6 +99,7 @@ export const nav: NavSection[] = [
 			{ label: "commands", href: "/docs/plugins/commands" },
 			{ label: "payments", href: "/docs/plugins/payments" },
 			{ label: "mini-app", href: "/docs/plugins/mini-app" },
+			{ label: "widget", href: "/docs/plugins/widget", badge: "new" },
 		],
 	},
 	{

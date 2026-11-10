@@ -119,6 +119,51 @@ test("click() dispatches a callback_query the bot's callbackQuery() handler sees
 	assert.equal(seenData, "vote:up");
 });
 
+test("queryWidget() / querySharedWidget() dispatch widget queries and widgetAnswer() reads the reply", async () => {
+	const seen: string[] = [];
+	const bot = new Composer<Context>()
+		.widgetQuery("ping", async (ctx) => {
+			const q = ctx.widgetQuery;
+			seen.push(
+				`${q.data}:${"chat" in q ? q.chat?.id : "-"}:${"inline_message_id" in q ? q.inline_message_id : "-"}`,
+			);
+			await ctx.api.answerWidgetQuery({ widget_query_id: q.id, data: "pong" });
+		})
+		.widgetQuery("silent", async (ctx) => {
+			await ctx.api.answerWidgetQuery({ widget_query_id: ctx.widgetQuery.id });
+		});
+	const env = createTestEnv(bot);
+	const user = env.createUser();
+	const group = env.createChat({ type: "group", title: "g" });
+
+	const pm = await user.queryWidget("ping");
+	assert.deepEqual(env.widgetAnswer(pm.id), { data: "pong" });
+	assert.equal(pm.chat?.id, user.id);
+	assert.deepEqual(pm.type, { type: "data" });
+
+	const msg = await user.in(group).sendMessage("host");
+	const inGroup = await user.on(msg).queryWidget("ping", { widgetId: "w1" });
+	assert.equal(inGroup.chat?.id, group.id);
+	assert.equal(inGroup.message_id, msg.message_id);
+	assert.equal(inGroup.widget_id, "w1");
+
+	const inline = await user.queryWidget("ping", { inlineMessageId: "im", chatType: "sender" });
+	assert.equal(inline.chat, undefined);
+	assert.equal(inline.message_id, undefined);
+	assert.equal(inline.chat_type, "sender");
+
+	const quiet = await user.queryWidget("silent");
+	assert.deepEqual(env.widgetAnswer(quiet.id), { data: undefined });
+
+	const shared = await user.querySharedWidget("w1", "ping", { type: "data" });
+	assert.equal(shared.widget_id, "w1");
+	assert.deepEqual(env.widgetAnswer(shared.id), { data: "pong" });
+
+	const unanswered = await user.queryWidget("nobody");
+	assert.equal(env.widgetAnswer(unanswered.id), undefined);
+	assert.deepEqual(seen, [`ping:${user.id}:-`, `ping:${group.id}:-`, "ping:-:im", "ping:-:-"]);
+});
+
 test("lastBotMessage() stays in sync with editMessageText/editMessageReplyMarkup, even on an earlier reference", async () => {
 	const bot = new Composer<Context>()
 		.on("message:text", (ctx) =>

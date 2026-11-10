@@ -761,6 +761,19 @@ test("widget_query: answer() fills the query id; inline widgets edit by inline_m
 	]);
 });
 
+test("message: sendSharedWidget fills chat_id and takes the widget_id", () => {
+	const { api, calls } = recorder();
+	const ctx = new MessageContext(api, {
+		update_id: 1,
+		message: { message_id: 4, date: 0, chat: { id: 9, type: "private" as const } },
+	} as never);
+	ctx.sendSharedWidget({ widget_id: "sw", chat_data: "c" });
+	assert.deepEqual(calls[0], {
+		m: "sendSharedWidget",
+		p: { chat_id: 9, widget_id: "sw", chat_data: "c" },
+	});
+});
+
 test("shared_widget_query: answer() and editSharedWidgetData fill their ids", () => {
 	const { api, calls } = recorder();
 	const ctx = contextFor("shared_widget_query", api, {

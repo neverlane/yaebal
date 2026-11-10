@@ -13,6 +13,7 @@ import type {
 	MessageEntity,
 	PhotoSize,
 	Poll,
+	SharedWidgetQuery,
 	Sticker,
 	SuccessfulPayment,
 	Update,
@@ -22,6 +23,7 @@ import type {
 	VideoNote,
 	Voice,
 	WebAppData,
+	WidgetQuery,
 } from "./telegram-types.js";
 
 export type NextFn = () => Promise<void>;
@@ -396,6 +398,53 @@ export class Composer<C extends Context = Context> {
 				if (!m) return next();
 
 				Object.assign(ctx as object, { match: m });
+			}
+
+			return handler(ctx, next);
+		});
+
+		return this;
+	}
+
+	/**
+	 * route HTML-widget queries (Bot API 10.4 — `widget_query` and, from forwarded shared widgets,
+	 * `shared_widget_query`) by their `data`, the same three ways as {@link callbackQuery}: a
+	 * `@yaebal/callback-data` namespace (decoded into `ctx.queryData`), an exact string, or a
+	 * regex (`ctx.match`). handlers see `ctx.widgetQuery` non-optional.
+	 */
+	widgetQuery<T>(
+		data: CallbackDataMatcher<T>,
+		...handlers: Middleware<C & { queryData: T; widgetQuery: WidgetQuery | SharedWidgetQuery }>[]
+	): this;
+	/** match widget-query data against a string or regex; exposes `ctx.match`. */
+	widgetQuery(
+		trigger: string | RegExp,
+		...handlers: Middleware<
+			C & { match: string | RegExpMatchArray; widgetQuery: WidgetQuery | SharedWidgetQuery }
+		>[]
+	): this;
+	widgetQuery(
+		trigger: string | RegExp | CallbackDataMatcher<unknown>,
+		// biome-ignore lint/suspicious/noExplicitAny: overload implementation
+		...handlers: Middleware<any>[]
+	): this {
+		const handler = compose(handlers as unknown as Middleware<C>[]);
+
+		this.middlewares.push((ctx, next) => {
+			const data = (ctx.update.widget_query ?? ctx.update.shared_widget_query)?.data;
+			if (data === undefined) return next();
+
+			if (typeof trigger === "string") {
+				if (data !== trigger) return next();
+				Object.assign(ctx as object, { match: data });
+			} else if (trigger instanceof RegExp) {
+				const m = matchOf(data, trigger);
+				if (!m) return next();
+				Object.assign(ctx as object, { match: m });
+			} else {
+				const queryData = trigger.unpack(data);
+				if (queryData === undefined) return next();
+				Object.assign(ctx as object, { queryData });
 			}
 
 			return handler(ctx, next);

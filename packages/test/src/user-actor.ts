@@ -1,4 +1,12 @@
-import type { Message, MessageEntity, Update, User } from "@yaebal/core";
+import type {
+	Chat,
+	Message,
+	MessageEntity,
+	SharedWidgetQuery,
+	Update,
+	User,
+	WidgetQuery,
+} from "@yaebal/core";
 import { ChatActor } from "./chat-actor.js";
 import type { ActorHost, SendText } from "./internal.js";
 import { fakeFile, resolveSendText } from "./internal.js";
@@ -53,6 +61,20 @@ function captionFields(caption: SendText | undefined): Record<string, unknown> {
  * a user actor — the primary way to drive a test scenario. every method emits the update a real
  * Telegram user's action would produce, then dispatches it through the bot under test.
  */
+/** where the widget a {@link UserActor.queryWidget} query comes from. */
+export interface WidgetQueryOptions {
+	/** the message carrying the widget — `chat` + `message_id` are taken from it (default: a fresh pm message). */
+	message?: { chat: Chat; message_id: number };
+	/** query a widget in an inline message instead — sets `inline_message_id` and drops `chat`/`message_id`. */
+	inlineMessageId?: string;
+	/** with `inlineMessageId`: the chat type the inline message was sent to (telegram's `chat_type`). */
+	chatType?: WidgetQuery["chat_type"];
+	/** the shared widget's id — set it for a query from a shared widget's original message. */
+	widgetId?: string;
+	/** the query type (default `{ type: "data" }`) — pass `sign_data` / `sent_transaction` for wallet flows. */
+	type?: WidgetQuery["type"];
+}
+
 export class UserActor {
 	readonly id: number;
 	readonly payload: User;
@@ -378,6 +400,51 @@ export class UserActor {
 		);
 	}
 
+	/**
+	 * tap a widget that sends `data` to the bot — dispatches `widget_query` (Bot API 10.4) and
+	 * returns the query, so a test can assert on `env.widgetAnswer(query.id)`.
+	 */
+	async queryWidget(data: string, options: WidgetQueryOptions = {}): Promise<WidgetQuery> {
+		const inline = options.inlineMessageId !== undefined;
+		const msg = inline ? undefined : (options.message ?? this.buildMessage(this.pmChat, {}));
+
+		const query: WidgetQuery = {
+			id: String(this.host.nextMessageId()),
+			from: this.payload,
+			chat_instance: "0",
+			type: options.type ?? { type: "data" },
+			data,
+			...(msg ? { chat: msg.chat, message_id: msg.message_id } : {}),
+			...(inline ? { inline_message_id: options.inlineMessageId } : {}),
+			...(inline && options.chatType ? { chat_type: options.chatType } : {}),
+			...(options.widgetId !== undefined ? { widget_id: options.widgetId } : {}),
+		};
+
+		await this.host.dispatch(createUpdate({ widget_query: query }));
+		return query;
+	}
+
+	/**
+	 * tap a forwarded copy of a shared widget — dispatches `shared_widget_query` (no chat, no
+	 * message: telegram only says which shared widget sent it).
+	 */
+	async querySharedWidget(
+		widgetId: string,
+		data: string,
+		type: SharedWidgetQuery["type"] = { type: "data" },
+	): Promise<SharedWidgetQuery> {
+		const query: SharedWidgetQuery = {
+			id: String(this.host.nextMessageId()),
+			from: this.payload,
+			type,
+			data,
+			widget_id: widgetId,
+		};
+
+		await this.host.dispatch(createUpdate({ shared_widget_query: query }));
+		return query;
+	}
+
 	/** react to `message` with one or more emojis — `old_reaction` is inferred from this user's last reaction on it. pass `[]` to clear. */
 	async react(emojis: string | string[], message: Message): Promise<void> {
 		const newReaction = Array.isArray(emojis) ? emojis : [emojis];
@@ -684,6 +751,14 @@ export class UserOnMessageScope {
 
 	react(emojis: string | string[]): Promise<void> {
 		return this.user.react(emojis, this.message);
+	}
+
+	/** tap the widget in this message — {@link UserActor.queryWidget} with the message pre-bound. */
+	queryWidget(
+		data: string,
+		options: Omit<WidgetQueryOptions, "message"> = {},
+	): Promise<WidgetQuery> {
+		return this.user.queryWidget(data, { ...options, message: this.message });
 	}
 
 	editMessage(text: SendText): Promise<Message> {

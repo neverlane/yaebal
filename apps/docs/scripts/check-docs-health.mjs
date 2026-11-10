@@ -123,6 +123,7 @@ const typecheckedSnippetPages = [
 	"docs/telegram/message-extras",
 	"docs/telegram/deep-links",
 	"docs/telegram/mini-apps",
+	"docs/telegram/widgets",
 	"docs/runtimes",
 ];
 

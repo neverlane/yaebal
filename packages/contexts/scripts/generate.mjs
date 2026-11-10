@@ -28,6 +28,10 @@ const ID_FILLABLE = [
 	"direct_messages_topic_id",
 ];
 
+// ids a context fills only when its payload carries them — a context without one still gets
+// the method, the caller just passes the id (e.g. sendSharedWidget's widget_id on a message)
+const PAYLOAD_IDS = new Set(["widget_id", "inline_message_id"]);
+
 // a shortcut must target one of these (otherwise it's not really "this thing")
 const TARGET_IDS = new Set([
 	"chat_id",
@@ -297,7 +301,7 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 		const unfilledRequired = args
 			.filter((a) => a.required && ID_FILLABLE.includes(a.name))
 			.map((a) => a.name)
-			.filter((n) => !fills.includes(n) && !(hasFromChat && n === "chat_id"));
+			.filter((n) => !fills.includes(n) && !(hasFromChat && n === "chat_id") && !PAYLOAD_IDS.has(n));
 		
 		if (unfilledRequired.length) continue;
 		// forward/copy target another chat (positional) but still act on "this message" —

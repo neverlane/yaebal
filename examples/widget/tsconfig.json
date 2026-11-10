@@ -1,0 +1,16 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"allowImportingTsExtensions": true,
+		"types": ["node"]
+	},
+	"references": [
+		{ "path": "../../packages/yaebal" },
+		{ "path": "../../packages/widget" },
+		{ "path": "../../packages/callback-data" }
+	],
+	"include": ["src/**/*.ts"]
+}

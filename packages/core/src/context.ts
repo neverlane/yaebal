@@ -6,9 +6,11 @@ import type {
 	Chat,
 	Message,
 	MessageEntity,
+	SharedWidgetQuery,
 	Update,
 	UpdateName,
 	User,
+	WidgetQuery,
 } from "./telegram-types.js";
 
 export interface ContextOptions {
@@ -96,6 +98,15 @@ export class Context {
 	}
 
 	/**
+	 * the query an HTML widget sent (Bot API 10.4): `widget_query` from the original message, or
+	 * `shared_widget_query` from a forwarded shared widget. answer it with `answerWidgetQuery`
+	 * within 15 seconds — `@yaebal/widget` adds typed answers, state edits and an auto-answer.
+	 */
+	get widgetQuery(): WidgetQuery | SharedWidgetQuery | undefined {
+		return this.update.widget_query ?? this.update.shared_widget_query;
+	}
+
+	/**
 	 * the business connection this update belongs to, if any. `send`/`reply` thread it
 	 * into outgoing calls automatically — without it Telegram would deliver the message
 	 * as the bot (into the bot's own chat with the user) instead of as the connected
@@ -144,6 +155,8 @@ export class Context {
 		return (
 			this.message?.from ??
 			u.callback_query?.from ??
+			u.widget_query?.from ??
+			u.shared_widget_query?.from ??
 			u.inline_query?.from ??
 			u.chosen_inline_result?.from ??
 			u.shipping_query?.from ??
@@ -165,6 +178,7 @@ export class Context {
 		return (
 			this.message?.chat ??
 			u.callback_query?.message?.chat ??
+			u.widget_query?.chat ??
 			u.my_chat_member?.chat ??
 			u.chat_member?.chat ??
 			u.chat_join_request?.chat ??

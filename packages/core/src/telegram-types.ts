@@ -27,6 +27,7 @@ export type {
 	PhotoSize,
 	Poll,
 	ResponseParameters,
+	SharedWidgetQuery,
 	Sticker,
 	SuccessfulPayment,
 	Update,
@@ -37,6 +38,7 @@ export type {
 	Voice,
 	WebAppData,
 	WebhookInfo,
+	WidgetQuery,
 } from "@yaebal/types";
 export { updateNames } from "@yaebal/types";
 

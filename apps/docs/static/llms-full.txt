@@ -772,3 +772,12 @@ env.lastApiCall("sendMessage")?.params?.text;
 - mini apps: https://yaebal.mom/docs/telegram/mini-apps/ — since july 20, 2026, external origins
   opened inside mini apps cannot use mini app methods by default. server-side initData
   validation is unchanged; botfather provides an opt-out for trusted linking setups.
+- html widgets (bot api 10.4): https://yaebal.mom/docs/telegram/widgets/ — `sendWidget` html
+  (≤32768 bytes, ≤4096 zlib level-9 compressed), `public_data` / `chat_data` (≤1024 bytes each),
+  taps arrive as `widget_query` / `shared_widget_query`; route with core's `bot.widgetQuery()`
+  (string, RegExp or a callbackData namespace → `ctx.queryData`) and answer within 15 s.
+  `@yaebal/widget` (https://yaebal.mom/docs/plugins/widget/): `widgets()` → `ctx.widget`
+  (answer/setData/setSharedData, auto-answer), `defineWidget`, `widgetState({ revision })`,
+  `widgetClient({ actions })` (in-widget `yw.ask` packing the callbackData wire format),
+  `tonTransaction`/`toNano`, `measureHtml`, `lintHtml`, `guardWidgets`, `previewPage`. tests:
+  `user.queryWidget(data)` + `env.widgetAnswer(id)` in `@yaebal/test`.

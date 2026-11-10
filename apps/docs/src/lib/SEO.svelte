@@ -223,6 +223,11 @@
 			description:
 				"validate telegram mini apps initData with @yaebal/mini-app: HMAC (ctx.miniApp.validate) and Ed25519 third-party validation, a typed initData parser and test signer, an Authorization: tma header helper, answerWebAppQuery, and a WebAppInfo/direct-link url generator.",
 		},
+		"/docs/plugins/widget": {
+			title: "@yaebal/widget — telegram html widgets (bot api 10.4)",
+			description:
+				"build telegram html widgets with @yaebal/widget: ctx.widget answers and state edits, typed widget queries via callback-data, revisioned json state, an in-widget client, TON wallet payments, zlib size checks, a sandbox linter and a browser preview.",
+		},
 		"/docs/plugins/auto-answer": {
 			title: "@yaebal/auto-answer — auto-clear the telegram callback-query spinner",
 			description:
@@ -476,6 +481,11 @@
 			title: "telegram deep links with yaebal",
 			description:
 				"build start parameters, referral links, group deep links, payload parsing, and safe onboarding flows with yaebal telegram bots.",
+		},
+		"/docs/telegram/widgets": {
+			title: "telegram html widgets with yaebal",
+			description:
+				"send telegram html widgets (bot api 10.4), route widget_query and shared_widget_query with bot.widgetQuery(), edit public_data and chat_data, shared widgets, and the limits that matter.",
 		},
 		"/docs/telegram/mini-apps": {
 			title: "telegram mini apps with yaebal",

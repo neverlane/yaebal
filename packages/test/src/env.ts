@@ -30,6 +30,7 @@ export {
 	UserActor,
 	UserInChatScope,
 	UserOnMessageScope,
+	type WidgetQueryOptions,
 } from "./user-actor.js";
 
 /** a satellite plugin's canned test fixtures — pass to {@link createTestEnv} via `options.packs`. explicit (you always list which packs apply), matching yaebal's "no implicit plugin wiring" rule. */
@@ -220,6 +221,20 @@ export class TestEnv<C extends Context = Context> implements ActorHost {
 				call.params?.pre_checkout_query_id === preCheckoutQueryId &&
 				call.params?.ok === true,
 		);
+	}
+
+	/**
+	 * the bot's answer to widget query `queryId`: `{ data }` (`data` is `undefined` for an empty
+	 * answer) once a successful `answerWidgetQuery` landed, `undefined` if it never answered.
+	 */
+	widgetAnswer(queryId: string): { data: string | undefined } | undefined {
+		const call = this.callsTo("answerWidgetQuery").find(
+			(c) => !c.error && c.params?.widget_query_id === queryId,
+		);
+		if (!call) return undefined;
+
+		const data = call.params?.data;
+		return { data: typeof data === "string" ? data : undefined };
 	}
 
 	/** restore the virtual clock (if one was installed) to real timers. call in `afterEach`/teardown. */

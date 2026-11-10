@@ -142,7 +142,7 @@ bot.install(session({
 	<tbody>
 		<tr><td><code>use(...middleware)</code></td><td>keeps the same context type</td></tr>
 		<tr><td><code>on(query, ...handlers)</code></td><td>narrows handlers with <code>Filtered&lt;C, Q&gt;</code></td></tr>
-		<tr><td><code>command()</code>, <code>hears()</code>, <code>callbackQuery()</code></td><td>attach match/command fields for the handler</td></tr>
+		<tr><td><code>command()</code>, <code>hears()</code>, <code>callbackQuery()</code>, <code>widgetQuery()</code></td><td>attach match/command fields for the handler</td></tr>
 		<tr><td><code>guard(predicate)</code></td><td>runtime gate, no type widening</td></tr>
 		<tr><td><code>filter(filter, ...handlers)</code></td><td>uses the filter's type guard to narrow context</td></tr>
 		<tr><td><code>derive()</code></td><td>async per-update enrichment; returns <code>Composer&lt;C &amp; D&gt;</code></td></tr>
@@ -155,7 +155,7 @@ bot.install(session({
 <h2>context</h2>
 <p>
 	<code>Context</code> exposes the raw update plus safe accessors: <code>message</code>,
-	<code>callbackQuery</code>, <code>from</code>, <code>chat</code>, <code>text</code>, routing helpers and
+	<code>callbackQuery</code>, <code>widgetQuery</code>, <code>from</code>, <code>chat</code>, <code>text</code>, routing helpers and
 	base shortcuts such as <code>send()</code>, <code>reply()</code>, <code>sendPhoto()</code>,
 	<code>sendDocument()</code>, <code>answerCallbackQuery()</code>. use <a href="/docs/contexts/">generated contexts</a>
 	via <code>createBot()</code> when you want every schema-derived shortcut.

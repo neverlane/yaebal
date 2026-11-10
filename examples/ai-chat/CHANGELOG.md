@@ -1,5 +1,14 @@
 # @yaebal/example-ai-chat
 
+## 0.0.6
+
+### patch changes
+
+- updated dependencies [aee2b65]
+  - @yaebal/runner@0.0.8
+  - @yaebal/ai@0.2.2
+  - yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

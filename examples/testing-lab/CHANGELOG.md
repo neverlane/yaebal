@@ -1,5 +1,13 @@
 # @yaebal/example-testing-lab
 
+## 0.0.6
+
+### patch changes
+
+- updated dependencies [369dbe3]
+  - @yaebal/test@1.0.5
+  - yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

@@ -1,5 +1,12 @@
 # @yaebal/example-feature-flags
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/feature-flags@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

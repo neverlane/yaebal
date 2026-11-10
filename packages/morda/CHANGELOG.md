@@ -1,5 +1,14 @@
 # @yaebal/morda
 
+## 1.0.6
+
+### patch changes
+
+- updated dependencies [aee2b65]
+- updated dependencies [369dbe3]
+  - @yaebal/core@0.4.5
+  - @yaebal/callback-data@0.1.2
+
 ## 1.0.5
 
 ### patch changes

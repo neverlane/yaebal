@@ -1,5 +1,26 @@
 # yaebal
 
+## 0.2.5
+
+### patch changes
+
+- updated dependencies [aee2b65]
+- updated dependencies [369dbe3]
+  - @yaebal/core@0.4.5
+  - @yaebal/callback-data@0.1.2
+  - @yaebal/contexts@1.0.7
+  - @yaebal/again@1.0.5
+  - @yaebal/auto-answer@1.0.5
+  - @yaebal/files@1.0.5
+  - @yaebal/filters@1.0.5
+  - @yaebal/fmt@1.0.5
+  - @yaebal/hydrate@0.1.6
+  - @yaebal/i18n@1.0.5
+  - @yaebal/session@1.0.5
+  - @yaebal/split@1.0.5
+  - @yaebal/typing@1.0.5
+  - @yaebal/web@1.0.5
+
 ## 0.2.4
 
 ### patch changes

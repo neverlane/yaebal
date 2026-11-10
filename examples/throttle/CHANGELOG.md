@@ -1,5 +1,13 @@
 # @yaebal/example-throttle
 
+## 0.0.6
+
+### patch changes
+
+- @yaebal/again@1.0.5
+- @yaebal/throttle@1.0.5
+- yaebal@0.2.5
+
 ## 0.0.5
 
 ### patch changes

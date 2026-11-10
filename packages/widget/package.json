@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/widget",
-	"version": "0.0.1",
+	"version": "0.1.0",
 	"description": "yaebal widget — html widgets (bot api 10.4): typed send/edit/answer, json state codecs, size + sandbox checks, an in-widget client that packs typed queries, ton wallet payments, and a browser preview.",
 	"type": "module",
 	"main": "./lib/index.js",
@@ -11,7 +11,10 @@
 			"import": "./lib/index.js"
 		}
 	},
-	"files": ["lib", "src"],
+	"files": [
+		"lib",
+		"src"
+	],
 	"scripts": {
 		"build": "tsc -p tsconfig.json",
 		"typecheck": "tsc -p tsconfig.json --noEmit",
@@ -29,13 +32,24 @@
 		"@yaebal/core": "workspace:*",
 		"@yaebal/test": "workspace:*"
 	},
-	"engines": { "node": ">=20" },
-	"keywords": ["telegram", "telegram-bot", "yaebal", "widget", "html-widget", "ton"],
+	"engines": {
+		"node": ">=20"
+	},
+	"keywords": [
+		"telegram",
+		"telegram-bot",
+		"yaebal",
+		"widget",
+		"html-widget",
+		"ton"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/neverlane/yaebal",
 		"directory": "packages/widget"
 	},
-	"publishConfig": { "access": "public" }
+	"publishConfig": {
+		"access": "public"
+	}
 }

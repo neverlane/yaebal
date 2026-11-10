@@ -213,6 +213,12 @@ export const EXAMPLES_CATALOG: readonly ExampleCatalogEntry[] = [
 		"package": "@yaebal/example-mini-app",
 		"focus": "HMAC + Ed25519 initData validation, Authorization: tma backend, answerWebAppQuery, web_app_data, direct/attachment-menu links",
 		"run": "pnpm --filter @yaebal/example-mini-app dev"
+	},
+	{
+		"name": "widget",
+		"package": "@yaebal/example-widget",
+		"focus": "html widgets: live poll (bot.widgetQuery, ctx.widget.setData/answer, revisioned widgetState, widgetClient), TON tip jar (yw.pay, tonTransaction), previewPage",
+		"run": "pnpm --filter @yaebal/example-widget dev"
 	}
 ];
 

@@ -123,6 +123,7 @@ yaebal is built around one invariant: the context type accumulates through the c
 - https://yaebal.mom/docs/telegram/inline-mode/
 - https://yaebal.mom/docs/telegram/message-extras/
 - https://yaebal.mom/docs/telegram/mini-apps/
+- https://yaebal.mom/docs/telegram/widgets/
 - https://yaebal.mom/docs/telegram/payments/
 - https://yaebal.mom/docs/telegram/service-events/
 - https://yaebal.mom/docs/troubleshooting/

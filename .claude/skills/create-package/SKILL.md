@@ -150,3 +150,18 @@ pnpm lint:fix
 ```
 
 release is via changesets (`pnpm changeset`) — do not hand-bump versions.
+
+## first publish (once per new package — ci can't do it)
+
+`release.yml` publishes through npm trusted publishing (oidc), and oidc can't create a package or
+trust one that doesn't exist. until a maintainer does this, every release fails on the new package
+and `scripts/publish-all.mjs` holds back everything that depends on it:
+
+```sh
+npm login
+pnpm --filter @yaebal/<name> build
+pnpm --filter @yaebal/<name> publish --access public   # first version, by hand
+node scripts/trust-all.mjs @yaebal/<name>              # trust neverlane/yaebal release.yml
+```
+
+tell the user to do this — it needs their npm account and 2fa otp.

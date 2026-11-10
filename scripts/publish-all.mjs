@@ -10,6 +10,11 @@
 // the first error, so one package missing its trusted-publisher config on npmjs.com silently
 // held back every package sorted after it.)
 //
+// packages go out in dependency order, and a package is held back when one of its workspace
+// dependencies isn't on npm at the version it would pin: `pnpm publish` rewrites `workspace:*`
+// to that exact version, so publishing anyway ships a package nobody can install. (that's how
+// @yaebal/core@0.4.4 ended up on npm pinning a @yaebal/types@10.3.2 that never got published.)
+//
 // set DRY_RUN=1 to print the plan without publishing. in CI it also passes --provenance
 // (set NO_PROVENANCE=1 to opt out, e.g. if a package's `repository` field doesn't match).
 // CI authenticates through npm trusted publishing (oidc) — `pnpm publish` hands the packed
@@ -42,10 +47,42 @@ function workspacePackages() {
 			continue;
 		}
 
-		out.push({ dir: join(PKGS_DIR, entry), name: manifest.name, version: manifest.version });
+		// workspace deps that end up in the published manifest (devDependencies don't install)
+		const deps = new Set();
+		for (const field of ["dependencies", "peerDependencies", "optionalDependencies"]) {
+			for (const [dep, range] of Object.entries(manifest[field] ?? {})) {
+				if (String(range).startsWith("workspace:")) deps.add(dep);
+			}
+		}
+
+		out.push({ dir: join(PKGS_DIR, entry), name: manifest.name, version: manifest.version, deps });
 	}
 
-	return out.sort((a, b) => a.name.localeCompare(b.name));
+	return topoSort(out.sort((a, b) => a.name.localeCompare(b.name)));
+}
+
+// dependencies before dependents (alphabetical among peers, so the order stays stable)
+function topoSort(pkgs) {
+	const byName = new Map(pkgs.map((p) => [p.name, p]));
+	const done = new Set();
+	const visiting = new Set();
+	const out = [];
+
+	const visit = (pkg) => {
+		if (done.has(pkg.name)) return;
+		if (visiting.has(pkg.name)) throw new Error(`workspace dependency cycle through ${pkg.name}`);
+		visiting.add(pkg.name);
+		for (const dep of pkg.deps) {
+			const target = byName.get(dep);
+			if (target) visit(target);
+		}
+		visiting.delete(pkg.name);
+		done.add(pkg.name);
+		out.push(pkg);
+	};
+
+	for (const pkg of pkgs) visit(pkg);
+	return out;
 }
 
 // is <name>@<version> already on the registry? a non-zero `npm view` (404 for a brand-new
@@ -76,12 +113,29 @@ function publish(pkg) {
 const published = [];
 const skipped = [];
 const failed = [];
+const blocked = [];
 
-for (const pkg of workspacePackages()) {
+const pkgs = workspacePackages();
+const versionOf = new Map(pkgs.map((p) => [p.name, p.version]));
+// name -> is its current version installable from npm (already there, or published this run)
+const available = new Map();
+
+for (const pkg of pkgs) {
 	const id = `${pkg.name}@${pkg.version}`;
 
 	if (isPublished(pkg.name, pkg.version)) {
 		skipped.push(id);
+		available.set(pkg.name, true);
+
+		continue;
+	}
+
+	const missing = [...pkg.deps].filter((dep) => versionOf.has(dep) && !available.get(dep));
+	if (missing.length > 0) {
+		blocked.push(
+			`${id} (needs ${missing.map((dep) => `${dep}@${versionOf.get(dep)}`).join(", ")})`,
+		);
+		available.set(pkg.name, false);
 
 		continue;
 	}
@@ -89,6 +143,7 @@ for (const pkg of workspacePackages()) {
 	if (DRY_RUN) {
 		console.log(`would publish ${id}`);
 		published.push(id);
+		available.set(pkg.name, true);
 
 		continue;
 	}
@@ -98,9 +153,11 @@ for (const pkg of workspacePackages()) {
 	try {
 		publish(pkg);
 		published.push(id);
+		available.set(pkg.name, true);
 	} catch {
 		// pnpm/npm already printed the reason above (stdio is inherited)
 		failed.push(id);
+		available.set(pkg.name, false);
 	}
 }
 
@@ -112,6 +169,12 @@ if (published.length > 0) {
 	console.log(published.map((id) => `  + ${id}`).join("\n"));
 }
 
+if (blocked.length > 0) {
+	console.error(
+		`\nheld back ${blocked.length} (a workspace dependency isn't on npm, publishing would ship an uninstallable package):\n${blocked.map((id) => `  ⏸ ${id}`).join("\n")}`,
+	);
+}
+
 if (failed.length > 0) {
 	console.error(`\nfailed ${failed.length}:\n${failed.map((id) => `  ✗ ${id}`).join("\n")}`);
 	console.error(
@@ -119,5 +182,6 @@ if (failed.length > 0) {
 			"package (settings → trusted publisher → github actions: neverlane/yaebal, release.yml),\n" +
 			"or the package doesn't exist yet — oidc can't create packages, publish the first version by hand.",
 	);
-	process.exit(1);
 }
+
+if (failed.length > 0 || blocked.length > 0) process.exit(1);

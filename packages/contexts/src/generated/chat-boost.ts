@@ -99,6 +99,10 @@ export class ChatBoostContext {
 	sendWidget(params: Omit<t.SendWidgetParams, "chat_id">) {
 		return this.api.call<t.Message>("sendWidget", { chat_id: this.chat.id, ...params });
 	}
+	/** Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendSharedWidget(params: Omit<t.SendSharedWidgetParams, "chat_id">) {
+		return this.api.call<t.Message>("sendSharedWidget", { chat_id: this.chat.id, ...params });
+	}
 	/** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPaidMedia", { chat_id: this.chat.id, ...params });

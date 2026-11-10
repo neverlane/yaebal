@@ -742,6 +742,76 @@ test("callbackQuery(callbackData) exposes typed queryData and skips on a failed 
 	assert.equal(fellThrough, true); // fell through to on("callback_query")
 });
 
+test("widgetQuery routes widget_query / shared_widget_query by string, regex and matcher", async () => {
+	const matcher = {
+		pattern: /^vote(?::|$)/,
+		unpack: (raw: string) => (raw === "vote:1" ? { option: 1 } : undefined),
+	};
+	const seen: string[] = [];
+	const bot = new Bot("123:abc")
+		.widgetQuery("ping", (ctx) => {
+			seen.push(`exact:${ctx.match}:${ctx.widgetQuery.id}`);
+		})
+		.widgetQuery(/^page:(\d+)$/, (ctx) => {
+			seen.push(`re:${(ctx.match as RegExpMatchArray)[1]}`);
+		})
+		.widgetQuery(matcher, (ctx) => {
+			seen.push(`data:${ctx.queryData.option}:${ctx.from?.id}:${ctx.chat?.id}`);
+		})
+		.on("widget_query", (ctx) => {
+			seen.push(`fallthrough:${ctx.widgetQuery?.data}`);
+		})
+		.on("shared_widget_query", (ctx) => {
+			seen.push(`shared-fallthrough:${ctx.widgetQuery?.data}`);
+		})
+		.on("message", () => {
+			seen.push("message");
+		});
+
+	const from = { id: 7, is_bot: false, first_name: "u" };
+	const type = { type: "data" as const };
+	const wq = (id: number, data: string) =>
+		bot.handleUpdate({
+			update_id: id,
+			widget_query: {
+				id: `w${id}`,
+				from,
+				chat: { id: -5, type: "group" },
+				message_id: 1,
+				chat_instance: "c",
+				type,
+				data,
+			},
+		} as never);
+
+	await wq(1, "ping");
+	await wq(2, "page:3");
+	await wq(3, "vote:1");
+	await wq(4, "vote:9");
+	await bot.handleUpdate({
+		update_id: 5,
+		shared_widget_query: { id: "s5", from, type, data: "ping", widget_id: "w" },
+	} as never);
+	await bot.handleUpdate({
+		update_id: 6,
+		shared_widget_query: { id: "s6", from, type, data: "other", widget_id: "w" },
+	} as never);
+	await bot.handleUpdate({
+		update_id: 7,
+		message: { message_id: 1, date: 0, chat: { id: 1, type: "private" }, text: "hi" },
+	} as never);
+
+	assert.deepEqual(seen, [
+		"exact:ping:w1",
+		"re:3",
+		"data:1:7:-5",
+		"fallthrough:vote:9",
+		"exact:ping:s5",
+		"shared-fallthrough:other",
+		"message",
+	]);
+});
+
 test("Context routes business updates through the connection", async () => {
 	const calls: { m: string; p: unknown }[] = [];
 	const api = {

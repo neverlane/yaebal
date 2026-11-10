@@ -263,3 +263,36 @@ test("unpack rejects partially parsed numbers, enum indices and invalid optional
 	assert.deepEqual(optional.unpack("m:0"), {});
 	assert.deepEqual(optional.unpack("m:1:hello"), { x: "hello" });
 });
+
+test("describe() exposes the wire format as plain JSON", () => {
+	const ns = callbackData(
+		"vote",
+		{
+			poll: field.uuid(),
+			option: field.enum(["a", "b"]),
+			weight: field.number().optional(),
+			note: field.string().default("x"),
+			big: field.bigint(),
+			ok: Boolean,
+		},
+		{ maxBytes: 60 },
+	);
+	const descriptor = ns.describe();
+	assert.deepEqual(descriptor, {
+		prefix: "vote",
+		maxBytes: 60,
+		required: [
+			{ key: "poll", type: "uuid" },
+			{ key: "option", type: "enum", values: ["a", "b"] },
+			{ key: "big", type: "bigint" },
+			{ key: "ok", type: "boolean" },
+		],
+		optional: [
+			{ key: "weight", type: "number" },
+			{ key: "note", type: "string" },
+		],
+	});
+	// JSON-safe: survives a round-trip unchanged
+	assert.deepEqual(JSON.parse(JSON.stringify(descriptor)), descriptor);
+	assert.equal(callbackData("p", {}).describe().maxBytes, CALLBACK_DATA_LIMIT);
+});

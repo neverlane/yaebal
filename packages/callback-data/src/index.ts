@@ -190,6 +190,28 @@ type PackArgs<S extends Schema> =
 
 // ── the namespace object ─────────────────────────────────────────────────────
 
+/** one field of a {@link CallbackDataDescriptor}, in wire order. */
+export interface FieldDescriptor {
+	readonly key: string;
+	readonly type: "string" | "number" | "boolean" | "enum" | "uuid" | "bigint";
+	/** the enum members (index = wire value), only for `type: "enum"`. */
+	readonly values?: readonly (string | number)[];
+}
+
+/**
+ * a JSON-serializable description of a namespace's wire format — enough for a packer written
+ * in another runtime (e.g. the script inside an `@yaebal/widget` HTML widget) to produce data
+ * this namespace's `unpack` accepts.
+ */
+export interface CallbackDataDescriptor {
+	readonly prefix: string;
+	readonly maxBytes: number;
+	/** required fields, packed first, in order. */
+	readonly required: readonly FieldDescriptor[];
+	/** optional fields — a base36 presence bitmask (bit i = optional[i]) precedes the present ones. */
+	readonly optional: readonly FieldDescriptor[];
+}
+
 export interface CallbackData<S extends Schema> {
 	/** the namespace prefix, verbatim. */
 	readonly prefix: string;
@@ -203,6 +225,8 @@ export interface CallbackData<S extends Schema> {
 	filter(raw: string | undefined): boolean;
 	/** derive a new namespace with extra fields appended (immutable — the original is untouched). */
 	extend<E extends Schema>(extra: E): CallbackData<Prettify<Omit<S, keyof E> & E>>;
+	/** the wire format as plain JSON — for packers outside this library (see {@link CallbackDataDescriptor}). */
+	describe(): CallbackDataDescriptor;
 }
 
 /** options for {@link callbackData}. */
@@ -347,6 +371,18 @@ export function callbackData<const S extends Schema>(
 			return callbackData(prefix, { ...schema, ...extra } as Prettify<Omit<S, keyof E> & E>, {
 				maxBytes,
 			});
+		},
+		describe() {
+			const describeField = (f: NormalizedField): FieldDescriptor =>
+				f.spec.enumValues
+					? { key: f.key, type: f.spec.type, values: [...f.spec.enumValues] }
+					: { key: f.key, type: f.spec.type };
+			return {
+				prefix,
+				maxBytes,
+				required: required.map(describeField),
+				optional: optional.map(describeField),
+			};
 		},
 	};
 }

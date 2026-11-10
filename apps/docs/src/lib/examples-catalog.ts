@@ -191,6 +191,12 @@ export const EXAMPLES_CATALOG: readonly ExampleCatalogEntry[] = [
 		"run": "pnpm --filter @yaebal/example-testing-lab test"
 	},
 	{
+		"name": "tgcloud",
+		"package": "@yaebal/example-tgcloud",
+		"focus": "echo plus a per-chat counter in the serverless sqlite, bundled by @yaebal/tgcloud into handlers/",
+		"run": "pnpm --filter @yaebal/example-tgcloud dev"
+	},
+	{
 		"name": "inline-search",
 		"package": "@yaebal/example-inline-search",
 		"focus": "core + @yaebal/contexts layering: contextFor, inline.answer(), pagination offset, chosen-result analytics",

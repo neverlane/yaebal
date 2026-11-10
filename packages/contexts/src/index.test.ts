@@ -706,7 +706,7 @@ test("generated user_id fills fail loud without a sender, and accept an explicit
 	assert.deepEqual(calls[0], { m: "banChatMember", p: { chat_id: -1, user_id: 99 } });
 });
 
-test("callback send: requiredId guards chat_id when the message is gone, explicit chat_id works", () => {
+test("callback send: no message -> no chat_id (ephemeral reply), explicit chat_id still passable", () => {
 	const { api, calls } = recorder();
 	const noMessage = new CallbackQueryContext(api, {
 		update_id: 1,
@@ -718,11 +718,69 @@ test("callback send: requiredId guards chat_id when the message is gone, explici
 		},
 	} as never);
 
-	// a very old callback carries no message — fail loud, not `chat_id: undefined`
-	assert.throws(() => noMessage.send({ text: "hi" }), /send\(\): cannot fill `chat_id`/);
+	// since Bot API 10.4 chat_id is optional on send* (ephemeral reply to a callback query),
+	// so a missing message just leaves it out — never a literal `chat_id: undefined`
+	noMessage.send({ text: "hi", ephemeral_message_parameters: { callback_query_id: "q1" } });
+	assert.deepEqual(calls[0], {
+		m: "sendMessage",
+		p: { text: "hi", ephemeral_message_parameters: { callback_query_id: "q1" } },
+	});
 
 	noMessage.send({ text: "hi", chat_id: 42 });
-	assert.deepEqual(calls[0], { m: "sendMessage", p: { text: "hi", chat_id: 42 } });
+	assert.deepEqual(calls[1], { m: "sendMessage", p: { text: "hi", chat_id: 42 } });
+});
+
+test("widget_query: answer() fills the query id; inline widgets edit by inline_message_id", () => {
+	const { api, calls } = recorder();
+	const base = {
+		id: "w1",
+		from: { id: 7, is_bot: false, first_name: "u" },
+		chat_instance: "ci",
+		type: { type: "data" as const },
+		data: "d",
+	};
+	const inChat = contextFor("widget_query", api, {
+		update_id: 1,
+		widget_query: { ...base, chat: { id: -5, type: "group" as const }, message_id: 3 },
+	});
+	const inline = contextFor("widget_query", api, {
+		update_id: 2,
+		widget_query: { ...base, inline_message_id: "im" },
+	});
+
+	inChat.answer();
+	inChat.editMessageWidgetData({ chat_data: "x" });
+	inline.editMessageWidgetData({ chat_data: "y" });
+
+	assert.equal(inChat.messageId, 3);
+	assert.equal(inline.chatId, undefined);
+	assert.deepEqual(calls, [
+		{ m: "answerWidgetQuery", p: { widget_query_id: "w1" } },
+		{ m: "editMessageWidgetData", p: { chat_id: -5, message_id: 3, chat_data: "x" } },
+		{ m: "editMessageWidgetData", p: { inline_message_id: "im", chat_data: "y" } },
+	]);
+});
+
+test("shared_widget_query: answer() and editSharedWidgetData fill their ids", () => {
+	const { api, calls } = recorder();
+	const ctx = contextFor("shared_widget_query", api, {
+		update_id: 1,
+		shared_widget_query: {
+			id: "s1",
+			from: { id: 7, is_bot: false, first_name: "u" },
+			type: { type: "data" as const },
+			data: "d",
+			widget_id: "wid",
+		},
+	});
+
+	ctx.answer({ data: "ok" });
+	ctx.editSharedWidgetData({ public_data: "p" });
+
+	assert.deepEqual(calls, [
+		{ m: "answerWidgetQuery", p: { widget_query_id: "s1", data: "ok" } },
+		{ m: "editSharedWidgetData", p: { widget_id: "wid", public_data: "p" } },
+	]);
 });
 
 test("message reply and quote shortcuts preserve ephemeral addressing and visibility", async () => {

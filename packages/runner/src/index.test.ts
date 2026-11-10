@@ -76,6 +76,13 @@ test("chatKey: guest messages, generation stops and anonymous poll votes stay or
 	assert.equal(chatKey({ update_id: 3, poll_answer: { voter_chat: { id: 9 } } } as never), 9);
 });
 
+test("chatKey: widget queries key by chat, falling back to the sender", () => {
+	const from = { id: 5 };
+	assert.equal(chatKey({ update_id: 1, widget_query: { from, chat: { id: -3 } } } as never), -3);
+	assert.equal(chatKey({ update_id: 2, widget_query: { from } } as never), 5);
+	assert.equal(chatKey({ update_id: 3, shared_widget_query: { from } } as never), 5);
+});
+
 test("scheduler: different keys run concurrently up to the limit", async () => {
 	const s = createScheduler(2);
 	const started: string[] = [];

@@ -39,7 +39,9 @@ test("formatMethod/formatObject: parameter tables with requiredness", () => {
 	assert.ok(send !== undefined);
 	const rendered = formatMethod(send);
 	assert.match(rendered, /# sendMessage/);
-	assert.match(rendered, /\| chat_id \|.*\| yes \|/);
+	assert.match(rendered, /\| text \|.*\| yes \|/);
+	// a union type must not split the row into extra columns
+	assert.match(rendered, /\| chat_id \| Integer \\\| String \| no \|/);
 	assert.match(rendered, /returns: Message/);
 
 	const message = schema.objects.find((o) => o.name === "Message");

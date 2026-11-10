@@ -49,6 +49,7 @@ import type {
 	RichTextSubscript,
 	RichTextSuperscript,
 	RichTextTextMention,
+	RichTextTonAddress,
 	RichTextUnderline,
 	RichTextUrl,
 } from "@yaebal/types";
@@ -105,6 +106,7 @@ interface RichTextByType {
 	email_address: RichTextEmailAddress;
 	phone_number: RichTextPhoneNumber;
 	bank_card_number: RichTextBankCardNumber;
+	ton_address: RichTextTonAddress;
 	mention: RichTextMention;
 	hashtag: RichTextHashtag;
 	cashtag: RichTextCashtag;
@@ -171,6 +173,7 @@ export const isUrlText = textGuard("url");
 export const isEmailAddress = textGuard("email_address");
 export const isPhoneNumber = textGuard("phone_number");
 export const isBankCardNumber = textGuard("bank_card_number");
+export const isTonAddress = textGuard("ton_address");
 export const isMentionText = textGuard("mention");
 export const isHashtag = textGuard("hashtag");
 export const isCashtag = textGuard("cashtag");

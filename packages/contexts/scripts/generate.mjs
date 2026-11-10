@@ -19,6 +19,9 @@ const ID_FILLABLE = [
 	"shipping_query_id",
 	"pre_checkout_query_id",
 	"guest_query_id",
+	"widget_query_id",
+	"widget_id",
+	"inline_message_id",
 	"from_chat_id",
 	"business_connection_id",
 	"message_thread_id",
@@ -34,6 +37,8 @@ const TARGET_IDS = new Set([
 	"shipping_query_id",
 	"pre_checkout_query_id",
 	"guest_query_id",
+	"widget_query_id",
+	"widget_id",
 ]);
 
 const QUERY_ID = {
@@ -41,6 +46,8 @@ const QUERY_ID = {
 	InlineQuery: "inline_query_id",
 	ShippingQuery: "shipping_query_id",
 	PreCheckoutQuery: "pre_checkout_query_id",
+	WidgetQuery: "widget_query_id",
+	SharedWidgetQuery: "widget_query_id",
 };
 
 // pretty names for the high-value shortcuts; everything else keeps its method name
@@ -62,6 +69,7 @@ const SHORT = {
 	answerShippingQuery: "answer",
 	answerPreCheckoutQuery: "answer",
 	answerGuestQuery: "answer",
+	answerWidgetQuery: "answer",
 };
 
 // methods that additionally accept their "main" param positionally —
@@ -151,16 +159,29 @@ const returnType = (node) => {
 	}
 };
 
+// providers whose expression has no `?.` but can still be undefined at runtime (an optional
+// payload field read directly) — see maybeUndefined
+const SOFT = Symbol("soft");
+
 function providersFor(payload, propName) {
 	const fields = new Map((payload.properties || []).map((f) => [f.name, f]));
-	const p = {};
+	const p = { [SOFT]: new Set() };
+	// an optional payload field is a runtime-optional fill (e.g. widget_query.chat/message_id
+	// are omitted for widgets in inline messages)
+	const direct = (param, field = param) => {
+		p[param] = `this.${field}`;
+		if (!fields.get(field).required) p[SOFT].add(param);
+	};
 
 	if (fields.has("chat")) {
-		p.chat_id = "this.chat.id";
-		p.from_chat_id = "this.chat.id";
+		const o = fields.get("chat").required ? "" : "?";
+		p.chat_id = `this.chat${o}.id`;
+		p.from_chat_id = `this.chat${o}.id`;
 	}
 
-	if (fields.has("message_id")) p.message_id = "this.message_id";
+	if (fields.has("message_id")) direct("message_id");
+	if (fields.has("inline_message_id")) direct("inline_message_id");
+	if (fields.has("widget_id")) direct("widget_id");
 	if (fields.has("from")) p.user_id = fields.get("from").required ? "this.from.id" : "this.from?.id";
 
 	// forum topic / direct-messages-topic this message lives in — replies, sends and the
@@ -213,7 +234,8 @@ function providersFor(payload, propName) {
 // message, message_id, …).
 const SOFT_FILLS = new Set(["business_connection_id", "message_thread_id", "direct_messages_topic_id"]);
 
-const maybeUndefined = (f, providers) => SOFT_FILLS.has(f) || /\?\./.test(providers[f]);
+const maybeUndefined = (f, providers) =>
+	SOFT_FILLS.has(f) || providers[SOFT]?.has(f) || /\?\./.test(providers[f]);
 
 // how one auto-filled id lands in the call object:
 // - always-present ids -> plain `key: expr`
@@ -306,7 +328,13 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 		if (requiredSoft.length > 0) usesRequiredId = true;
 
 		const paramsType = `t.${capFirst(m.name)}Params`;
-		const omit = effFills.map((f) => JSON.stringify(f)).join(" | ");
+		// a runtime-optional fill on an optional param stays passable: the conditional spread
+		// sends nothing when the update lacks it, so the caller must be able to supply it
+		// (e.g. chat_id on a callback whose message is gone — send* take an optional chat_id
+		// since Bot API 10.4 ephemeral replies). required soft fills get the `ext` below.
+		const passable = (f) => !argByName.get(f)?.required && maybeUndefined(f, providers);
+		const omitted = effFills.filter((f) => !passable(f));
+		const omit = omitted.length > 0 ? omitted.map((f) => JSON.stringify(f)).join(" | ") : "never";
 		const ext =
 			requiredSoft.length > 0
 				? ` & { ${requiredSoft.map((f) => `${f}?: ${returnType(argByName.get(f))}`).join("; ")} }`
@@ -321,7 +349,9 @@ function methodsFor(providers, isMessage, targetIds = TARGET_IDS) {
 			)
 			.join(", ");
 		const ret = m.return_type ? returnType(m.return_type) : "unknown";
-		const otherArgs = args.some((a) => !effFills.includes(a.name));
+		// params are only mandatory when something non-filled is required (or a required soft id
+		// may need to be supplied — that case is still optional on the type, checked at runtime)
+		const otherArgs = args.some((a) => a.required && !effFills.includes(a.name));
 		const sig = otherArgs
 			? `params: Omit<${paramsType}, ${omit}>${ext}`
 			: `params?: Omit<${paramsType}, ${omit}>${ext}`;
@@ -440,8 +470,10 @@ function gettersFor(payload) {
 	}
 
 	if (fields.has("message_id")) {
+		const o = fields.get("message_id").required ? "" : " | undefined";
+
 		lines.push(`	/** camel-case alias for \`message_id\`. */
-	get messageId(): number {
+	get messageId(): number${o} {
 		return this.message_id;
 	}`);
 	}

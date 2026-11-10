@@ -95,6 +95,10 @@ export class ChatBoostContext {
 			: ((a ?? {}) as Omit<t.SendVideoNoteParams, "chat_id">);
 		return this.api.call<t.Message>("sendVideoNote", { chat_id: this.chat.id, ...params });
 	}
+	/** Use this method to send a message with an [HTML widget](/bots/widgets). Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendWidget(params: Omit<t.SendWidgetParams, "chat_id">) {
+		return this.api.call<t.Message>("sendWidget", { chat_id: this.chat.id, ...params });
+	}
 	/** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPaidMedia", { chat_id: this.chat.id, ...params });
@@ -161,7 +165,7 @@ export class ChatBoostContext {
 		return this.api.call<string>("exportChatInviteLink", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
-	createChatInviteLink(params: Omit<t.CreateChatInviteLinkParams, "chat_id">) {
+	createChatInviteLink(params?: Omit<t.CreateChatInviteLinkParams, "chat_id">) {
 		return this.api.call<t.ChatInviteLink>("createChatInviteLink", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit a non-primary invite link created by the bot. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the edited invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
@@ -193,11 +197,11 @@ export class ChatBoostContext {
 		return this.api.call<boolean>("setChatTitle", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to change the description of a group, a supergroup or a channel. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success. */
-	setChatDescription(params: Omit<t.SetChatDescriptionParams, "chat_id">) {
+	setChatDescription(params?: Omit<t.SetChatDescriptionParams, "chat_id">) {
 		return this.api.call<boolean>("setChatDescription", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns *True* on success. */
-	unpin(params: Omit<t.UnpinChatMessageParams, "chat_id">) {
+	unpin(params?: Omit<t.UnpinChatMessageParams, "chat_id">) {
 		return this.api.call<boolean>("unpinChatMessage", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns *True* on success. */
@@ -213,7 +217,7 @@ export class ChatBoostContext {
 		return this.api.call<t.ChatFullInfo>("getChat", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get a list of administrators in a chat. Returns an Array of [ChatMember](https://core.telegram.org/bots/api/#chatmember) objects. */
-	getChatAdministrators(params: Omit<t.GetChatAdministratorsParams, "chat_id">) {
+	getChatAdministrators(params?: Omit<t.GetChatAdministratorsParams, "chat_id">) {
 		return this.api.call<t.ChatMember[]>("getChatAdministrators", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get the number of members in a chat. Returns *Integer* on success. */
@@ -228,7 +232,7 @@ export class ChatBoostContext {
 	deleteChatStickerSet(params?: Omit<t.DeleteChatStickerSetParams, "chat_id">) {
 		return this.api.call<boolean>("deleteChatStickerSet", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
+	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. In the case of a private chat, a link to the topic can be created in the format `https://t.me/<bot_username>/<message_thread_id>`; the link opens the topic only for the user. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 	createForumTopic(params: Omit<t.CreateForumTopicParams, "chat_id">) {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.chat.id, ...params });
 	}
@@ -257,7 +261,7 @@ export class ChatBoostContext {
 		return this.api.call<boolean>("unpinAllGeneralForumTopicMessages", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to change the bot's menu button in a private chat, or the default menu button. Returns *True* on success. */
-	setChatMenuButton(params: Omit<t.SetChatMenuButtonParams, "chat_id">) {
+	setChatMenuButton(params?: Omit<t.SetChatMenuButtonParams, "chat_id">) {
 		return this.api.call<boolean>("setChatMenuButton", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get the current value of the bot's menu button in a private chat, or the default menu button. Returns [MenuButton](https://core.telegram.org/bots/api/#menubutton) on success. */
@@ -269,7 +273,7 @@ export class ChatBoostContext {
 		return this.api.call<boolean>("sendGift", { chat_id: this.chat.id, ...params });
 	}
 	/** Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyChat(params: Omit<t.VerifyChatParams, "chat_id">) {
+	verifyChat(params?: Omit<t.VerifyChatParams, "chat_id">) {
 		return this.api.call<boolean>("verifyChat", { chat_id: this.chat.id, ...params });
 	}
 	/** Removes verification from a chat that is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
@@ -277,15 +281,15 @@ export class ChatBoostContext {
 		return this.api.call<boolean>("removeChatVerification", { chat_id: this.chat.id, ...params });
 	}
 	/** Returns the gifts owned by a chat. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
-	getChatGifts(params: Omit<t.GetChatGiftsParams, "chat_id">) {
+	getChatGifts(params?: Omit<t.GetChatGiftsParams, "chat_id">) {
 		return this.api.call<t.OwnedGifts>("getChatGifts", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editText(params: Omit<t.EditMessageTextParams, "chat_id">) {
+	editText(params?: Omit<t.EditMessageTextParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageText", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit captions of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editCaption(params: Omit<t.EditMessageCaptionParams, "chat_id">) {
+	editCaption(params?: Omit<t.EditMessageCaptionParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageCaption", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit animation, audio, document, live photo, photo, or video messages, or to replace a text or a rich message with a media. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
@@ -297,8 +301,12 @@ export class ChatBoostContext {
 		return this.api.call<t.Message | boolean>("editMessageLiveLocation", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to stop updating a live location message before *live\_period* expires. On success, if the message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. */
-	stopMessageLiveLocation(params: Omit<t.StopMessageLiveLocationParams, "chat_id">) {
+	stopMessageLiveLocation(params?: Omit<t.StopMessageLiveLocationParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, *True* is returned. */
+	editMessageWidgetData(params?: Omit<t.EditMessageWidgetDataParams, "chat_id">) {
+		return this.api.call<boolean>("editMessageWidgetData", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editReplyMarkup(replyMarkup: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup }, params?: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "reply_markup">): Promise<t.Message | boolean>;
@@ -334,7 +342,7 @@ export class ChatBoostContext {
 		return this.api.call<boolean>("deleteEphemeralMessage", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success. */
-	deleteAllMessageReactions(params: Omit<t.DeleteAllMessageReactionsParams, "chat_id">) {
+	deleteAllMessageReactions(params?: Omit<t.DeleteAllMessageReactionsParams, "chat_id">) {
 		return this.api.call<boolean>("deleteAllMessageReactions", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */

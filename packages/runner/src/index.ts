@@ -134,11 +134,13 @@ export function chatKey(update: Update): number | undefined {
 		update.chat_boost ??
 		update.removed_chat_boost;
 
-	const chatId = scoped?.chat?.id;
+	const chatId = scoped?.chat?.id ?? update.widget_query?.chat?.id;
 	if (chatId != null) return chatId;
 
 	return (
 		update.callback_query?.from?.id ??
+		update.widget_query?.from?.id ??
+		update.shared_widget_query?.from?.id ??
 		update.inline_query?.from?.id ??
 		update.chosen_inline_result?.from?.id ??
 		update.shipping_query?.from?.id ??

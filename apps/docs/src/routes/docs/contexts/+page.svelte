@@ -158,6 +158,8 @@ bot.on("shipping_query", (shippingCtx) => shippingCtx.answer(true));`;
 		["inline_query", "InlineQueryContext"],
 		["chosen_inline_result", "ChosenInlineResultContext"],
 		["callback_query", "CallbackQueryContext"],
+		["widget_query", "WidgetQueryContext"],
+		["shared_widget_query", "SharedWidgetQueryContext"],
 		["shipping_query", "ShippingQueryContext"],
 		["pre_checkout_query", "PreCheckoutQueryContext"],
 		["purchased_paid_media", "PurchasedPaidMediaContext"],

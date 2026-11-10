@@ -3,7 +3,7 @@
 // source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
 /** the Telegram Bot API version these types were generated from. */
-export const BOT_API_VERSION = "10.3";
+export const BOT_API_VERSION = "10.4";
 
 /** runtime list of `Update` payload keys (every update kind, excluding `update_id`). */
 export const updateNames = [
@@ -21,6 +21,8 @@ export const updateNames = [
 	"inline_query",
 	"chosen_inline_result",
 	"callback_query",
+	"widget_query",
+	"shared_widget_query",
 	"shipping_query",
 	"pre_checkout_query",
 	"purchased_paid_media",
@@ -94,6 +96,22 @@ export interface Animation {
 	mime_type?: string;
 	/** *Optional*. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value. */
 	file_size?: number;
+}
+
+/** Describes the position of a rectangle area on a story media or a TON wallet card. */
+export interface AreaPosition {
+	/** The abscissa of the area's center, as a percentage of the media or the card width */
+	x_percentage: number;
+	/** The ordinate of the area's center, as a percentage of the media or the card height */
+	y_percentage: number;
+	/** The width of the area's rectangle, as a percentage of the media or the card width */
+	width_percentage: number;
+	/** The height of the area's rectangle, as a percentage of the media or the card height */
+	height_percentage: number;
+	/** The clockwise rotation angle of the rectangle, in degrees; 0-360 */
+	rotation_angle: number;
+	/** The radius of the rectangle corner rounding, as a percentage of the media or the card width */
+	corner_radius_percentage: number;
 }
 
 /** This object represents an audio file to be treated as music by the Telegram clients. */
@@ -667,6 +685,10 @@ export interface ChatFullInfo {
 	guard_bot?: User;
 	/** *Optional*. The [Community](https://core.telegram.org/bots/api/#community) to which the chat belongs */
 	community?: Community;
+	/** *Optional*. For private chats, the TON wallet card of the user, which is shown on their profile page */
+	ton_wallet_card?: TonWalletCard;
+	/** *Optional*. For private chats, supergroups and channels, the theme of the screen for sharing a link to the user or the chat; omitted if the default theme is used */
+	share_theme?: ChatShareTheme;
 }
 
 /** Represents an invite link for a chat. */
@@ -840,7 +862,7 @@ export interface ChatMemberRestricted {
 	can_send_voice_notes: boolean;
 	/** *True*, if the user is allowed to send polls and checklists */
 	can_send_polls: boolean;
-	/** *True*, if the user is allowed to send animations, games, stickers and use inline bots */
+	/** *True*, if the user is allowed to send animations, games, stickers, widgets and use inline bots */
 	can_send_other_messages: boolean;
 	/** *True*, if the user is allowed to add web page previews to their messages */
 	can_add_web_page_previews: boolean;
@@ -910,7 +932,7 @@ export interface ChatPermissions {
 	can_send_voice_notes?: boolean;
 	/** *Optional*. *True*, if the user is allowed to send polls and checklists */
 	can_send_polls?: boolean;
-	/** *Optional*. *True*, if the user is allowed to send animations, games, stickers and use inline bots */
+	/** *Optional*. *True*, if the user is allowed to send animations, games, stickers, widgets and use inline bots */
 	can_send_other_messages?: boolean;
 	/** *Optional*. *True*, if the user is allowed to add web page previews to their messages */
 	can_add_web_page_previews?: boolean;
@@ -938,6 +960,43 @@ export interface ChatPhoto {
 	big_file_id: string;
 	/** Unique file identifier of big (640x640) chat photo, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file. */
 	big_file_unique_id: string;
+}
+
+/** This object describes the theme of the screen for sharing a link to a user or a chat. Currently, it can be one of */
+export type ChatShareTheme = ChatShareThemeEmoji | ChatShareThemeUniqueGift;
+
+/** This object describes a backdrop, which can be used as the background of a theme of the screen for sharing a link to a user or a chat. */
+export interface ChatShareThemeBackdrop {
+	/** Unique identifier of the backdrop */
+	id: number;
+	/** Name of the backdrop */
+	name: string;
+	/** Colors of the backdrop */
+	colors: UniqueGiftBackdropColors;
+}
+
+/** This object contains a list of backdrops, which can be used as the background of a theme of the screen for sharing a link to a user or a chat. */
+export interface ChatShareThemeBackdrops {
+	/** The list of backdrops */
+	backdrops: ChatShareThemeBackdrop[];
+}
+
+/** The theme with emoji placed on a background. */
+export interface ChatShareThemeEmoji {
+	/** Type of the theme, always “emoji” */
+	type: "emoji";
+	/** The emoji; 0-6 regular or custom emoji */
+	emojis: EmojiType[];
+	/** *Optional*. Identifier of the backdrop used as the background; omitted if the default background is used. Use [getChatShareThemeBackdrops](https://core.telegram.org/bots/api/#getchatsharethemebackdrops) to get details about the backdrop. */
+	background_backdrop_id?: number;
+}
+
+/** The theme based on a unique gift owned by the user or the chat. */
+export interface ChatShareThemeUniqueGift {
+	/** Type of the theme, always “unique_gift” */
+	type: "unique_gift";
+	/** The gift */
+	gift: UniqueGift;
 }
 
 /** This object contains information about a chat that was shared with the bot using a [KeyboardButtonRequestChat](https://core.telegram.org/bots/api/#keyboardbuttonrequestchat) button. */
@@ -1102,6 +1161,25 @@ export interface Document {
 	file_size?: number;
 }
 
+/** This object describes an emoji. Currently, it can be one of */
+export type EmojiType = EmojiTypeEmoji | EmojiTypeCustomEmoji;
+
+/** A custom emoji. */
+export interface EmojiTypeCustomEmoji {
+	/** Type of the emoji, always “custom_emoji” */
+	type: "custom_emoji";
+	/** Identifier of the custom emoji. Use [getCustomEmojiStickers](https://core.telegram.org/bots/api/#getcustomemojistickers) to get full information about the sticker. */
+	custom_emoji_id: string;
+}
+
+/** A regular emoji. */
+export interface EmojiTypeEmoji {
+	/** Type of the emoji, always “emoji” */
+	type: "emoji";
+	/** The emoji */
+	emoji: string;
+}
+
 /** Describes data required for decrypting and authenticating [EncryptedPassportElement](https://core.telegram.org/bots/api/#encryptedpassportelement). See the [Telegram Passport Documentation](/passport#receiving-information) for a complete description of the data decryption and authentication processes. */
 export interface EncryptedCredentials {
 	/** Base64-encoded encrypted JSON-serialized data with unique user's payload, data hashes and secrets required for [EncryptedPassportElement](https://core.telegram.org/bots/api/#encryptedpassportelement) decryption and authentication */
@@ -1137,9 +1215,9 @@ export interface EncryptedPassportElement {
 }
 
 export interface EphemeralMessageParameters {
-	/** Identifier of the user who will receive the message. It is not guaranteed that the user will receive the message, especially if they are offline. See [here](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
-	receiver_user_id: number;
-	/** *Optional*. Identifier of the callback query which triggered the message, if any */
+	/** *Optional*. Identifier of the user who will receive the message; required unless the message is sent as an ephemeral reply to a callback query. If omitted, then the parameter *chat\_id* of the method is ignored. If specified together with *callback\_query\_id*, then it must be the identifier of the user who pressed the button. Must be omitted for messages sent in chats where the bot isn't a member, unless the message is a reply to an ephemeral message. It is not guaranteed that the user will receive the message, especially if they are offline. See [here](https://core.telegram.org/bots/api/#ephemeral-messages-and-commands) for more details. */
+	receiver_user_id?: number;
+	/** *Optional*. Identifier of the callback query which triggered the message, if any. If specified and *receiver\_user\_id* is omitted, then the message is sent as an ephemeral reply to the callback query and will be shown only to the user who pressed the button. Ephemeral replies can't be sent to callback queries from messages in channel direct messages chats. The bot must still answer the callback query using [answerCallbackQuery](https://core.telegram.org/bots/api/#answercallbackquery). */
 	callback_query_id?: string;
 	/** *Optional*. Pass *True* if the ephemeral message must be shown in place of the original message. Must be *False* for callback queries from ephemeral messages, which must be edited using regular *editEphemeralMessage…* methods. */
 	replace_callback_query_message?: boolean;
@@ -1177,6 +1255,8 @@ export interface ExternalReplyInfo {
 	video_note?: VideoNote;
 	/** *Optional*. Message is a voice message, information about the file */
 	voice?: Voice;
+	/** *Optional*. Message is an HTML widget, information about the widget */
+	widget?: Widget;
 	/** *Optional*. *True*, if the message media is covered by a spoiler animation */
 	has_media_spoiler?: boolean;
 	/** *Optional*. Message is a checklist */
@@ -1455,7 +1535,7 @@ export interface InlineKeyboardButton {
 	url?: string;
 	/** *Optional*. Data to be sent in a [callback query](https://core.telegram.org/bots/api/#callbackquery) to the bot when the button is pressed, 1-64 bytes */
 	callback_data?: string;
-	/** *Optional*. Description of the [Web App](/bots/webapps) that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method [answerWebAppQuery](https://core.telegram.org/bots/api/#answerwebappquery). Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account. */
+	/** *Optional*. Description of the [Web App](/bots/webapps) that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method [answerWebAppQuery](https://core.telegram.org/bots/api/#answerwebappquery). Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account and ephemeral messages. */
 	web_app?: WebAppInfo;
 	/** *Optional*. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](/widgets/login). Not supported for ephemeral messages. */
 	login_url?: LoginUrl;
@@ -2355,7 +2435,7 @@ export interface InputMediaVoiceNote {
 }
 
 /** This object represents the content of a message to be sent as a result of an inline query. Telegram clients currently support the following types: */
-export type InputMessageContent = InputTextMessageContent | InputRichMessageContent | InputLocationMessageContent | InputVenueMessageContent | InputContactMessageContent | InputInvoiceMessageContent;
+export type InputMessageContent = InputTextMessageContent | InputRichMessageContent | InputLocationMessageContent | InputVenueMessageContent | InputContactMessageContent | InputInvoiceMessageContent | InputWidgetMessageContent | InputSharedWidgetMessageContent;
 
 /** This object describes the paid media to be sent. Currently, it can be one of */
 export type InputPaidMedia = InputPaidMediaLivePhoto | InputPaidMediaPhoto | InputPaidMediaVideo;
@@ -2724,6 +2804,22 @@ export interface InputRichMessageMedia {
 	media: InputMediaAnimation | InputMediaAudio | InputMediaDocument | InputMediaPhoto | InputMediaVideo | InputMediaVoiceNote;
 }
 
+/** Represents the [content](https://core.telegram.org/bots/api/#inputmessagecontent) of a message with a shared widget to be sent as the result of an inline query. Currently, widgets can't be sent in response to inline queries in the production environment. */
+export interface InputSharedWidgetMessageContent {
+	/** Unique identifier of the shared widget created by the bot */
+	widget_id: string;
+	/** *Optional*. Data of the widget, which is specific to the message, 0-1024 bytes */
+	chat_data?: string;
+	/** *Optional*. Widget caption, 0-1024 characters after entities parsing */
+	caption?: string | FormattedText;
+	/** *Optional*. Mode for parsing entities in the widget caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
+	parse_mode?: string;
+	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
+	caption_entities?: MessageEntity[];
+	/** *Optional*. Pass *True* if the caption must be shown above the widget */
+	show_caption_above_media?: boolean;
+}
+
 /** This object describes a sticker to be added to a sticker set. */
 export interface InputSticker {
 	/** The added sticker. Pass a *file\_id* as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new file using multipart/form-data under <file_attach_name> name. Animated and video stickers can't be uploaded via HTTP URL. [More information on Sending Files »](https://core.telegram.org/bots/api/#sending-files) */
@@ -2793,6 +2889,32 @@ export interface InputVenueMessageContent {
 	google_place_id?: string;
 	/** *Optional*. Google Places type of the venue. (See [supported types](https://developers.google.com/places/web-service/supported_types).) */
 	google_place_type?: string;
+}
+
+/** Represents the [content](https://core.telegram.org/bots/api/#inputmessagecontent) of a message with an [HTML widget](/bots/widgets) to be sent as the result of an inline query. Currently, widgets can't be sent in response to inline queries in the production environment. */
+export interface InputWidgetMessageContent {
+	/** HTML code of the widget, 1-32768 bytes. The code must not exceed 4096 bytes when compressed by zlib with the maximum compression level. */
+	html: string;
+	/** *Optional*. Width of the widget in logical pixels; omit if the widget must occupy the whole width of the message bubble. The width is clamped by the app to the range from 200 to the maximum width of the message bubble. */
+	width?: number;
+	/** *Optional*. Height of the widget in logical pixels; omit if the height of the widget isn't fixed. The height is clamped by the app to the range 50-600. */
+	height?: number;
+	/** *Optional*. Public data of the widget, 0-1024 bytes, which will be available wherever the widget is shown. If the widget is shared, then all messages with it will have the same public data. */
+	public_data?: string;
+	/** *Optional*. Data of the widget, which is specific to the message, 0-1024 bytes */
+	chat_data?: string;
+	/** *Optional*. Widget caption, 0-1024 characters after entities parsing */
+	caption?: string | FormattedText;
+	/** *Optional*. Mode for parsing entities in the widget caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
+	parse_mode?: string;
+	/** *Optional*. List of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
+	caption_entities?: MessageEntity[];
+	/** *Optional*. Pass *True* if the caption must be shown above the widget */
+	show_caption_above_media?: boolean;
+	/** *Optional*. Pass *True* to allow the widget to send queries to the bot */
+	allow_queries?: boolean;
+	/** *Optional*. Pass *True* to create a shared widget. Each message sent from the result creates a separate shared widget, whose identifier is received by the bot only in the field *widget\_id* of queries from the widget. To send an existing shared widget in response to an inline query, use [InputSharedWidgetMessageContent](https://core.telegram.org/bots/api/#inputsharedwidgetmessagecontent) instead. */
+	is_shared?: boolean;
 }
 
 /** This object contains basic information about an invoice. */
@@ -2871,7 +2993,7 @@ export interface KeyboardButtonRequestManagedBot {
 	request_id: number;
 	/** *Optional*. Suggested name for the bot */
 	suggested_name?: string;
-	/** *Optional*. Suggested username for the bot */
+	/** *Optional*. Suggested username for the bot. The username must end with “bot”. If the user creating the bot has a Telegram Premium subscription, then the username can also end with “agent”, “ai”, “app”, “game”, or “gay”; in this case, the username will be assigned to the bot as a secondary username, and a regular username ending with “bot” will be assigned to the bot automatically. */
 	suggested_username?: string;
 }
 
@@ -2969,7 +3091,7 @@ export interface LocationAddress {
 	street?: string;
 }
 
-/** This object represents a parameter of the inline keyboard button used to automatically authorize a user. It serves as a great replacement for the [Telegram Login Widget](/widgets/login) when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:  [](/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c)  Sample bot: [@DiscussBot](https://t.me/discussbot) */
+/** This object represents a parameter of the inline keyboard button used to automatically authorize a user. It serves as a great replacement for the [Telegram Login Widget](/widgets/login) when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:  [TITLE](/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c)  Sample bot: [@DiscussBot](https://t.me/discussbot) */
 export interface LoginUrl {
 	/** An HTTPS URL to be opened with user authorization data added to the query string when the button is pressed. If the user refuses to provide authorization data, the original URL without information about the user will be opened. The data added is the same as described in [Receiving authorization data](/widgets/login#receiving-authorization-data).  **NOTE:** You **must** always check the hash of the received data to verify the authentication and the integrity of the data as described in [Checking authorization](/widgets/login#checking-authorization). */
 	url: string;
@@ -3137,11 +3259,13 @@ export interface Message {
 	video_note?: VideoNote;
 	/** *Optional*. Message is a voice message, information about the file */
 	voice?: Voice;
-	/** *Optional*. Caption for the animation, audio, document, paid media, photo, video or voice */
+	/** *Optional*. Message is an HTML widget, information about the widget */
+	widget?: Widget;
+	/** *Optional*. Caption for the animation, audio, document, live photo, paid media, photo, video, voice, or widget */
 	caption?: string;
 	/** *Optional*. For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear in the caption */
 	caption_entities?: MessageEntity[];
-	/** *Optional*. *True*, if the caption must be shown above the message media */
+	/** *Optional*. *True*, if the caption must be shown above the message media or the widget */
 	show_caption_above_media?: boolean;
 	/** *Optional*. *True*, if the message media is covered by a spoiler animation */
 	has_media_spoiler?: boolean;
@@ -3251,6 +3375,8 @@ export interface Message {
 	managed_bot_created?: ManagedBotCreated;
 	/** *Optional*. Service message: the price for paid messages has changed in the chat */
 	paid_message_price_changed?: PaidMessagePriceChanged;
+	/** *Optional*. Service message: the sender of the message used a link of the other user, which allows sending messages to the user without paying Telegram Stars */
+	paid_messages_waived?: PaidMessagesWaived;
 	/** *Optional*. Service message: answer option was added to a poll */
 	poll_option_added?: PollOptionAdded;
 	/** *Optional*. Service message: answer option was deleted from a poll */
@@ -3265,6 +3391,8 @@ export interface Message {
 	suggested_post_paid?: SuggestedPostPaid;
 	/** *Optional*. Service message: payment for a suggested post was refunded */
 	suggested_post_refunded?: SuggestedPostRefunded;
+	/** *Optional*. Service message: a transfer with a TON wallet */
+	ton_wallet_transfer?: TonWalletTransfer;
 	/** *Optional*. Service message: video chat scheduled */
 	video_chat_scheduled?: VideoChatScheduled;
 	/** *Optional*. Service message: video chat started */
@@ -3287,8 +3415,8 @@ export interface MessageAutoDeleteTimerChanged {
 
 /** This object represents one special entity in a text message. For example, hashtags, usernames, URLs, etc. */
 export interface MessageEntity {
-	/** Type of the entity. Currently, can be “mention” (`@username`), “hashtag” (`#hashtag` or `#hashtag@chatusername`), “cashtag” (`$USD` or `$USD@chatusername`), “bot_command” (`/start@jobs_bot`), “url” (`https://telegram.org`), “email” (`do-not-reply@telegram.org`), “phone_number” (`+1-212-555-0123`), “bold” (**bold text**), “italic” (*italic text*), “underline” (underlined text), “strikethrough” (strikethrough text), “spoiler” (spoiler message), “blockquote” (block quotation), “expandable_blockquote” (collapsed-by-default block quotation), “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs), “text_mention” (for users [without usernames](https://telegram.org/blog/edit#new-mentions)), “custom_emoji” (for inline custom emoji stickers), or “date_time” (for formatted date and time). */
-	type: "mention" | "hashtag" | "cashtag" | "bot_command" | "url" | "email" | "phone_number" | "bold" | "italic" | "underline" | "strikethrough" | "spoiler" | "blockquote" | "expandable_blockquote" | "code" | "pre" | "text_link" | "text_mention" | "custom_emoji" | "date_time";
+	/** Type of the entity. Currently, can be “mention” (`@username`), “hashtag” (`#hashtag` or `#hashtag@chatusername`), “cashtag” (`$USD` or `$USD@chatusername`), “bot_command” (`/start@jobs_bot`), “url” (`https://telegram.org`), “email” (`do-not-reply@telegram.org`), “phone_number” (`+1-212-555-0123`), “bank_card_number” (bank card number), “ton_address” (address in the TON blockchain), “bold” (**bold text**), “italic” (*italic text*), “underline” (underlined text), “strikethrough” (strikethrough text), “spoiler” (spoiler message), “blockquote” (block quotation), “expandable_blockquote” (collapsed-by-default block quotation), “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs), “text_mention” (for users [without usernames](https://telegram.org/blog/edit#new-mentions)), “custom_emoji” (for inline custom emoji stickers), or “date_time” (for formatted date and time). */
+	type: "mention" | "hashtag" | "cashtag" | "bot_command" | "url" | "email" | "phone_number" | "bank_card_number" | "ton_address" | "bold" | "italic" | "underline" | "strikethrough" | "spoiler" | "blockquote" | "expandable_blockquote" | "code" | "pre" | "text_link" | "text_mention" | "custom_emoji" | "date_time";
 	/** Offset in [UTF-16 code units](/api/entities#entity-length) to the start of the entity */
 	offset: number;
 	/** Length of the entity in [UTF-16 code units](/api/entities#entity-length) */
@@ -3543,6 +3671,9 @@ export interface PaidMessagePriceChanged {
 	/** The new number of Telegram Stars that must be paid by non-administrator users of the supergroup chat for each sent message */
 	paid_message_star_count: number;
 }
+
+/** Describes a service message about the sender of the message using a link of the other user, which allows sending messages to the user without paying Telegram Stars. Currently holds no information. */
+export type PaidMessagesWaived = Record<never, never>;
 
 /** Describes Telegram Passport data shared with the bot by the user. */
 export interface PassportData {
@@ -3938,7 +4069,7 @@ export interface ReplyKeyboardRemove {
 export interface ReplyParameters {
 	/** *Optional*. Identifier of the message that will be replied to in the current chat, or in the chat *chat\_id* if it is specified. Required if *ephemeral\_message\_id* isn't specified. */
 	message_id?: number;
-	/** *Optional*. If the message to be replied to is from a different chat, unique identifier for the chat or username of the bot, supergroup or channel in the format `@username`. Not supported for messages sent on behalf of a business account, messages from channel direct messages chats and ephemeral messages. */
+	/** *Optional*. If the message to be replied to is from a different chat, unique identifier for the chat or username of the bot, supergroup, or channel in the format `@username`. Not supported for messages sent on behalf of a business account, messages from channel direct messages chats and ephemeral messages. */
 	chat_id?: number | string;
 	/** *Optional*. Identifier of the incoming ephemeral message that will be replied to in the current chat. A reply to an ephemeral message must itself be an ephemeral message. An ephemeral message may only be replied to within 15 seconds of being sent. Required if *message\_id* isn't specified. */
 	ephemeral_message_id?: number;
@@ -3950,7 +4081,9 @@ export interface ReplyParameters {
 	quote_parse_mode?: string;
 	/** *Optional*. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of *quote\_parse\_mode*. */
 	quote_entities?: MessageEntity[];
-	/** *Optional*. Position of the quote in the original message in UTF-16 code units */
+	/** *Optional*. A JSON-serialized list of quoted parts of the [rich message](https://core.telegram.org/bots/api/#richmessage) to be replied to. Must contain one element for each quoted text of the message in the order of their appearance. Each of the following is a separate quoted text: the text of a paragraph, a heading, a preformatted block, a footer, or a mathematical expression; the text and the credit of a block quotation or a pull quotation; the summary of a details block; the caption and each cell of a table; the text and the credit of a caption of a media block, a collage, a slideshow, or a map. Texts of blocks nested in lists, block quotations, details, collages, and slideshows are separate quoted texts too. The first and the last elements can contain only a part of the corresponding text; all other elements must contain the whole text. Formatting of the quoted parts must be kept, and rich texts must be nested in the same way as in the message received from the server. Mathematical expressions must be quoted entirely. Buttons in [RichBlockButtons](https://core.telegram.org/bots/api/#richblockbuttons), anchors and dividers can't be quoted. Up to 32 quoted texts with total length up to 1024 characters can be specified. Only plain text, [RichTextBold](https://core.telegram.org/bots/api/#richtextbold), [RichTextItalic](https://core.telegram.org/bots/api/#richtextitalic), [RichTextUnderline](https://core.telegram.org/bots/api/#richtextunderline), [RichTextStrikethrough](https://core.telegram.org/bots/api/#richtextstrikethrough), [RichTextSpoiler](https://core.telegram.org/bots/api/#richtextspoiler), [RichTextSubscript](https://core.telegram.org/bots/api/#richtextsubscript), [RichTextSuperscript](https://core.telegram.org/bots/api/#richtextsuperscript), [RichTextDateTime](https://core.telegram.org/bots/api/#richtextdatetime), [RichTextCustomEmoji](https://core.telegram.org/bots/api/#richtextcustomemoji), [RichTextMathematicalExpression](https://core.telegram.org/bots/api/#richtextmathematicalexpression), and arrays of them are kept in the quote; other rich text types are replaced with their text. If non-empty, then *quote*, *quote\_parse\_mode* and *quote\_entities* are ignored. */
+	quote_rich_texts?: RichText[];
+	/** *Optional*. Position of the quote in the original message in UTF-16 code units. For quotes from rich messages, it is the position in the text formed by joining plain texts of all quotable texts of the message, separated by line feeds. */
 	quote_position?: number;
 	/** *Optional*. Identifier of the specific checklist task to be replied to */
 	checklist_task_id?: number;
@@ -4313,7 +4446,7 @@ export interface RichMessageButton {
 }
 
 /** This object represents a rich formatted text. Currently, it can be either a String for plain text, an Array of [RichText](https://core.telegram.org/bots/api/#richtext), or any of the following types: */
-export type RichText = string | RichText[] | RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextButton | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
+export type RichText = string | RichText[] | RichTextBold | RichTextItalic | RichTextUnderline | RichTextStrikethrough | RichTextSpoiler | RichTextDateTime | RichTextTextMention | RichTextSubscript | RichTextSuperscript | RichTextMarked | RichTextCode | RichTextCustomEmoji | RichTextMathematicalExpression | RichTextUrl | RichTextEmailAddress | RichTextPhoneNumber | RichTextBankCardNumber | RichTextTonAddress | RichTextMention | RichTextHashtag | RichTextCashtag | RichTextBotCommand | RichTextButton | RichTextAnchor | RichTextAnchorLink | RichTextReference | RichTextReferenceLink;
 
 /** An anchor. */
 export interface RichTextAnchor {
@@ -4535,6 +4668,16 @@ export interface RichTextTextMention {
 	user: User;
 }
 
+/** An address in the TON blockchain. */
+export interface RichTextTonAddress {
+	/** Type of the rich text, always “ton_address” */
+	type: "ton_address";
+	/** Text of the address */
+	text: RichText;
+	/** The address */
+	address: string;
+}
+
 /** An underlined text. */
 export interface RichTextUnderline {
 	/** Type of the rich text, always “underline” */
@@ -4577,6 +4720,20 @@ export interface SharedUser {
 	username?: string;
 	/** *Optional*. Available sizes of the chat photo, if the photo was requested by the bot */
 	photo?: PhotoSize[];
+}
+
+/** This object represents an incoming query from a forwarded message with a shared widget created by the bot. Use [answerWidgetQuery](https://core.telegram.org/bots/api/#answerwidgetquery) to answer the query. Each user can send at most 5 queries per 5 seconds to the bot from all its widgets. */
+export interface SharedWidgetQuery {
+	/** Unique identifier for this query */
+	id: string;
+	/** Sender */
+	from: User;
+	/** Type of the query */
+	type: WidgetQueryType;
+	/** Data of the query, 1-64 bytes */
+	data: string;
+	/** Unique identifier of the shared widget, which sent the query */
+	widget_id: string;
 }
 
 /** This object represents a shipping address. */
@@ -4706,25 +4863,9 @@ export interface Story {
 /** Describes a clickable area on a story media. */
 export interface StoryArea {
 	/** Position of the area */
-	position: StoryAreaPosition;
+	position: AreaPosition;
 	/** Type of the area */
 	type: StoryAreaType;
-}
-
-/** Describes the position of a clickable area within a story. */
-export interface StoryAreaPosition {
-	/** The abscissa of the area's center, as a percentage of the media width */
-	x_percentage: number;
-	/** The ordinate of the area's center, as a percentage of the media height */
-	y_percentage: number;
-	/** The width of the area's rectangle, as a percentage of the media width */
-	width_percentage: number;
-	/** The height of the area's rectangle, as a percentage of the media height */
-	height_percentage: number;
-	/** The clockwise rotation angle of the rectangle, in degrees; 0-360 */
-	rotation_angle: number;
-	/** The radius of the rectangle corner rounding, as a percentage of the media width */
-	corner_radius_percentage: number;
 }
 
 /** Describes the type of a clickable area on a story. Currently, it can be one of */
@@ -4894,14 +5035,74 @@ export interface SwitchInlineQueryChosenChat {
 
 /** This object contains information about the quoted part of a message that is replied to by the given message. */
 export interface TextQuote {
-	/** Text of the quoted part of a message that is replied to by the given message */
+	/** Text of the quoted part of a message that is replied to by the given message; may be empty if the quote was chosen from a rich message */
 	text: string;
 	/** *Optional*. Special entities that appear in the quote. Currently, only *bold*, *italic*, *underline*, *strikethrough*, *spoiler*, *custom\_emoji*, and *date\_time* entities are kept in quotes. */
 	entities?: MessageEntity[];
-	/** Approximate quote position in the original message in UTF-16 code units as specified by the sender */
+	/** *Optional*. Rich text of the quote if it was chosen from a [rich message](https://core.telegram.org/bots/api/#richmessage). May contain only plain text, [RichTextBold](https://core.telegram.org/bots/api/#richtextbold), [RichTextItalic](https://core.telegram.org/bots/api/#richtextitalic), [RichTextUnderline](https://core.telegram.org/bots/api/#richtextunderline), [RichTextStrikethrough](https://core.telegram.org/bots/api/#richtextstrikethrough), [RichTextSpoiler](https://core.telegram.org/bots/api/#richtextspoiler), [RichTextSubscript](https://core.telegram.org/bots/api/#richtextsubscript), [RichTextSuperscript](https://core.telegram.org/bots/api/#richtextsuperscript), [RichTextDateTime](https://core.telegram.org/bots/api/#richtextdatetime), [RichTextCustomEmoji](https://core.telegram.org/bots/api/#richtextcustomemoji), [RichTextMathematicalExpression](https://core.telegram.org/bots/api/#richtextmathematicalexpression), and arrays of them. */
+	rich_texts?: RichText[];
+	/** Approximate quote position in the original message in UTF-16 code units as specified by the sender. For quotes from rich messages, it is the position in the text formed by joining plain texts of all quotable texts of the message, separated by line feeds. */
 	position: number;
 	/** *Optional*. *True*, if the quote was chosen manually by the message sender. Otherwise, the quote was added automatically by the server. */
 	is_manual?: boolean;
+}
+
+/** This object represents an NFT in the TON blockchain. */
+export interface TonNft {
+	/** Address of the NFT */
+	address: string;
+	/** *Optional*. Address of the collection to which the NFT belongs; omitted if unknown */
+	collection_address?: string;
+	/** Index of the NFT among all NFTs from the collection as a decimal number */
+	index: string;
+	/** Name of the NFT */
+	name: string;
+	/** Description of the NFT */
+	description: string;
+	/** *Optional*. Attributes of the NFT */
+	attributes?: TonNftAttribute[];
+	/** *Optional*. The unique gift corresponding to the NFT */
+	gift?: UniqueGift;
+}
+
+/** This object represents an attribute of an NFT in the TON blockchain. */
+export interface TonNftAttribute {
+	/** Trait type of the attribute */
+	trait_type: string;
+	/** Value of the attribute */
+	value: string;
+}
+
+/** This object describes a TON wallet card, which is shown on the profile page of a user to everyone. */
+export interface TonWalletCard {
+	/** Address of the wallet */
+	address: string;
+	/** Balance of the wallet, in the *smallest units* of the cryptocurrency, as a decimal number */
+	amount: string;
+	/** Stickers placed on the card */
+	stickers: TonWalletCardSticker[];
+	/** *Optional*. Address of the NFT of one of the stickers, whose colors must be used for the card background; omitted if the default background must be used */
+	background_nft_address?: string;
+}
+
+/** This object describes a sticker on a TON wallet card. */
+export interface TonWalletCardSticker {
+	/** Position of the sticker on the card */
+	position: AreaPosition;
+	/** The NFT shown as the sticker */
+	nft: TonNft;
+}
+
+/** Describes a service message about a transfer with a TON wallet. */
+export interface TonWalletTransfer {
+	/** Unique identifier of the transaction; may be empty if the transfer hasn't been sent yet */
+	transaction_id: string;
+	/** Address of the transfer peer in the TON blockchain */
+	peer_address: string;
+	/** The amount of transferred cryptocurrency, in the *smallest units* of the cryptocurrency, as a decimal number; negative for outgoing transfers */
+	amount: string;
+	/** *Optional*. Comment added to the transfer; omitted if the comment is encrypted */
+	comment?: string;
 }
 
 /** This object describes the source of a transaction, or its recipient for outgoing transactions. Currently, it can be one of */
@@ -5123,6 +5324,10 @@ export interface Update {
 	chosen_inline_result?: ChosenInlineResult;
 	/** *Optional*. New incoming callback query */
 	callback_query?: CallbackQuery;
+	/** *Optional*. New incoming query from a widget in a message sent by the bot or via the bot */
+	widget_query?: WidgetQuery;
+	/** *Optional*. New incoming query from a forwarded message with a shared widget */
+	shared_widget_query?: SharedWidgetQuery;
 	/** *Optional*. New incoming shipping query. Only for invoices with flexible price. */
 	shipping_query?: ShippingQuery;
 	/** *Optional*. New incoming pre-checkout query. Contains full information about checkout. */
@@ -5382,6 +5587,89 @@ export interface WebhookInfo {
 	allowed_updates?: string[];
 }
 
+/** This object describes an [HTML widget](/bots/widgets). */
+export interface Widget {
+	/** *Optional*. Unique identifier of the shared widget, which can be used to send the widget again using the method [sendSharedWidget](https://core.telegram.org/bots/api/#sendsharedwidget); omitted if the widget isn't shared */
+	id?: string;
+	/** *Optional*. Width of the widget in logical pixels; omitted if the widget must occupy the whole width of the message bubble */
+	width?: number;
+	/** *Optional*. Height of the widget in logical pixels; omitted if the height of the widget isn't fixed */
+	height?: number;
+	/** HTML code of the widget */
+	html: string;
+	/** *Optional*. Public data of the widget, which is available wherever the widget is shown. All messages with a shared widget have the same public data. */
+	public_data?: string;
+	/** *Optional*. Data of the widget, which is specific to the message */
+	chat_data?: string;
+}
+
+/** This object represents an incoming query from a widget in a message sent by the bot or via the bot. Use [answerWidgetQuery](https://core.telegram.org/bots/api/#answerwidgetquery) to answer the query. Each user can send at most 5 queries per 5 seconds to the bot from all its widgets. */
+export interface WidgetQuery {
+	/** Unique identifier for this query */
+	id: string;
+	/** Sender */
+	from: User;
+	/** *Optional*. Chat with the message containing the widget; omitted if the widget is in an inline message */
+	chat?: Chat;
+	/** *Optional*. Identifier of the message containing the widget; omitted if the widget is in an inline message */
+	message_id?: number;
+	/** *Optional*. Identifier of the inline message containing the widget */
+	inline_message_id?: string;
+	/** Global identifier, uniquely corresponding to the chat to which the message with the widget was sent */
+	chat_instance: string;
+	/** *Optional*. For widgets in inline messages, type of the chat to which the message was sent. Can be either “sender” for a private chat with the inline query sender, “private”, “group”, “supergroup”, or “channel”. */
+	chat_type?: "sender" | "private" | "group" | "supergroup" | "channel";
+	/** Type of the query */
+	type: WidgetQueryType;
+	/** Data of the query, 1-64 bytes */
+	data: string;
+	/** *Optional*. Unique identifier of the shared widget, which sent the query; omitted if the widget isn't shared */
+	widget_id?: string;
+}
+
+/** This object describes the type of a query from a widget. Currently, it can be one of */
+export type WidgetQueryType = WidgetQueryTypeData | WidgetQueryTypeSignData | WidgetQueryTypeSentTransaction;
+
+/** The query contains data for the bot. */
+export interface WidgetQueryTypeData {
+	/** Type of the query, always “data” */
+	type: "data";
+	/** *Optional*. TON wallet card of the user who sent the query, if it was sent to the bot along with the query */
+	wallet_card?: TonWalletCard;
+}
+
+/** The query notifies the bot about a transaction sent from a TON wallet of the user who sent the query. */
+export interface WidgetQueryTypeSentTransaction {
+	/** Type of the query, always “sent_transaction” */
+	type: "sent_transaction";
+	/** The wallet from which the transaction was sent */
+	wallet: WidgetQueryWallet;
+	/** Value of *msg\_hash* of the transaction */
+	msg_hash: string;
+}
+
+/** The query contains data signed by a TON wallet of the user who sent the query. The data is signed for the domain `bot<bot_id>`, where `<bot_id>` is the identifier of the bot. */
+export interface WidgetQueryTypeSignData {
+	/** Type of the query, always “sign_data” */
+	type: "sign_data";
+	/** The wallet that signed the data */
+	wallet: WidgetQueryWallet;
+	/** JSON-serialized signed data */
+	sign_data: string;
+}
+
+/** This object describes a TON wallet of the user, which is used in a query from a widget. */
+export interface WidgetQueryWallet {
+	/** Address of the wallet */
+	address: string;
+	/** Balance of the wallet, in the *smallest units* of the cryptocurrency, as a decimal number */
+	amount: string;
+	/** *Optional*. Hex-encoded public key of the wallet; omitted if unknown */
+	public_key?: string;
+	/** *Optional*. Base64-encoded serialized StateInit of the wallet contract; omitted if and only if *public\_key* is omitted */
+	state_init?: string;
+}
+
 /** This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps). */
 export interface WriteAccessAllowed {
 	/** *Optional*. *True*, if the access was granted after the user accepted an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps) */
@@ -5478,6 +5766,14 @@ export interface AnswerWebAppQueryParams {
 	result: InlineQueryResult;
 }
 
+/** Use this method to send an answer to a query from a widget. The query must be answered within 15 seconds. The answer is received only by the widget that sent the query and doesn't change data of the widget; use [editMessageWidgetData](https://core.telegram.org/bots/api/#editmessagewidgetdata) or [editSharedWidgetData](https://core.telegram.org/bots/api/#editsharedwidgetdata) to change it. On success, *True* is returned. */
+export interface AnswerWidgetQueryParams {
+	/** Unique identifier for the query to be answered */
+	widget_query_id: string;
+	/** Data to be returned to the widget, 0-1024 bytes */
+	data?: string;
+}
+
 /** Use this method to approve a chat join request. The bot must be an administrator in the chat for this to work and must have the *can\_invite\_users* administrator right. Returns *True* on success. */
 export interface ApproveChatJoinRequestParams {
 	/** Unique identifier for the target chat or username of the target channel in the format `@username` */
@@ -5541,15 +5837,15 @@ export interface ConvertGiftToStarsParams {
 	owned_gift_id: string;
 }
 
-/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
 export interface CopyMessageParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup or channel in the format `@username`) */
+	/** Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup, or channel in the format `@username`) */
 	from_chat_id: number | string;
 	/** Message identifier in the chat specified in *from\_chat\_id* */
 	message_id: number;
@@ -5579,15 +5875,15 @@ export interface CopyMessageParams {
 	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply;
 }
 
-/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
+/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
 export interface CopyMessagesParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the messages will be sent; required if the messages are sent to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup or channel in the format `@username`) */
+	/** Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup, or channel in the format `@username`) */
 	from_chat_id: number | string;
 	/** A JSON-serialized list of 1-100 identifiers of messages in the chat *from\_chat\_id* to copy. The identifiers must be specified in a strictly increasing order. */
 	message_ids: number[];
@@ -5625,7 +5921,7 @@ export interface CreateChatSubscriptionInviteLinkParams {
 	subscription_price: number;
 }
 
-/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
+/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. In the case of a private chat, a link to the topic can be created in the format `https://t.me/<bot_username>/<message_thread_id>`; the link opens the topic only for the user. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 export interface CreateForumTopicParams {
 	/** Unique identifier for the target chat or username of the target supergroup in the format `@username` */
 	chat_id: number | string;
@@ -5729,6 +6025,14 @@ export interface DeleteAllMessageReactionsParams {
 	actor_chat_id?: number;
 }
 
+/** Deletes a regular gift owned by a managed business account without receiving Telegram Stars for it. Requires the *can\_convert\_gifts\_to\_stars* business bot right. The gift can be deleted only if it isn't limited (the field *total\_count* of the [Gift](https://core.telegram.org/bots/api/#gift) is omitted) and wasn't refunded. Returns *True* on success. */
+export interface DeleteBusinessAccountGiftParams {
+	/** Unique identifier of the business connection */
+	business_connection_id: string;
+	/** Unique identifier of the regular gift that should be deleted */
+	owned_gift_id: string;
+}
+
 /** Delete messages on behalf of a business account. Requires the *can\_delete\_sent\_messages* business bot right to delete messages sent by the bot itself, or the *can\_delete\_all\_messages* business bot right to delete any message. Returns *True* on success. */
 export interface DeleteBusinessMessagesParams {
 	/** Unique identifier of the business connection on behalf of which to delete the messages */
@@ -5769,7 +6073,7 @@ export interface DeleteForumTopicParams {
 
 /** Use this method to delete a message, including service messages, with the following limitations: - A message can only be deleted if it was sent less than 48 hours ago. - Service messages about a supergroup, channel, or forum topic creation can't be deleted. - A dice message in a private chat can only be deleted if it was sent more than 24 hours ago. - Bots can delete outgoing messages in private chats, groups, and supergroups. - Bots can delete incoming messages in private chats. - Bots granted *can\_post\_messages* permissions can delete outgoing messages in channels. - If the bot is an administrator of a group, it can delete any message there. - If the bot has *can\_delete\_messages* administrator right in a supergroup or a channel, it can delete any message there. - If the bot has *can\_manage\_direct\_messages* administrator right in a channel, it can delete any message in the corresponding direct messages chat. Returns *True* on success. */
 export interface DeleteMessageParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Identifier of the message to delete */
 	message_id: number;
@@ -5789,7 +6093,7 @@ export interface DeleteMessageReactionParams {
 
 /** Use this method to delete multiple messages simultaneously. If some of the specified messages can't be found, they are skipped. Returns *True* on success. */
 export interface DeleteMessagesParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** A JSON-serialized list of 1-100 identifiers of messages to delete. See [deleteMessage](https://core.telegram.org/bots/api/#deletemessage) for limitations on which messages can be deleted. */
 	message_ids: number[];
@@ -5947,7 +6251,7 @@ export interface EditGeneralForumTopicParams {
 export interface EditMessageCaptionParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message to edit. */
 	message_id?: number;
@@ -5983,7 +6287,7 @@ export interface EditMessageChecklistParams {
 export interface EditMessageLiveLocationParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message to edit. */
 	message_id?: number;
@@ -6009,7 +6313,7 @@ export interface EditMessageLiveLocationParams {
 export interface EditMessageMediaParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message to edit. */
 	message_id?: number;
@@ -6025,7 +6329,7 @@ export interface EditMessageMediaParams {
 export interface EditMessageReplyMarkupParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message to edit. */
 	message_id?: number;
@@ -6039,7 +6343,7 @@ export interface EditMessageReplyMarkupParams {
 export interface EditMessageTextParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message to edit. */
 	message_id?: number;
@@ -6057,6 +6361,30 @@ export interface EditMessageTextParams {
 	rich_message?: InputRichMessage;
 	/** A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards) */
 	reply_markup?: InlineKeyboardMarkup;
+}
+
+/** Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, *True* is returned. */
+export interface EditMessageWidgetDataParams {
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target supergroup in the format `@username`. */
+	chat_id?: number | string;
+	/** Required if *inline\_message\_id* is not specified. Identifier of the message with the widget. */
+	message_id?: number;
+	/** Required if *chat\_id* and *message\_id* are not specified. Identifier of the inline message. */
+	inline_message_id?: string;
+	/** New public data of the widget, 0-1024 bytes; pass an empty string to remove the public data. If omitted, then the public data isn't changed. */
+	public_data?: string;
+	/** New data of the widget, which is specific to the message, 0-1024 bytes; pass an empty string to remove the data. If omitted, then the data isn't changed. */
+	chat_data?: string;
+}
+
+/** Use this method to edit public data of a shared widget created by the bot. A shared widget can be edited at most once per second. On success, *True* is returned. */
+export interface EditSharedWidgetDataParams {
+	/** Unique identifier of the shared widget */
+	widget_id: string;
+	/** New public data of the widget, 0-1024 bytes; pass an empty string to remove the public data */
+	public_data: string;
+	/** The maximum amount of time in seconds that the public data of the widget may be cached client-side; 5-3600. If omitted, then the current value is kept, which is 30 by default. */
+	cache_time?: number;
 }
 
 /** Edits a story previously posted by the bot on behalf of a managed business account. Requires the *can\_manage\_stories* business bot right. Returns [Story](https://core.telegram.org/bots/api/#story) on success. */
@@ -6095,13 +6423,13 @@ export interface ExportChatInviteLinkParams {
 
 /** Use this method to forward messages of any kind. Service messages and messages with protected content can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 export interface ForwardMessageParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be forwarded; required if the message is forwarded to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup or channel in the format `@username`) */
+	/** Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup, or channel in the format `@username`) */
 	from_chat_id: number | string;
 	/** New start timestamp for the forwarded video in the message */
 	video_start_timestamp?: number;
@@ -6119,13 +6447,13 @@ export interface ForwardMessageParams {
 
 /** Use this method to forward multiple messages of any kind. If some of the specified messages can't be found or forwarded, they are skipped. Service messages and messages with protected content can't be forwarded. Album grouping is kept for forwarded messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
 export interface ForwardMessagesParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the messages will be forwarded; required if the messages are forwarded to a direct messages chat */
 	direct_messages_topic_id?: number;
-	/** Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup or channel in the format `@username`) */
+	/** Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup, or channel in the format `@username`) */
 	from_chat_id: number | string;
 	/** A JSON-serialized list of 1-100 identifiers of messages in the chat *from\_chat\_id* to forward. The identifiers must be specified in a strictly increasing order. */
 	message_ids: number[];
@@ -6236,6 +6564,9 @@ export interface GetChatMenuButtonParams {
 	chat_id?: number;
 }
 
+/** Use this method to get the list of backdrops, which can be used as the background of a theme of the screen for sharing a link to a user or a chat. Requires no parameters. Returns a [ChatShareThemeBackdrops](https://core.telegram.org/bots/api/#chatsharethemebackdrops) object. */
+export type GetChatShareThemeBackdropsParams = Record<never, never>;
+
 /** Use this method to get information about custom emoji stickers by their identifiers. Returns an Array of [Sticker](https://core.telegram.org/bots/api/#sticker) objects. */
 export interface GetCustomEmojiStickersParams {
 	/** A JSON-serialized list of custom emoji identifiers. At most 200 custom emoji identifiers can be specified. */
@@ -6324,6 +6655,12 @@ export interface GetStarTransactionsParams {
 /** Use this method to get a sticker set. On success, a [StickerSet](https://core.telegram.org/bots/api/#stickerset) object is returned. */
 export interface GetStickerSetParams {
 	/** Name of the sticker set */
+	name: string;
+}
+
+/** Use this method to get information about a unique gift by its name. Returns a [UniqueGift](https://core.telegram.org/bots/api/#uniquegift) object on success. */
+export interface GetUniqueGiftParams {
+	/** Unique name of the gift */
 	name: string;
 }
 
@@ -6648,8 +6985,8 @@ export interface SavePreparedKeyboardButtonParams {
 export interface SendAnimationParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -6696,8 +7033,8 @@ export interface SendAnimationParams {
 export interface SendAudioParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -6780,8 +7117,8 @@ export interface SendChecklistParams {
 export interface SendContactParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -6816,7 +7153,7 @@ export interface SendContactParams {
 export interface SendDiceParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
@@ -6844,8 +7181,8 @@ export interface SendDiceParams {
 export interface SendDocumentParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -6908,7 +7245,7 @@ export interface SendGameParams {
 export interface SendGiftParams {
 	/** Required if *chat\_id* is not specified. Unique identifier of the target user who will receive the gift. */
 	user_id?: number;
-	/** Required if *user\_id* is not specified. Unique identifier for the chat or username of the channel (in the format `@username`) that will receive the gift. */
+	/** Required if *user\_id* is not specified. Unique identifier for the chat that will receive the gift or username of the channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Identifier of the gift; limited gifts can't be sent to channel chats */
 	gift_id: string;
@@ -6924,7 +7261,7 @@ export interface SendGiftParams {
 
 /** Use this method to send invoices. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 export interface SendInvoiceParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
@@ -6992,8 +7329,8 @@ export interface SendInvoiceParams {
 export interface SendLivePhotoParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target channel (in the format `@channelusername`) */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7034,8 +7371,8 @@ export interface SendLivePhotoParams {
 export interface SendLocationParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7074,7 +7411,7 @@ export interface SendLocationParams {
 export interface SendMediaGroupParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
@@ -7098,8 +7435,8 @@ export interface SendMediaGroupParams {
 export interface SendMessageParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7154,7 +7491,7 @@ export interface SendMessageDraftParams {
 export interface SendPaidMediaParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. If the chat is a channel, all Telegram Star proceeds from this media will be credited to the chat's balance. Otherwise, they will be credited to the bot's balance. */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. If the chat is a channel, all Telegram Star proceeds from this media will be credited to the chat's balance. Otherwise, they will be credited to the bot's balance. */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
@@ -7192,8 +7529,8 @@ export interface SendPaidMediaParams {
 export interface SendPhotoParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7232,7 +7569,7 @@ export interface SendPhotoParams {
 export interface SendPollParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. Polls can't be sent to channel direct messages chats. */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. Polls can't be sent to channel direct messages chats. */
 	chat_id: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
@@ -7304,8 +7641,8 @@ export interface SendPollParams {
 export interface SendRichMessageParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent. Bot can send rich messages on behalf of a business account only if the corresponding user can send rich messages. */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7346,12 +7683,44 @@ export interface SendRichMessageDraftParams {
 	keep_on_stop?: boolean;
 }
 
+/** Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+export interface SendSharedWidgetParams {
+	/** Unique identifier for the target chat or username of the target supergroup in the format `@username` */
+	chat_id: number | string;
+	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
+	message_thread_id?: number;
+	/** Unique identifier of the shared widget */
+	widget_id: string;
+	/** Data of the widget, which is specific to the message, 0-1024 bytes */
+	chat_data?: string;
+	/** Widget caption, 0-1024 characters after entities parsing */
+	caption?: string | FormattedText;
+	/** Mode for parsing entities in the widget caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
+	parse_mode?: string;
+	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
+	caption_entities?: MessageEntity[];
+	/** Pass *True* if the caption must be shown above the widget */
+	show_caption_above_media?: boolean;
+	/** Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound. */
+	disable_notification?: boolean;
+	/** Protects the contents of the sent message from forwarding and saving */
+	protect_content?: boolean;
+	/** Pass *True* to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance. */
+	allow_paid_broadcast?: boolean;
+	/** Unique identifier of the message effect to be added to the message; for private chats only */
+	message_effect_id?: string;
+	/** Description of the message to reply to */
+	reply_parameters?: ReplyParameters;
+	/** Additional interface options. A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards), [custom reply keyboard](/bots/features#keyboards), instructions to remove a reply keyboard or to force a reply from the user. */
+	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply;
+}
+
 /** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 export interface SendStickerParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7382,8 +7751,8 @@ export interface SendStickerParams {
 export interface SendVenueParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7426,8 +7795,8 @@ export interface SendVenueParams {
 export interface SendVideoParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7480,8 +7849,8 @@ export interface SendVideoParams {
 export interface SendVideoNoteParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7516,8 +7885,8 @@ export interface SendVideoNoteParams {
 export interface SendVoiceParams {
 	/** Unique identifier of the business connection on behalf of which the message will be sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
-	chat_id: number | string;
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`; required unless the message is sent as an ephemeral reply to a callback query */
+	chat_id?: number | string;
 	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
 	message_thread_id?: number;
 	/** Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat */
@@ -7544,6 +7913,48 @@ export interface SendVoiceParams {
 	message_effect_id?: string;
 	/** A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined. */
 	suggested_post_parameters?: SuggestedPostParameters;
+	/** Description of the message to reply to */
+	reply_parameters?: ReplyParameters;
+	/** Additional interface options. A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards), [custom reply keyboard](/bots/features#keyboards), instructions to remove a reply keyboard or to force a reply from the user. */
+	reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply;
+}
+
+/** Use this method to send a message with an [HTML widget](/bots/widgets). Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+export interface SendWidgetParams {
+	/** Unique identifier for the target chat or username of the target supergroup in the format `@username` */
+	chat_id: number | string;
+	/** Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only */
+	message_thread_id?: number;
+	/** HTML code of the widget, 1-32768 bytes. The code must not exceed 4096 bytes when compressed by zlib with the maximum compression level. */
+	html: string;
+	/** Width of the widget in logical pixels; omit if the widget must occupy the whole width of the message bubble. The width is clamped by the app to the range from 200 to the maximum width of the message bubble. */
+	width?: number;
+	/** Height of the widget in logical pixels; omit if the height of the widget isn't fixed. The height is clamped by the app to the range 50-600. */
+	height?: number;
+	/** Public data of the widget, 0-1024 bytes, which will be available wherever the widget is shown. If the widget is shared, then all messages with it will have the same public data. */
+	public_data?: string;
+	/** Data of the widget, which is specific to the message, 0-1024 bytes */
+	chat_data?: string;
+	/** Widget caption, 0-1024 characters after entities parsing */
+	caption?: string | FormattedText;
+	/** Mode for parsing entities in the widget caption. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. */
+	parse_mode?: string;
+	/** A JSON-serialized list of special entities that appear in the caption, which can be specified instead of *parse\_mode* */
+	caption_entities?: MessageEntity[];
+	/** Pass *True* if the caption must be shown above the widget */
+	show_caption_above_media?: boolean;
+	/** Pass *True* to allow the widget to send queries to the bot */
+	allow_queries?: boolean;
+	/** Pass *True* to create a shared widget, which can be sent again using the method [sendSharedWidget](https://core.telegram.org/bots/api/#sendsharedwidget) */
+	is_shared?: boolean;
+	/** Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound. */
+	disable_notification?: boolean;
+	/** Protects the contents of the sent message from forwarding and saving */
+	protect_content?: boolean;
+	/** Pass *True* to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance. */
+	allow_paid_broadcast?: boolean;
+	/** Unique identifier of the message effect to be added to the message; for private chats only */
+	message_effect_id?: string;
 	/** Description of the message to reply to */
 	reply_parameters?: ReplyParameters;
 	/** Additional interface options. A JSON-serialized object for an [inline keyboard](/bots/features#inline-keyboards), [custom reply keyboard](/bots/features#keyboards), instructions to remove a reply keyboard or to force a reply from the user. */
@@ -7704,7 +8115,7 @@ export interface SetManagedBotAccessSettingsParams {
 
 /** Use this method to change the chosen reactions on a message. Service messages of some types can't be reacted to. Automatically forwarded messages from a channel to its discussion group have the same available reactions as messages in the channel. Bots can't use paid reactions. Returns *True* on success. */
 export interface SetMessageReactionParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Identifier of the target message. If the message belongs to a media group, the reaction is set to the first non-deleted message in the group instead. */
 	message_id: number;
@@ -7854,7 +8265,7 @@ export interface SetWebhookParams {
 export interface StopMessageLiveLocationParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. */
+	/** Required if *inline\_message\_id* is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. */
 	chat_id?: number | string;
 	/** Required if *inline\_message\_id* is not specified. Identifier of the message with live location to stop. */
 	message_id?: number;
@@ -7868,7 +8279,7 @@ export interface StopMessageLiveLocationParams {
 export interface StopPollParams {
 	/** Unique identifier of the business connection on behalf of which the message to be edited was sent */
 	business_connection_id?: string;
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username` */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username` */
 	chat_id: number | string;
 	/** Identifier of the original message with the poll */
 	message_id: number;
@@ -7974,10 +8385,14 @@ export interface UploadStickerFileParams {
 
 /** Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
 export interface VerifyChatParams {
-	/** Unique identifier for the target chat or username of the target bot, supergroup or channel in the format `@username`. Channel direct messages chats can't be verified. */
+	/** Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format `@username`. Channel direct messages chats can't be verified. */
 	chat_id: number | string;
 	/** Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description. */
-	custom_description?: string;
+	custom_description?: string | FormattedText;
+	/** Mode for parsing entities in the custom description. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Only “text_link” entities are supported. */
+	custom_description_parse_mode?: string;
+	/** A JSON-serialized list of special entities that appear in the custom description, which can be specified instead of *custom\_description\_parse\_mode*. Only “text_link” entities are supported. */
+	custom_description_entities?: MessageEntity[];
 }
 
 /** Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
@@ -7985,7 +8400,11 @@ export interface VerifyUserParams {
 	/** Unique identifier of the target user */
 	user_id: number;
 	/** Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description. */
-	custom_description?: string;
+	custom_description?: string | FormattedText;
+	/** Mode for parsing entities in the custom description. See [formatting options](https://core.telegram.org/bots/api/#formatting-options) for more details. Only “text_link” entities are supported. */
+	custom_description_parse_mode?: string;
+	/** A JSON-serialized list of special entities that appear in the custom description, which can be specified instead of *custom\_description\_parse\_mode*. Only “text_link” entities are supported. */
+	custom_description_entities?: MessageEntity[];
 }
 
 /** every Telegram Bot API method, fully typed. */
@@ -8006,6 +8425,8 @@ export interface BotApiMethods {
 	answerShippingQuery(params: AnswerShippingQueryParams): Promise<boolean>;
 		/** Use this method to set the result of an interaction with a [Web App](/bots/webapps) and send a corresponding message on behalf of the user to the chat from which the query originated. On success, a [SentWebAppMessage](https://core.telegram.org/bots/api/#sentwebappmessage) object is returned. */
 	answerWebAppQuery(params: AnswerWebAppQueryParams): Promise<SentWebAppMessage>;
+		/** Use this method to send an answer to a query from a widget. The query must be answered within 15 seconds. The answer is received only by the widget that sent the query and doesn't change data of the widget; use [editMessageWidgetData](https://core.telegram.org/bots/api/#editmessagewidgetdata) or [editSharedWidgetData](https://core.telegram.org/bots/api/#editsharedwidgetdata) to change it. On success, *True* is returned. */
+	answerWidgetQuery(params: AnswerWidgetQueryParams): Promise<boolean>;
 		/** Use this method to approve a chat join request. The bot must be an administrator in the chat for this to work and must have the *can\_invite\_users* administrator right. Returns *True* on success. */
 	approveChatJoinRequest(params: ApproveChatJoinRequestParams): Promise<boolean>;
 		/** Use this method to approve a suggested post in a direct messages chat. The bot must have the 'can_post_messages' administrator right in the corresponding channel chat. Returns *True* on success. */
@@ -8022,15 +8443,15 @@ export interface BotApiMethods {
 	closeGeneralForumTopic(params: CloseGeneralForumTopicParams): Promise<boolean>;
 		/** Converts a given regular gift to Telegram Stars. Requires the *can\_convert\_gifts\_to\_stars* business bot right. Returns *True* on success. */
 	convertGiftToStars(params: ConvertGiftToStarsParams): Promise<boolean>;
-		/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
+		/** Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success. */
 	copyMessage(params: CopyMessageParams): Promise<MessageId>;
-		/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
+		/** Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\_option\_ids* is known to the bot. The method is analogous to the method [forwardMessages](https://core.telegram.org/bots/api/#forwardmessages), but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent messages is returned. */
 	copyMessages(params: CopyMessagesParams): Promise<MessageId[]>;
 		/** Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
 	createChatInviteLink(params: CreateChatInviteLinkParams): Promise<ChatInviteLink>;
 		/** Use this method to create a [subscription invite link](https://telegram.org/blog/superchannels-star-reactions-subscriptions#star-subscriptions) for a channel chat. The bot must have the *can\_invite\_users* administrator rights. The link can be edited using the method [editChatSubscriptionInviteLink](https://core.telegram.org/bots/api/#editchatsubscriptioninvitelink) or revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
 	createChatSubscriptionInviteLink(params: CreateChatSubscriptionInviteLinkParams): Promise<ChatInviteLink>;
-		/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
+		/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. In the case of a private chat, a link to the topic can be created in the format `https://t.me/<bot_username>/<message_thread_id>`; the link opens the topic only for the user. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 	createForumTopic(params: CreateForumTopicParams): Promise<ForumTopic>;
 		/** Use this method to create a link for an invoice. Returns the created invoice link as *String* on success. */
 	createInvoiceLink(params: CreateInvoiceLinkParams): Promise<string>;
@@ -8042,6 +8463,8 @@ export interface BotApiMethods {
 	declineSuggestedPost(params: DeclineSuggestedPostParams): Promise<boolean>;
 		/** Use this method to remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success. */
 	deleteAllMessageReactions(params: DeleteAllMessageReactionsParams): Promise<boolean>;
+		/** Deletes a regular gift owned by a managed business account without receiving Telegram Stars for it. Requires the *can\_convert\_gifts\_to\_stars* business bot right. The gift can be deleted only if it isn't limited (the field *total\_count* of the [Gift](https://core.telegram.org/bots/api/#gift) is omitted) and wasn't refunded. Returns *True* on success. */
+	deleteBusinessAccountGift(params: DeleteBusinessAccountGiftParams): Promise<boolean>;
 		/** Delete messages on behalf of a business account. Requires the *can\_delete\_sent\_messages* business bot right to delete messages sent by the bot itself, or the *can\_delete\_all\_messages* business bot right to delete any message. Returns *True* on success. */
 	deleteBusinessMessages(params: DeleteBusinessMessagesParams): Promise<boolean>;
 		/** Use this method to delete a chat photo. Photos can't be changed for private chats. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success. */
@@ -8096,6 +8519,10 @@ export interface BotApiMethods {
 	editMessageReplyMarkup(params?: EditMessageReplyMarkupParams): Promise<Message | boolean>;
 		/** Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editMessageText(params?: EditMessageTextParams): Promise<Message | boolean>;
+		/** Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, *True* is returned. */
+	editMessageWidgetData(params?: EditMessageWidgetDataParams): Promise<boolean>;
+		/** Use this method to edit public data of a shared widget created by the bot. A shared widget can be edited at most once per second. On success, *True* is returned. */
+	editSharedWidgetData(params: EditSharedWidgetDataParams): Promise<boolean>;
 		/** Edits a story previously posted by the bot on behalf of a managed business account. Requires the *can\_manage\_stories* business bot right. Returns [Story](https://core.telegram.org/bots/api/#story) on success. */
 	editStory(params: EditStoryParams): Promise<Story>;
 		/** Allows the bot to cancel or re-enable extension of a subscription paid in Telegram Stars. Returns *True* on success. */
@@ -8126,6 +8553,8 @@ export interface BotApiMethods {
 	getChatMemberCount(params: GetChatMemberCountParams): Promise<number>;
 		/** Use this method to get the current value of the bot's menu button in a private chat, or the default menu button. Returns [MenuButton](https://core.telegram.org/bots/api/#menubutton) on success. */
 	getChatMenuButton(params?: GetChatMenuButtonParams): Promise<MenuButton>;
+		/** Use this method to get the list of backdrops, which can be used as the background of a theme of the screen for sharing a link to a user or a chat. Requires no parameters. Returns a [ChatShareThemeBackdrops](https://core.telegram.org/bots/api/#chatsharethemebackdrops) object. */
+	getChatShareThemeBackdrops(params?: GetChatShareThemeBackdropsParams): Promise<ChatShareThemeBackdrops>;
 		/** Use this method to get information about custom emoji stickers by their identifiers. Returns an Array of [Sticker](https://core.telegram.org/bots/api/#sticker) objects. */
 	getCustomEmojiStickers(params: GetCustomEmojiStickersParams): Promise<Sticker[]>;
 		/** Use this method to get basic information about a file and prepare it for downloading. For the moment, bots can download files of up to 20MB in size. On success, a [File](https://core.telegram.org/bots/api/#file) object is returned. The file can then be downloaded via the link `https://api.telegram.org/file/bot<token>/<file_path>`, where `<file_path>` is taken from the response. It is guaranteed that the link will be valid for at least 1 hour. When the link expires, a new one can be requested by calling [getFile](https://core.telegram.org/bots/api/#getfile) again. */
@@ -8156,6 +8585,8 @@ export interface BotApiMethods {
 	getStarTransactions(params?: GetStarTransactionsParams): Promise<StarTransactions>;
 		/** Use this method to get a sticker set. On success, a [StickerSet](https://core.telegram.org/bots/api/#stickerset) object is returned. */
 	getStickerSet(params: GetStickerSetParams): Promise<StickerSet>;
+		/** Use this method to get information about a unique gift by its name. Returns a [UniqueGift](https://core.telegram.org/bots/api/#uniquegift) object on success. */
+	getUniqueGift(params: GetUniqueGiftParams): Promise<UniqueGift>;
 		/** Use this method to receive incoming updates using long polling ([wiki](https://en.wikipedia.org/wiki/Push_technology#Long_polling)). Returns an Array of [Update](https://core.telegram.org/bots/api/#update) objects. */
 	getUpdates(params?: GetUpdatesParams): Promise<Update[]>;
 		/** Use this method to get the list of boosts added to a chat by a user. Requires administrator rights in the chat. Returns a [UserChatBoosts](https://core.telegram.org/bots/api/#userchatboosts) object. */
@@ -8256,6 +8687,8 @@ export interface BotApiMethods {
 	sendRichMessage(params: SendRichMessageParams): Promise<Message>;
 		/** Use this method to stream a partial rich message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendRichMessage](https://core.telegram.org/bots/api/#sendrichmessage) with the complete message to persist it in the user's chat. Returns *True* on success. */
 	sendRichMessageDraft(params: SendRichMessageDraftParams): Promise<boolean>;
+		/** Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendSharedWidget(params: SendSharedWidgetParams): Promise<Message>;
 		/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendSticker(params: SendStickerParams): Promise<Message>;
 		/** Use this method to send information about a venue. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -8266,6 +8699,8 @@ export interface BotApiMethods {
 	sendVideoNote(params: SendVideoNoteParams): Promise<Message>;
 		/** Use this method to send audio files, if you want Telegram clients to display the file as a playable voice message. For this to work, your audio must be in an .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats may be sent as [Audio](https://core.telegram.org/bots/api/#audio) or [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send voice messages of up to 50 MB in size, this limit may be changed in the future. */
 	sendVoice(params: SendVoiceParams): Promise<Message>;
+		/** Use this method to send a message with an [HTML widget](/bots/widgets). Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendWidget(params: SendWidgetParams): Promise<Message>;
 		/** Changes the bio of a managed business account. Requires the *can\_change\_bio* business bot right. Returns *True* on success. */
 	setBusinessAccountBio(params: SetBusinessAccountBioParams): Promise<boolean>;
 		/** Changes the privacy settings pertaining to incoming gifts in a managed business account. Requires the *can\_change\_gift\_settings* business bot right. Returns *True* on success. */

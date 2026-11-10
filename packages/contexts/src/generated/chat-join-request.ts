@@ -103,6 +103,10 @@ export class ChatJoinRequestContextBase {
 			: ((a ?? {}) as Omit<t.SendVideoNoteParams, "chat_id">);
 		return this.api.call<t.Message>("sendVideoNote", { chat_id: this.chat.id, ...params });
 	}
+	/** Use this method to send a message with an [HTML widget](/bots/widgets). Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
+	sendWidget(params: Omit<t.SendWidgetParams, "chat_id">) {
+		return this.api.call<t.Message>("sendWidget", { chat_id: this.chat.id, ...params });
+	}
 	/** Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
 	sendPaidMedia(params: Omit<t.SendPaidMediaParams, "chat_id">) {
 		return this.api.call<t.Message>("sendPaidMedia", { chat_id: this.chat.id, ...params });
@@ -153,23 +157,23 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("sendChatAction", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get a list of profile pictures for a user. Returns a [UserProfilePhotos](https://core.telegram.org/bots/api/#userprofilephotos) object. */
-	getUserProfilePhotos(params: Omit<t.GetUserProfilePhotosParams, "user_id">) {
+	getUserProfilePhotos(params?: Omit<t.GetUserProfilePhotosParams, "user_id">) {
 		return this.api.call<t.UserProfilePhotos>("getUserProfilePhotos", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to get a list of profile audios for a user. Returns a [UserProfileAudios](https://core.telegram.org/bots/api/#userprofileaudios) object. */
-	getUserProfileAudios(params: Omit<t.GetUserProfileAudiosParams, "user_id">) {
+	getUserProfileAudios(params?: Omit<t.GetUserProfileAudiosParams, "user_id">) {
 		return this.api.call<t.UserProfileAudios>("getUserProfileAudios", { user_id: this.from.id, ...params });
 	}
 	/** Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](/bots/webapps#initializing-mini-apps). Returns *True* on success. */
-	setUserEmojiStatus(params: Omit<t.SetUserEmojiStatusParams, "user_id">) {
+	setUserEmojiStatus(params?: Omit<t.SetUserEmojiStatusParams, "user_id">) {
 		return this.api.call<boolean>("setUserEmojiStatus", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to ban a user in a group, a supergroup or a channel. In the case of supergroups and channels, the user will not be able to return to the chat on their own using invite links, etc., unless [unbanned](https://core.telegram.org/bots/api/#unbanchatmember) first. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success. */
-	banChatMember(params: Omit<t.BanChatMemberParams, "chat_id" | "user_id">) {
+	banChatMember(params?: Omit<t.BanChatMemberParams, "chat_id" | "user_id">) {
 		return this.api.call<boolean>("banChatMember", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to unban a previously banned user in a supergroup or channel. The user will **not** return to the group or channel automatically, but will be able to join via link, etc. The bot must be an administrator for this to work. By default, this method guarantees that after the call the user is not a member of the chat, but will be able to join it. So if the user is a member of the chat they will also be **removed** from the chat. If you don't want this, use the parameter *only\_if\_banned*. Returns *True* on success. */
-	unbanChatMember(params: Omit<t.UnbanChatMemberParams, "chat_id" | "user_id">) {
+	unbanChatMember(params?: Omit<t.UnbanChatMemberParams, "chat_id" | "user_id">) {
 		return this.api.call<boolean>("unbanChatMember", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to restrict a user in a supergroup. The bot must be an administrator in the supergroup for this to work and must have the appropriate administrator rights. Pass *True* for all permissions to lift restrictions from a user. Returns *True* on success. */
@@ -177,7 +181,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("restrictChatMember", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to promote or demote a user in a supergroup or a channel. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Pass *False* for all boolean parameters to demote a user. Returns *True* on success. */
-	promoteChatMember(params: Omit<t.PromoteChatMemberParams, "chat_id" | "user_id">) {
+	promoteChatMember(params?: Omit<t.PromoteChatMemberParams, "chat_id" | "user_id">) {
 		return this.api.call<boolean>("promoteChatMember", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to set a custom title for an administrator in a supergroup promoted by the bot. Returns *True* on success. */
@@ -185,7 +189,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("setChatAdministratorCustomTitle", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to set a tag for a regular member in a group or a supergroup. The bot must be an administrator in the chat for this to work and must have the *can\_manage\_tags* administrator right. Returns *True* on success. */
-	setChatMemberTag(params: Omit<t.SetChatMemberTagParams, "chat_id" | "user_id">) {
+	setChatMemberTag(params?: Omit<t.SetChatMemberTagParams, "chat_id" | "user_id">) {
 		return this.api.call<boolean>("setChatMemberTag", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to ban a channel chat in a supergroup or a channel. Until the chat is [unbanned](https://core.telegram.org/bots/api/#unbanchatsenderchat), the owner of the banned chat won't be able to send messages on behalf of **any of their channels**. The bot must be an administrator in the supergroup or channel for this to work and must have the appropriate administrator rights. Returns *True* on success. */
@@ -205,7 +209,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<string>("exportChatInviteLink", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
-	createChatInviteLink(params: Omit<t.CreateChatInviteLinkParams, "chat_id">) {
+	createChatInviteLink(params?: Omit<t.CreateChatInviteLinkParams, "chat_id">) {
 		return this.api.call<t.ChatInviteLink>("createChatInviteLink", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit a non-primary invite link created by the bot. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the edited invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object. */
@@ -245,11 +249,11 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("setChatTitle", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to change the description of a group, a supergroup or a channel. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success. */
-	setChatDescription(params: Omit<t.SetChatDescriptionParams, "chat_id">) {
+	setChatDescription(params?: Omit<t.SetChatDescriptionParams, "chat_id">) {
 		return this.api.call<boolean>("setChatDescription", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns *True* on success. */
-	unpin(params: Omit<t.UnpinChatMessageParams, "chat_id">) {
+	unpin(params?: Omit<t.UnpinChatMessageParams, "chat_id">) {
 		return this.api.call<boolean>("unpinChatMessage", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns *True* on success. */
@@ -265,7 +269,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<t.ChatFullInfo>("getChat", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get a list of administrators in a chat. Returns an Array of [ChatMember](https://core.telegram.org/bots/api/#chatmember) objects. */
-	getChatAdministrators(params: Omit<t.GetChatAdministratorsParams, "chat_id">) {
+	getChatAdministrators(params?: Omit<t.GetChatAdministratorsParams, "chat_id">) {
 		return this.api.call<t.ChatMember[]>("getChatAdministrators", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get the number of members in a chat. Returns *Integer* on success. */
@@ -288,7 +292,7 @@ export class ChatJoinRequestContextBase {
 	deleteChatStickerSet(params?: Omit<t.DeleteChatStickerSetParams, "chat_id">) {
 		return this.api.call<boolean>("deleteChatStickerSet", { chat_id: this.chat.id, ...params });
 	}
-	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
+	/** Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\_manage\_topics* administrator right. In the case of a private chat, a link to the topic can be created in the format `https://t.me/<bot_username>/<message_thread_id>`; the link opens the topic only for the user. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object. */
 	createForumTopic(params: Omit<t.CreateForumTopicParams, "chat_id">) {
 		return this.api.call<t.ForumTopic>("createForumTopic", { chat_id: this.chat.id, ...params });
 	}
@@ -337,7 +341,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("setManagedBotAccessSettings", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to change the bot's menu button in a private chat, or the default menu button. Returns *True* on success. */
-	setChatMenuButton(params: Omit<t.SetChatMenuButtonParams, "chat_id">) {
+	setChatMenuButton(params?: Omit<t.SetChatMenuButtonParams, "chat_id">) {
 		return this.api.call<boolean>("setChatMenuButton", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get the current value of the bot's menu button in a private chat, or the default menu button. Returns [MenuButton](https://core.telegram.org/bots/api/#menubutton) on success. */
@@ -353,11 +357,11 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("giftPremiumSubscription", { user_id: this.from.id, ...params });
 	}
 	/** Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyUser(params: Omit<t.VerifyUserParams, "user_id">) {
+	verifyUser(params?: Omit<t.VerifyUserParams, "user_id">) {
 		return this.api.call<boolean>("verifyUser", { user_id: this.from.id, ...params });
 	}
 	/** Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyChat(params: Omit<t.VerifyChatParams, "chat_id">) {
+	verifyChat(params?: Omit<t.VerifyChatParams, "chat_id">) {
 		return this.api.call<boolean>("verifyChat", { chat_id: this.chat.id, ...params });
 	}
 	/** Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
@@ -369,11 +373,11 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("removeChatVerification", { chat_id: this.chat.id, ...params });
 	}
 	/** Returns the gifts owned and hosted by a user. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
-	getUserGifts(params: Omit<t.GetUserGiftsParams, "user_id">) {
+	getUserGifts(params?: Omit<t.GetUserGiftsParams, "user_id">) {
 		return this.api.call<t.OwnedGifts>("getUserGifts", { user_id: this.from.id, ...params });
 	}
 	/** Returns the gifts owned by a chat. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
-	getChatGifts(params: Omit<t.GetChatGiftsParams, "chat_id">) {
+	getChatGifts(params?: Omit<t.GetChatGiftsParams, "chat_id">) {
 		return this.api.call<t.OwnedGifts>("getChatGifts", { chat_id: this.chat.id, ...params });
 	}
 	/** Stores a message that can be sent by a user of a Mini App. Returns a [PreparedInlineMessage](https://core.telegram.org/bots/api/#preparedinlinemessage) object. */
@@ -385,11 +389,11 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<t.PreparedKeyboardButton>("savePreparedKeyboardButton", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editText(params: Omit<t.EditMessageTextParams, "chat_id">) {
+	editText(params?: Omit<t.EditMessageTextParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageText", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit captions of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
-	editCaption(params: Omit<t.EditMessageCaptionParams, "chat_id">) {
+	editCaption(params?: Omit<t.EditMessageCaptionParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("editMessageCaption", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit animation, audio, document, live photo, photo, or video messages, or to replace a text or a rich message with a media. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
@@ -401,8 +405,12 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<t.Message | boolean>("editMessageLiveLocation", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to stop updating a live location message before *live\_period* expires. On success, if the message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. */
-	stopMessageLiveLocation(params: Omit<t.StopMessageLiveLocationParams, "chat_id">) {
+	stopMessageLiveLocation(params?: Omit<t.StopMessageLiveLocationParams, "chat_id">) {
 		return this.api.call<t.Message | boolean>("stopMessageLiveLocation", { chat_id: this.chat.id, ...params });
+	}
+	/** Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, *True* is returned. */
+	editMessageWidgetData(params?: Omit<t.EditMessageWidgetDataParams, "chat_id">) {
+		return this.api.call<boolean>("editMessageWidgetData", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent. */
 	editReplyMarkup(replyMarkup: t.InlineKeyboardMarkup | { toJSON(): t.InlineKeyboardMarkup }, params?: Omit<t.EditMessageReplyMarkupParams, "chat_id" | "reply_markup">): Promise<t.Message | boolean>;
@@ -438,7 +446,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<boolean>("deleteEphemeralMessage", { chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success. */
-	deleteAllMessageReactions(params: Omit<t.DeleteAllMessageReactionsParams, "chat_id" | "user_id">) {
+	deleteAllMessageReactions(params?: Omit<t.DeleteAllMessageReactionsParams, "chat_id" | "user_id">) {
 		return this.api.call<boolean>("deleteAllMessageReactions", { chat_id: this.chat.id, user_id: this.from.id, ...params });
 	}
 	/** Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */
@@ -503,7 +511,7 @@ export class ChatJoinRequestContextBase {
 		return this.api.call<t.Message | boolean>("setGameScore", { user_id: this.from.id, chat_id: this.chat.id, ...params });
 	}
 	/** Use this method to get data for high score tables. Will return the score of the specified user and several of their neighbors in a game. Returns an Array of [GameHighScore](https://core.telegram.org/bots/api/#gamehighscore) objects.  This method will currently return scores for the target user, plus two of their closest neighbors on each side. Will also return the top three users if the user and their neighbors are not among them. Please note that this behavior is subject to change. */
-	getGameHighScores(params: Omit<t.GetGameHighScoresParams, "user_id" | "chat_id">) {
+	getGameHighScores(params?: Omit<t.GetGameHighScoresParams, "user_id" | "chat_id">) {
 		return this.api.call<t.GameHighScore[]>("getGameHighScores", { user_id: this.from.id, chat_id: this.chat.id, ...params });
 	}
 }

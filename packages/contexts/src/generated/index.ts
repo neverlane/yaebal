@@ -15,6 +15,8 @@ import { MessageReactionCountContext } from "./message-reaction-count.js";
 import { InlineQueryContext } from "../sugar/inline-query.js";
 import { ChosenInlineResultContext } from "./chosen-inline-result.js";
 import { CallbackQueryContext } from "../sugar/callback-query.js";
+import { WidgetQueryContext } from "./widget-query.js";
+import { SharedWidgetQueryContext } from "./shared-widget-query.js";
 import { ShippingQueryContext } from "../sugar/shipping-query.js";
 import { PreCheckoutQueryContext } from "../sugar/pre-checkout-query.js";
 import { PurchasedPaidMediaContext } from "./purchased-paid-media.js";
@@ -52,6 +54,8 @@ export { InlineQueryContextBase } from "./inline-query.js";
 export { ChosenInlineResultContext } from "./chosen-inline-result.js";
 export { CallbackQueryContext } from "../sugar/callback-query.js";
 export { CallbackQueryContextBase } from "./callback-query.js";
+export { WidgetQueryContext } from "./widget-query.js";
+export { SharedWidgetQueryContext } from "./shared-widget-query.js";
 export { ShippingQueryContext } from "../sugar/shipping-query.js";
 export { ShippingQueryContextBase } from "./shipping-query.js";
 export { PreCheckoutQueryContext } from "../sugar/pre-checkout-query.js";
@@ -85,6 +89,8 @@ export interface ContextByType {
 	inline_query: InlineQueryContext;
 	chosen_inline_result: ChosenInlineResultContext;
 	callback_query: CallbackQueryContext;
+	widget_query: WidgetQueryContext;
+	shared_widget_query: SharedWidgetQueryContext;
 	shipping_query: ShippingQueryContext;
 	pre_checkout_query: PreCheckoutQueryContext;
 	purchased_paid_media: PurchasedPaidMediaContext;
@@ -115,6 +121,8 @@ const CONTEXTS = {
 	inline_query: InlineQueryContext,
 	chosen_inline_result: ChosenInlineResultContext,
 	callback_query: CallbackQueryContext,
+	widget_query: WidgetQueryContext,
+	shared_widget_query: SharedWidgetQueryContext,
 	shipping_query: ShippingQueryContext,
 	pre_checkout_query: PreCheckoutQueryContext,
 	purchased_paid_media: PurchasedPaidMediaContext,

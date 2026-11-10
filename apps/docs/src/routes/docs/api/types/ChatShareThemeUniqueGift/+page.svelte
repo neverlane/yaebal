@@ -2,4 +2,4 @@
 	import ApiTypePage from "$lib/api/ApiTypePage.svelte";
 </script>
 
-<ApiTypePage name={"StoryAreaPosition"} />
+<ApiTypePage name={"ChatShareThemeUniqueGift"} />

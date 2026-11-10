@@ -2,7 +2,7 @@
 // source of truth: packages/types/schema.json (the same file @yaebal/types and
 // @yaebal/contexts generate from). regenerate: pnpm --filter @yaebal/docs generate:api
 
-export const BOT_API_VERSION = "10.3";
+export const BOT_API_VERSION = "10.4";
 
 export interface ApiField {
 	name: string;
@@ -208,8 +208,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -299,12 +299,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendmessage",
 		"isApiShortcut": true,
-		"usageExample": "import type { SendMessageParams } from \"@yaebal/types\";\n\nawait bot.api.sendMessage({\n  chat_id: 123456789,\n  text: \"hello from yaebal!\",\n} satisfies SendMessageParams);",
+		"usageExample": "import type { SendMessageParams } from \"@yaebal/types\";\n\nawait bot.api.sendMessage({\n  text: \"hello from yaebal!\",\n} satisfies SendMessageParams);",
 		"contextShortcut": {
 			"name": "reply",
 			"signature": "reply(params: Omit<SendMessageParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
 			"jsdoc": "reply to this message.",
-			"availableOn": 24
+			"availableOn": 26
 		}
 	},
 	{
@@ -316,7 +316,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -334,7 +334,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "from_chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup or channel in the format <code>@username</code>)"
+				"description": "Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup, or channel in the format <code>@username</code>)"
 			},
 			{
 				"name": "video_start_timestamp",
@@ -379,7 +379,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { ForwardMessageParams } from \"@yaebal/types\";\n\nawait bot.api.forwardMessage({\n  chat_id: 123456789,\n  from_chat_id: 123456789,\n  message_id: 1,\n} satisfies ForwardMessageParams);",
 		"contextShortcut": {
 			"name": "forward",
-			"signature": "forward(chatId: number | string, params?: Omit<ForwardMessageParams, \"message_thread_id\" | \"direct_messages_topic_id\" | \"from_chat_id\" | \"message_id\" | \"chat_id\">)",
+			"signature": "forward(chatId: number | string, params?: Omit<ForwardMessageParams, \"from_chat_id\" | \"message_id\" | \"chat_id\">)",
 			"jsdoc": "Use this method to forward messages of any kind. Service messages and messages with protected content can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
 			"availableOn": 9
 		}
@@ -393,7 +393,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -411,7 +411,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "from_chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup or channel in the format <code>@username</code>)"
+				"description": "Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup, or channel in the format <code>@username</code>)"
 			},
 			{
 				"name": "message_ids",
@@ -440,13 +440,13 @@ export const apiMethods: ApiMethodDoc[] = [
 	{
 		"name": "copyMessage",
 		"category": "Available methods",
-		"description": "<p>Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz <a href=\"/docs/api/types/Poll\">poll</a> can be copied only if the value of the field <em>correct_option_ids</em> is known to the bot. The method is analogous to the method <a href=\"/docs/api/methods/forwardMessage\">forwardMessage</a>, but the copied message doesn't have a link to the original message. Returns the <a href=\"/docs/api/types/MessageId\">MessageId</a> of the sent message on success.</p>",
+		"description": "<p>Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz <a href=\"/docs/api/types/Poll\">poll</a> can be copied only if the value of the field <em>correct_option_ids</em> is known to the bot. The method is analogous to the method <a href=\"/docs/api/methods/forwardMessage\">forwardMessage</a>, but the copied message doesn't have a link to the original message. Returns the <a href=\"/docs/api/types/MessageId\">MessageId</a> of the sent message on success.</p>",
 		"params": [
 			{
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -464,7 +464,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "from_chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup or channel in the format <code>@username</code>)"
+				"description": "Unique identifier for the chat where the original message was sent (or username of the target bot, supergroup, or channel in the format <code>@username</code>)"
 			},
 			{
 				"name": "message_id",
@@ -551,21 +551,21 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { CopyMessageParams } from \"@yaebal/types\";\n\nawait bot.api.copyMessage({\n  chat_id: 123456789,\n  from_chat_id: 123456789,\n  message_id: 1,\n} satisfies CopyMessageParams);",
 		"contextShortcut": {
 			"name": "copy",
-			"signature": "copy(chatId: number | string, params?: Omit<CopyMessageParams, \"message_thread_id\" | \"direct_messages_topic_id\" | \"from_chat_id\" | \"message_id\" | \"chat_id\">)",
-			"jsdoc": "Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\\_option\\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success.",
+			"signature": "copy(chatId: number | string, params?: Omit<CopyMessageParams, \"from_chat_id\" | \"message_id\" | \"chat_id\">)",
+			"jsdoc": "Use this method to copy messages of any kind. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz [poll](https://core.telegram.org/bots/api/#poll) can be copied only if the value of the field *correct\\_option\\_ids* is known to the bot. The method is analogous to the method [forwardMessage](https://core.telegram.org/bots/api/#forwardmessage), but the copied message doesn't have a link to the original message. Returns the [MessageId](https://core.telegram.org/bots/api/#messageid) of the sent message on success.",
 			"availableOn": 9
 		}
 	},
 	{
 		"name": "copyMessages",
 		"category": "Available methods",
-		"description": "<p>Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, and invoice messages can't be copied. A quiz <a href=\"/docs/api/types/Poll\">poll</a> can be copied only if the value of the field <em>correct_option_ids</em> is known to the bot. The method is analogous to the method <a href=\"/docs/api/methods/forwardMessages\">forwardMessages</a>, but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of <a href=\"/docs/api/types/MessageId\">MessageId</a> of the sent messages is returned.</p>",
+		"description": "<p>Use this method to copy messages of any kind. If some of the specified messages can't be found or copied, they are skipped. Service messages, paid media messages, giveaway messages, giveaway winners messages, invoice messages, and widget messages can't be copied. A quiz <a href=\"/docs/api/types/Poll\">poll</a> can be copied only if the value of the field <em>correct_option_ids</em> is known to the bot. The method is analogous to the method <a href=\"/docs/api/methods/forwardMessages\">forwardMessages</a>, but the copied messages don't have a link to the original message. Album grouping is kept for copied messages. On success, an Array of <a href=\"/docs/api/types/MessageId\">MessageId</a> of the sent messages is returned.</p>",
 		"params": [
 			{
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -583,7 +583,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "from_chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup or channel in the format <code>@username</code>)"
+				"description": "Unique identifier for the chat where the original messages were sent (or username of the target bot, supergroup, or channel in the format <code>@username</code>)"
 			},
 			{
 				"name": "message_ids",
@@ -629,8 +629,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -732,12 +732,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendphoto",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendPhotoParams } from \"@yaebal/types\";\n\nawait bot.api.sendPhoto({\n  chat_id: 123456789,\n  photo: media.url(\"https://picsum.photos/400\"),\n} satisfies SendPhotoParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendPhotoParams } from \"@yaebal/types\";\n\nawait bot.api.sendPhoto({\n  photo: media.url(\"https://picsum.photos/400\"),\n} satisfies SendPhotoParams);",
 		"contextShortcut": {
 			"name": "sendPhoto",
-			"signature": "sendPhoto(photo: InputFile | string, params?: Omit<SendPhotoParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"photo\">)",
+			"signature": "sendPhoto(photo: InputFile | string, params?: Omit<SendPhotoParams, \"chat_id\" | \"photo\">)",
 			"jsdoc": "Use this method to send photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -754,8 +754,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target channel (in the format <code>@channelusername</code>)"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -863,12 +863,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendlivephoto",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendLivePhotoParams } from \"@yaebal/types\";\n\nawait bot.api.sendLivePhoto({\n  chat_id: 123456789,\n  live_photo: media.url(\"https://picsum.photos/400\"),\n  photo: media.url(\"https://picsum.photos/400\"),\n} satisfies SendLivePhotoParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendLivePhotoParams } from \"@yaebal/types\";\n\nawait bot.api.sendLivePhoto({\n  live_photo: media.url(\"https://picsum.photos/400\"),\n  photo: media.url(\"https://picsum.photos/400\"),\n} satisfies SendLivePhotoParams);",
 		"contextShortcut": {
 			"name": "sendLivePhoto",
-			"signature": "sendLivePhoto(params: Omit<SendLivePhotoParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendLivePhoto(params: Omit<SendLivePhotoParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send live photos. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 19
 		}
 	},
 	{
@@ -885,8 +885,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1000,12 +1000,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendaudio",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendAudioParams } from \"@yaebal/types\";\n\nawait bot.api.sendAudio({\n  chat_id: 123456789,\n  audio: media.url(\"https://picsum.photos/400\"),\n} satisfies SendAudioParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendAudioParams } from \"@yaebal/types\";\n\nawait bot.api.sendAudio({\n  audio: media.url(\"https://picsum.photos/400\"),\n} satisfies SendAudioParams);",
 		"contextShortcut": {
 			"name": "sendAudio",
-			"signature": "sendAudio(audio: InputFile | string, params?: Omit<SendAudioParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"audio\">)",
+			"signature": "sendAudio(audio: InputFile | string, params?: Omit<SendAudioParams, \"chat_id\" | \"audio\">)",
 			"jsdoc": "Use this method to send audio files, if you want Telegram clients to display them in the music player. Your audio must be in the .MP3 or .M4A format. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send audio files of up to 50 MB in size, this limit may be changed in the future.  For sending voice messages, use the [sendVoice](https://core.telegram.org/bots/api/#sendvoice) method instead.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -1022,8 +1022,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1125,12 +1125,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#senddocument",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendDocumentParams } from \"@yaebal/types\";\n\nawait bot.api.sendDocument({\n  chat_id: 123456789,\n  document: media.url(\"https://picsum.photos/400\"),\n} satisfies SendDocumentParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendDocumentParams } from \"@yaebal/types\";\n\nawait bot.api.sendDocument({\n  document: media.url(\"https://picsum.photos/400\"),\n} satisfies SendDocumentParams);",
 		"contextShortcut": {
 			"name": "sendDocument",
-			"signature": "sendDocument(document: InputFile | string, params?: Omit<SendDocumentParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"document\">)",
+			"signature": "sendDocument(document: InputFile | string, params?: Omit<SendDocumentParams, \"chat_id\" | \"document\">)",
 			"jsdoc": "Use this method to send general files. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send files of any type of up to 50 MB in size, this limit may be changed in the future.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -1147,8 +1147,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1292,12 +1292,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendvideo",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVideoParams } from \"@yaebal/types\";\n\nawait bot.api.sendVideo({\n  chat_id: 123456789,\n  video: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVideoParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVideoParams } from \"@yaebal/types\";\n\nawait bot.api.sendVideo({\n  video: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVideoParams);",
 		"contextShortcut": {
 			"name": "sendVideo",
-			"signature": "sendVideo(video: InputFile | string, params?: Omit<SendVideoParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"video\">)",
+			"signature": "sendVideo(video: InputFile | string, params?: Omit<SendVideoParams, \"chat_id\" | \"video\">)",
 			"jsdoc": "Use this method to send video files, Telegram clients support MPEG4 videos (other formats may be sent as [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send video files of up to 50 MB in size, this limit may be changed in the future.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -1314,8 +1314,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1441,12 +1441,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendanimation",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendAnimationParams } from \"@yaebal/types\";\n\nawait bot.api.sendAnimation({\n  chat_id: 123456789,\n  animation: media.url(\"https://picsum.photos/400\"),\n} satisfies SendAnimationParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendAnimationParams } from \"@yaebal/types\";\n\nawait bot.api.sendAnimation({\n  animation: media.url(\"https://picsum.photos/400\"),\n} satisfies SendAnimationParams);",
 		"contextShortcut": {
 			"name": "sendAnimation",
-			"signature": "sendAnimation(animation: InputFile | string, params?: Omit<SendAnimationParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"animation\">)",
+			"signature": "sendAnimation(animation: InputFile | string, params?: Omit<SendAnimationParams, \"chat_id\" | \"animation\">)",
 			"jsdoc": "Use this method to send animation files (GIF or H.264/MPEG-4 AVC video without sound). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send animation files of up to 50 MB in size, this limit may be changed in the future.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -1463,8 +1463,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1560,12 +1560,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendvoice",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVoiceParams } from \"@yaebal/types\";\n\nawait bot.api.sendVoice({\n  chat_id: 123456789,\n  voice: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVoiceParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVoiceParams } from \"@yaebal/types\";\n\nawait bot.api.sendVoice({\n  voice: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVoiceParams);",
 		"contextShortcut": {
 			"name": "sendVoice",
-			"signature": "sendVoice(voice: InputFile | string, params?: Omit<SendVoiceParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"voice\">)",
+			"signature": "sendVoice(voice: InputFile | string, params?: Omit<SendVoiceParams, \"chat_id\" | \"voice\">)",
 			"jsdoc": "Use this method to send audio files, if you want Telegram clients to display the file as a playable voice message. For this to work, your audio must be in an .OGG file encoded with OPUS, or in .MP3 format, or in .M4A format (other formats may be sent as [Audio](https://core.telegram.org/bots/api/#audio) or [Document](https://core.telegram.org/bots/api/#document)). On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. Bots can currently send voice messages of up to 50 MB in size, this limit may be changed in the future.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -1582,8 +1582,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1673,12 +1673,244 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendvideonote",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVideoNoteParams } from \"@yaebal/types\";\n\nawait bot.api.sendVideoNote({\n  chat_id: 123456789,\n  video_note: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVideoNoteParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendVideoNoteParams } from \"@yaebal/types\";\n\nawait bot.api.sendVideoNote({\n  video_note: media.url(\"https://picsum.photos/400\"),\n} satisfies SendVideoNoteParams);",
 		"contextShortcut": {
 			"name": "sendVideoNote",
-			"signature": "sendVideoNote(videoNote: InputFile | string, params?: Omit<SendVideoNoteParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"video_note\">)",
+			"signature": "sendVideoNote(videoNote: InputFile | string, params?: Omit<SendVideoNoteParams, \"chat_id\" | \"video_note\">)",
 			"jsdoc": "Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 16
+			"availableOn": 19
+		}
+	},
+	{
+		"name": "sendWidget",
+		"category": "Available methods",
+		"description": "<p>Use this method to send a message with an <a href=\"https://core.telegram.org/bots/widgets\" target=\"_blank\" rel=\"noopener noreferrer\">HTML widget</a>. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent <a href=\"/docs/api/types/Message\">Message</a> is returned.</p>",
+		"params": [
+			{
+				"name": "chat_id",
+				"type": "number | string",
+				"required": true,
+				"description": "Unique identifier for the target chat or username of the target supergroup in the format <code>@username</code>"
+			},
+			{
+				"name": "message_thread_id",
+				"type": "number",
+				"required": false,
+				"description": "Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only"
+			},
+			{
+				"name": "html",
+				"type": "string",
+				"required": true,
+				"description": "HTML code of the widget, 1-32768 bytes. The code must not exceed 4096 bytes when compressed by zlib with the maximum compression level."
+			},
+			{
+				"name": "width",
+				"type": "number",
+				"required": false,
+				"description": "Width of the widget in logical pixels; omit if the widget must occupy the whole width of the message bubble. The width is clamped by the app to the range from 200 to the maximum width of the message bubble."
+			},
+			{
+				"name": "height",
+				"type": "number",
+				"required": false,
+				"description": "Height of the widget in logical pixels; omit if the height of the widget isn't fixed. The height is clamped by the app to the range 50-600."
+			},
+			{
+				"name": "public_data",
+				"type": "string",
+				"required": false,
+				"description": "Public data of the widget, 0-1024 bytes, which will be available wherever the widget is shown. If the widget is shared, then all messages with it will have the same public data."
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "Data of the widget, which is specific to the message, 0-1024 bytes"
+			},
+			{
+				"name": "caption",
+				"type": "string",
+				"required": false,
+				"description": "Widget caption, 0-1024 characters after entities parsing"
+			},
+			{
+				"name": "parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "Mode for parsing entities in the widget caption. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details."
+			},
+			{
+				"name": "caption_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "A JSON-serialized list of special entities that appear in the caption, which can be specified instead of <em>parse_mode</em>"
+			},
+			{
+				"name": "show_caption_above_media",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> if the caption must be shown above the widget"
+			},
+			{
+				"name": "allow_queries",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow the widget to send queries to the bot"
+			},
+			{
+				"name": "is_shared",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to create a shared widget, which can be sent again using the method <a href=\"/docs/api/methods/sendSharedWidget\">sendSharedWidget</a>"
+			},
+			{
+				"name": "disable_notification",
+				"type": "boolean",
+				"required": false,
+				"description": "Sends the message <a href=\"https://telegram.org/blog/channels-2-0#silent-messages\" target=\"_blank\" rel=\"noopener noreferrer\">silently</a>. Users will receive a notification with no sound."
+			},
+			{
+				"name": "protect_content",
+				"type": "boolean",
+				"required": false,
+				"description": "Protects the contents of the sent message from forwarding and saving"
+			},
+			{
+				"name": "allow_paid_broadcast",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow up to 1000 messages per second, ignoring <a href=\"https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once\" target=\"_blank\" rel=\"noopener noreferrer\">broadcasting limits</a> for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance."
+			},
+			{
+				"name": "message_effect_id",
+				"type": "string",
+				"required": false,
+				"description": "Unique identifier of the message effect to be added to the message; for private chats only"
+			},
+			{
+				"name": "reply_parameters",
+				"type": "ReplyParameters",
+				"required": false,
+				"description": "Description of the message to reply to"
+			},
+			{
+				"name": "reply_markup",
+				"type": "InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply",
+				"required": false,
+				"description": "Additional interface options. A JSON-serialized object for an <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboard</a>, <a href=\"https://core.telegram.org/bots/features#keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">custom reply keyboard</a>, instructions to remove a reply keyboard or to force a reply from the user."
+			}
+		],
+		"returnType": "Message",
+		"documentationLink": "https://core.telegram.org/bots/api/#sendwidget",
+		"isApiShortcut": true,
+		"usageExample": "import type { SendWidgetParams } from \"@yaebal/types\";\n\nawait bot.api.sendWidget({\n  chat_id: 123456789,\n  html: \"...\",\n} satisfies SendWidgetParams);",
+		"contextShortcut": {
+			"name": "sendWidget",
+			"signature": "sendWidget(params: Omit<SendWidgetParams, \"chat_id\">)",
+			"jsdoc": "Use this method to send a message with an [HTML widget](/bots/widgets). Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
+			"availableOn": 18
+		}
+	},
+	{
+		"name": "sendSharedWidget",
+		"category": "Available methods",
+		"description": "<p>Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent <a href=\"/docs/api/types/Message\">Message</a> is returned.</p>",
+		"params": [
+			{
+				"name": "chat_id",
+				"type": "number | string",
+				"required": true,
+				"description": "Unique identifier for the target chat or username of the target supergroup in the format <code>@username</code>"
+			},
+			{
+				"name": "message_thread_id",
+				"type": "number",
+				"required": false,
+				"description": "Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only"
+			},
+			{
+				"name": "widget_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the shared widget"
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "Data of the widget, which is specific to the message, 0-1024 bytes"
+			},
+			{
+				"name": "caption",
+				"type": "string",
+				"required": false,
+				"description": "Widget caption, 0-1024 characters after entities parsing"
+			},
+			{
+				"name": "parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "Mode for parsing entities in the widget caption. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details."
+			},
+			{
+				"name": "caption_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "A JSON-serialized list of special entities that appear in the caption, which can be specified instead of <em>parse_mode</em>"
+			},
+			{
+				"name": "show_caption_above_media",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> if the caption must be shown above the widget"
+			},
+			{
+				"name": "disable_notification",
+				"type": "boolean",
+				"required": false,
+				"description": "Sends the message <a href=\"https://telegram.org/blog/channels-2-0#silent-messages\" target=\"_blank\" rel=\"noopener noreferrer\">silently</a>. Users will receive a notification with no sound."
+			},
+			{
+				"name": "protect_content",
+				"type": "boolean",
+				"required": false,
+				"description": "Protects the contents of the sent message from forwarding and saving"
+			},
+			{
+				"name": "allow_paid_broadcast",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow up to 1000 messages per second, ignoring <a href=\"https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once\" target=\"_blank\" rel=\"noopener noreferrer\">broadcasting limits</a> for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance."
+			},
+			{
+				"name": "message_effect_id",
+				"type": "string",
+				"required": false,
+				"description": "Unique identifier of the message effect to be added to the message; for private chats only"
+			},
+			{
+				"name": "reply_parameters",
+				"type": "ReplyParameters",
+				"required": false,
+				"description": "Description of the message to reply to"
+			},
+			{
+				"name": "reply_markup",
+				"type": "InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply",
+				"required": false,
+				"description": "Additional interface options. A JSON-serialized object for an <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboard</a>, <a href=\"https://core.telegram.org/bots/features#keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">custom reply keyboard</a>, instructions to remove a reply keyboard or to force a reply from the user."
+			}
+		],
+		"returnType": "Message",
+		"documentationLink": "https://core.telegram.org/bots/api/#sendsharedwidget",
+		"isApiShortcut": true,
+		"usageExample": "import type { SendSharedWidgetParams } from \"@yaebal/types\";\n\nawait bot.api.sendSharedWidget({\n  chat_id: 123456789,\n  widget_id: \"...\",\n} satisfies SendSharedWidgetParams);",
+		"contextShortcut": {
+			"name": "sendSharedWidget",
+			"signature": "sendSharedWidget(params?: Omit<SendSharedWidgetParams, \"chat_id\" | \"widget_id\"> & { chat_id?: number | string; widget_id?: string })",
+			"jsdoc": "Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
+			"availableOn": 1
 		}
 	},
 	{
@@ -1696,7 +1928,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>. If the chat is a channel, all Telegram Star proceeds from this media will be credited to the chat's balance. Otherwise, they will be credited to the bot's balance."
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>. If the chat is a channel, all Telegram Star proceeds from this media will be credited to the chat's balance. Otherwise, they will be credited to the bot's balance."
 			},
 			{
 				"name": "message_thread_id",
@@ -1795,9 +2027,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendPaidMediaParams } from \"@yaebal/types\";\n\nawait bot.api.sendPaidMedia({\n  chat_id: 123456789,\n  star_count: 1,\n  media: [],\n} satisfies SendPaidMediaParams);",
 		"contextShortcut": {
 			"name": "sendPaidMedia",
-			"signature": "sendPaidMedia(params: Omit<SendPaidMediaParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendPaidMedia(params: Omit<SendPaidMediaParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send paid media. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -1815,7 +2047,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -1872,9 +2104,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendMediaGroupParams } from \"@yaebal/types\";\n\nawait bot.api.sendMediaGroup({\n  chat_id: 123456789,\n  media: [],\n} satisfies SendMediaGroupParams);",
 		"contextShortcut": {
 			"name": "sendMediaGroup",
-			"signature": "sendMediaGroup(params: Omit<SendMediaGroupParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendMediaGroup(params: Omit<SendMediaGroupParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send a group of photos, live photos, videos, documents or audios as an album. Documents and audio files can be only grouped in an album with messages of the same type. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects that were sent is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -1891,8 +2123,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -1994,12 +2226,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendlocation",
 		"isApiShortcut": true,
-		"usageExample": "import type { SendLocationParams } from \"@yaebal/types\";\n\nawait bot.api.sendLocation({\n  chat_id: 123456789,\n  latitude: 1,\n  longitude: 1,\n} satisfies SendLocationParams);",
+		"usageExample": "import type { SendLocationParams } from \"@yaebal/types\";\n\nawait bot.api.sendLocation({\n  latitude: 1,\n  longitude: 1,\n} satisfies SendLocationParams);",
 		"contextShortcut": {
 			"name": "sendLocation",
-			"signature": "sendLocation(latitude: number, longitude: number, params?: Omit<SendLocationParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"latitude\" | \"longitude\">)",
+			"signature": "sendLocation(latitude: number, longitude: number, params?: Omit<SendLocationParams, \"chat_id\" | \"latitude\" | \"longitude\">)",
 			"jsdoc": "Use this method to send point on the map. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -2016,8 +2248,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -2131,12 +2363,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendvenue",
 		"isApiShortcut": true,
-		"usageExample": "import type { SendVenueParams } from \"@yaebal/types\";\n\nawait bot.api.sendVenue({\n  chat_id: 123456789,\n  latitude: 1,\n  longitude: 1,\n  title: \"...\",\n  address: \"...\",\n} satisfies SendVenueParams);",
+		"usageExample": "import type { SendVenueParams } from \"@yaebal/types\";\n\nawait bot.api.sendVenue({\n  latitude: 1,\n  longitude: 1,\n  title: \"...\",\n  address: \"...\",\n} satisfies SendVenueParams);",
 		"contextShortcut": {
 			"name": "sendVenue",
-			"signature": "sendVenue(params: Omit<SendVenueParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendVenue(params: Omit<SendVenueParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send information about a venue. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 19
 		}
 	},
 	{
@@ -2153,8 +2385,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -2244,12 +2476,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendcontact",
 		"isApiShortcut": true,
-		"usageExample": "import type { SendContactParams } from \"@yaebal/types\";\n\nawait bot.api.sendContact({\n  chat_id: 123456789,\n  phone_number: \"...\",\n  first_name: \"...\",\n} satisfies SendContactParams);",
+		"usageExample": "import type { SendContactParams } from \"@yaebal/types\";\n\nawait bot.api.sendContact({\n  phone_number: \"...\",\n  first_name: \"...\",\n} satisfies SendContactParams);",
 		"contextShortcut": {
 			"name": "sendContact",
-			"signature": "sendContact(params: Omit<SendContactParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendContact(params: Omit<SendContactParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send phone contacts. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 19
 		}
 	},
 	{
@@ -2267,7 +2499,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>. Polls can't be sent to channel direct messages chats."
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>. Polls can't be sent to channel direct messages chats."
 			},
 			{
 				"name": "message_thread_id",
@@ -2528,7 +2760,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"contextShortcut": {
 			"name": "sendChecklist",
 			"signature": "sendChecklist(params: Omit<SendChecklistParams, \"business_connection_id\" | \"chat_id\"> & { business_connection_id?: string })",
-			"jsdoc": "Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */ sendPoll(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<t.SendPollParams, \"business_connection_id\" | \"chat_id\" | \"message_thread_id\" | \"question\" | \"options\">): Promise<t.Message>; sendPoll(params: Omit<t.SendPollParams, \"business_connection_id\" | \"chat_id\" | \"message_thread_id\">): Promise<t.Message>; sendPoll(a: string | Omit<t.SendPollParams, \"business_connection_id\" | \"chat_id\" | \"message_thread_id\">, b?: readonly (string | t.InputPollOption)[], c?: Omit<t.SendPollParams, \"business_connection_id\" | \"chat_id\" | \"message_thread_id\" | \"question\" | \"options\">): Promise<t.Message> { const params = typeof a === \"string\" ? ({ question: a, options: (b ?? []).map((o) => (typeof o === \"string\" ? { text: o } : o)), ...c } as unknown as Omit<t.SendPollParams, \"business_connection_id\" | \"chat_id\" | \"message_thread_id\">) : a; return this.api.call<t.Message>(\"sendPoll\", { ...(((this.business_connection_id) === undefined) ? {} : { business_connection_id: this.business_connection_id }), chat_id: this.chat.id, ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...params }); } /** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
+			"jsdoc": "Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */ sendPoll(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<t.SendPollParams, \"chat_id\" | \"question\" | \"options\">): Promise<t.Message>; sendPoll(params: Omit<t.SendPollParams, \"chat_id\">): Promise<t.Message>; sendPoll(a: string | Omit<t.SendPollParams, \"chat_id\">, b?: readonly (string | t.InputPollOption)[], c?: Omit<t.SendPollParams, \"chat_id\" | \"question\" | \"options\">): Promise<t.Message> { const params = typeof a === \"string\" ? ({ question: a, options: (b ?? []).map((o) => (typeof o === \"string\" ? { text: o } : o)), ...c } as unknown as Omit<t.SendPollParams, \"chat_id\">) : a; return this.api.call<t.Message>(\"sendPoll\", { ...(((this.business_connection_id) === undefined) ? {} : { business_connection_id: this.business_connection_id }), chat_id: this.chat.id, ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...params }); } /** Use this method to send a checklist on behalf of a connected business account. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
 			"availableOn": 4
 		}
 	},
@@ -2547,7 +2779,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -2616,8 +2848,8 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendDiceParams } from \"@yaebal/types\";\n\nawait bot.api.sendDice({\n  chat_id: 123456789,\n} satisfies SendDiceParams);",
 		"contextShortcut": {
 			"name": "sendDice",
-			"signature": "sendDice(emoji: string, params?: Omit<SendDiceParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"emoji\">)",
-			"jsdoc": "Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */ sendPoll(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<t.SendPollParams, \"chat_id\" | \"message_thread_id\" | \"question\" | \"options\">): Promise<t.Message>; sendPoll(params: Omit<t.SendPollParams, \"chat_id\" | \"message_thread_id\">): Promise<t.Message>; sendPoll(a: string | Omit<t.SendPollParams, \"chat_id\" | \"message_thread_id\">, b?: readonly (string | t.InputPollOption)[], c?: Omit<t.SendPollParams, \"chat_id\" | \"message_thread_id\" | \"question\" | \"options\">): Promise<t.Message> { const params = typeof a === \"string\" ? ({ question: a, options: (b ?? []).map((o) => (typeof o === \"string\" ? { text: o } : o)), ...c } as unknown as Omit<t.SendPollParams, \"chat_id\" | \"message_thread_id\">) : a; return this.api.call<t.Message>(\"sendPoll\", { chat_id: this.chat.id, ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...params }); } /** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
+			"signature": "sendDice(emoji: string, params?: Omit<SendDiceParams, \"chat_id\" | \"emoji\">)",
+			"jsdoc": "Use this method to send a native poll. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned. */ sendPoll(question: string, options: readonly (string | t.InputPollOption)[], params?: Omit<t.SendPollParams, \"chat_id\" | \"question\" | \"options\">): Promise<t.Message>; sendPoll(params: Omit<t.SendPollParams, \"chat_id\">): Promise<t.Message>; sendPoll(a: string | Omit<t.SendPollParams, \"chat_id\">, b?: readonly (string | t.InputPollOption)[], c?: Omit<t.SendPollParams, \"chat_id\" | \"question\" | \"options\">): Promise<t.Message> { const params = typeof a === \"string\" ? ({ question: a, options: (b ?? []).map((o) => (typeof o === \"string\" ? { text: o } : o)), ...c } as unknown as Omit<t.SendPollParams, \"chat_id\">) : a; return this.api.call<t.Message>(\"sendPoll\", { chat_id: this.chat.id, ...(((this.message_thread_id) === undefined) ? {} : { message_thread_id: this.message_thread_id }), ...params }); } /** Use this method to send an animated emoji that will display a random value. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
 			"availableOn": 16
 		}
 	},
@@ -2681,9 +2913,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendMessageDraftParams } from \"@yaebal/types\";\n\nawait bot.api.sendMessageDraft({\n  chat_id: 123456789,\n  draft_id: 1,\n} satisfies SendMessageDraftParams);",
 		"contextShortcut": {
 			"name": "sendMessageDraft",
-			"signature": "sendMessageDraft(params: Omit<SendMessageDraftParams, \"chat_id\" | \"message_thread_id\">)",
+			"signature": "sendMessageDraft(params: Omit<SendMessageDraftParams, \"chat_id\">)",
 			"jsdoc": "Use this method to stream a partial message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendMessage](https://core.telegram.org/bots/api/#sendmessage) with the complete message to persist it in the user's chat. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -2722,9 +2954,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendChatActionParams } from \"@yaebal/types\";\n\nawait bot.api.sendChatAction({\n  chat_id: 123456789,\n  action: \"typing\",\n} satisfies SendChatActionParams);",
 		"contextShortcut": {
 			"name": "sendChatAction",
-			"signature": "sendChatAction(params: Omit<SendChatActionParams, \"chat_id\" | \"message_thread_id\">)",
+			"signature": "sendChatAction(params: Omit<SendChatActionParams, \"chat_id\">)",
 			"jsdoc": "Use this method when you need to tell the user that something is happening on the bot's side. The status is set for 5 seconds or less (when a message arrives from your bot, Telegram clients clear its typing status). Returns *True* on success.  Example: The [ImageBot](https://t.me/imagebot) needs some time to process a request and upload the image. Instead of sending a text message along the lines of “Retrieving image, please wait…”, the bot may use [sendChatAction](https://core.telegram.org/bots/api/#sendchataction) with *action* = *upload\\_photo*. The user will see a “sending photo” status for the bot.  We only recommend using this method when a response from the bot will take a **noticeable** amount of time to arrive.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -2736,7 +2968,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_id",
@@ -2763,9 +2995,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetMessageReactionParams } from \"@yaebal/types\";\n\nawait bot.api.setMessageReaction({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies SetMessageReactionParams);",
 		"contextShortcut": {
 			"name": "react",
-			"signature": "react(params: Omit<SetMessageReactionParams, \"chat_id\" | \"message_id\">)",
+			"signature": "react(params?: Omit<SetMessageReactionParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to change the chosen reactions on a message. Service messages of some types can't be reacted to. Automatically forwarded messages from a channel to its discussion group have the same available reactions as messages in the channel. Bots can't use paid reactions. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -2798,9 +3030,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetUserProfilePhotosParams } from \"@yaebal/types\";\n\nawait bot.api.getUserProfilePhotos({\n  user_id: 123456789,\n} satisfies GetUserProfilePhotosParams);",
 		"contextShortcut": {
 			"name": "getUserProfilePhotos",
-			"signature": "getUserProfilePhotos(params: Omit<GetUserProfilePhotosParams, \"user_id\"> & { user_id?: number })",
+			"signature": "getUserProfilePhotos(params?: Omit<GetUserProfilePhotosParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get a list of profile pictures for a user. Returns a [UserProfilePhotos](https://core.telegram.org/bots/api/#userprofilephotos) object.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -2833,9 +3065,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetUserProfileAudiosParams } from \"@yaebal/types\";\n\nawait bot.api.getUserProfileAudios({\n  user_id: 123456789,\n} satisfies GetUserProfileAudiosParams);",
 		"contextShortcut": {
 			"name": "getUserProfileAudios",
-			"signature": "getUserProfileAudios(params: Omit<GetUserProfileAudiosParams, \"user_id\"> & { user_id?: number })",
+			"signature": "getUserProfileAudios(params?: Omit<GetUserProfileAudiosParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get a list of profile audios for a user. Returns a [UserProfileAudios](https://core.telegram.org/bots/api/#userprofileaudios) object.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -2868,9 +3100,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetUserEmojiStatusParams } from \"@yaebal/types\";\n\nawait bot.api.setUserEmojiStatus({\n  user_id: 123456789,\n} satisfies SetUserEmojiStatusParams);",
 		"contextShortcut": {
 			"name": "setUserEmojiStatus",
-			"signature": "setUserEmojiStatus(params: Omit<SetUserEmojiStatusParams, \"user_id\"> & { user_id?: number })",
+			"signature": "setUserEmojiStatus(params?: Omit<SetUserEmojiStatusParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](/bots/webapps#initializing-mini-apps). Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -2926,9 +3158,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { BanChatMemberParams } from \"@yaebal/types\";\n\nawait bot.api.banChatMember({\n  chat_id: 123456789,\n  user_id: 123456789,\n} satisfies BanChatMemberParams);",
 		"contextShortcut": {
 			"name": "banChatMember",
-			"signature": "banChatMember(params: Omit<BanChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
+			"signature": "banChatMember(params?: Omit<BanChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to ban a user in a group, a supergroup or a channel. In the case of supergroups and channels, the user will not be able to return to the chat on their own using invite links, etc., unless [unbanned](https://core.telegram.org/bots/api/#unbanchatmember) first. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -2961,9 +3193,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { UnbanChatMemberParams } from \"@yaebal/types\";\n\nawait bot.api.unbanChatMember({\n  chat_id: 123456789,\n  user_id: 123456789,\n} satisfies UnbanChatMemberParams);",
 		"contextShortcut": {
 			"name": "unbanChatMember",
-			"signature": "unbanChatMember(params: Omit<UnbanChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
+			"signature": "unbanChatMember(params?: Omit<UnbanChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to unban a previously banned user in a supergroup or channel. The user will **not** return to the group or channel automatically, but will be able to join via link, etc. The bot must be an administrator for this to work. By default, this method guarantees that after the call the user is not a member of the chat, but will be able to join it. So if the user is a member of the chat they will also be **removed** from the chat. If you don't want this, use the parameter *only\\_if\\_banned*. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3010,7 +3242,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "restrictChatMember",
 			"signature": "restrictChatMember(params: Omit<RestrictChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to restrict a user in a supergroup. The bot must be an administrator in the supergroup for this to work and must have the appropriate administrator rights. Pass *True* for all permissions to lift restrictions from a user. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3145,9 +3377,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { PromoteChatMemberParams } from \"@yaebal/types\";\n\nawait bot.api.promoteChatMember({\n  chat_id: 123456789,\n  user_id: 123456789,\n} satisfies PromoteChatMemberParams);",
 		"contextShortcut": {
 			"name": "promoteChatMember",
-			"signature": "promoteChatMember(params: Omit<PromoteChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
+			"signature": "promoteChatMember(params?: Omit<PromoteChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to promote or demote a user in a supergroup or a channel. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Pass *False* for all boolean parameters to demote a user. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3182,7 +3414,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setChatAdministratorCustomTitle",
 			"signature": "setChatAdministratorCustomTitle(params: Omit<SetChatAdministratorCustomTitleParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to set a custom title for an administrator in a supergroup promoted by the bot. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3215,9 +3447,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetChatMemberTagParams } from \"@yaebal/types\";\n\nawait bot.api.setChatMemberTag({\n  chat_id: 123456789,\n  user_id: 123456789,\n} satisfies SetChatMemberTagParams);",
 		"contextShortcut": {
 			"name": "setChatMemberTag",
-			"signature": "setChatMemberTag(params: Omit<SetChatMemberTagParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
+			"signature": "setChatMemberTag(params?: Omit<SetChatMemberTagParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to set a tag for a regular member in a group or a supergroup. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_tags* administrator right. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3246,7 +3478,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "banChatSenderChat",
 			"signature": "banChatSenderChat(params: Omit<BanChatSenderChatParams, \"chat_id\">)",
 			"jsdoc": "Use this method to ban a channel chat in a supergroup or a channel. Until the chat is [unbanned](https://core.telegram.org/bots/api/#unbanchatsenderchat), the owner of the banned chat won't be able to send messages on behalf of **any of their channels**. The bot must be an administrator in the supergroup or channel for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3275,7 +3507,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "unbanChatSenderChat",
 			"signature": "unbanChatSenderChat(params: Omit<UnbanChatSenderChatParams, \"chat_id\">)",
 			"jsdoc": "Use this method to unban a previously banned channel chat in a supergroup or channel. The bot must be an administrator for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3310,7 +3542,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setChatPermissions",
 			"signature": "setChatPermissions(params: Omit<SetChatPermissionsParams, \"chat_id\">)",
 			"jsdoc": "Use this method to set default chat permissions for all members. The bot must be an administrator in the group or a supergroup for this to work and must have the *can\\_restrict\\_members* administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3333,7 +3565,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "exportChatInviteLink",
 			"signature": "exportChatInviteLink(params?: Omit<ExportChatInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to generate a new primary invite link for a chat; any previously generated primary link is revoked. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the new invite link as *String* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3378,9 +3610,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { CreateChatInviteLinkParams } from \"@yaebal/types\";\n\nawait bot.api.createChatInviteLink({\n  chat_id: 123456789,\n} satisfies CreateChatInviteLinkParams);",
 		"contextShortcut": {
 			"name": "createChatInviteLink",
-			"signature": "createChatInviteLink(params: Omit<CreateChatInviteLinkParams, \"chat_id\">)",
+			"signature": "createChatInviteLink(params?: Omit<CreateChatInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to create an additional invite link for a chat. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. The link can be revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3433,7 +3665,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editChatInviteLink",
 			"signature": "editChatInviteLink(params: Omit<EditChatInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit a non-primary invite link created by the bot. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the edited invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3474,7 +3706,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "createChatSubscriptionInviteLink",
 			"signature": "createChatSubscriptionInviteLink(params: Omit<CreateChatSubscriptionInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to create a [subscription invite link](https://telegram.org/blog/superchannels-star-reactions-subscriptions#star-subscriptions) for a channel chat. The bot must have the *can\\_invite\\_users* administrator rights. The link can be edited using the method [editChatSubscriptionInviteLink](https://core.telegram.org/bots/api/#editchatsubscriptioninvitelink) or revoked using the method [revokeChatInviteLink](https://core.telegram.org/bots/api/#revokechatinvitelink). Returns the new invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3509,7 +3741,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editChatSubscriptionInviteLink",
 			"signature": "editChatSubscriptionInviteLink(params: Omit<EditChatSubscriptionInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit a subscription invite link created by the bot. The bot must have the *can\\_invite\\_users* administrator rights. Returns the edited invite link as a [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3538,7 +3770,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "revokeChatInviteLink",
 			"signature": "revokeChatInviteLink(params: Omit<RevokeChatInviteLinkParams, \"chat_id\">)",
 			"jsdoc": "Use this method to revoke an invite link created by the bot. If the primary link is revoked, a new link is automatically generated. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the revoked invite link as [ChatInviteLink](https://core.telegram.org/bots/api/#chatinvitelink) object.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3567,7 +3799,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "approveChatJoinRequest",
 			"signature": "approveChatJoinRequest(params?: Omit<ApproveChatJoinRequestParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to approve a chat join request. The bot must be an administrator in the chat for this to work and must have the *can\\_invite\\_users* administrator right. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3596,7 +3828,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "declineChatJoinRequest",
 			"signature": "declineChatJoinRequest(params?: Omit<DeclineChatJoinRequestParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to decline a chat join request. The bot must be an administrator in the chat for this to work and must have the *can\\_invite\\_users* administrator right. Returns *True* on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -3671,7 +3903,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setChatPhoto",
 			"signature": "setChatPhoto(params: Omit<SetChatPhotoParams, \"chat_id\">)",
 			"jsdoc": "Use this method to set a new profile photo for the chat. Photos can't be changed for private chats. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3694,7 +3926,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "deleteChatPhoto",
 			"signature": "deleteChatPhoto(params?: Omit<DeleteChatPhotoParams, \"chat_id\">)",
 			"jsdoc": "Use this method to delete a chat photo. Photos can't be changed for private chats. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3723,7 +3955,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setChatTitle",
 			"signature": "setChatTitle(params: Omit<SetChatTitleParams, \"chat_id\">)",
 			"jsdoc": "Use this method to change the title of a chat. Titles can't be changed for private chats. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3750,9 +3982,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetChatDescriptionParams } from \"@yaebal/types\";\n\nawait bot.api.setChatDescription({\n  chat_id: 123456789,\n} satisfies SetChatDescriptionParams);",
 		"contextShortcut": {
 			"name": "setChatDescription",
-			"signature": "setChatDescription(params: Omit<SetChatDescriptionParams, \"chat_id\">)",
+			"signature": "setChatDescription(params?: Omit<SetChatDescriptionParams, \"chat_id\">)",
 			"jsdoc": "Use this method to change the description of a group, a supergroup or a channel. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3791,9 +4023,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { PinChatMessageParams } from \"@yaebal/types\";\n\nawait bot.api.pinChatMessage({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies PinChatMessageParams);",
 		"contextShortcut": {
 			"name": "pin",
-			"signature": "pin(params: Omit<PinChatMessageParams, \"chat_id\" | \"message_id\">)",
+			"signature": "pin(params?: Omit<PinChatMessageParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to add a message to the list of pinned messages in a chat. In private chats and channel direct messages chats, all non-service messages can be pinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to pin messages in groups and channels respectively. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -3826,9 +4058,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { UnpinChatMessageParams } from \"@yaebal/types\";\n\nawait bot.api.unpinChatMessage({\n  chat_id: 123456789,\n} satisfies UnpinChatMessageParams);",
 		"contextShortcut": {
 			"name": "unpin",
-			"signature": "unpin(params: Omit<UnpinChatMessageParams, \"chat_id\" | \"message_id\">)",
+			"signature": "unpin(params?: Omit<UnpinChatMessageParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to remove a message from the list of pinned messages in a chat. In private chats and channel direct messages chats, all messages can be unpinned. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin messages in groups and channels respectively. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3851,7 +4083,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "unpinAllChatMessages",
 			"signature": "unpinAllChatMessages(params?: Omit<UnpinAllChatMessagesParams, \"chat_id\">)",
 			"jsdoc": "Use this method to clear the list of pinned messages in a chat. In private chats and channel direct messages chats, no additional rights are required to unpin all pinned messages. Conversely, the bot must be an administrator with the 'can_pin_messages' right or the 'can_edit_messages' right to unpin all pinned messages in groups and channels respectively. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3874,7 +4106,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "leaveChat",
 			"signature": "leaveChat(params?: Omit<LeaveChatParams, \"chat_id\">)",
 			"jsdoc": "Use this method for your bot to leave a group, supergroup or channel. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3897,7 +4129,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getChat",
 			"signature": "getChat(params?: Omit<GetChatParams, \"chat_id\">)",
 			"jsdoc": "Use this method to get up-to-date information about the chat. Returns a [ChatFullInfo](https://core.telegram.org/bots/api/#chatfullinfo) object on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3924,9 +4156,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetChatAdministratorsParams } from \"@yaebal/types\";\n\nawait bot.api.getChatAdministrators({\n  chat_id: 123456789,\n} satisfies GetChatAdministratorsParams);",
 		"contextShortcut": {
 			"name": "getChatAdministrators",
-			"signature": "getChatAdministrators(params: Omit<GetChatAdministratorsParams, \"chat_id\">)",
+			"signature": "getChatAdministrators(params?: Omit<GetChatAdministratorsParams, \"chat_id\">)",
 			"jsdoc": "Use this method to get a list of administrators in a chat. Returns an Array of [ChatMember](https://core.telegram.org/bots/api/#chatmember) objects.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3949,7 +4181,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getChatMemberCount",
 			"signature": "getChatMemberCount(params?: Omit<GetChatMemberCountParams, \"chat_id\">)",
 			"jsdoc": "Use this method to get the number of members in a chat. Returns *Integer* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -3978,8 +4210,18 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getChatMember",
 			"signature": "getChatMember(params?: Omit<GetChatMemberParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get information about a member of a chat. The method is only guaranteed to work for other users if the bot is an administrator in the chat. Returns a [ChatMember](https://core.telegram.org/bots/api/#chatmember) object on success.",
-			"availableOn": 11
+			"availableOn": 12
 		}
+	},
+	{
+		"name": "getChatShareThemeBackdrops",
+		"category": "Available methods",
+		"description": "<p>Use this method to get the list of backdrops, which can be used as the background of a theme of the screen for sharing a link to a user or a chat. Requires no parameters. Returns a <a href=\"/docs/api/types/ChatShareThemeBackdrops\">ChatShareThemeBackdrops</a> object.</p>",
+		"params": [],
+		"returnType": "ChatShareThemeBackdrops",
+		"documentationLink": "https://core.telegram.org/bots/api/#getchatsharethemebackdrops",
+		"isApiShortcut": true,
+		"usageExample": "await bot.api.getChatShareThemeBackdrops();"
 	},
 	{
 		"name": "getUserPersonalChatMessages",
@@ -4007,7 +4249,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getUserPersonalChatMessages",
 			"signature": "getUserPersonalChatMessages(params: Omit<GetUserPersonalChatMessagesParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects is returned.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -4036,7 +4278,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setChatStickerSet",
 			"signature": "setChatStickerSet(params: Omit<SetChatStickerSetParams, \"chat_id\">)",
 			"jsdoc": "Use this method to set a new group sticker set for a supergroup. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Use the field *can\\_set\\_sticker\\_set* optionally returned in [getChat](https://core.telegram.org/bots/api/#getchat) requests to check if the bot can use this method. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4059,7 +4301,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "deleteChatStickerSet",
 			"signature": "deleteChatStickerSet(params?: Omit<DeleteChatStickerSetParams, \"chat_id\">)",
 			"jsdoc": "Use this method to delete a group sticker set from a supergroup. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Use the field *can\\_set\\_sticker\\_set* optionally returned in [getChat](https://core.telegram.org/bots/api/#getchat) requests to check if the bot can use this method. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4075,7 +4317,7 @@ export const apiMethods: ApiMethodDoc[] = [
 	{
 		"name": "createForumTopic",
 		"category": "Available methods",
-		"description": "<p>Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the <em>can_manage_topics</em> administrator right. Returns information about the created topic as a <a href=\"/docs/api/types/ForumTopic\">ForumTopic</a> object.</p>",
+		"description": "<p>Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the <em>can_manage_topics</em> administrator right. In the case of a private chat, a link to the topic can be created in the format <code>https://t.me/&lt;bot_username&gt;/&lt;message_thread_id&gt;</code>; the link opens the topic only for the user. Returns information about the created topic as a <a href=\"/docs/api/types/ForumTopic\">ForumTopic</a> object.</p>",
 		"params": [
 			{
 				"name": "chat_id",
@@ -4109,8 +4351,8 @@ export const apiMethods: ApiMethodDoc[] = [
 		"contextShortcut": {
 			"name": "createForumTopic",
 			"signature": "createForumTopic(params: Omit<CreateForumTopicParams, \"chat_id\">)",
-			"jsdoc": "Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator right. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object.",
-			"availableOn": 17
+			"jsdoc": "Use this method to create a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator right. In the case of a private chat, a link to the topic can be created in the format `https://t.me/<bot_username>/<message_thread_id>`; the link opens the topic only for the user. Returns information about the created topic as a [ForumTopic](https://core.telegram.org/bots/api/#forumtopic) object.",
+			"availableOn": 18
 		}
 	},
 	{
@@ -4149,7 +4391,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { EditForumTopicParams } from \"@yaebal/types\";\n\nawait bot.api.editForumTopic({\n  chat_id: 123456789,\n  message_thread_id: 1,\n} satisfies EditForumTopicParams);",
 		"contextShortcut": {
 			"name": "editForumTopic",
-			"signature": "editForumTopic(params: Omit<EditForumTopicParams, \"chat_id\" | \"message_thread_id\"> & { message_thread_id?: number })",
+			"signature": "editForumTopic(params?: Omit<EditForumTopicParams, \"chat_id\" | \"message_thread_id\"> & { message_thread_id?: number })",
 			"jsdoc": "Use this method to edit name and icon of a topic in a forum supergroup chat or a private chat with a user. In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights, unless it is the creator of the topic. Returns *True* on success.",
 			"availableOn": 9
 		}
@@ -4296,7 +4538,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editGeneralForumTopic",
 			"signature": "editGeneralForumTopic(params: Omit<EditGeneralForumTopicParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit the name of the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4319,7 +4561,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "closeGeneralForumTopic",
 			"signature": "closeGeneralForumTopic(params?: Omit<CloseGeneralForumTopicParams, \"chat_id\">)",
 			"jsdoc": "Use this method to close an open 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4342,7 +4584,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "reopenGeneralForumTopic",
 			"signature": "reopenGeneralForumTopic(params?: Omit<ReopenGeneralForumTopicParams, \"chat_id\">)",
 			"jsdoc": "Use this method to reopen a closed 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights. The topic will be automatically unhidden if it was hidden. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4365,7 +4607,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "hideGeneralForumTopic",
 			"signature": "hideGeneralForumTopic(params?: Omit<HideGeneralForumTopicParams, \"chat_id\">)",
 			"jsdoc": "Use this method to hide the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights. The topic will be automatically closed if it was open. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4388,7 +4630,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "unhideGeneralForumTopic",
 			"signature": "unhideGeneralForumTopic(params?: Omit<UnhideGeneralForumTopicParams, \"chat_id\">)",
 			"jsdoc": "Use this method to unhide the 'General' topic in a forum supergroup chat. The bot must be an administrator in the chat for this to work and must have the *can\\_manage\\_topics* administrator rights. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4411,7 +4653,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "unpinAllGeneralForumTopicMessages",
 			"signature": "unpinAllGeneralForumTopicMessages(params?: Omit<UnpinAllGeneralForumTopicMessagesParams, \"chat_id\">)",
 			"jsdoc": "Use this method to clear the list of pinned messages in a General forum topic. The bot must be an administrator in the chat for this to work and must have the *can\\_pin\\_messages* administrator right in the supergroup. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4458,6 +4700,35 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "answerCallbackQuery",
 			"signature": "answerCallbackQuery(extra: Record<string, unknown> = {})",
 			"jsdoc": "answer the current callback query (no-op if there is none).",
+			"availableOn": 2
+		}
+	},
+	{
+		"name": "answerWidgetQuery",
+		"category": "Available methods",
+		"description": "<p>Use this method to send an answer to a query from a widget. The query must be answered within 15 seconds. The answer is received only by the widget that sent the query and doesn't change data of the widget; use <a href=\"/docs/api/methods/editMessageWidgetData\">editMessageWidgetData</a> or <a href=\"/docs/api/methods/editSharedWidgetData\">editSharedWidgetData</a> to change it. On success, <em>True</em> is returned.</p>",
+		"params": [
+			{
+				"name": "widget_query_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier for the query to be answered"
+			},
+			{
+				"name": "data",
+				"type": "string",
+				"required": false,
+				"description": "Data to be returned to the widget, 0-1024 bytes"
+			}
+		],
+		"returnType": "boolean",
+		"documentationLink": "https://core.telegram.org/bots/api/#answerwidgetquery",
+		"isApiShortcut": true,
+		"usageExample": "import type { AnswerWidgetQueryParams } from \"@yaebal/types\";\n\nawait bot.api.answerWidgetQuery({\n  widget_query_id: \"...\",\n} satisfies AnswerWidgetQueryParams);",
+		"contextShortcut": {
+			"name": "answer",
+			"signature": "answer(params?: Omit<AnswerWidgetQueryParams, \"widget_query_id\">)",
+			"jsdoc": "Use this method to send an answer to a query from a widget. The query must be answered within 15 seconds. The answer is received only by the widget that sent the query and doesn't change data of the widget; use [editMessageWidgetData](https://core.telegram.org/bots/api/#editmessagewidgetdata) or [editSharedWidgetData](https://core.telegram.org/bots/api/#editsharedwidgetdata) to change it. On success, *True* is returned.",
 			"availableOn": 2
 		}
 	},
@@ -4516,7 +4787,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getUserChatBoosts",
 			"signature": "getUserChatBoosts(params?: Omit<GetUserChatBoostsParams, \"chat_id\" | \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get the list of boosts added to a chat by a user. Requires administrator rights in the chat. Returns a [UserChatBoosts](https://core.telegram.org/bots/api/#userchatboosts) object.",
-			"availableOn": 11
+			"availableOn": 12
 		}
 	},
 	{
@@ -4562,7 +4833,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getManagedBotToken",
 			"signature": "getManagedBotToken(params?: Omit<GetManagedBotTokenParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get the token of a managed bot. Returns the token as *String* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -4585,7 +4856,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "replaceManagedBotToken",
 			"signature": "replaceManagedBotToken(params?: Omit<ReplaceManagedBotTokenParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to revoke the current token of a managed bot and generate a new one. Returns the new token as *String* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -4608,7 +4879,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getManagedBotAccessSettings",
 			"signature": "getManagedBotAccessSettings(params?: Omit<GetManagedBotAccessSettingsParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get the access settings of a managed bot. Returns a [BotAccessSettings](https://core.telegram.org/bots/api/#botaccesssettings) object on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -4643,7 +4914,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setManagedBotAccessSettings",
 			"signature": "setManagedBotAccessSettings(params: Omit<SetManagedBotAccessSettingsParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to change the access settings of a managed bot. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -4892,9 +5163,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetChatMenuButtonParams } from \"@yaebal/types\";\n\nawait bot.api.setChatMenuButton({} satisfies SetChatMenuButtonParams);",
 		"contextShortcut": {
 			"name": "setChatMenuButton",
-			"signature": "setChatMenuButton(params: Omit<SetChatMenuButtonParams, \"chat_id\">)",
+			"signature": "setChatMenuButton(params?: Omit<SetChatMenuButtonParams, \"chat_id\">)",
 			"jsdoc": "Use this method to change the bot's menu button in a private chat, or the default menu button. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4917,7 +5188,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "getChatMenuButton",
 			"signature": "getChatMenuButton(params?: Omit<GetChatMenuButtonParams, \"chat_id\">)",
 			"jsdoc": "Use this method to get the current value of the bot's menu button in a private chat, or the default menu button. Returns [MenuButton](https://core.telegram.org/bots/api/#menubutton) on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -4985,7 +5256,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>user_id</em> is not specified. Unique identifier for the chat or username of the channel (in the format <code>@username</code>) that will receive the gift."
+				"description": "Required if <em>user_id</em> is not specified. Unique identifier for the chat that will receive the gift or username of the channel in the format <code>@username</code>."
 			},
 			{
 				"name": "gift_id",
@@ -5024,9 +5295,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendGiftParams } from \"@yaebal/types\";\n\nawait bot.api.sendGift({\n  gift_id: \"...\",\n} satisfies SendGiftParams);",
 		"contextShortcut": {
 			"name": "sendGift",
-			"signature": "sendGift(params: Omit<SendGiftParams, \"user_id\">)",
+			"signature": "sendGift(params: Omit<SendGiftParams, never>)",
 			"jsdoc": "Sends a gift to the given user or channel chat. The gift can't be converted to Telegram Stars by the receiver. Returns *True* on success.",
-			"availableOn": 22
+			"availableOn": 24
 		}
 	},
 	{
@@ -5079,7 +5350,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "giftPremiumSubscription",
 			"signature": "giftPremiumSubscription(params: Omit<GiftPremiumSubscriptionParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Gifts a Telegram Premium subscription to the given user. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -5098,6 +5369,18 @@ export const apiMethods: ApiMethodDoc[] = [
 				"type": "string",
 				"required": false,
 				"description": "Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description."
+			},
+			{
+				"name": "custom_description_parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "Mode for parsing entities in the custom description. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details. Only “text_link” entities are supported."
+			},
+			{
+				"name": "custom_description_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "A JSON-serialized list of special entities that appear in the custom description, which can be specified instead of <em>custom_description_parse_mode</em>. Only “text_link” entities are supported."
 			}
 		],
 		"returnType": "boolean",
@@ -5106,9 +5389,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { VerifyUserParams } from \"@yaebal/types\";\n\nawait bot.api.verifyUser({\n  user_id: 123456789,\n} satisfies VerifyUserParams);",
 		"contextShortcut": {
 			"name": "verifyUser",
-			"signature": "verifyUser(params: Omit<VerifyUserParams, \"user_id\"> & { user_id?: number })",
+			"signature": "verifyUser(params?: Omit<VerifyUserParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -5120,13 +5403,25 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>. Channel direct messages chats can't be verified."
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>. Channel direct messages chats can't be verified."
 			},
 			{
 				"name": "custom_description",
 				"type": "string",
 				"required": false,
 				"description": "Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description."
+			},
+			{
+				"name": "custom_description_parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "Mode for parsing entities in the custom description. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details. Only “text_link” entities are supported."
+			},
+			{
+				"name": "custom_description_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "A JSON-serialized list of special entities that appear in the custom description, which can be specified instead of <em>custom_description_parse_mode</em>. Only “text_link” entities are supported."
 			}
 		],
 		"returnType": "boolean",
@@ -5135,9 +5430,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { VerifyChatParams } from \"@yaebal/types\";\n\nawait bot.api.verifyChat({\n  chat_id: 123456789,\n} satisfies VerifyChatParams);",
 		"contextShortcut": {
 			"name": "verifyChat",
-			"signature": "verifyChat(params: Omit<VerifyChatParams, \"chat_id\">)",
+			"signature": "verifyChat(params?: Omit<VerifyChatParams, \"chat_id\">)",
 			"jsdoc": "Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -5160,7 +5455,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "removeUserVerification",
 			"signature": "removeUserVerification(params?: Omit<RemoveUserVerificationParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -5183,7 +5478,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "removeChatVerification",
 			"signature": "removeChatVerification(params?: Omit<RemoveChatVerificationParams, \"chat_id\">)",
 			"jsdoc": "Removes verification from a chat that is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -5309,7 +5604,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetBusinessAccountUsernameParams } from \"@yaebal/types\";\n\nawait bot.api.setBusinessAccountUsername({\n  business_connection_id: \"...\",\n} satisfies SetBusinessAccountUsernameParams);",
 		"contextShortcut": {
 			"name": "setBusinessAccountUsername",
-			"signature": "setBusinessAccountUsername(params: Omit<SetBusinessAccountUsernameParams, \"business_connection_id\"> & { business_connection_id?: string })",
+			"signature": "setBusinessAccountUsername(params?: Omit<SetBusinessAccountUsernameParams, \"business_connection_id\"> & { business_connection_id?: string })",
 			"jsdoc": "Changes the username of a managed business account. Requires the *can\\_change\\_username* business bot right. Returns *True* on success.",
 			"availableOn": 4
 		}
@@ -5338,7 +5633,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SetBusinessAccountBioParams } from \"@yaebal/types\";\n\nawait bot.api.setBusinessAccountBio({\n  business_connection_id: \"...\",\n} satisfies SetBusinessAccountBioParams);",
 		"contextShortcut": {
 			"name": "setBusinessAccountBio",
-			"signature": "setBusinessAccountBio(params: Omit<SetBusinessAccountBioParams, \"business_connection_id\"> & { business_connection_id?: string })",
+			"signature": "setBusinessAccountBio(params?: Omit<SetBusinessAccountBioParams, \"business_connection_id\"> & { business_connection_id?: string })",
 			"jsdoc": "Changes the bio of a managed business account. Requires the *can\\_change\\_bio* business bot right. Returns *True* on success.",
 			"availableOn": 4
 		}
@@ -5402,7 +5697,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { RemoveBusinessAccountProfilePhotoParams } from \"@yaebal/types\";\n\nawait bot.api.removeBusinessAccountProfilePhoto({\n  business_connection_id: \"...\",\n} satisfies RemoveBusinessAccountProfilePhotoParams);",
 		"contextShortcut": {
 			"name": "removeBusinessAccountProfilePhoto",
-			"signature": "removeBusinessAccountProfilePhoto(params: Omit<RemoveBusinessAccountProfilePhotoParams, \"business_connection_id\"> & { business_connection_id?: string })",
+			"signature": "removeBusinessAccountProfilePhoto(params?: Omit<RemoveBusinessAccountProfilePhotoParams, \"business_connection_id\"> & { business_connection_id?: string })",
 			"jsdoc": "Removes the current profile photo of a managed business account. Requires the *can\\_edit\\_profile\\_photo* business bot right. Returns *True* on success.",
 			"availableOn": 4
 		}
@@ -5572,7 +5867,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetBusinessAccountGiftsParams } from \"@yaebal/types\";\n\nawait bot.api.getBusinessAccountGifts({\n  business_connection_id: \"...\",\n} satisfies GetBusinessAccountGiftsParams);",
 		"contextShortcut": {
 			"name": "getBusinessAccountGifts",
-			"signature": "getBusinessAccountGifts(params: Omit<GetBusinessAccountGiftsParams, \"business_connection_id\"> & { business_connection_id?: string })",
+			"signature": "getBusinessAccountGifts(params?: Omit<GetBusinessAccountGiftsParams, \"business_connection_id\"> & { business_connection_id?: string })",
 			"jsdoc": "Returns the gifts received and owned by a managed business account. Requires the *can\\_view\\_gifts\\_and\\_stars* business bot right. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success.",
 			"availableOn": 4
 		}
@@ -5643,9 +5938,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetUserGiftsParams } from \"@yaebal/types\";\n\nawait bot.api.getUserGifts({\n  user_id: 123456789,\n} satisfies GetUserGiftsParams);",
 		"contextShortcut": {
 			"name": "getUserGifts",
-			"signature": "getUserGifts(params: Omit<GetUserGiftsParams, \"user_id\"> & { user_id?: number })",
+			"signature": "getUserGifts(params?: Omit<GetUserGiftsParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Returns the gifts owned and hosted by a user. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -5726,10 +6021,27 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetChatGiftsParams } from \"@yaebal/types\";\n\nawait bot.api.getChatGifts({\n  chat_id: 123456789,\n} satisfies GetChatGiftsParams);",
 		"contextShortcut": {
 			"name": "getChatGifts",
-			"signature": "getChatGifts(params: Omit<GetChatGiftsParams, \"chat_id\">)",
+			"signature": "getChatGifts(params?: Omit<GetChatGiftsParams, \"chat_id\">)",
 			"jsdoc": "Returns the gifts owned by a chat. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
+	},
+	{
+		"name": "getUniqueGift",
+		"category": "Available methods",
+		"description": "<p>Use this method to get information about a unique gift by its name. Returns a <a href=\"/docs/api/types/UniqueGift\">UniqueGift</a> object on success.</p>",
+		"params": [
+			{
+				"name": "name",
+				"type": "string",
+				"required": true,
+				"description": "Unique name of the gift"
+			}
+		],
+		"returnType": "UniqueGift",
+		"documentationLink": "https://core.telegram.org/bots/api/#getuniquegift",
+		"isApiShortcut": true,
+		"usageExample": "import type { GetUniqueGiftParams } from \"@yaebal/types\";\n\nawait bot.api.getUniqueGift({\n  name: \"...\",\n} satisfies GetUniqueGiftParams);"
 	},
 	{
 		"name": "convertGiftToStars",
@@ -5839,6 +6151,35 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "transferGift",
 			"signature": "transferGift(params: Omit<TransferGiftParams, \"business_connection_id\"> & { business_connection_id?: string })",
 			"jsdoc": "Transfers an owned unique gift to another user. Requires the *can\\_transfer\\_and\\_upgrade\\_gifts* business bot right. Requires *can\\_transfer\\_stars* business bot right if the transfer is paid. Returns *True* on success.",
+			"availableOn": 4
+		}
+	},
+	{
+		"name": "deleteBusinessAccountGift",
+		"category": "Available methods",
+		"description": "<p>Deletes a regular gift owned by a managed business account without receiving Telegram Stars for it. Requires the <em>can_convert_gifts_to_stars</em> business bot right. The gift can be deleted only if it isn't limited (the field <em>total_count</em> of the <a href=\"/docs/api/types/Gift\">Gift</a> is omitted) and wasn't refunded. Returns <em>True</em> on success.</p>",
+		"params": [
+			{
+				"name": "business_connection_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the business connection"
+			},
+			{
+				"name": "owned_gift_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the regular gift that should be deleted"
+			}
+		],
+		"returnType": "boolean",
+		"documentationLink": "https://core.telegram.org/bots/api/#deletebusinessaccountgift",
+		"isApiShortcut": true,
+		"usageExample": "import type { DeleteBusinessAccountGiftParams } from \"@yaebal/types\";\n\nawait bot.api.deleteBusinessAccountGift({\n  business_connection_id: \"...\",\n  owned_gift_id: \"...\",\n} satisfies DeleteBusinessAccountGiftParams);",
+		"contextShortcut": {
+			"name": "deleteBusinessAccountGift",
+			"signature": "deleteBusinessAccountGift(params: Omit<DeleteBusinessAccountGiftParams, \"business_connection_id\"> & { business_connection_id?: string })",
+			"jsdoc": "Deletes a regular gift owned by a managed business account without receiving Telegram Stars for it. Requires the *can\\_convert\\_gifts\\_to\\_stars* business bot right. The gift can be deleted only if it isn't limited (the field *total\\_count* of the [Gift](https://core.telegram.org/bots/api/#gift) is omitted) and wasn't refunded. Returns *True* on success.",
 			"availableOn": 4
 		}
 	},
@@ -6127,7 +6468,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "savePreparedInlineMessage",
 			"signature": "savePreparedInlineMessage(params: Omit<SavePreparedInlineMessageParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Stores a message that can be sent by a user of a Mini App. Returns a [PreparedInlineMessage](https://core.telegram.org/bots/api/#preparedinlinemessage) object.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -6156,7 +6497,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "savePreparedKeyboardButton",
 			"signature": "savePreparedKeyboardButton(params: Omit<SavePreparedKeyboardButtonParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Stores a keyboard button that can be used by a user within a Mini App. Returns a [PreparedKeyboardButton](https://core.telegram.org/bots/api/#preparedkeyboardbutton) object.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -6174,7 +6515,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6231,9 +6572,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { EditMessageTextParams } from \"@yaebal/types\";\n\nawait bot.api.editMessageText({} satisfies EditMessageTextParams);",
 		"contextShortcut": {
 			"name": "editText",
-			"signature": "editText(params: Omit<EditMessageTextParams, \"chat_id\" | \"message_id\">)",
+			"signature": "editText(params?: Omit<EditMessageTextParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to edit text, rich and [game](https://core.telegram.org/bots/api/#games) messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent.",
-			"availableOn": 18
+			"availableOn": 19
 		}
 	},
 	{
@@ -6251,7 +6592,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6302,9 +6643,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { EditMessageCaptionParams } from \"@yaebal/types\";\n\nawait bot.api.editMessageCaption({} satisfies EditMessageCaptionParams);",
 		"contextShortcut": {
 			"name": "editCaption",
-			"signature": "editCaption(params: Omit<EditMessageCaptionParams, \"chat_id\" | \"message_id\">)",
+			"signature": "editCaption(params?: Omit<EditMessageCaptionParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to edit captions of messages. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent.",
-			"availableOn": 18
+			"availableOn": 19
 		}
 	},
 	{
@@ -6322,7 +6663,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6357,7 +6698,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editMedia",
 			"signature": "editMedia(params: Omit<EditMessageMediaParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to edit animation, audio, document, live photo, photo, or video messages, or to replace a text or a rich message with a media. If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo, a live photo, or a video otherwise. When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL. On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within **48 hours** from the time they were sent.",
-			"availableOn": 18
+			"availableOn": 19
 		}
 	},
 	{
@@ -6375,7 +6716,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6440,7 +6781,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editLiveLocation",
 			"signature": "editLiveLocation(params: Omit<EditMessageLiveLocationParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to edit live location messages. A location can be edited until its *live\\_period* expires or editing is explicitly disabled by a call to [stopMessageLiveLocation](https://core.telegram.org/bots/api/#stopmessagelivelocation). On success, if the edited message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned.",
-			"availableOn": 18
+			"availableOn": 19
 		}
 	},
 	{
@@ -6458,7 +6799,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6485,9 +6826,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { StopMessageLiveLocationParams } from \"@yaebal/types\";\n\nawait bot.api.stopMessageLiveLocation({} satisfies StopMessageLiveLocationParams);",
 		"contextShortcut": {
 			"name": "stopMessageLiveLocation",
-			"signature": "stopMessageLiveLocation(params: Omit<StopMessageLiveLocationParams, \"chat_id\" | \"message_id\">)",
+			"signature": "stopMessageLiveLocation(params?: Omit<StopMessageLiveLocationParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to stop updating a live location message before *live\\_period* expires. On success, if the message is not an inline message, the edited [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned.",
-			"availableOn": 18
+			"availableOn": 19
 		}
 	},
 	{
@@ -6538,6 +6879,88 @@ export const apiMethods: ApiMethodDoc[] = [
 		}
 	},
 	{
+		"name": "editMessageWidgetData",
+		"category": "Updating messages",
+		"description": "<p>Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, <em>True</em> is returned.</p>",
+		"params": [
+			{
+				"name": "chat_id",
+				"type": "number | string",
+				"required": false,
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target supergroup in the format <code>@username</code>."
+			},
+			{
+				"name": "message_id",
+				"type": "number",
+				"required": false,
+				"description": "Required if <em>inline_message_id</em> is not specified. Identifier of the message with the widget."
+			},
+			{
+				"name": "inline_message_id",
+				"type": "string",
+				"required": false,
+				"description": "Required if <em>chat_id</em> and <em>message_id</em> are not specified. Identifier of the inline message."
+			},
+			{
+				"name": "public_data",
+				"type": "string",
+				"required": false,
+				"description": "New public data of the widget, 0-1024 bytes; pass an empty string to remove the public data. If omitted, then the public data isn't changed."
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "New data of the widget, which is specific to the message, 0-1024 bytes; pass an empty string to remove the data. If omitted, then the data isn't changed."
+			}
+		],
+		"returnType": "boolean",
+		"documentationLink": "https://core.telegram.org/bots/api/#editmessagewidgetdata",
+		"isApiShortcut": true,
+		"usageExample": "import type { EditMessageWidgetDataParams } from \"@yaebal/types\";\n\nawait bot.api.editMessageWidgetData({} satisfies EditMessageWidgetDataParams);",
+		"contextShortcut": {
+			"name": "editMessageWidgetData",
+			"signature": "editMessageWidgetData(params?: Omit<EditMessageWidgetDataParams, \"chat_id\" | \"message_id\">)",
+			"jsdoc": "Use this method to edit data of a widget in a message sent by the bot or via the bot (for inline bots). Public data of a shared widget can be changed at most once per second. On success, *True* is returned.",
+			"availableOn": 18
+		}
+	},
+	{
+		"name": "editSharedWidgetData",
+		"category": "Updating messages",
+		"description": "<p>Use this method to edit public data of a shared widget created by the bot. A shared widget can be edited at most once per second. On success, <em>True</em> is returned.</p>",
+		"params": [
+			{
+				"name": "widget_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the shared widget"
+			},
+			{
+				"name": "public_data",
+				"type": "string",
+				"required": true,
+				"description": "New public data of the widget, 0-1024 bytes; pass an empty string to remove the public data"
+			},
+			{
+				"name": "cache_time",
+				"type": "number",
+				"required": false,
+				"description": "The maximum amount of time in seconds that the public data of the widget may be cached client-side; 5-3600. If omitted, then the current value is kept, which is 30 by default."
+			}
+		],
+		"returnType": "boolean",
+		"documentationLink": "https://core.telegram.org/bots/api/#editsharedwidgetdata",
+		"isApiShortcut": true,
+		"usageExample": "import type { EditSharedWidgetDataParams } from \"@yaebal/types\";\n\nawait bot.api.editSharedWidgetData({\n  widget_id: \"...\",\n  public_data: \"...\",\n} satisfies EditSharedWidgetDataParams);",
+		"contextShortcut": {
+			"name": "editSharedWidgetData",
+			"signature": "editSharedWidgetData(params: Omit<EditSharedWidgetDataParams, \"widget_id\">)",
+			"jsdoc": "Use this method to edit public data of a shared widget created by the bot. A shared widget can be edited at most once per second. On success, *True* is returned.",
+			"availableOn": 2
+		}
+	},
+	{
 		"name": "editMessageReplyMarkup",
 		"category": "Updating messages",
 		"description": "<p>Use this method to edit only the reply markup of messages. On success, if the edited message is not an inline message, the edited <a href=\"/docs/api/types/Message\">Message</a> is returned, otherwise <em>True</em> is returned. Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within <strong>48 hours</strong> from the time they were sent.</p>",
@@ -6552,7 +6975,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>."
+				"description": "Required if <em>inline_message_id</em> is not specified. Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>."
 			},
 			{
 				"name": "message_id",
@@ -6593,7 +7016,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_id",
@@ -6614,9 +7037,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { StopPollParams } from \"@yaebal/types\";\n\nawait bot.api.stopPoll({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies StopPollParams);",
 		"contextShortcut": {
 			"name": "stopPoll",
-			"signature": "stopPoll(params: Omit<StopPollParams, \"chat_id\" | \"message_id\">)",
+			"signature": "stopPoll(params?: Omit<StopPollParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to stop a poll which was sent by the bot. On success, the stopped [Poll](https://core.telegram.org/bots/api/#poll) is returned.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -6687,7 +7110,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editEphemeralMessageText",
 			"signature": "editEphemeralMessageText(params: Omit<EditEphemeralMessageTextParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -6734,7 +7157,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editEphemeralMessageMedia",
 			"signature": "editEphemeralMessageMedia(params: Omit<EditEphemeralMessageMediaParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit the media of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -6799,7 +7222,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editEphemeralMessageCaption",
 			"signature": "editEphemeralMessageCaption(params: Omit<EditEphemeralMessageCaptionParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit the caption of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -6840,7 +7263,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editEphemeralMessageReplyMarkup",
 			"signature": "editEphemeralMessageReplyMarkup(params: Omit<EditEphemeralMessageReplyMarkupParams, \"chat_id\">)",
 			"jsdoc": "Use this method to edit only the reply markup of an ephemeral message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, *True* is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -6873,9 +7296,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { ApproveSuggestedPostParams } from \"@yaebal/types\";\n\nawait bot.api.approveSuggestedPost({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies ApproveSuggestedPostParams);",
 		"contextShortcut": {
 			"name": "approveSuggestedPost",
-			"signature": "approveSuggestedPost(params: Omit<ApproveSuggestedPostParams, \"chat_id\" | \"message_id\">)",
+			"signature": "approveSuggestedPost(params?: Omit<ApproveSuggestedPostParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to approve a suggested post in a direct messages chat. The bot must have the 'can_post_messages' administrator right in the corresponding channel chat. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -6908,9 +7331,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { DeclineSuggestedPostParams } from \"@yaebal/types\";\n\nawait bot.api.declineSuggestedPost({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies DeclineSuggestedPostParams);",
 		"contextShortcut": {
 			"name": "declineSuggestedPost",
-			"signature": "declineSuggestedPost(params: Omit<DeclineSuggestedPostParams, \"chat_id\" | \"message_id\">)",
+			"signature": "declineSuggestedPost(params?: Omit<DeclineSuggestedPostParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to decline a suggested post in a direct messages chat. The bot must have the 'can_manage_direct_messages' administrator right in the corresponding channel chat. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -6922,7 +7345,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_id",
@@ -6939,7 +7362,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "delete",
 			"signature": "delete(params?: Omit<DeleteMessageParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to delete a message, including service messages, with the following limitations: - A message can only be deleted if it was sent less than 48 hours ago. - Service messages about a supergroup, channel, or forum topic creation can't be deleted. - A dice message in a private chat can only be deleted if it was sent more than 24 hours ago. - Bots can delete outgoing messages in private chats, groups, and supergroups. - Bots can delete incoming messages in private chats. - Bots granted *can\\_post\\_messages* permissions can delete outgoing messages in channels. - If the bot is an administrator of a group, it can delete any message there. - If the bot has *can\\_delete\\_messages* administrator right in a supergroup or a channel, it can delete any message there. - If the bot has *can\\_manage\\_direct\\_messages* administrator right in a channel, it can delete any message in the corresponding direct messages chat. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -6951,7 +7374,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_ids",
@@ -6968,7 +7391,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "deleteMessages",
 			"signature": "deleteMessages(params: Omit<DeleteMessagesParams, \"chat_id\">)",
 			"jsdoc": "Use this method to delete multiple messages simultaneously. If some of the specified messages can't be found, they are skipped. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -7003,7 +7426,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "deleteEphemeralMessage",
 			"signature": "deleteEphemeralMessage(params: Omit<DeleteEphemeralMessageParams, \"chat_id\">)",
 			"jsdoc": "Use this method to delete an ephemeral message. Note that it is not guaranteed that the user will receive the message deletion event, especially if they are offline. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -7042,9 +7465,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { DeleteMessageReactionParams } from \"@yaebal/types\";\n\nawait bot.api.deleteMessageReaction({\n  chat_id: 123456789,\n  message_id: 1,\n} satisfies DeleteMessageReactionParams);",
 		"contextShortcut": {
 			"name": "deleteMessageReaction",
-			"signature": "deleteMessageReaction(params: Omit<DeleteMessageReactionParams, \"chat_id\" | \"message_id\" | \"user_id\">)",
+			"signature": "deleteMessageReaction(params?: Omit<DeleteMessageReactionParams, \"chat_id\" | \"message_id\">)",
 			"jsdoc": "Use this method to remove a reaction from a message in a group or a supergroup chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success.",
-			"availableOn": 10
+			"availableOn": 11
 		}
 	},
 	{
@@ -7077,9 +7500,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { DeleteAllMessageReactionsParams } from \"@yaebal/types\";\n\nawait bot.api.deleteAllMessageReactions({\n  chat_id: 123456789,\n} satisfies DeleteAllMessageReactionsParams);",
 		"contextShortcut": {
 			"name": "deleteAllMessageReactions",
-			"signature": "deleteAllMessageReactions(params: Omit<DeleteAllMessageReactionsParams, \"chat_id\" | \"user_id\">)",
+			"signature": "deleteAllMessageReactions(params?: Omit<DeleteAllMessageReactionsParams, \"chat_id\">)",
 			"jsdoc": "Use this method to remove up to 10000 recent reactions in a group or a supergroup chat added by a given user or chat. The bot must have the 'can_delete_messages' administrator right in the chat. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -7096,8 +7519,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -7175,12 +7598,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendsticker",
 		"isApiShortcut": true,
-		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendStickerParams } from \"@yaebal/types\";\n\nawait bot.api.sendSticker({\n  chat_id: 123456789,\n  sticker: media.url(\"https://picsum.photos/400\"),\n} satisfies SendStickerParams);",
+		"usageExample": "import { media } from \"@yaebal/core\";\nimport type { SendStickerParams } from \"@yaebal/types\";\n\nawait bot.api.sendSticker({\n  sticker: media.url(\"https://picsum.photos/400\"),\n} satisfies SendStickerParams);",
 		"contextShortcut": {
 			"name": "sendSticker",
-			"signature": "sendSticker(sticker: InputFile | string, params?: Omit<SendStickerParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\" | \"sticker\">)",
+			"signature": "sendSticker(sticker: InputFile | string, params?: Omit<SendStickerParams, \"chat_id\" | \"sticker\">)",
 			"jsdoc": "Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or [video](https://telegram.org/blog/video-stickers-better-reactions) .WEBM stickers. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 16
+			"availableOn": 19
 		}
 	},
 	{
@@ -7249,7 +7672,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "uploadStickerFile",
 			"signature": "uploadStickerFile(params: Omit<UploadStickerFileParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to upload a file with a sticker for later use in the [createNewStickerSet](https://core.telegram.org/bots/api/#createnewstickerset), [addStickerToSet](https://core.telegram.org/bots/api/#addstickertoset), or [replaceStickerInSet](https://core.telegram.org/bots/api/#replacestickerinset) methods (the file can be used multiple times). Returns the uploaded [File](https://core.telegram.org/bots/api/#file) on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -7302,7 +7725,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "createNewStickerSet",
 			"signature": "createNewStickerSet(params: Omit<CreateNewStickerSetParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to create a new sticker set owned by a user. The bot will be able to edit the sticker set thus created. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -7337,7 +7760,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "addStickerToSet",
 			"signature": "addStickerToSet(params: Omit<AddStickerToSetParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to add a new sticker to a set created by the bot. Emoji sticker sets can have up to 200 stickers. Other sticker sets can have up to 120 stickers. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -7418,7 +7841,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "replaceStickerInSet",
 			"signature": "replaceStickerInSet(params: Omit<ReplaceStickerInSetParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to replace an existing sticker in a sticker set with a new one. The method is equivalent to calling [deleteStickerFromSet](https://core.telegram.org/bots/api/#deletestickerfromset), then [addStickerToSet](https://core.telegram.org/bots/api/#addstickertoset), then [setStickerPositionInSet](https://core.telegram.org/bots/api/#setstickerpositioninset). Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -7551,7 +7974,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setStickerSetThumbnail",
 			"signature": "setStickerSetThumbnail(params: Omit<SetStickerSetThumbnailParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to set the thumbnail of a regular or mask sticker set. The format of the thumbnail file must match the format of the stickers in the set. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -7608,8 +8031,8 @@ export const apiMethods: ApiMethodDoc[] = [
 			{
 				"name": "chat_id",
 				"type": "number | string",
-				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"required": false,
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>; required unless the message is sent as an ephemeral reply to a callback query"
 			},
 			{
 				"name": "message_thread_id",
@@ -7681,12 +8104,12 @@ export const apiMethods: ApiMethodDoc[] = [
 		"returnType": "Message",
 		"documentationLink": "https://core.telegram.org/bots/api/#sendrichmessage",
 		"isApiShortcut": true,
-		"usageExample": "import type { SendRichMessageParams } from \"@yaebal/types\";\n\nawait bot.api.sendRichMessage({\n  chat_id: 123456789,\n  rich_message: {} /* InputRichMessage */,\n} satisfies SendRichMessageParams);",
+		"usageExample": "import type { SendRichMessageParams } from \"@yaebal/types\";\n\nawait bot.api.sendRichMessage({\n  rich_message: {} /* InputRichMessage */,\n} satisfies SendRichMessageParams);",
 		"contextShortcut": {
 			"name": "sendRichMessage",
-			"signature": "sendRichMessage(params: Omit<SendRichMessageParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendRichMessage(params: Omit<SendRichMessageParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send rich messages. If the message contains a block with a media element, then the bot must have the right to send the media to the chat. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 19
 		}
 	},
 	{
@@ -7737,9 +8160,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendRichMessageDraftParams } from \"@yaebal/types\";\n\nawait bot.api.sendRichMessageDraft({\n  chat_id: 123456789,\n  draft_id: 1,\n  rich_message: {} /* InputRichMessage */,\n} satisfies SendRichMessageDraftParams);",
 		"contextShortcut": {
 			"name": "sendRichMessageDraft",
-			"signature": "sendRichMessageDraft(params: Omit<SendRichMessageDraftParams, \"chat_id\" | \"message_thread_id\">)",
+			"signature": "sendRichMessageDraft(params: Omit<SendRichMessageDraftParams, \"chat_id\">)",
 			"jsdoc": "Use this method to stream a partial rich message to a user while the message is being generated. Note that the streamed draft is ephemeral and acts as a temporary 30-second preview - once the output is finalized, you **must** call [sendRichMessage](https://core.telegram.org/bots/api/#sendrichmessage) with the complete message to persist it in the user's chat. Returns *True* on success.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -7804,7 +8227,7 @@ export const apiMethods: ApiMethodDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": true,
-				"description": "Unique identifier for the target chat or username of the target bot, supergroup or channel in the format <code>@username</code>"
+				"description": "Unique identifier for the target chat or username of the target bot, supergroup, or channel in the format <code>@username</code>"
 			},
 			{
 				"name": "message_thread_id",
@@ -7993,9 +8416,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendInvoiceParams } from \"@yaebal/types\";\n\nawait bot.api.sendInvoice({\n  chat_id: 123456789,\n  title: \"...\",\n  description: \"...\",\n  payload: \"...\",\n  currency: \"...\",\n  prices: [],\n} satisfies SendInvoiceParams);",
 		"contextShortcut": {
 			"name": "sendInvoice",
-			"signature": "sendInvoice(params: Omit<SendInvoiceParams, \"chat_id\" | \"message_thread_id\" | \"direct_messages_topic_id\">)",
+			"signature": "sendInvoice(params: Omit<SendInvoiceParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send invoices. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -8142,7 +8565,7 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { CreateInvoiceLinkParams } from \"@yaebal/types\";\n\nawait bot.api.createInvoiceLink({\n  title: \"...\",\n  description: \"...\",\n  payload: \"...\",\n  currency: \"...\",\n  prices: [],\n} satisfies CreateInvoiceLinkParams);",
 		"contextShortcut": {
 			"name": "createInvoiceLink",
-			"signature": "createInvoiceLink(params: Omit<CreateInvoiceLinkParams, \"business_connection_id\">)",
+			"signature": "createInvoiceLink(params: Omit<CreateInvoiceLinkParams, never>)",
 			"jsdoc": "Use this method to create a link for an invoice. Returns the created invoice link as *String* on success.",
 			"availableOn": 4
 		}
@@ -8282,7 +8705,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "refundStarPayment",
 			"signature": "refundStarPayment(params: Omit<RefundStarPaymentParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Refunds a successful payment in [Telegram Stars](https://t.me/BotNews/90). Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -8317,7 +8740,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "editUserStarSubscription",
 			"signature": "editUserStarSubscription(params: Omit<EditUserStarSubscriptionParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Allows the bot to cancel or re-enable extension of a subscription paid in Telegram Stars. Returns *True* on success.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -8346,7 +8769,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setPassportDataErrors",
 			"signature": "setPassportDataErrors(params: Omit<SetPassportDataErrorsParams, \"user_id\"> & { user_id?: number })",
 			"jsdoc": "Informs a user that some of the Telegram Passport elements they provided contains errors. The user will not be able to re-submit their Passport to you until the errors are fixed (the contents of the field for which you returned the error must change). Returns *True* on success.  Use this if the data submitted by the user doesn't satisfy the standards your service requires for any reason. For example, if a birthday date seems invalid, a submitted document is blurry, a scan shows evidence of tampering, etc. Supply some details in the error message to make sure the user knows how to correct the issues.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -8421,9 +8844,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendGameParams } from \"@yaebal/types\";\n\nawait bot.api.sendGame({\n  chat_id: 123456789,\n  game_short_name: \"...\",\n} satisfies SendGameParams);",
 		"contextShortcut": {
 			"name": "sendGame",
-			"signature": "sendGame(params: Omit<SendGameParams, \"chat_id\" | \"message_thread_id\">)",
+			"signature": "sendGame(params: Omit<SendGameParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send a game. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 17
+			"availableOn": 18
 		}
 	},
 	{
@@ -8482,7 +8905,7 @@ export const apiMethods: ApiMethodDoc[] = [
 			"name": "setGameScore",
 			"signature": "setGameScore(params: Omit<SetGameScoreParams, \"user_id\" | \"chat_id\" | \"message_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to set the score of the specified user in a game message. On success, if the message is not an inline message, the [Message](https://core.telegram.org/bots/api/#message) is returned, otherwise *True* is returned. Returns an error, if the new score is not greater than the user's current score in the chat and *force* is *False*.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	},
 	{
@@ -8521,9 +8944,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { GetGameHighScoresParams } from \"@yaebal/types\";\n\nawait bot.api.getGameHighScores({\n  user_id: 123456789,\n} satisfies GetGameHighScoresParams);",
 		"contextShortcut": {
 			"name": "getGameHighScores",
-			"signature": "getGameHighScores(params: Omit<GetGameHighScoresParams, \"user_id\" | \"chat_id\" | \"message_id\"> & { user_id?: number })",
+			"signature": "getGameHighScores(params?: Omit<GetGameHighScoresParams, \"user_id\" | \"chat_id\" | \"message_id\"> & { user_id?: number })",
 			"jsdoc": "Use this method to get data for high score tables. Will return the score of the specified user and several of their neighbors in a game. Returns an Array of [GameHighScore](https://core.telegram.org/bots/api/#gamehighscore) objects.  This method will currently return scores for the target user, plus two of their closest neighbors on each side. Will also return the top three users if the user and their neighbors are not among them. Please note that this behavior is subject to change.",
-			"availableOn": 16
+			"availableOn": 18
 		}
 	}
 ];
@@ -8624,6 +9047,18 @@ export const apiTypes: ApiTypeDoc[] = [
 				"type": "CallbackQuery",
 				"required": false,
 				"description": "<em>Optional</em>. New incoming callback query"
+			},
+			{
+				"name": "widget_query",
+				"type": "WidgetQuery",
+				"required": false,
+				"description": "<em>Optional</em>. New incoming query from a widget in a message sent by the bot or via the bot"
+			},
+			{
+				"name": "shared_widget_query",
+				"type": "SharedWidgetQuery",
+				"required": false,
+				"description": "<em>Optional</em>. New incoming query from a forwarded message with a shared widget"
 			},
 			{
 				"name": "shipping_query",
@@ -8940,10 +9375,12 @@ export const apiTypes: ApiTypeDoc[] = [
 			"PreCheckoutQuery",
 			"ProximityAlertTriggered",
 			"RichTextTextMention",
+			"SharedWidgetQuery",
 			"ShippingQuery",
 			"TransactionPartnerAffiliateProgram",
 			"TransactionPartnerUser",
-			"VideoChatParticipantsInvited"
+			"VideoChatParticipantsInvited",
+			"WidgetQuery"
 		]
 	},
 	{
@@ -9028,7 +9465,8 @@ export const apiTypes: ApiTypeDoc[] = [
 			"PollOption",
 			"Story",
 			"TransactionPartnerChat",
-			"UniqueGift"
+			"UniqueGift",
+			"WidgetQuery"
 		]
 	},
 	{
@@ -9354,6 +9792,18 @@ export const apiTypes: ApiTypeDoc[] = [
 				"type": "Community",
 				"required": false,
 				"description": "<em>Optional</em>. The <a href=\"/docs/api/types/Community\">Community</a> to which the chat belongs"
+			},
+			{
+				"name": "ton_wallet_card",
+				"type": "TonWalletCard",
+				"required": false,
+				"description": "<em>Optional</em>. For private chats, the TON wallet card of the user, which is shown on their profile page"
+			},
+			{
+				"name": "share_theme",
+				"type": "ChatShareTheme",
+				"required": false,
+				"description": "<em>Optional</em>. For private chats, supergroups and channels, the theme of the screen for sharing a link to the user or the chat; omitted if the default theme is used"
 			}
 		],
 		"variants": [],
@@ -9670,10 +10120,16 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "<em>Optional</em>. Message is a voice message, information about the file"
 			},
 			{
+				"name": "widget",
+				"type": "Widget",
+				"required": false,
+				"description": "<em>Optional</em>. Message is an HTML widget, information about the widget"
+			},
+			{
 				"name": "caption",
 				"type": "string",
 				"required": false,
-				"description": "<em>Optional</em>. Caption for the animation, audio, document, paid media, photo, video or voice"
+				"description": "<em>Optional</em>. Caption for the animation, audio, document, live photo, paid media, photo, video, voice, or widget"
 			},
 			{
 				"name": "caption_entities",
@@ -9685,7 +10141,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "show_caption_above_media",
 				"type": "boolean",
 				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the caption must be shown above the message media"
+				"description": "<em>Optional</em>. <em>True</em>, if the caption must be shown above the message media or the widget"
 			},
 			{
 				"name": "has_media_spoiler",
@@ -10012,6 +10468,12 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "<em>Optional</em>. Service message: the price for paid messages has changed in the chat"
 			},
 			{
+				"name": "paid_messages_waived",
+				"type": "PaidMessagesWaived",
+				"required": false,
+				"description": "<em>Optional</em>. Service message: the sender of the message used a link of the other user, which allows sending messages to the user without paying Telegram Stars"
+			},
+			{
 				"name": "poll_option_added",
 				"type": "PollOptionAdded",
 				"required": false,
@@ -10052,6 +10514,12 @@ export const apiTypes: ApiTypeDoc[] = [
 				"type": "SuggestedPostRefunded",
 				"required": false,
 				"description": "<em>Optional</em>. Service message: payment for a suggested post was refunded"
+			},
+			{
+				"name": "ton_wallet_transfer",
+				"type": "TonWalletTransfer",
+				"required": false,
+				"description": "<em>Optional</em>. Service message: a transfer with a TON wallet"
 			},
 			{
 				"name": "video_chat_scheduled",
@@ -10117,11 +10585,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
 			"sendVoice",
+			"sendWidget",
 			"setGameScore",
 			"stopMessageLiveLocation"
 		],
@@ -10220,9 +10690,9 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "type",
-				"type": "\"mention\" | \"hashtag\" | \"cashtag\" | \"bot_command\" | \"url\" | \"email\" | \"phone_number\" | \"bold\" | \"italic\" | \"underline\" | \"strikethrough\" | \"spoiler\" | \"blockquote\" | \"expandable_blockquote\" | \"code\" | \"pre\" | \"text_link\" | \"text_mention\" | \"custom_emoji\" | \"date_time\"",
+				"type": "\"mention\" | \"hashtag\" | \"cashtag\" | \"bot_command\" | \"url\" | \"email\" | \"phone_number\" | \"bank_card_number\" | \"ton_address\" | \"bold\" | \"italic\" | \"underline\" | \"strikethrough\" | \"spoiler\" | \"blockquote\" | \"expandable_blockquote\" | \"code\" | \"pre\" | \"text_link\" | \"text_mention\" | \"custom_emoji\" | \"date_time\"",
 				"required": true,
-				"description": "Type of the entity. Currently, can be “mention” (<code>@username</code>), “hashtag” (<code>#hashtag</code> or <code>#hashtag@chatusername</code>), “cashtag” (<code>$USD</code> or <code>$USD@chatusername</code>), “bot_command” (<code>/start@jobs_bot</code>), “url” (<code>https://telegram.org</code>), “email” (<code>do-not-reply@telegram.org</code>), “phone_number” (<code>+1-212-555-0123</code>), “bold” (<strong>bold text</strong>), “italic” (<em>italic text</em>), “underline” (underlined text), “strikethrough” (strikethrough text), “spoiler” (spoiler message), “blockquote” (block quotation), “expandable_blockquote” (collapsed-by-default block quotation), “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs), “text_mention” (for users <a href=\"https://telegram.org/blog/edit#new-mentions\" target=\"_blank\" rel=\"noopener noreferrer\">without usernames</a>), “custom_emoji” (for inline custom emoji stickers), or “date_time” (for formatted date and time)."
+				"description": "Type of the entity. Currently, can be “mention” (<code>@username</code>), “hashtag” (<code>#hashtag</code> or <code>#hashtag@chatusername</code>), “cashtag” (<code>$USD</code> or <code>$USD@chatusername</code>), “bot_command” (<code>/start@jobs_bot</code>), “url” (<code>https://telegram.org</code>), “email” (<code>do-not-reply@telegram.org</code>), “phone_number” (<code>+1-212-555-0123</code>), “bank_card_number” (bank card number), “ton_address” (address in the TON blockchain), “bold” (<strong>bold text</strong>), “italic” (<em>italic text</em>), “underline” (underlined text), “strikethrough” (strikethrough text), “spoiler” (spoiler message), “blockquote” (block quotation), “expandable_blockquote” (collapsed-by-default block quotation), “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs), “text_mention” (for users <a href=\"https://telegram.org/blog/edit#new-mentions\" target=\"_blank\" rel=\"noopener noreferrer\">without usernames</a>), “custom_emoji” (for inline custom emoji stickers), or “date_time” (for formatted date and time)."
 			},
 			{
 				"name": "offset",
@@ -10294,8 +10764,12 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPaidMedia",
 			"sendPhoto",
 			"sendPoll",
+			"sendSharedWidget",
 			"sendVideo",
-			"sendVoice"
+			"sendVoice",
+			"sendWidget",
+			"verifyChat",
+			"verifyUser"
 		],
 		"usedByTypes": [
 			"Checklist",
@@ -10326,7 +10800,9 @@ export const apiTypes: ApiTypeDoc[] = [
 			"InputMediaVideo",
 			"InputMediaVoiceNote",
 			"InputPollOption",
+			"InputSharedWidgetMessageContent",
 			"InputTextMessageContent",
+			"InputWidgetMessageContent",
 			"Message",
 			"OwnedGiftRegular",
 			"Poll",
@@ -10348,7 +10824,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "text",
 				"type": "string",
 				"required": true,
-				"description": "Text of the quoted part of a message that is replied to by the given message"
+				"description": "Text of the quoted part of a message that is replied to by the given message; may be empty if the quote was chosen from a rich message"
 			},
 			{
 				"name": "entities",
@@ -10357,10 +10833,16 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "<em>Optional</em>. Special entities that appear in the quote. Currently, only <em>bold</em>, <em>italic</em>, <em>underline</em>, <em>strikethrough</em>, <em>spoiler</em>, <em>custom_emoji</em>, and <em>date_time</em> entities are kept in quotes."
 			},
 			{
+				"name": "rich_texts",
+				"type": "RichText[]",
+				"required": false,
+				"description": "<em>Optional</em>. Rich text of the quote if it was chosen from a <a href=\"/docs/api/types/RichMessage\">rich message</a>. May contain only plain text, <a href=\"/docs/api/types/RichTextBold\">RichTextBold</a>, <a href=\"/docs/api/types/RichTextItalic\">RichTextItalic</a>, <a href=\"/docs/api/types/RichTextUnderline\">RichTextUnderline</a>, <a href=\"/docs/api/types/RichTextStrikethrough\">RichTextStrikethrough</a>, <a href=\"/docs/api/types/RichTextSpoiler\">RichTextSpoiler</a>, <a href=\"/docs/api/types/RichTextSubscript\">RichTextSubscript</a>, <a href=\"/docs/api/types/RichTextSuperscript\">RichTextSuperscript</a>, <a href=\"/docs/api/types/RichTextDateTime\">RichTextDateTime</a>, <a href=\"/docs/api/types/RichTextCustomEmoji\">RichTextCustomEmoji</a>, <a href=\"/docs/api/types/RichTextMathematicalExpression\">RichTextMathematicalExpression</a>, and arrays of them."
+			},
+			{
 				"name": "position",
 				"type": "number",
 				"required": true,
-				"description": "Approximate quote position in the original message in UTF-16 code units as specified by the sender"
+				"description": "Approximate quote position in the original message in UTF-16 code units as specified by the sender. For quotes from rich messages, it is the position in the text formed by joining plain texts of all quotable texts of the message, separated by line feeds."
 			},
 			{
 				"name": "is_manual",
@@ -10473,6 +10955,12 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "<em>Optional</em>. Message is a voice message, information about the file"
 			},
 			{
+				"name": "widget",
+				"type": "Widget",
+				"required": false,
+				"description": "<em>Optional</em>. Message is an HTML widget, information about the widget"
+			},
+			{
 				"name": "has_media_spoiler",
 				"type": "boolean",
 				"required": false,
@@ -10562,7 +11050,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "chat_id",
 				"type": "number | string",
 				"required": false,
-				"description": "<em>Optional</em>. If the message to be replied to is from a different chat, unique identifier for the chat or username of the bot, supergroup or channel in the format <code>@username</code>. Not supported for messages sent on behalf of a business account, messages from channel direct messages chats and ephemeral messages."
+				"description": "<em>Optional</em>. If the message to be replied to is from a different chat, unique identifier for the chat or username of the bot, supergroup, or channel in the format <code>@username</code>. Not supported for messages sent on behalf of a business account, messages from channel direct messages chats and ephemeral messages."
 			},
 			{
 				"name": "ephemeral_message_id",
@@ -10595,10 +11083,16 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "<em>Optional</em>. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of <em>quote_parse_mode</em>."
 			},
 			{
+				"name": "quote_rich_texts",
+				"type": "RichText[]",
+				"required": false,
+				"description": "<em>Optional</em>. A JSON-serialized list of quoted parts of the <a href=\"/docs/api/types/RichMessage\">rich message</a> to be replied to. Must contain one element for each quoted text of the message in the order of their appearance. Each of the following is a separate quoted text: the text of a paragraph, a heading, a preformatted block, a footer, or a mathematical expression; the text and the credit of a block quotation or a pull quotation; the summary of a details block; the caption and each cell of a table; the text and the credit of a caption of a media block, a collage, a slideshow, or a map. Texts of blocks nested in lists, block quotations, details, collages, and slideshows are separate quoted texts too. The first and the last elements can contain only a part of the corresponding text; all other elements must contain the whole text. Formatting of the quoted parts must be kept, and rich texts must be nested in the same way as in the message received from the server. Mathematical expressions must be quoted entirely. Buttons in <a href=\"/docs/api/types/RichBlockButtons\">RichBlockButtons</a>, anchors and dividers can't be quoted. Up to 32 quoted texts with total length up to 1024 characters can be specified. Only plain text, <a href=\"/docs/api/types/RichTextBold\">RichTextBold</a>, <a href=\"/docs/api/types/RichTextItalic\">RichTextItalic</a>, <a href=\"/docs/api/types/RichTextUnderline\">RichTextUnderline</a>, <a href=\"/docs/api/types/RichTextStrikethrough\">RichTextStrikethrough</a>, <a href=\"/docs/api/types/RichTextSpoiler\">RichTextSpoiler</a>, <a href=\"/docs/api/types/RichTextSubscript\">RichTextSubscript</a>, <a href=\"/docs/api/types/RichTextSuperscript\">RichTextSuperscript</a>, <a href=\"/docs/api/types/RichTextDateTime\">RichTextDateTime</a>, <a href=\"/docs/api/types/RichTextCustomEmoji\">RichTextCustomEmoji</a>, <a href=\"/docs/api/types/RichTextMathematicalExpression\">RichTextMathematicalExpression</a>, and arrays of them are kept in the quote; other rich text types are replaced with their text. If non-empty, then <em>quote</em>, <em>quote_parse_mode</em> and <em>quote_entities</em> are ignored."
+			},
+			{
 				"name": "quote_position",
 				"type": "number",
 				"required": false,
-				"description": "<em>Optional</em>. Position of the quote in the original message in UTF-16 code units"
+				"description": "<em>Optional</em>. Position of the quote in the original message in UTF-16 code units. For quotes from rich messages, it is the position in the text formed by joining plain texts of all quotable texts of the message, separated by line feeds."
 			},
 			{
 				"name": "checklist_task_id",
@@ -10633,11 +11127,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
-			"sendVoice"
+			"sendVoice",
+			"sendWidget"
 		],
 		"usedByTypes": []
 	},
@@ -10650,14 +11146,14 @@ export const apiTypes: ApiTypeDoc[] = [
 			{
 				"name": "receiver_user_id",
 				"type": "number",
-				"required": true,
-				"description": "Identifier of the user who will receive the message. It is not guaranteed that the user will receive the message, especially if they are offline. See <a href=\"https://core.telegram.org/bots/api/#ephemeral-messages-and-commands\" target=\"_blank\" rel=\"noopener noreferrer\">here</a> for more details."
+				"required": false,
+				"description": "<em>Optional</em>. Identifier of the user who will receive the message; required unless the message is sent as an ephemeral reply to a callback query. If omitted, then the parameter <em>chat_id</em> of the method is ignored. If specified together with <em>callback_query_id</em>, then it must be the identifier of the user who pressed the button. Must be omitted for messages sent in chats where the bot isn't a member, unless the message is a reply to an ephemeral message. It is not guaranteed that the user will receive the message, especially if they are offline. See <a href=\"https://core.telegram.org/bots/api/#ephemeral-messages-and-commands\" target=\"_blank\" rel=\"noopener noreferrer\">here</a> for more details."
 			},
 			{
 				"name": "callback_query_id",
 				"type": "string",
 				"required": false,
-				"description": "<em>Optional</em>. Identifier of the callback query which triggered the message, if any"
+				"description": "<em>Optional</em>. Identifier of the callback query which triggered the message, if any. If specified and <em>receiver_user_id</em> is omitted, then the message is sent as an ephemeral reply to the callback query and will be shown only to the user who pressed the button. Ephemeral replies can't be sent to callback queries from messages in channel direct messages chats. The bot must still answer the callback query using <a href=\"/docs/api/methods/answerCallbackQuery\">answerCallbackQuery</a>."
 			},
 			{
 				"name": "replace_callback_query_message",
@@ -11442,6 +11938,57 @@ export const apiTypes: ApiTypeDoc[] = [
 			"ExternalReplyInfo",
 			"Message",
 			"RichBlockVoiceNote"
+		]
+	},
+	{
+		"name": "Widget",
+		"category": "Available types",
+		"description": "<p>This object describes an <a href=\"https://core.telegram.org/bots/widgets\" target=\"_blank\" rel=\"noopener noreferrer\">HTML widget</a>.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "id",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Unique identifier of the shared widget, which can be used to send the widget again using the method <a href=\"/docs/api/methods/sendSharedWidget\">sendSharedWidget</a>; omitted if the widget isn't shared"
+			},
+			{
+				"name": "width",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Width of the widget in logical pixels; omitted if the widget must occupy the whole width of the message bubble"
+			},
+			{
+				"name": "height",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Height of the widget in logical pixels; omitted if the height of the widget isn't fixed"
+			},
+			{
+				"name": "html",
+				"type": "string",
+				"required": true,
+				"description": "HTML code of the widget"
+			},
+			{
+				"name": "public_data",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Public data of the widget, which is available wherever the widget is shown. All messages with a shared widget have the same public data."
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Data of the widget, which is specific to the message"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widget",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ExternalReplyInfo",
+			"Message"
 		]
 	},
 	{
@@ -13630,6 +14177,57 @@ export const apiTypes: ApiTypeDoc[] = [
 		]
 	},
 	{
+		"name": "PaidMessagesWaived",
+		"category": "Available types",
+		"description": "<p>Describes a service message about the sender of the message using a link of the other user, which allows sending messages to the user without paying Telegram Stars. Currently holds no information.</p>",
+		"kind": "empty",
+		"fields": [],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#paidmessageswaived",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"Message"
+		]
+	},
+	{
+		"name": "TonWalletTransfer",
+		"category": "Available types",
+		"description": "<p>Describes a service message about a transfer with a TON wallet.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "transaction_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the transaction; may be empty if the transfer hasn't been sent yet"
+			},
+			{
+				"name": "peer_address",
+				"type": "string",
+				"required": true,
+				"description": "Address of the transfer peer in the TON blockchain"
+			},
+			{
+				"name": "amount",
+				"type": "string",
+				"required": true,
+				"description": "The amount of transferred cryptocurrency, in the <em>smallest units</em> of the cryptocurrency, as a decimal number; negative for outgoing transfers"
+			},
+			{
+				"name": "comment",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Comment added to the transfer; omitted if the comment is encrypted"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#tonwallettransfer",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"Message"
+		]
+	},
+	{
 		"name": "GiveawayCreated",
 		"category": "Available types",
 		"description": "<p>This object represents a service message about the creation of a scheduled giveaway.</p>",
@@ -14206,11 +14804,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
-			"sendVoice"
+			"sendVoice",
+			"sendWidget"
 		],
 		"usedByTypes": []
 	},
@@ -14448,7 +15048,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "suggested_username",
 				"type": "string",
 				"required": false,
-				"description": "<em>Optional</em>. Suggested username for the bot"
+				"description": "<em>Optional</em>. Suggested username for the bot. The username must end with “bot”. If the user creating the bot has a Telegram Premium subscription, then the username can also end with “agent”, “ai”, “app”, “game”, or “gay”; in this case, the username will be assigned to the bot as a secondary username, and a regular username ending with “bot” will be assigned to the bot automatically."
 			}
 		],
 		"variants": [],
@@ -14513,11 +15113,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
-			"sendVoice"
+			"sendVoice",
+			"sendWidget"
 		],
 		"usedByTypes": []
 	},
@@ -14569,11 +15171,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
 			"sendVoice",
+			"sendWidget",
 			"stopMessageLiveLocation",
 			"stopPoll"
 		],
@@ -14641,7 +15245,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "web_app",
 				"type": "WebAppInfo",
 				"required": false,
-				"description": "<em>Optional</em>. Description of the <a href=\"https://core.telegram.org/bots/webapps\" target=\"_blank\" rel=\"noopener noreferrer\">Web App</a> that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method <a href=\"/docs/api/methods/answerWebAppQuery\">answerWebAppQuery</a>. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account."
+				"description": "<em>Optional</em>. Description of the <a href=\"https://core.telegram.org/bots/webapps\" target=\"_blank\" rel=\"noopener noreferrer\">Web App</a> that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method <a href=\"/docs/api/methods/answerWebAppQuery\">answerWebAppQuery</a>. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a business account and ephemeral messages."
 			},
 			{
 				"name": "login_url",
@@ -14702,7 +15306,7 @@ export const apiTypes: ApiTypeDoc[] = [
 	{
 		"name": "LoginUrl",
 		"category": "Available types",
-		"description": "<p>This object represents a parameter of the inline keyboard button used to automatically authorize a user. It serves as a great replacement for the <a href=\"https://core.telegram.org/widgets/login\" target=\"_blank\" rel=\"noopener noreferrer\">Telegram Login Widget</a> when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:</p>\n<p>[](/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c)</p>\n<p>Sample bot: <a href=\"https://t.me/discussbot\" target=\"_blank\" rel=\"noopener noreferrer\">@DiscussBot</a></p>",
+		"description": "<p>This object represents a parameter of the inline keyboard button used to automatically authorize a user. It serves as a great replacement for the <a href=\"https://core.telegram.org/widgets/login\" target=\"_blank\" rel=\"noopener noreferrer\">Telegram Login Widget</a> when the user is coming from Telegram. All the user needs to do is tap/click a button and confirm that they want to log in:</p>\n<p><a href=\"https://core.telegram.org/file/811140015/1734/8VZFkwWXalM.97872/6127fa62d8a0bf2b3c\" target=\"_blank\" rel=\"noopener noreferrer\">TITLE</a></p>\n<p>Sample bot: <a href=\"https://t.me/discussbot\" target=\"_blank\" rel=\"noopener noreferrer\">@DiscussBot</a></p>",
 		"kind": "properties",
 		"fields": [
 			{
@@ -14875,6 +15479,271 @@ export const apiTypes: ApiTypeDoc[] = [
 		]
 	},
 	{
+		"name": "WidgetQueryType",
+		"category": "Available types",
+		"description": "<p>This object describes the type of a query from a widget. Currently, it can be one of</p>",
+		"kind": "any_of",
+		"fields": [],
+		"variants": [
+			"WidgetQueryTypeData",
+			"WidgetQueryTypeSignData",
+			"WidgetQueryTypeSentTransaction"
+		],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquerytype",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"SharedWidgetQuery",
+			"WidgetQuery"
+		]
+	},
+	{
+		"name": "WidgetQueryTypeData",
+		"category": "Available types",
+		"description": "<p>The query contains data for the bot.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"data\"",
+				"required": true,
+				"description": "Type of the query, always “data”"
+			},
+			{
+				"name": "wallet_card",
+				"type": "TonWalletCard",
+				"required": false,
+				"description": "<em>Optional</em>. TON wallet card of the user who sent the query, if it was sent to the bot along with the query"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquerytypedata",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"WidgetQueryType"
+		]
+	},
+	{
+		"name": "WidgetQueryTypeSignData",
+		"category": "Available types",
+		"description": "<p>The query contains data signed by a TON wallet of the user who sent the query. The data is signed for the domain <code>bot&lt;bot_id&gt;</code>, where <code>&lt;bot_id&gt;</code> is the identifier of the bot.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"sign_data\"",
+				"required": true,
+				"description": "Type of the query, always “sign_data”"
+			},
+			{
+				"name": "wallet",
+				"type": "WidgetQueryWallet",
+				"required": true,
+				"description": "The wallet that signed the data"
+			},
+			{
+				"name": "sign_data",
+				"type": "string",
+				"required": true,
+				"description": "JSON-serialized signed data"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquerytypesigndata",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"WidgetQueryType"
+		]
+	},
+	{
+		"name": "WidgetQueryTypeSentTransaction",
+		"category": "Available types",
+		"description": "<p>The query notifies the bot about a transaction sent from a TON wallet of the user who sent the query.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"sent_transaction\"",
+				"required": true,
+				"description": "Type of the query, always “sent_transaction”"
+			},
+			{
+				"name": "wallet",
+				"type": "WidgetQueryWallet",
+				"required": true,
+				"description": "The wallet from which the transaction was sent"
+			},
+			{
+				"name": "msg_hash",
+				"type": "string",
+				"required": true,
+				"description": "Value of <em>msg_hash</em> of the transaction"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquerytypesenttransaction",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"WidgetQueryType"
+		]
+	},
+	{
+		"name": "WidgetQueryWallet",
+		"category": "Available types",
+		"description": "<p>This object describes a TON wallet of the user, which is used in a query from a widget.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "address",
+				"type": "string",
+				"required": true,
+				"description": "Address of the wallet"
+			},
+			{
+				"name": "amount",
+				"type": "string",
+				"required": true,
+				"description": "Balance of the wallet, in the <em>smallest units</em> of the cryptocurrency, as a decimal number"
+			},
+			{
+				"name": "public_key",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Hex-encoded public key of the wallet; omitted if unknown"
+			},
+			{
+				"name": "state_init",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Base64-encoded serialized StateInit of the wallet contract; omitted if and only if <em>public_key</em> is omitted"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquerywallet",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"WidgetQueryTypeSentTransaction",
+			"WidgetQueryTypeSignData"
+		]
+	},
+	{
+		"name": "WidgetQuery",
+		"category": "Available types",
+		"description": "<p>This object represents an incoming query from a widget in a message sent by the bot or via the bot. Use <a href=\"/docs/api/methods/answerWidgetQuery\">answerWidgetQuery</a> to answer the query. Each user can send at most 5 queries per 5 seconds to the bot from all its widgets.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier for this query"
+			},
+			{
+				"name": "from",
+				"type": "User",
+				"required": true,
+				"description": "Sender"
+			},
+			{
+				"name": "chat",
+				"type": "Chat",
+				"required": false,
+				"description": "<em>Optional</em>. Chat with the message containing the widget; omitted if the widget is in an inline message"
+			},
+			{
+				"name": "message_id",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Identifier of the message containing the widget; omitted if the widget is in an inline message"
+			},
+			{
+				"name": "inline_message_id",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Identifier of the inline message containing the widget"
+			},
+			{
+				"name": "chat_instance",
+				"type": "string",
+				"required": true,
+				"description": "Global identifier, uniquely corresponding to the chat to which the message with the widget was sent"
+			},
+			{
+				"name": "chat_type",
+				"type": "\"sender\" | \"private\" | \"group\" | \"supergroup\" | \"channel\"",
+				"required": false,
+				"description": "<em>Optional</em>. For widgets in inline messages, type of the chat to which the message was sent. Can be either “sender” for a private chat with the inline query sender, “private”, “group”, “supergroup”, or “channel”."
+			},
+			{
+				"name": "type",
+				"type": "WidgetQueryType",
+				"required": true,
+				"description": "Type of the query"
+			},
+			{
+				"name": "data",
+				"type": "string",
+				"required": true,
+				"description": "Data of the query, 1-64 bytes"
+			},
+			{
+				"name": "widget_id",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Unique identifier of the shared widget, which sent the query; omitted if the widget isn't shared"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#widgetquery",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"Update"
+		]
+	},
+	{
+		"name": "SharedWidgetQuery",
+		"category": "Available types",
+		"description": "<p>This object represents an incoming query from a forwarded message with a shared widget created by the bot. Use <a href=\"/docs/api/methods/answerWidgetQuery\">answerWidgetQuery</a> to answer the query. Each user can send at most 5 queries per 5 seconds to the bot from all its widgets.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier for this query"
+			},
+			{
+				"name": "from",
+				"type": "User",
+				"required": true,
+				"description": "Sender"
+			},
+			{
+				"name": "type",
+				"type": "WidgetQueryType",
+				"required": true,
+				"description": "Type of the query"
+			},
+			{
+				"name": "data",
+				"type": "string",
+				"required": true,
+				"description": "Data of the query, 1-64 bytes"
+			},
+			{
+				"name": "widget_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the shared widget, which sent the query"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#sharedwidgetquery",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"Update"
+		]
+	},
+	{
 		"name": "ForceReply",
 		"category": "Available types",
 		"description": "<p>Upon receiving a message with this object, Telegram clients will display a reply interface to the user (act as if the user has selected the bot's message and tapped 'Reply'). This can be extremely useful if you want to create user-friendly step-by-step interfaces without having to sacrifice <a href=\"https://core.telegram.org/bots/features#privacy-mode\" target=\"_blank\" rel=\"noopener noreferrer\">privacy mode</a>. Not supported in channels and for messages sent on behalf of a user account.</p>",
@@ -14915,11 +15784,13 @@ export const apiTypes: ApiTypeDoc[] = [
 			"sendPhoto",
 			"sendPoll",
 			"sendRichMessage",
+			"sendSharedWidget",
 			"sendSticker",
 			"sendVenue",
 			"sendVideo",
 			"sendVideoNote",
-			"sendVoice"
+			"sendVoice",
+			"sendWidget"
 		],
 		"usedByTypes": []
 	},
@@ -15590,7 +16461,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "can_send_other_messages",
 				"type": "boolean",
 				"required": true,
-				"description": "<em>True</em>, if the user is allowed to send animations, games, stickers and use inline bots"
+				"description": "<em>True</em>, if the user is allowed to send animations, games, stickers, widgets and use inline bots"
 			},
 			{
 				"name": "can_add_web_page_previews",
@@ -15820,7 +16691,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "can_send_other_messages",
 				"type": "boolean",
 				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the user is allowed to send animations, games, stickers and use inline bots"
+				"description": "<em>Optional</em>. <em>True</em>, if the user is allowed to send animations, games, stickers, widgets and use inline bots"
 			},
 			{
 				"name": "can_add_web_page_previews",
@@ -16056,34 +16927,34 @@ export const apiTypes: ApiTypeDoc[] = [
 		]
 	},
 	{
-		"name": "StoryAreaPosition",
+		"name": "AreaPosition",
 		"category": "Available types",
-		"description": "<p>Describes the position of a clickable area within a story.</p>",
+		"description": "<p>Describes the position of a rectangle area on a story media or a TON wallet card.</p>",
 		"kind": "properties",
 		"fields": [
 			{
 				"name": "x_percentage",
 				"type": "number",
 				"required": true,
-				"description": "The abscissa of the area's center, as a percentage of the media width"
+				"description": "The abscissa of the area's center, as a percentage of the media or the card width"
 			},
 			{
 				"name": "y_percentage",
 				"type": "number",
 				"required": true,
-				"description": "The ordinate of the area's center, as a percentage of the media height"
+				"description": "The ordinate of the area's center, as a percentage of the media or the card height"
 			},
 			{
 				"name": "width_percentage",
 				"type": "number",
 				"required": true,
-				"description": "The width of the area's rectangle, as a percentage of the media width"
+				"description": "The width of the area's rectangle, as a percentage of the media or the card width"
 			},
 			{
 				"name": "height_percentage",
 				"type": "number",
 				"required": true,
-				"description": "The height of the area's rectangle, as a percentage of the media height"
+				"description": "The height of the area's rectangle, as a percentage of the media or the card height"
 			},
 			{
 				"name": "rotation_angle",
@@ -16095,14 +16966,356 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "corner_radius_percentage",
 				"type": "number",
 				"required": true,
-				"description": "The radius of the rectangle corner rounding, as a percentage of the media width"
+				"description": "The radius of the rectangle corner rounding, as a percentage of the media or the card width"
 			}
 		],
 		"variants": [],
-		"documentationLink": "https://core.telegram.org/bots/api/#storyareaposition",
+		"documentationLink": "https://core.telegram.org/bots/api/#areaposition",
 		"usedByMethods": [],
 		"usedByTypes": [
-			"StoryArea"
+			"StoryArea",
+			"TonWalletCardSticker"
+		]
+	},
+	{
+		"name": "TonNft",
+		"category": "Available types",
+		"description": "<p>This object represents an NFT in the TON blockchain.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "address",
+				"type": "string",
+				"required": true,
+				"description": "Address of the NFT"
+			},
+			{
+				"name": "collection_address",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Address of the collection to which the NFT belongs; omitted if unknown"
+			},
+			{
+				"name": "index",
+				"type": "string",
+				"required": true,
+				"description": "Index of the NFT among all NFTs from the collection as a decimal number"
+			},
+			{
+				"name": "name",
+				"type": "string",
+				"required": true,
+				"description": "Name of the NFT"
+			},
+			{
+				"name": "description",
+				"type": "string",
+				"required": true,
+				"description": "Description of the NFT"
+			},
+			{
+				"name": "attributes",
+				"type": "TonNftAttribute[]",
+				"required": false,
+				"description": "<em>Optional</em>. Attributes of the NFT"
+			},
+			{
+				"name": "gift",
+				"type": "UniqueGift",
+				"required": false,
+				"description": "<em>Optional</em>. The unique gift corresponding to the NFT"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#tonnft",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"TonWalletCardSticker"
+		]
+	},
+	{
+		"name": "TonNftAttribute",
+		"category": "Available types",
+		"description": "<p>This object represents an attribute of an NFT in the TON blockchain.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "trait_type",
+				"type": "string",
+				"required": true,
+				"description": "Trait type of the attribute"
+			},
+			{
+				"name": "value",
+				"type": "string",
+				"required": true,
+				"description": "Value of the attribute"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#tonnftattribute",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"TonNft"
+		]
+	},
+	{
+		"name": "TonWalletCardSticker",
+		"category": "Available types",
+		"description": "<p>This object describes a sticker on a TON wallet card.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "position",
+				"type": "AreaPosition",
+				"required": true,
+				"description": "Position of the sticker on the card"
+			},
+			{
+				"name": "nft",
+				"type": "TonNft",
+				"required": true,
+				"description": "The NFT shown as the sticker"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#tonwalletcardsticker",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"TonWalletCard"
+		]
+	},
+	{
+		"name": "TonWalletCard",
+		"category": "Available types",
+		"description": "<p>This object describes a TON wallet card, which is shown on the profile page of a user to everyone.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "address",
+				"type": "string",
+				"required": true,
+				"description": "Address of the wallet"
+			},
+			{
+				"name": "amount",
+				"type": "string",
+				"required": true,
+				"description": "Balance of the wallet, in the <em>smallest units</em> of the cryptocurrency, as a decimal number"
+			},
+			{
+				"name": "stickers",
+				"type": "TonWalletCardSticker[]",
+				"required": true,
+				"description": "Stickers placed on the card"
+			},
+			{
+				"name": "background_nft_address",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Address of the NFT of one of the stickers, whose colors must be used for the card background; omitted if the default background must be used"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#tonwalletcard",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatFullInfo",
+			"WidgetQueryTypeData"
+		]
+	},
+	{
+		"name": "EmojiType",
+		"category": "Available types",
+		"description": "<p>This object describes an emoji. Currently, it can be one of</p>",
+		"kind": "any_of",
+		"fields": [],
+		"variants": [
+			"EmojiTypeEmoji",
+			"EmojiTypeCustomEmoji"
+		],
+		"documentationLink": "https://core.telegram.org/bots/api/#emojitype",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatShareThemeEmoji"
+		]
+	},
+	{
+		"name": "EmojiTypeEmoji",
+		"category": "Available types",
+		"description": "<p>A regular emoji.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"emoji\"",
+				"required": true,
+				"description": "Type of the emoji, always “emoji”"
+			},
+			{
+				"name": "emoji",
+				"type": "string",
+				"required": true,
+				"description": "The emoji"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#emojitypeemoji",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"EmojiType"
+		]
+	},
+	{
+		"name": "EmojiTypeCustomEmoji",
+		"category": "Available types",
+		"description": "<p>A custom emoji.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"custom_emoji\"",
+				"required": true,
+				"description": "Type of the emoji, always “custom_emoji”"
+			},
+			{
+				"name": "custom_emoji_id",
+				"type": "string",
+				"required": true,
+				"description": "Identifier of the custom emoji. Use <a href=\"/docs/api/methods/getCustomEmojiStickers\">getCustomEmojiStickers</a> to get full information about the sticker."
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#emojitypecustomemoji",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"EmojiType"
+		]
+	},
+	{
+		"name": "ChatShareTheme",
+		"category": "Available types",
+		"description": "<p>This object describes the theme of the screen for sharing a link to a user or a chat. Currently, it can be one of</p>",
+		"kind": "any_of",
+		"fields": [],
+		"variants": [
+			"ChatShareThemeEmoji",
+			"ChatShareThemeUniqueGift"
+		],
+		"documentationLink": "https://core.telegram.org/bots/api/#chatsharetheme",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatFullInfo"
+		]
+	},
+	{
+		"name": "ChatShareThemeEmoji",
+		"category": "Available types",
+		"description": "<p>The theme with emoji placed on a background.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"emoji\"",
+				"required": true,
+				"description": "Type of the theme, always “emoji”"
+			},
+			{
+				"name": "emojis",
+				"type": "EmojiType[]",
+				"required": true,
+				"description": "The emoji; 0-6 regular or custom emoji"
+			},
+			{
+				"name": "background_backdrop_id",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Identifier of the backdrop used as the background; omitted if the default background is used. Use <a href=\"/docs/api/methods/getChatShareThemeBackdrops\">getChatShareThemeBackdrops</a> to get details about the backdrop."
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#chatsharethemeemoji",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatShareTheme"
+		]
+	},
+	{
+		"name": "ChatShareThemeUniqueGift",
+		"category": "Available types",
+		"description": "<p>The theme based on a unique gift owned by the user or the chat.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"unique_gift\"",
+				"required": true,
+				"description": "Type of the theme, always “unique_gift”"
+			},
+			{
+				"name": "gift",
+				"type": "UniqueGift",
+				"required": true,
+				"description": "The gift"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#chatsharethemeuniquegift",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatShareTheme"
+		]
+	},
+	{
+		"name": "ChatShareThemeBackdrops",
+		"category": "Available types",
+		"description": "<p>This object contains a list of backdrops, which can be used as the background of a theme of the screen for sharing a link to a user or a chat.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "backdrops",
+				"type": "ChatShareThemeBackdrop[]",
+				"required": true,
+				"description": "The list of backdrops"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#chatsharethemebackdrops",
+		"usedByMethods": [
+			"getChatShareThemeBackdrops"
+		],
+		"usedByTypes": []
+	},
+	{
+		"name": "ChatShareThemeBackdrop",
+		"category": "Available types",
+		"description": "<p>This object describes a backdrop, which can be used as the background of a theme of the screen for sharing a link to a user or a chat.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "id",
+				"type": "number",
+				"required": true,
+				"description": "Unique identifier of the backdrop"
+			},
+			{
+				"name": "name",
+				"type": "string",
+				"required": true,
+				"description": "Name of the backdrop"
+			},
+			{
+				"name": "colors",
+				"type": "UniqueGiftBackdropColors",
+				"required": true,
+				"description": "Colors of the backdrop"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#chatsharethemebackdrop",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"ChatShareThemeBackdrops"
 		]
 	},
 	{
@@ -16336,7 +17549,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"fields": [
 			{
 				"name": "position",
-				"type": "StoryAreaPosition",
+				"type": "AreaPosition",
 				"required": true,
 				"description": "Position of the area"
 			},
@@ -16892,6 +18105,7 @@ export const apiTypes: ApiTypeDoc[] = [
 		"documentationLink": "https://core.telegram.org/bots/api/#uniquegiftbackdropcolors",
 		"usedByMethods": [],
 		"usedByTypes": [
+			"ChatShareThemeBackdrop",
 			"UniqueGiftBackdrop"
 		]
 	},
@@ -17059,9 +18273,13 @@ export const apiTypes: ApiTypeDoc[] = [
 		],
 		"variants": [],
 		"documentationLink": "https://core.telegram.org/bots/api/#uniquegift",
-		"usedByMethods": [],
+		"usedByMethods": [
+			"getUniqueGift"
+		],
 		"usedByTypes": [
+			"ChatShareThemeUniqueGift",
 			"OwnedGiftUnique",
+			"TonNft",
 			"UniqueGiftInfo"
 		]
 	},
@@ -19953,6 +21171,7 @@ export const apiTypes: ApiTypeDoc[] = [
 			"RichTextEmailAddress",
 			"RichTextPhoneNumber",
 			"RichTextBankCardNumber",
+			"RichTextTonAddress",
 			"RichTextMention",
 			"RichTextHashtag",
 			"RichTextCashtag",
@@ -19976,6 +21195,7 @@ export const apiTypes: ApiTypeDoc[] = [
 			"InputRichBlockSectionHeading",
 			"InputRichBlockTable",
 			"InputRichBlockThinking",
+			"ReplyParameters",
 			"RichBlockBlockQuotation",
 			"RichBlockCaption",
 			"RichBlockDetails",
@@ -20009,8 +21229,10 @@ export const apiTypes: ApiTypeDoc[] = [
 			"RichTextSubscript",
 			"RichTextSuperscript",
 			"RichTextTextMention",
+			"RichTextTonAddress",
 			"RichTextUnderline",
-			"RichTextUrl"
+			"RichTextUrl",
+			"TextQuote"
 		]
 	},
 	{
@@ -20498,6 +21720,38 @@ export const apiTypes: ApiTypeDoc[] = [
 		],
 		"variants": [],
 		"documentationLink": "https://core.telegram.org/bots/api/#richtextbankcardnumber",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"RichText"
+		]
+	},
+	{
+		"name": "RichTextTonAddress",
+		"category": "Rich messages",
+		"description": "<p>An address in the TON blockchain.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "type",
+				"type": "\"ton_address\"",
+				"required": true,
+				"description": "Type of the rich text, always “ton_address”"
+			},
+			{
+				"name": "text",
+				"type": "RichText",
+				"required": true,
+				"description": "Text of the address"
+			},
+			{
+				"name": "address",
+				"type": "string",
+				"required": true,
+				"description": "The address"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#richtexttonaddress",
 		"usedByMethods": [],
 		"usedByTypes": [
 			"RichText"
@@ -24344,7 +25598,9 @@ export const apiTypes: ApiTypeDoc[] = [
 			"InputLocationMessageContent",
 			"InputVenueMessageContent",
 			"InputContactMessageContent",
-			"InputInvoiceMessageContent"
+			"InputInvoiceMessageContent",
+			"InputWidgetMessageContent",
+			"InputSharedWidgetMessageContent"
 		],
 		"documentationLink": "https://core.telegram.org/bots/api/#inputmessagecontent",
 		"usedByMethods": [],
@@ -24707,6 +25963,136 @@ export const apiTypes: ApiTypeDoc[] = [
 		],
 		"variants": [],
 		"documentationLink": "https://core.telegram.org/bots/api/#inputinvoicemessagecontent",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"InputMessageContent"
+		]
+	},
+	{
+		"name": "InputWidgetMessageContent",
+		"category": "Inline mode",
+		"description": "<p>Represents the <a href=\"/docs/api/types/InputMessageContent\">content</a> of a message with an <a href=\"https://core.telegram.org/bots/widgets\" target=\"_blank\" rel=\"noopener noreferrer\">HTML widget</a> to be sent as the result of an inline query. Currently, widgets can't be sent in response to inline queries in the production environment.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "html",
+				"type": "string",
+				"required": true,
+				"description": "HTML code of the widget, 1-32768 bytes. The code must not exceed 4096 bytes when compressed by zlib with the maximum compression level."
+			},
+			{
+				"name": "width",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Width of the widget in logical pixels; omit if the widget must occupy the whole width of the message bubble. The width is clamped by the app to the range from 200 to the maximum width of the message bubble."
+			},
+			{
+				"name": "height",
+				"type": "number",
+				"required": false,
+				"description": "<em>Optional</em>. Height of the widget in logical pixels; omit if the height of the widget isn't fixed. The height is clamped by the app to the range 50-600."
+			},
+			{
+				"name": "public_data",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Public data of the widget, 0-1024 bytes, which will be available wherever the widget is shown. If the widget is shared, then all messages with it will have the same public data."
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Data of the widget, which is specific to the message, 0-1024 bytes"
+			},
+			{
+				"name": "caption",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Widget caption, 0-1024 characters after entities parsing"
+			},
+			{
+				"name": "parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Mode for parsing entities in the widget caption. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details."
+			},
+			{
+				"name": "caption_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "<em>Optional</em>. List of special entities that appear in the caption, which can be specified instead of <em>parse_mode</em>"
+			},
+			{
+				"name": "show_caption_above_media",
+				"type": "boolean",
+				"required": false,
+				"description": "<em>Optional</em>. Pass <em>True</em> if the caption must be shown above the widget"
+			},
+			{
+				"name": "allow_queries",
+				"type": "boolean",
+				"required": false,
+				"description": "<em>Optional</em>. Pass <em>True</em> to allow the widget to send queries to the bot"
+			},
+			{
+				"name": "is_shared",
+				"type": "boolean",
+				"required": false,
+				"description": "<em>Optional</em>. Pass <em>True</em> to create a shared widget. Each message sent from the result creates a separate shared widget, whose identifier is received by the bot only in the field <em>widget_id</em> of queries from the widget. To send an existing shared widget in response to an inline query, use <a href=\"/docs/api/types/InputSharedWidgetMessageContent\">InputSharedWidgetMessageContent</a> instead."
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#inputwidgetmessagecontent",
+		"usedByMethods": [],
+		"usedByTypes": [
+			"InputMessageContent"
+		]
+	},
+	{
+		"name": "InputSharedWidgetMessageContent",
+		"category": "Inline mode",
+		"description": "<p>Represents the <a href=\"/docs/api/types/InputMessageContent\">content</a> of a message with a shared widget to be sent as the result of an inline query. Currently, widgets can't be sent in response to inline queries in the production environment.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "widget_id",
+				"type": "string",
+				"required": true,
+				"description": "Unique identifier of the shared widget created by the bot"
+			},
+			{
+				"name": "chat_data",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Data of the widget, which is specific to the message, 0-1024 bytes"
+			},
+			{
+				"name": "caption",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Widget caption, 0-1024 characters after entities parsing"
+			},
+			{
+				"name": "parse_mode",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Mode for parsing entities in the widget caption. See <a href=\"https://core.telegram.org/bots/api/#formatting-options\" target=\"_blank\" rel=\"noopener noreferrer\">formatting options</a> for more details."
+			},
+			{
+				"name": "caption_entities",
+				"type": "MessageEntity[]",
+				"required": false,
+				"description": "<em>Optional</em>. List of special entities that appear in the caption, which can be specified instead of <em>parse_mode</em>"
+			},
+			{
+				"name": "show_caption_above_media",
+				"type": "boolean",
+				"required": false,
+				"description": "<em>Optional</em>. Pass <em>True</em> if the caption must be shown above the widget"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#inputsharedwidgetmessagecontent",
 		"usedByMethods": [],
 		"usedByTypes": [
 			"InputMessageContent"
@@ -26329,6 +27715,7 @@ export const apiCategories: ApiCategory[] = [
 			"Video",
 			"VideoNote",
 			"Voice",
+			"Widget",
 			"PaidMediaInfo",
 			"PaidMedia",
 			"PaidMediaLivePhoto",
@@ -26397,6 +27784,8 @@ export const apiCategories: ApiCategory[] = [
 			"SuggestedPostDeclined",
 			"SuggestedPostPaid",
 			"SuggestedPostRefunded",
+			"PaidMessagesWaived",
+			"TonWalletTransfer",
 			"GiveawayCreated",
 			"Giveaway",
 			"GiveawayWinners",
@@ -26424,6 +27813,13 @@ export const apiCategories: ApiCategory[] = [
 			"CopyTextButton",
 			"DisabledButton",
 			"CallbackQuery",
+			"WidgetQueryType",
+			"WidgetQueryTypeData",
+			"WidgetQueryTypeSignData",
+			"WidgetQueryTypeSentTransaction",
+			"WidgetQueryWallet",
+			"WidgetQuery",
+			"SharedWidgetQuery",
 			"ForceReply",
 			"Community",
 			"ChatPhoto",
@@ -26445,7 +27841,19 @@ export const apiCategories: ApiCategory[] = [
 			"BusinessOpeningHoursInterval",
 			"BusinessOpeningHours",
 			"UserRating",
-			"StoryAreaPosition",
+			"AreaPosition",
+			"TonNft",
+			"TonNftAttribute",
+			"TonWalletCardSticker",
+			"TonWalletCard",
+			"EmojiType",
+			"EmojiTypeEmoji",
+			"EmojiTypeCustomEmoji",
+			"ChatShareTheme",
+			"ChatShareThemeEmoji",
+			"ChatShareThemeUniqueGift",
+			"ChatShareThemeBackdrops",
+			"ChatShareThemeBackdrop",
 			"LocationAddress",
 			"StoryAreaType",
 			"StoryAreaTypeLocation",
@@ -26559,6 +27967,8 @@ export const apiCategories: ApiCategory[] = [
 			"sendAnimation",
 			"sendVoice",
 			"sendVideoNote",
+			"sendWidget",
+			"sendSharedWidget",
 			"sendPaidMedia",
 			"sendMediaGroup",
 			"sendLocation",
@@ -26605,6 +28015,7 @@ export const apiCategories: ApiCategory[] = [
 			"getChatAdministrators",
 			"getChatMemberCount",
 			"getChatMember",
+			"getChatShareThemeBackdrops",
 			"getUserPersonalChatMessages",
 			"setChatStickerSet",
 			"deleteChatStickerSet",
@@ -26622,6 +28033,7 @@ export const apiCategories: ApiCategory[] = [
 			"unhideGeneralForumTopic",
 			"unpinAllGeneralForumTopicMessages",
 			"answerCallbackQuery",
+			"answerWidgetQuery",
 			"answerGuestQuery",
 			"getUserChatBoosts",
 			"getBusinessConnection",
@@ -26664,9 +28076,11 @@ export const apiCategories: ApiCategory[] = [
 			"getBusinessAccountGifts",
 			"getUserGifts",
 			"getChatGifts",
+			"getUniqueGift",
 			"convertGiftToStars",
 			"upgradeGift",
 			"transferGift",
+			"deleteBusinessAccountGift",
 			"postStory",
 			"repostStory",
 			"editStory",
@@ -26686,6 +28100,8 @@ export const apiCategories: ApiCategory[] = [
 			"editMessageLiveLocation",
 			"stopMessageLiveLocation",
 			"editMessageChecklist",
+			"editMessageWidgetData",
+			"editSharedWidgetData",
 			"editMessageReplyMarkup",
 			"stopPoll",
 			"editEphemeralMessageText",
@@ -26758,6 +28174,7 @@ export const apiCategories: ApiCategory[] = [
 			"RichTextEmailAddress",
 			"RichTextPhoneNumber",
 			"RichTextBankCardNumber",
+			"RichTextTonAddress",
 			"RichTextMention",
 			"RichTextHashtag",
 			"RichTextCashtag",
@@ -26859,6 +28276,8 @@ export const apiCategories: ApiCategory[] = [
 			"InputVenueMessageContent",
 			"InputContactMessageContent",
 			"InputInvoiceMessageContent",
+			"InputWidgetMessageContent",
+			"InputSharedWidgetMessageContent",
 			"ChosenInlineResult"
 		]
 	},

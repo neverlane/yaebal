@@ -35,6 +35,10 @@ export function typeName(node: unknown): string {
 	}
 }
 
+// a markdown table cell: `Integer | String` (and any `|` in a description) would otherwise
+// split into extra columns
+const cell = (text: string): string => text.replaceAll("\n", " ").replaceAll("|", "\\|");
+
 export function formatMethod(method: ApiMethod): string {
 	const lines: string[] = [
 		`# ${method.name}`,
@@ -48,9 +52,8 @@ export function formatMethod(method: ApiMethod): string {
 	if (args.length > 0) {
 		lines.push("", "| parameter | type | required | description |", "| --- | --- | --- | --- |");
 		for (const arg of args) {
-			const description = arg.description.replaceAll("\n", " ");
 			lines.push(
-				`| ${arg.name} | ${typeName(arg)} | ${arg.required ? "yes" : "no"} | ${description} |`,
+				`| ${arg.name} | ${cell(typeName(arg))} | ${arg.required ? "yes" : "no"} | ${cell(arg.description)} |`,
 			);
 		}
 	} else {
@@ -68,9 +71,8 @@ export function formatObject(object: ApiObject): string {
 	if (properties.length > 0) {
 		lines.push("", "| field | type | required | description |", "| --- | --- | --- | --- |");
 		for (const property of properties) {
-			const description = property.description.replaceAll("\n", " ");
 			lines.push(
-				`| ${property.name} | ${typeName(property)} | ${property.required === true ? "yes" : "no"} | ${description} |`,
+				`| ${property.name} | ${cell(typeName(property))} | ${property.required === true ? "yes" : "no"} | ${cell(property.description)} |`,
 			);
 		}
 	}

@@ -52,6 +52,7 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						] },
 					] },
 				] },
+				{ field: "caption", entities: "caption_entities" },
 			] },
 		] },
 	],
@@ -87,6 +88,7 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						] },
 					] },
 				] },
+				{ field: "caption", entities: "caption_entities" },
 			] },
 		] },
 	],
@@ -122,6 +124,7 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						] },
 					] },
 				] },
+				{ field: "caption", entities: "caption_entities" },
 			] },
 		] },
 	],
@@ -256,6 +259,7 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 						] },
 					] },
 				] },
+				{ field: "caption", entities: "caption_entities" },
 			] },
 		] },
 	],
@@ -432,6 +436,12 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 			] },
 		] },
 	],
+	sendSharedWidget: [
+		{ field: "caption", entities: "caption_entities" },
+		{ field: "reply_parameters", nested: [
+			{ field: "quote", entities: "quote_entities" },
+		] },
+	],
 	sendSticker: [
 		{ field: "reply_parameters", nested: [
 			{ field: "quote", entities: "quote_entities" },
@@ -458,5 +468,17 @@ export const formatFields: Readonly<Record<string, readonly FormatFieldSpec[]>> 
 		{ field: "reply_parameters", nested: [
 			{ field: "quote", entities: "quote_entities" },
 		] },
+	],
+	sendWidget: [
+		{ field: "caption", entities: "caption_entities" },
+		{ field: "reply_parameters", nested: [
+			{ field: "quote", entities: "quote_entities" },
+		] },
+	],
+	verifyChat: [
+		{ field: "custom_description", entities: "custom_description_entities" },
+	],
+	verifyUser: [
+		{ field: "custom_description", entities: "custom_description_entities" },
 	],
 };

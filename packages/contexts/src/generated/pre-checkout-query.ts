@@ -20,15 +20,15 @@ export class PreCheckoutQueryContextBase {
 		return this.from.first_name;
 	}
 	/** Use this method to get a list of profile pictures for a user. Returns a [UserProfilePhotos](https://core.telegram.org/bots/api/#userprofilephotos) object. */
-	getUserProfilePhotos(params: Omit<t.GetUserProfilePhotosParams, "user_id">) {
+	getUserProfilePhotos(params?: Omit<t.GetUserProfilePhotosParams, "user_id">) {
 		return this.api.call<t.UserProfilePhotos>("getUserProfilePhotos", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to get a list of profile audios for a user. Returns a [UserProfileAudios](https://core.telegram.org/bots/api/#userprofileaudios) object. */
-	getUserProfileAudios(params: Omit<t.GetUserProfileAudiosParams, "user_id">) {
+	getUserProfileAudios(params?: Omit<t.GetUserProfileAudiosParams, "user_id">) {
 		return this.api.call<t.UserProfileAudios>("getUserProfileAudios", { user_id: this.from.id, ...params });
 	}
 	/** Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](/bots/webapps#initializing-mini-apps). Returns *True* on success. */
-	setUserEmojiStatus(params: Omit<t.SetUserEmojiStatusParams, "user_id">) {
+	setUserEmojiStatus(params?: Omit<t.SetUserEmojiStatusParams, "user_id">) {
 		return this.api.call<boolean>("setUserEmojiStatus", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to get the last messages from the personal chat (i.e., the chat currently added to their profile) of a given user. On success, an Array of [Message](https://core.telegram.org/bots/api/#message) objects is returned. */
@@ -60,7 +60,7 @@ export class PreCheckoutQueryContextBase {
 		return this.api.call<boolean>("giftPremiumSubscription", { user_id: this.from.id, ...params });
 	}
 	/** Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot. Returns *True* on success. */
-	verifyUser(params: Omit<t.VerifyUserParams, "user_id">) {
+	verifyUser(params?: Omit<t.VerifyUserParams, "user_id">) {
 		return this.api.call<boolean>("verifyUser", { user_id: this.from.id, ...params });
 	}
 	/** Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot. Returns *True* on success. */
@@ -68,7 +68,7 @@ export class PreCheckoutQueryContextBase {
 		return this.api.call<boolean>("removeUserVerification", { user_id: this.from.id, ...params });
 	}
 	/** Returns the gifts owned and hosted by a user. Returns [OwnedGifts](https://core.telegram.org/bots/api/#ownedgifts) on success. */
-	getUserGifts(params: Omit<t.GetUserGiftsParams, "user_id">) {
+	getUserGifts(params?: Omit<t.GetUserGiftsParams, "user_id">) {
 		return this.api.call<t.OwnedGifts>("getUserGifts", { user_id: this.from.id, ...params });
 	}
 	/** Stores a message that can be sent by a user of a Mini App. Returns a [PreparedInlineMessage](https://core.telegram.org/bots/api/#preparedinlinemessage) object. */
@@ -120,7 +120,7 @@ export class PreCheckoutQueryContextBase {
 		return this.api.call<t.Message | boolean>("setGameScore", { user_id: this.from.id, ...params });
 	}
 	/** Use this method to get data for high score tables. Will return the score of the specified user and several of their neighbors in a game. Returns an Array of [GameHighScore](https://core.telegram.org/bots/api/#gamehighscore) objects.  This method will currently return scores for the target user, plus two of their closest neighbors on each side. Will also return the top three users if the user and their neighbors are not among them. Please note that this behavior is subject to change. */
-	getGameHighScores(params: Omit<t.GetGameHighScoresParams, "user_id">) {
+	getGameHighScores(params?: Omit<t.GetGameHighScoresParams, "user_id">) {
 		return this.api.call<t.GameHighScore[]>("getGameHighScores", { user_id: this.from.id, ...params });
 	}
 }

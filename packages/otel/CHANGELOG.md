@@ -1,5 +1,12 @@
 # @yaebal/otel
 
+## 0.0.5
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/core@0.4.6
+
 ## 0.0.4
 
 ### patch changes

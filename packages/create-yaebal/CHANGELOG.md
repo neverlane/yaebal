@@ -1,5 +1,11 @@
 # create-yaebal
 
+## 0.5.1
+
+### patch changes
+
+- @yaebal/ai@0.2.3
+
 ## 0.5.0
 
 ### minor changes

@@ -1,6 +1,6 @@
 {
 	"name": "@yaebal/widget",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "yaebal widget — html widgets (bot api 10.4): typed send/edit/answer, json state codecs, size + sandbox checks, an in-widget client that packs typed queries, ton wallet payments, and a browser preview.",
 	"type": "module",
 	"main": "./lib/index.js",

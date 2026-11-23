@@ -1,5 +1,12 @@
 # @yaebal/ephemeral
 
+## 1.1.4
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/core@0.4.6
+
 ## 1.1.3
 
 ### patch changes

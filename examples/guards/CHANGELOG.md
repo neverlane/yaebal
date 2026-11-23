@@ -1,5 +1,12 @@
 # @yaebal/example-guards
 
+## 0.0.7
+
+### patch changes
+
+- @yaebal/guards@1.0.6
+- yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

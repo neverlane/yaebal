@@ -1,5 +1,12 @@
 # @yaebal/example-analytics
 
+## 0.0.7
+
+### patch changes
+
+- @yaebal/analytics@1.0.6
+- yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

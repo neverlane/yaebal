@@ -2,7 +2,7 @@
 // source of truth: packages/types/schema.json (the same file @yaebal/types and
 // @yaebal/contexts generate from). regenerate: pnpm --filter @yaebal/docs generate:api
 
-export const BOT_API_VERSION = "10.4";
+export const BOT_API_VERSION = "10.5";
 
 export interface ApiField {
 	name: string;
@@ -167,9 +167,9 @@ export const apiMethods: ApiMethodDoc[] = [
 	{
 		"name": "getMe",
 		"category": "Available methods",
-		"description": "<p>A simple method for testing your bot's authentication token. Requires no parameters. Returns basic information about the bot in form of a <a href=\"/docs/api/types/User\">User</a> object.</p>",
+		"description": "<p>A simple method for testing your bot's authentication token. Requires no parameters. Returns information about the bot in form of a <a href=\"/docs/api/types/BotFullInfo\">BotFullInfo</a> object.</p>",
 		"params": [],
-		"returnType": "User",
+		"returnType": "BotFullInfo",
 		"documentationLink": "https://core.telegram.org/bots/api/#getme",
 		"isApiShortcut": true,
 		"usageExample": "await bot.api.getMe();"
@@ -1908,9 +1908,9 @@ export const apiMethods: ApiMethodDoc[] = [
 		"usageExample": "import type { SendSharedWidgetParams } from \"@yaebal/types\";\n\nawait bot.api.sendSharedWidget({\n  chat_id: 123456789,\n  widget_id: \"...\",\n} satisfies SendSharedWidgetParams);",
 		"contextShortcut": {
 			"name": "sendSharedWidget",
-			"signature": "sendSharedWidget(params?: Omit<SendSharedWidgetParams, \"chat_id\" | \"widget_id\"> & { chat_id?: number | string; widget_id?: string })",
+			"signature": "sendSharedWidget(params: Omit<SendSharedWidgetParams, \"chat_id\">)",
 			"jsdoc": "Use this method to send again a shared widget created by the bot. Currently, in the production environment, widgets can be sent only to private chats, and sent widgets automatically have protected content and therefore can't be forwarded. On success, the sent [Message](https://core.telegram.org/bots/api/#message) is returned.",
-			"availableOn": 1
+			"availableOn": 18
 		}
 	},
 	{
@@ -4659,7 +4659,7 @@ export const apiMethods: ApiMethodDoc[] = [
 	{
 		"name": "answerCallbackQuery",
 		"category": "Available methods",
-		"description": "<p>Use this method to send answers to callback queries sent from <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboards</a>. The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, <em>True</em> is returned.</p>\n<p>Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via <a href=\"https://t.me/botfather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> and accept the terms. Otherwise, you may use links like <code>t.me/your_bot?start=XXXX</code> that open your bot with a parameter.</p>",
+		"description": "<p>Use this method to send answers to callback queries sent from <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboards</a> or <a href=\"/docs/api/types/RichMessage\">rich messages</a>. The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, <em>True</em> is returned.</p>\n<p>Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via <a href=\"https://t.me/botfather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> and accept the terms. Otherwise, you may use links like <code>t.me/your_bot?start=XXXX</code> that open your bot with a parameter.</p>",
 		"params": [
 			{
 				"name": "callback_query_id",
@@ -4916,6 +4916,107 @@ export const apiMethods: ApiMethodDoc[] = [
 			"jsdoc": "Use this method to change the access settings of a managed bot. Returns *True* on success.",
 			"availableOn": 18
 		}
+	},
+	{
+		"name": "setMySettings",
+		"category": "Available methods",
+		"description": "<p>Use this method to change settings of the bot. Settings that aren't specified remain unchanged. Returns <em>True</em> on success.</p>",
+		"params": [
+			{
+				"name": "supports_inline_queries",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to enable <a href=\"https://core.telegram.org/bots/api/#inline-mode\" target=\"_blank\" rel=\"noopener noreferrer\">inline mode</a> for the bot or <em>False</em> to disable it"
+			},
+			{
+				"name": "inline_query_placeholder",
+				"type": "string",
+				"required": false,
+				"description": "New placeholder for inline queries, which is shown in the input field after the bot's username. Pass an empty string to use the default placeholder."
+			},
+			{
+				"name": "needs_inline_query_location",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to request the location of the user with every inline query to the bot or <em>False</em> to stop requesting it"
+			},
+			{
+				"name": "inline_feedback_share_denominator",
+				"type": "number",
+				"required": false,
+				"description": "Denominator of the share of <a href=\"/docs/api/types/ChosenInlineResult\">chosen inline results</a> received by the bot; the bot receives 1 out of <em>inline_feedback_share_denominator</em> chosen results. Must be one of 1, 10, 100, or 1000. Pass 0 to stop receiving chosen inline results."
+			},
+			{
+				"name": "can_join_groups",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow adding the bot to groups or <em>False</em> to disallow it"
+			},
+			{
+				"name": "can_read_all_group_messages",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to disable <a href=\"https://core.telegram.org/bots/features#privacy-mode\" target=\"_blank\" rel=\"noopener noreferrer\">privacy mode</a> for the bot or <em>False</em> to enable it"
+			},
+			{
+				"name": "can_connect_to_business",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow connecting the bot to user accounts to manage them or <em>False</em> to disallow it"
+			},
+			{
+				"name": "can_manage_bots",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow creating other bots that will be controlled by the bot or <em>False</em> to disallow it"
+			},
+			{
+				"name": "supports_guest_queries",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow guest queries to the bot from chats it isn't a member of or <em>False</em> to disallow them"
+			},
+			{
+				"name": "supports_join_request_queries",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow assigning the bot to process join request queries or <em>False</em> to disallow it"
+			},
+			{
+				"name": "has_topics_enabled",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to enable forum topic mode in private chats with the bot or <em>False</em> to disable it"
+			},
+			{
+				"name": "allows_users_to_create_topics",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow users to create and delete topics in private chats with the bot or <em>False</em> to disallow it"
+			},
+			{
+				"name": "has_topic_sidebar",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to show topics in private chats with the bot in a sidebar or <em>False</em> to stop showing them in a sidebar"
+			},
+			{
+				"name": "can_communicate_with_bots",
+				"type": "boolean",
+				"required": false,
+				"description": "Pass <em>True</em> to allow the bot to communicate with other bots in groups, private chats, and through business accounts or <em>False</em> to disallow it"
+			},
+			{
+				"name": "callback_query_mode",
+				"type": "\"default\" | \"auto\" | \"inline\" | \"message\" | \"inline_message_id\"",
+				"required": false,
+				"description": "Mode in which the bot receives <a href=\"/docs/api/types/CallbackQuery\">callback queries</a> from buttons in messages sent by the bot. Must be one of “default” (the field <em>message</em> is always used and contains an <a href=\"/docs/api/types/InaccessibleMessage\">InaccessibleMessage</a> if the message is inaccessible to the bot), “auto” (the field <em>inline_message_id</em> is used instead of the field <em>message</em> if the message is inaccessible to the bot; the field <em>message</em> can still contain an inaccessible message if the message has just been deleted), or “inline” (the field <em>inline_message_id</em> is always used instead of the field <em>message</em>)."
+			}
+		],
+		"returnType": "boolean",
+		"documentationLink": "https://core.telegram.org/bots/api/#setmysettings",
+		"isApiShortcut": true,
+		"usageExample": "import type { SetMySettingsParams } from \"@yaebal/types\";\n\nawait bot.api.setMySettings({} satisfies SetMySettingsParams);"
 	},
 	{
 		"name": "setMyCommands",
@@ -9040,7 +9141,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "chosen_inline_result",
 				"type": "ChosenInlineResult",
 				"required": false,
-				"description": "<em>Optional</em>. The result of an <a href=\"https://core.telegram.org/bots/api/#inline-mode\" target=\"_blank\" rel=\"noopener noreferrer\">inline</a> query that was chosen by a user and sent to their chat partner. Please see our documentation on the <a href=\"https://core.telegram.org/bots/inline#collecting-feedback\" target=\"_blank\" rel=\"noopener noreferrer\">feedback collecting</a> for details on how to enable these updates for your bot."
+				"description": "<em>Optional</em>. The result of an <a href=\"https://core.telegram.org/bots/api/#inline-mode\" target=\"_blank\" rel=\"noopener noreferrer\">inline</a> query that was chosen by a user and sent to their chat partner. Please see our documentation on the <a href=\"https://core.telegram.org/bots/inline#collecting-feedback\" target=\"_blank\" rel=\"noopener noreferrer\">feedback collecting</a> for details on how to enable these updates for your bot. The updates can also be enabled using the parameter <em>inline_feedback_share_denominator</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>."
 			},
 			{
 				"name": "callback_query",
@@ -9215,6 +9316,128 @@ export const apiTypes: ApiTypeDoc[] = [
 		"usedByTypes": []
 	},
 	{
+		"name": "BotFullInfo",
+		"category": "Available types",
+		"description": "<p>This object contains full information about the bot itself.</p>",
+		"kind": "properties",
+		"fields": [
+			{
+				"name": "id",
+				"type": "number",
+				"required": true,
+				"description": "Unique identifier for this bot. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier."
+			},
+			{
+				"name": "is_bot",
+				"type": "boolean",
+				"required": true,
+				"description": "Always <em>True</em>"
+			},
+			{
+				"name": "first_name",
+				"type": "string",
+				"required": true,
+				"description": "Bot's first name"
+			},
+			{
+				"name": "username",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Bot's username"
+			},
+			{
+				"name": "active_usernames",
+				"type": "string[]",
+				"required": false,
+				"description": "<em>Optional</em>. If non-empty, the list of all <a href=\"https://telegram.org/blog/topics-in-groups-collectible-usernames#collectible-usernames\" target=\"_blank\" rel=\"noopener noreferrer\">active usernames</a> of the bot"
+			},
+			{
+				"name": "can_join_groups",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot can be added to groups"
+			},
+			{
+				"name": "can_read_all_group_messages",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if <a href=\"https://core.telegram.org/bots/features#privacy-mode\" target=\"_blank\" rel=\"noopener noreferrer\">privacy mode</a> is disabled for the bot"
+			},
+			{
+				"name": "supports_guest_queries",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot supports guest queries from chats it is not a member of"
+			},
+			{
+				"name": "supports_inline_queries",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot supports inline queries"
+			},
+			{
+				"name": "inline_query_placeholder",
+				"type": "string",
+				"required": false,
+				"description": "<em>Optional</em>. Placeholder for inline queries, which is shown in the input field after the bot's username; omitted if the default placeholder is used"
+			},
+			{
+				"name": "needs_inline_query_location",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot requests the location of the user with every inline query"
+			},
+			{
+				"name": "can_connect_to_business",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot can be connected to a user account to manage it"
+			},
+			{
+				"name": "has_main_web_app",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot has a main Web App"
+			},
+			{
+				"name": "has_topics_enabled",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot has forum topic mode enabled in private chats"
+			},
+			{
+				"name": "allows_users_to_create_topics",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot allows users to create and delete topics in private chats"
+			},
+			{
+				"name": "has_topic_sidebar",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if topics in private chats with the bot are shown in a sidebar"
+			},
+			{
+				"name": "can_manage_bots",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if other bots can be created to be controlled by the bot"
+			},
+			{
+				"name": "supports_join_request_queries",
+				"type": "boolean",
+				"required": true,
+				"description": "<em>True</em>, if the bot supports join request queries and can be assigned to process them"
+			}
+		],
+		"variants": [],
+		"documentationLink": "https://core.telegram.org/bots/api/#botfullinfo",
+		"usedByMethods": [
+			"getMe"
+		],
+		"usedByTypes": []
+	},
+	{
 		"name": "User",
 		"category": "Available types",
 		"description": "<p>This object represents a Telegram user or bot.</p>",
@@ -9267,73 +9490,11 @@ export const apiTypes: ApiTypeDoc[] = [
 				"type": "boolean",
 				"required": false,
 				"description": "<em>Optional</em>. <em>True</em>, if this user added the bot to the attachment menu"
-			},
-			{
-				"name": "can_join_groups",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot can be invited to groups. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "can_read_all_group_messages",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if <a href=\"https://core.telegram.org/bots/features#privacy-mode\" target=\"_blank\" rel=\"noopener noreferrer\">privacy mode</a> is disabled for the bot. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "supports_guest_queries",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot supports guest queries from chats it is not a member of. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "supports_inline_queries",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot supports inline queries. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "can_connect_to_business",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot can be connected to a user account to manage it. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "has_main_web_app",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot has a main Web App. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "has_topics_enabled",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot has forum topic mode enabled in private chats. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "allows_users_to_create_topics",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot allows users to create and delete topics in private chats. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "can_manage_bots",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if other bots can be created to be controlled by the bot. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
-			},
-			{
-				"name": "supports_join_request_queries",
-				"type": "boolean",
-				"required": false,
-				"description": "<em>Optional</em>. <em>True</em>, if the bot supports join request queries and can be assigned to process them. Returned only in <a href=\"/docs/api/methods/getMe\">getMe</a>."
 			}
 		],
 		"variants": [],
 		"documentationLink": "https://core.telegram.org/bots/api/#user",
-		"usedByMethods": [
-			"getMe"
-		],
+		"usedByMethods": [],
 		"usedByTypes": [
 			"AffiliateInfo",
 			"BotAccessSettings",
@@ -9380,7 +9541,8 @@ export const apiTypes: ApiTypeDoc[] = [
 			"TransactionPartnerAffiliateProgram",
 			"TransactionPartnerUser",
 			"VideoChatParticipantsInvited",
-			"WidgetQuery"
+			"WidgetQuery",
+			"WriteAccessAllowed"
 		]
 	},
 	{
@@ -10333,7 +10495,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "write_access_allowed",
 				"type": "WriteAccessAllowed",
 				"required": false,
-				"description": "<em>Optional</em>. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method <a href=\"https://core.telegram.org/bots/webapps#initializing-mini-apps\" target=\"_blank\" rel=\"noopener noreferrer\">requestWriteAccess</a>"
+				"description": "<em>Optional</em>. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method <a href=\"https://core.telegram.org/bots/webapps#initializing-mini-apps\" target=\"_blank\" rel=\"noopener noreferrer\">requestWriteAccess</a>, or the user was invited to the private chat with the bot by the owner of the bot"
 			},
 			{
 				"name": "passport_data",
@@ -13880,7 +14042,7 @@ export const apiTypes: ApiTypeDoc[] = [
 	{
 		"name": "WriteAccessAllowed",
 		"category": "Available types",
-		"description": "<p>This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method <a href=\"https://core.telegram.org/bots/webapps#initializing-mini-apps\" target=\"_blank\" rel=\"noopener noreferrer\">requestWriteAccess</a>.</p>",
+		"description": "<p>This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method <a href=\"https://core.telegram.org/bots/webapps#initializing-mini-apps\" target=\"_blank\" rel=\"noopener noreferrer\">requestWriteAccess</a>, or about a user being invited to the private chat with the bot by the owner of the bot.</p>",
 		"kind": "properties",
 		"fields": [
 			{
@@ -13900,6 +14062,12 @@ export const apiTypes: ApiTypeDoc[] = [
 				"type": "boolean",
 				"required": false,
 				"description": "<em>Optional</em>. <em>True</em>, if the access was granted when the bot was added to the attachment or side menu"
+			},
+			{
+				"name": "inviter",
+				"type": "User",
+				"required": false,
+				"description": "<em>Optional</em>. The owner of the bot, if the access was granted when the owner invited the user to the private chat with the bot. Bot owners can invite up to 10 users at once by pressing the link <code>https://t.me/botinvite/&lt;bot_username&gt;</code>."
 			}
 		],
 		"variants": [],
@@ -14854,7 +15022,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "request_managed_bot",
 				"type": "KeyboardButtonRequestManagedBot",
 				"required": false,
-				"description": "<em>Optional</em>. If specified, pressing the button will ask the user to create and share a bot that will be managed by the current bot. Available for bots that enabled management of other bots in the <a href=\"https://t.me/BotFather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> Mini App. Available in private chats only."
+				"description": "<em>Optional</em>. If specified, pressing the button will ask the user to create and share a bot that will be managed by the current bot. Available for bots that enabled management of other bots in the <a href=\"https://t.me/BotFather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> Mini App or using the parameter <em>can_manage_bots</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>. Available in private chats only."
 			},
 			{
 				"name": "request_contact",
@@ -15425,7 +15593,7 @@ export const apiTypes: ApiTypeDoc[] = [
 	{
 		"name": "CallbackQuery",
 		"category": "Available types",
-		"description": "<p>This object represents an incoming callback query from a callback button in an <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboard</a>. If the button that originated the query was attached to a message sent by the bot, the field <em>message</em> will be present. If the button was attached to a message sent via the bot (in <a href=\"https://core.telegram.org/bots/api/#inline-mode\" target=\"_blank\" rel=\"noopener noreferrer\">inline mode</a>), the field <em>inline_message_id</em> will be present. Exactly one of the fields <em>data</em> or <em>game_short_name</em> will be present.</p>",
+		"description": "<p>This object represents an incoming callback query from a callback button in an <a href=\"https://core.telegram.org/bots/features#inline-keyboards\" target=\"_blank\" rel=\"noopener noreferrer\">inline keyboard</a> or in a <a href=\"/docs/api/types/RichMessage\">rich message</a>. If the button that originated the query belongs to a message sent by the bot, the field <em>message</em> will be present, unless the field <em>inline_message_id</em> is used instead as specified by the parameter <em>callback_query_mode</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>. If the button belongs to a message sent via the bot (in <a href=\"https://core.telegram.org/bots/api/#inline-mode\" target=\"_blank\" rel=\"noopener noreferrer\">inline mode</a>), the field <em>inline_message_id</em> will be present. Exactly one of the fields <em>data</em> or <em>game_short_name</em> will be present.</p>",
 		"kind": "properties",
 		"fields": [
 			{
@@ -15450,7 +15618,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "inline_message_id",
 				"type": "string",
 				"required": false,
-				"description": "<em>Optional</em>. Identifier of the message sent via the bot in inline mode, that originated the query"
+				"description": "<em>Optional</em>. Identifier of the message sent via the bot in inline mode, that originated the query. Can also be present for messages sent by the bot, depending on the parameter <em>callback_query_mode</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>."
 			},
 			{
 				"name": "chat_instance",
@@ -22215,6 +22383,7 @@ export const apiTypes: ApiTypeDoc[] = [
 			"RichBlockBlockQuotation",
 			"RichBlockCollage",
 			"RichBlockDetails",
+			"RichBlockExpandableBlockQuotation",
 			"RichBlockListItem",
 			"RichBlockSlideshow",
 			"RichMessage"
@@ -22479,8 +22648,8 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "Type of the block, always “expandable_blockquote”"
 			},
 			{
-				"name": "text",
-				"type": "RichText",
+				"name": "blocks",
+				"type": "RichBlock[]",
 				"required": true,
 				"description": "Content of the block"
 			},
@@ -23082,6 +23251,7 @@ export const apiTypes: ApiTypeDoc[] = [
 			"InputRichBlockBlockQuotation",
 			"InputRichBlockCollage",
 			"InputRichBlockDetails",
+			"InputRichBlockExpandableBlockQuotation",
 			"InputRichBlockListItem",
 			"InputRichBlockSlideshow",
 			"InputRichMessage"
@@ -23346,8 +23516,8 @@ export const apiTypes: ApiTypeDoc[] = [
 				"description": "Type of the block, always “expandable_blockquote”"
 			},
 			{
-				"name": "text",
-				"type": "RichText",
+				"name": "blocks",
+				"type": "InputRichBlock[]",
 				"required": true,
 				"description": "Content of the block"
 			},
@@ -23889,7 +24059,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "location",
 				"type": "Location",
 				"required": false,
-				"description": "<em>Optional</em>. Sender location, only for bots that request user location"
+				"description": "<em>Optional</em>. Sender location, only for bots that enabled user location requests via <a href=\"https://t.me/botfather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> or using the parameter <em>needs_inline_query_location</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>"
 			}
 		],
 		"variants": [],
@@ -26120,7 +26290,7 @@ export const apiTypes: ApiTypeDoc[] = [
 				"name": "location",
 				"type": "Location",
 				"required": false,
-				"description": "<em>Optional</em>. Sender location, only for bots that require user location"
+				"description": "<em>Optional</em>. Sender location, only for bots that enabled user location requests via <a href=\"https://t.me/botfather\" target=\"_blank\" rel=\"noopener noreferrer\">@BotFather</a> or using the parameter <em>needs_inline_query_location</em> of the method <a href=\"/docs/api/methods/setMySettings\">setMySettings</a>"
 			},
 			{
 				"name": "inline_message_id",
@@ -27688,6 +27858,7 @@ export const apiCategories: ApiCategory[] = [
 		"title": "Available types",
 		"methods": [],
 		"types": [
+			"BotFullInfo",
 			"User",
 			"Chat",
 			"ChatFullInfo",
@@ -28041,6 +28212,7 @@ export const apiCategories: ApiCategory[] = [
 			"replaceManagedBotToken",
 			"getManagedBotAccessSettings",
 			"setManagedBotAccessSettings",
+			"setMySettings",
 			"setMyCommands",
 			"deleteMyCommands",
 			"getMyCommands",

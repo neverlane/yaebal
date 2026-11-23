@@ -3,7 +3,7 @@
 // source: https://core.telegram.org/bots/api (scraped by scripts/lib/parse-schema.mjs)
 
 /** the Telegram Bot API version these types were generated from. */
-export const BOT_API_VERSION = "10.4";
+export const BOT_API_VERSION = "10.5";
 
 /** runtime list of `Update` payload keys (every update kind, excluding `update_id`). */
 export const updateNames = [
@@ -305,6 +305,46 @@ export interface BotDescription {
 	description: string;
 }
 
+/** This object contains full information about the bot itself. */
+export interface BotFullInfo {
+	/** Unique identifier for this bot. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. */
+	id: number;
+	/** Always *True* */
+	is_bot: boolean;
+	/** Bot's first name */
+	first_name: string;
+	/** *Optional*. Bot's username */
+	username?: string;
+	/** *Optional*. If non-empty, the list of all [active usernames](https://telegram.org/blog/topics-in-groups-collectible-usernames#collectible-usernames) of the bot */
+	active_usernames?: string[];
+	/** *True*, if the bot can be added to groups */
+	can_join_groups: boolean;
+	/** *True*, if [privacy mode](/bots/features#privacy-mode) is disabled for the bot */
+	can_read_all_group_messages: boolean;
+	/** *True*, if the bot supports guest queries from chats it is not a member of */
+	supports_guest_queries: boolean;
+	/** *True*, if the bot supports inline queries */
+	supports_inline_queries: boolean;
+	/** *Optional*. Placeholder for inline queries, which is shown in the input field after the bot's username; omitted if the default placeholder is used */
+	inline_query_placeholder?: string;
+	/** *True*, if the bot requests the location of the user with every inline query */
+	needs_inline_query_location: boolean;
+	/** *True*, if the bot can be connected to a user account to manage it */
+	can_connect_to_business: boolean;
+	/** *True*, if the bot has a main Web App */
+	has_main_web_app: boolean;
+	/** *True*, if the bot has forum topic mode enabled in private chats */
+	has_topics_enabled: boolean;
+	/** *True*, if the bot allows users to create and delete topics in private chats */
+	allows_users_to_create_topics: boolean;
+	/** *True*, if topics in private chats with the bot are shown in a sidebar */
+	has_topic_sidebar: boolean;
+	/** *True*, if other bots can be created to be controlled by the bot */
+	can_manage_bots: boolean;
+	/** *True*, if the bot supports join request queries and can be assigned to process them */
+	supports_join_request_queries: boolean;
+}
+
 /** This object represents the bot's name. */
 export interface BotName {
 	/** The bot's name */
@@ -422,7 +462,7 @@ export interface BusinessOpeningHoursInterval {
 /** A placeholder, currently holds no information. Use [BotFather](https://t.me/botfather) to set up your game. */
 export type CallbackGame = Record<never, never>;
 
-/** This object represents an incoming callback query from a callback button in an [inline keyboard](/bots/features#inline-keyboards). If the button that originated the query was attached to a message sent by the bot, the field *message* will be present. If the button was attached to a message sent via the bot (in [inline mode](https://core.telegram.org/bots/api/#inline-mode)), the field *inline\_message\_id* will be present. Exactly one of the fields *data* or *game\_short\_name* will be present. */
+/** This object represents an incoming callback query from a callback button in an [inline keyboard](/bots/features#inline-keyboards) or in a [rich message](https://core.telegram.org/bots/api/#richmessage). If the button that originated the query belongs to a message sent by the bot, the field *message* will be present, unless the field *inline\_message\_id* is used instead as specified by the parameter *callback\_query\_mode* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings). If the button belongs to a message sent via the bot (in [inline mode](https://core.telegram.org/bots/api/#inline-mode)), the field *inline\_message\_id* will be present. Exactly one of the fields *data* or *game\_short\_name* will be present. */
 export interface CallbackQuery {
 	/** Unique identifier for this query */
 	id: string;
@@ -430,7 +470,7 @@ export interface CallbackQuery {
 	from: User;
 	/** *Optional*. Message sent by the bot with the callback button that originated the query */
 	message?: MaybeInaccessibleMessage;
-	/** *Optional*. Identifier of the message sent via the bot in inline mode, that originated the query */
+	/** *Optional*. Identifier of the message sent via the bot in inline mode, that originated the query. Can also be present for messages sent by the bot, depending on the parameter *callback\_query\_mode* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings). */
 	inline_message_id?: string;
 	/** Global identifier, uniquely corresponding to the chat to which the message with the callback button was sent. Useful for high scores in [games](https://core.telegram.org/bots/api/#games). */
 	chat_instance: string;
@@ -1067,7 +1107,7 @@ export interface ChosenInlineResult {
 	result_id: string;
 	/** The user that chose the result */
 	from: User;
-	/** *Optional*. Sender location, only for bots that require user location */
+	/** *Optional*. Sender location, only for bots that enabled user location requests via [@BotFather](https://t.me/botfather) or using the parameter *needs\_inline\_query\_location* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings) */
 	location?: Location;
 	/** *Optional*. Identifier of the sent inline message. Available only if there is an [inline keyboard](https://core.telegram.org/bots/api/#inlinekeyboardmarkup) attached to the message. Will be also received in [callback queries](https://core.telegram.org/bots/api/#callbackquery) and can be used to [edit](https://core.telegram.org/bots/api/#updating-messages) the message. */
 	inline_message_id?: string;
@@ -1575,7 +1615,7 @@ export interface InlineQuery {
 	offset: string;
 	/** *Optional*. Type of the chat from which the inline query was sent. Can be either “sender” for a private chat with the inline query sender, “private”, “group”, “supergroup”, or “channel”. The chat type should be always known for requests sent from official clients and most third-party clients, unless the request was sent from a secret chat. */
 	chat_type?: "sender" | "private" | "group" | "supergroup" | "channel";
-	/** *Optional*. Sender location, only for bots that request user location */
+	/** *Optional*. Sender location, only for bots that enabled user location requests via [@BotFather](https://t.me/botfather) or using the parameter *needs\_inline\_query\_location* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings) */
 	location?: Location;
 }
 
@@ -2613,7 +2653,7 @@ export interface InputRichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
 	type: "expandable_blockquote";
 	/** Content of the block */
-	text: RichText;
+	blocks: InputRichBlock[];
 	/** *Optional*. Credit of the block */
 	credit?: RichText;
 }
@@ -2943,7 +2983,7 @@ export interface KeyboardButton {
 	request_users?: KeyboardButtonRequestUsers;
 	/** *Optional*. If specified, pressing the button will open a list of suitable chats. Tapping on a chat will send its identifier to the bot in a “chat_shared” service message. Available in private chats only. */
 	request_chat?: KeyboardButtonRequestChat;
-	/** *Optional*. If specified, pressing the button will ask the user to create and share a bot that will be managed by the current bot. Available for bots that enabled management of other bots in the [@BotFather](https://t.me/BotFather) Mini App. Available in private chats only. */
+	/** *Optional*. If specified, pressing the button will ask the user to create and share a bot that will be managed by the current bot. Available for bots that enabled management of other bots in the [@BotFather](https://t.me/BotFather) Mini App or using the parameter *can\_manage\_bots* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings). Available in private chats only. */
 	request_managed_bot?: KeyboardButtonRequestManagedBot;
 	/** *Optional*. If *True*, the user's phone number will be sent as a contact when the button is pressed. Available in private chats only. */
 	request_contact?: boolean;
@@ -3329,7 +3369,7 @@ export interface Message {
 	gift_upgrade_sent?: GiftInfo;
 	/** *Optional*. The domain name of the website on which the user has logged in. [More about Telegram Login »](/widgets/login) */
 	connected_website?: string;
-	/** *Optional*. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps) */
+	/** *Optional*. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps), or the user was invited to the private chat with the bot by the owner of the bot */
 	write_access_allowed?: WriteAccessAllowed;
 	/** *Optional*. Telegram Passport data */
 	passport_data?: PassportData;
@@ -4228,7 +4268,7 @@ export interface RichBlockExpandableBlockQuotation {
 	/** Type of the block, always “expandable_blockquote” */
 	type: "expandable_blockquote";
 	/** Content of the block */
-	text: RichText;
+	blocks: RichBlock[];
 	/** *Optional*. Credit of the block */
 	credit?: RichText;
 }
@@ -5320,7 +5360,7 @@ export interface Update {
 	message_reaction_count?: MessageReactionCountUpdated;
 	/** *Optional*. New incoming [inline](https://core.telegram.org/bots/api/#inline-mode) query */
 	inline_query?: InlineQuery;
-	/** *Optional*. The result of an [inline](https://core.telegram.org/bots/api/#inline-mode) query that was chosen by a user and sent to their chat partner. Please see our documentation on the [feedback collecting](/bots/inline#collecting-feedback) for details on how to enable these updates for your bot. */
+	/** *Optional*. The result of an [inline](https://core.telegram.org/bots/api/#inline-mode) query that was chosen by a user and sent to their chat partner. Please see our documentation on the [feedback collecting](/bots/inline#collecting-feedback) for details on how to enable these updates for your bot. The updates can also be enabled using the parameter *inline\_feedback\_share\_denominator* of the method [setMySettings](https://core.telegram.org/bots/api/#setmysettings). */
 	chosen_inline_result?: ChosenInlineResult;
 	/** *Optional*. New incoming callback query */
 	callback_query?: CallbackQuery;
@@ -5374,26 +5414,6 @@ export interface User {
 	is_premium?: boolean;
 	/** *Optional*. *True*, if this user added the bot to the attachment menu */
 	added_to_attachment_menu?: boolean;
-	/** *Optional*. *True*, if the bot can be invited to groups. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	can_join_groups?: boolean;
-	/** *Optional*. *True*, if [privacy mode](/bots/features#privacy-mode) is disabled for the bot. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	can_read_all_group_messages?: boolean;
-	/** *Optional*. *True*, if the bot supports guest queries from chats it is not a member of. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	supports_guest_queries?: boolean;
-	/** *Optional*. *True*, if the bot supports inline queries. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	supports_inline_queries?: boolean;
-	/** *Optional*. *True*, if the bot can be connected to a user account to manage it. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	can_connect_to_business?: boolean;
-	/** *Optional*. *True*, if the bot has a main Web App. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	has_main_web_app?: boolean;
-	/** *Optional*. *True*, if the bot has forum topic mode enabled in private chats. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	has_topics_enabled?: boolean;
-	/** *Optional*. *True*, if the bot allows users to create and delete topics in private chats. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	allows_users_to_create_topics?: boolean;
-	/** *Optional*. *True*, if other bots can be created to be controlled by the bot. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	can_manage_bots?: boolean;
-	/** *Optional*. *True*, if the bot supports join request queries and can be assigned to process them. Returned only in [getMe](https://core.telegram.org/bots/api/#getme). */
-	supports_join_request_queries?: boolean;
 }
 
 /** This object represents a list of boosts added to a chat by a user. */
@@ -5670,7 +5690,7 @@ export interface WidgetQueryWallet {
 	state_init?: string;
 }
 
-/** This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps). */
+/** This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps), or about a user being invited to the private chat with the bot by the owner of the bot. */
 export interface WriteAccessAllowed {
 	/** *Optional*. *True*, if the access was granted after the user accepted an explicit request from a Web App sent by the method [requestWriteAccess](/bots/webapps#initializing-mini-apps) */
 	from_request?: boolean;
@@ -5678,6 +5698,8 @@ export interface WriteAccessAllowed {
 	web_app_name?: string;
 	/** *Optional*. *True*, if the access was granted when the bot was added to the attachment or side menu */
 	from_attachment_menu?: boolean;
+	/** *Optional*. The owner of the bot, if the access was granted when the owner invited the user to the private chat with the bot. Bot owners can invite up to 10 users at once by pressing the link `https://t.me/botinvite/<bot_username>`. */
+	inviter?: User;
 }
 
 /** Use this method to add a new sticker to a set created by the bot. Emoji sticker sets can have up to 200 stickers. Other sticker sets can have up to 120 stickers. Returns *True* on success. */
@@ -5690,7 +5712,7 @@ export interface AddStickerToSetParams {
 	sticker: InputSticker;
 }
 
-/** Use this method to send answers to callback queries sent from [inline keyboards](/bots/features#inline-keyboards). The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, *True* is returned.  Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via [@BotFather](https://t.me/botfather) and accept the terms. Otherwise, you may use links like `t.me/your_bot?start=XXXX` that open your bot with a parameter. */
+/** Use this method to send answers to callback queries sent from [inline keyboards](/bots/features#inline-keyboards) or [rich messages](https://core.telegram.org/bots/api/#richmessage). The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, *True* is returned.  Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via [@BotFather](https://t.me/botfather) and accept the terms. Otherwise, you may use links like `t.me/your_bot?start=XXXX` that open your bot with a parameter. */
 export interface AnswerCallbackQueryParams {
 	/** Unique identifier for the query to be answered */
 	callback_query_id: string;
@@ -6606,7 +6628,7 @@ export interface GetManagedBotTokenParams {
 	user_id: number;
 }
 
-/** A simple method for testing your bot's authentication token. Requires no parameters. Returns basic information about the bot in form of a [User](https://core.telegram.org/bots/api/#user) object. */
+/** A simple method for testing your bot's authentication token. Requires no parameters. Returns information about the bot in form of a [BotFullInfo](https://core.telegram.org/bots/api/#botfullinfo) object. */
 export type GetMeParams = Record<never, never>;
 
 /** Use this method to get the current list of the bot's commands for the given scope and user language. Returns an Array of [BotCommand](https://core.telegram.org/bots/api/#botcommand) objects. If commands aren't set, an empty list is returned. */
@@ -8165,6 +8187,40 @@ export interface SetMyProfilePhotoParams {
 	photo: InputProfilePhoto;
 }
 
+/** Use this method to change settings of the bot. Settings that aren't specified remain unchanged. Returns *True* on success. */
+export interface SetMySettingsParams {
+	/** Pass *True* to enable [inline mode](https://core.telegram.org/bots/api/#inline-mode) for the bot or *False* to disable it */
+	supports_inline_queries?: boolean;
+	/** New placeholder for inline queries, which is shown in the input field after the bot's username. Pass an empty string to use the default placeholder. */
+	inline_query_placeholder?: string;
+	/** Pass *True* to request the location of the user with every inline query to the bot or *False* to stop requesting it */
+	needs_inline_query_location?: boolean;
+	/** Denominator of the share of [chosen inline results](https://core.telegram.org/bots/api/#choseninlineresult) received by the bot; the bot receives 1 out of *inline\_feedback\_share\_denominator* chosen results. Must be one of 1, 10, 100, or 1000. Pass 0 to stop receiving chosen inline results. */
+	inline_feedback_share_denominator?: number;
+	/** Pass *True* to allow adding the bot to groups or *False* to disallow it */
+	can_join_groups?: boolean;
+	/** Pass *True* to disable [privacy mode](/bots/features#privacy-mode) for the bot or *False* to enable it */
+	can_read_all_group_messages?: boolean;
+	/** Pass *True* to allow connecting the bot to user accounts to manage them or *False* to disallow it */
+	can_connect_to_business?: boolean;
+	/** Pass *True* to allow creating other bots that will be controlled by the bot or *False* to disallow it */
+	can_manage_bots?: boolean;
+	/** Pass *True* to allow guest queries to the bot from chats it isn't a member of or *False* to disallow them */
+	supports_guest_queries?: boolean;
+	/** Pass *True* to allow assigning the bot to process join request queries or *False* to disallow it */
+	supports_join_request_queries?: boolean;
+	/** Pass *True* to enable forum topic mode in private chats with the bot or *False* to disable it */
+	has_topics_enabled?: boolean;
+	/** Pass *True* to allow users to create and delete topics in private chats with the bot or *False* to disallow it */
+	allows_users_to_create_topics?: boolean;
+	/** Pass *True* to show topics in private chats with the bot in a sidebar or *False* to stop showing them in a sidebar */
+	has_topic_sidebar?: boolean;
+	/** Pass *True* to allow the bot to communicate with other bots in groups, private chats, and through business accounts or *False* to disallow it */
+	can_communicate_with_bots?: boolean;
+	/** Mode in which the bot receives [callback queries](https://core.telegram.org/bots/api/#callbackquery) from buttons in messages sent by the bot. Must be one of “default” (the field *message* is always used and contains an [InaccessibleMessage](https://core.telegram.org/bots/api/#inaccessiblemessage) if the message is inaccessible to the bot), “auto” (the field *inline\_message\_id* is used instead of the field *message* if the message is inaccessible to the bot; the field *message* can still contain an inaccessible message if the message has just been deleted), or “inline” (the field *inline\_message\_id* is always used instead of the field *message*). */
+	callback_query_mode?: "default" | "auto" | "inline" | "message" | "inline_message_id";
+}
+
 /** Use this method to change the bot's short description, which is shown on the bot's profile page and is sent together with the link when users share the bot. Returns *True* on success. */
 export interface SetMyShortDescriptionParams {
 	/** New short description for the bot; 0-120 characters. Pass an empty string to remove the dedicated short description for the given language. */
@@ -8411,7 +8467,7 @@ export interface VerifyUserParams {
 export interface BotApiMethods {
 		/** Use this method to add a new sticker to a set created by the bot. Emoji sticker sets can have up to 200 stickers. Other sticker sets can have up to 120 stickers. Returns *True* on success. */
 	addStickerToSet(params: AddStickerToSetParams): Promise<boolean>;
-		/** Use this method to send answers to callback queries sent from [inline keyboards](/bots/features#inline-keyboards). The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, *True* is returned.  Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via [@BotFather](https://t.me/botfather) and accept the terms. Otherwise, you may use links like `t.me/your_bot?start=XXXX` that open your bot with a parameter. */
+		/** Use this method to send answers to callback queries sent from [inline keyboards](/bots/features#inline-keyboards) or [rich messages](https://core.telegram.org/bots/api/#richmessage). The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, *True* is returned.  Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via [@BotFather](https://t.me/botfather) and accept the terms. Otherwise, you may use links like `t.me/your_bot?start=XXXX` that open your bot with a parameter. */
 	answerCallbackQuery(params: AnswerCallbackQueryParams): Promise<boolean>;
 		/** Use this method to process a received chat join request query. Returns *True* on success. */
 	answerChatJoinRequestQuery(params: AnswerChatJoinRequestQueryParams): Promise<boolean>;
@@ -8567,8 +8623,8 @@ export interface BotApiMethods {
 	getManagedBotAccessSettings(params: GetManagedBotAccessSettingsParams): Promise<BotAccessSettings>;
 		/** Use this method to get the token of a managed bot. Returns the token as *String* on success. */
 	getManagedBotToken(params: GetManagedBotTokenParams): Promise<string>;
-		/** A simple method for testing your bot's authentication token. Requires no parameters. Returns basic information about the bot in form of a [User](https://core.telegram.org/bots/api/#user) object. */
-	getMe(params?: GetMeParams): Promise<User>;
+		/** A simple method for testing your bot's authentication token. Requires no parameters. Returns information about the bot in form of a [BotFullInfo](https://core.telegram.org/bots/api/#botfullinfo) object. */
+	getMe(params?: GetMeParams): Promise<BotFullInfo>;
 		/** Use this method to get the current list of the bot's commands for the given scope and user language. Returns an Array of [BotCommand](https://core.telegram.org/bots/api/#botcommand) objects. If commands aren't set, an empty list is returned. */
 	getMyCommands(params?: GetMyCommandsParams): Promise<BotCommand[]>;
 		/** Use this method to get the current default administrator rights of the bot. Returns [ChatAdministratorRights](https://core.telegram.org/bots/api/#chatadministratorrights) on success. */
@@ -8745,6 +8801,8 @@ export interface BotApiMethods {
 	setMyName(params?: SetMyNameParams): Promise<boolean>;
 		/** Changes the profile photo of the bot. Returns *True* on success. */
 	setMyProfilePhoto(params: SetMyProfilePhotoParams): Promise<boolean>;
+		/** Use this method to change settings of the bot. Settings that aren't specified remain unchanged. Returns *True* on success. */
+	setMySettings(params?: SetMySettingsParams): Promise<boolean>;
 		/** Use this method to change the bot's short description, which is shown on the bot's profile page and is sent together with the link when users share the bot. Returns *True* on success. */
 	setMyShortDescription(params?: SetMyShortDescriptionParams): Promise<boolean>;
 		/** Informs a user that some of the Telegram Passport elements they provided contains errors. The user will not be able to re-submit their Passport to you until the errors are fixed (the contents of the field for which you returned the error must change). Returns *True* on success.  Use this if the data submitted by the user doesn't satisfy the standards your service requires for any reason. For example, if a birthday date seems invalid, a submitted document is blurry, a scan shows evidence of tampering, etc. Supply some details in the error message to make sure the user knows how to correct the issues. */

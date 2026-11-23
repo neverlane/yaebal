@@ -1,5 +1,12 @@
 # @yaebal/hydrate
 
+## 0.1.7
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/core@0.4.6
+
 ## 0.1.6
 
 ### patch changes

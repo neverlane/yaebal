@@ -1,5 +1,13 @@
 # @yaebal/example-rich-messages
 
+## 0.0.7
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/rich@1.3.0
+  - yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

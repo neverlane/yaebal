@@ -1,5 +1,11 @@
 # @yaebal/example-keyboard
 
+## 0.0.7
+
+### patch changes
+
+- yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

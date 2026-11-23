@@ -1,5 +1,12 @@
 # @yaebal/widget
 
+## 0.1.1
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/core@0.4.6
+
 ## 0.1.0
 
 ### minor changes

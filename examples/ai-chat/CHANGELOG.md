@@ -1,5 +1,12 @@
 # @yaebal/example-ai-chat
 
+## 0.0.7
+
+### patch changes
+
+- @yaebal/ai@0.2.3
+- yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

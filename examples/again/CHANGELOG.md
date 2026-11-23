@@ -1,5 +1,12 @@
 # @yaebal/example-again
 
+## 0.0.7
+
+### patch changes
+
+- @yaebal/again@1.0.6
+- yaebal@0.2.6
+
 ## 0.0.6
 
 ### patch changes

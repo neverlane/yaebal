@@ -1,5 +1,12 @@
 # @yaebal/toml
 
+## 1.0.6
+
+### patch changes
+
+- updated dependencies [2316abb]
+  - @yaebal/core@0.4.6
+
 ## 1.0.5
 
 ### patch changes

@@ -1,5 +1,12 @@
 # @yaebal/example-widget
 
+## 0.0.3
+
+### patch changes
+
+- @yaebal/widget@0.1.1
+- yaebal@0.2.6
+
 ## 0.0.2
 
 ### patch changes

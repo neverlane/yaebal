@@ -153,12 +153,16 @@ test("bot api 10.3 blocks: buttons, button text, expandable quote, document", ()
 				{ text: "b", disabled: {} },
 			],
 		},
-		{ type: "expandable_blockquote", text: "long quote", credit: "me" },
+		{
+			type: "expandable_blockquote",
+			blocks: [{ type: "paragraph", text: "long quote" }],
+			credit: "me",
+		},
 		{ type: "document", document: { file_id: "f" }, caption: { text: "report" } },
 	] as unknown as RichBlock[];
 
 	assert.equal(
 		blocks.map(richBlockToPlainText).join(""),
-		"tap here\na | b\nlong quote — me\nreport\n",
+		"tap here\na | b\nlong quote\n — me\nreport\n",
 	);
 });

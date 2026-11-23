@@ -105,8 +105,8 @@ export function richBlockToPlainText(block: RichBlock): string {
 			return `${blocks.map(richBlockToPlainText).join("")}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
 		}
 		case "expandable_blockquote": {
-			const { text, credit } = as<RichBlockExpandableBlockQuotation>(block);
-			return `${richTextToPlainText(text)}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
+			const { blocks, credit } = as<RichBlockExpandableBlockQuotation>(block);
+			return `${blocks.map(richBlockToPlainText).join("")}${credit ? ` — ${richTextToPlainText(credit)}` : ""}\n`;
 		}
 		case "buttons":
 			return `${as<RichBlockButtons>(block)
